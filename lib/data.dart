@@ -111,6 +111,9 @@ List<Player> generateMarket(Random rng) {
       list.add(makePlayer(rng, pos, 52 + rng.nextInt(24), 18 + rng.nextInt(16)));
     }
   });
+  for (final p in list) {
+    if (rng.nextDouble() < 0.22) p.free = true;
+  }
   list.sort((a, b) => b.overall.compareTo(a.overall));
   return list;
 }

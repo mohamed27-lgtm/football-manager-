@@ -31,6 +31,7 @@ class Player {
   int atk, def, pas, gk, potential;
   int contract; // سنوات متبقية
   String? photo;
+  bool free = false, onLoan = false, listed = false;
   double fitness = 100;
   double morale = 70;
   int injuredWeeks = 0;
@@ -93,6 +94,9 @@ class Player {
         'apps': apps,
         'yel': yellows,
         'photo': photo,
+        'free': free,
+        'loan': onLoan,
+        'listed': listed,
       };
 
   factory Player.fromJson(Map<String, dynamic> j) => Player(
@@ -115,7 +119,10 @@ class Player {
         ..assists = j['ast'] as int
         ..apps = j['apps'] as int
         ..yellows = j['yel'] as int
-        ..photo = j['photo'] as String?;
+        ..photo = j['photo'] as String?
+        ..free = (j['free'] as bool?) ?? false
+        ..onLoan = (j['loan'] as bool?) ?? false
+        ..listed = (j['listed'] as bool?) ?? false;
 }
 
 class Formation {

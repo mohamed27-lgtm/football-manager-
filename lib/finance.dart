@@ -6,7 +6,7 @@ class Finance {
   final Map<String, double> season = {};
   final List<double> history = [];
 
-  static const incomeKeys = ['tickets', 'broadcast', 'sponsor', 'prize', 'sales'];
+  static const incomeKeys = ['tickets', 'broadcast', 'sponsor', 'prize', 'sales', 'loanout'];
   static const expenseKeys = [
     'wages',
     'maintenance',
@@ -15,6 +15,8 @@ class Finance {
     'severance',
     'upgrades',
     'interest',
+    'agents',
+    'loanin',
   ];
 
   static const labels = <String, String>{
@@ -30,6 +32,9 @@ class Finance {
     'severance': 'إنهاء العقود',
     'upgrades': 'ترقية المنشآت',
     'interest': 'فوائد القروض',
+    'agents': 'عمولات الوكلاء',
+    'loanin': 'استعارة لاعبين',
+    'loanout': 'إعارة لاعبين',
   };
 
   void add(String key, double v) => season[key] = (season[key] ?? 0) + v;

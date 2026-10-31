@@ -7,6 +7,7 @@ import 'data.dart';
 import 'engine.dart';
 import 'finance.dart';
 import 'models.dart';
+import 'transfers.dart';
 
 class Fixture {
   final int home, away;
@@ -45,6 +46,9 @@ class GameState extends ChangeNotifier {
   List<Player> market = [];
   MatchSim? sim;
   Finance fin = Finance();
+  final List<Offer> offers = [];
+  final List<Player> loanedOut = [];
+  final Map<int, double> _reserve = {};
 
   Set<Player> _suspBefore = {};
   Set<Player> _injBefore = {};
@@ -95,6 +99,15 @@ class GameState extends ChangeNotifier {
               ..ag = f[3] as int?
         ]
     ];
+    for (final o in (j['offers'] as List?) ?? const []) {
+      final hit = user.squad.where((p) => p.id == o['pid']);
+      if (hit.isNotEmpty) {
+        offers.add(Offer(hit.first, o['club'] as String, (o['amt'] as num).toDouble(), o['w'] as int));
+      }
+    }
+    for (final p in (j['loanedOut'] as List?) ?? const []) {
+      loanedOut.add(Player.fromJson(p as Map<String, dynamic>));
+    }
     var maxId = 0;
     for (final t in teams) {
       for (final p in t.squad) {
@@ -118,6 +131,8 @@ class GameState extends ChangeNotifier {
         'objective': objective,
         'league': leagueName,
         'fin': fin.toJson(),
+        'offers': [for (final o in offers) o.toJson()],
+        'loanedOut': [for (final p in loanedOut) p.toJson()],
         'conf': confidence,
         'training': training,
         'fired': fired,
@@ -380,6 +395,7 @@ class GameState extends ChangeNotifier {
     confidence = confidence.clamp(0, 100).toDouble();
     if (confidence <= 0) fired = true;
 
+    _transferTick();
     week++;
     if (week % 4 == 0) market = generateMarket(rng);
     if (week >= rounds.length) seasonOver = true;
@@ -418,26 +434,164 @@ class GameState extends ChangeNotifier {
   }
 
   // ───────── الانتقالات والعقود ─────────
-  double buyPrice(Player p) => (p.value * 1.15 * 10).round() / 10;
+  double signingBonus(Player p) => max(0.1, (p.wage * 15 * 10).round() / 10);
+  double buyPrice(Player p) => p.free ? signingBonus(p) : (p.value * 1.15 * 10).round() / 10;
   double sellPrice(Player p) => (p.value * 0.85 * 10).round() / 10;
   double renewCost(Player p) => max(0.1, (p.value * 0.08 * 10).round() / 10);
+  double agentFee(double price) => price <= 0 ? 0 : max(0.1, (price * 0.05 * 10).round() / 10);
+  double loanFee(Player p) => max(0.1, (p.value * 0.12 * 10).round() / 10);
+  double loanOutFee(Player p) => max(0.1, (p.value * 0.1 * 10).round() / 10);
 
-  String? buy(Player p) {
-    final price = buyPrice(p);
+  /// جولة تفاوض: يقبل البائع إذا بلغ عرضك حدّه الخفي، وإلا يعرض سعراً مضاداً (3 جولات)
+  NegoResult evaluateOffer(Player p, double offer, int round) {
+    final ask = buyPrice(p);
+    final reserve = _reserve.putIfAbsent(p.id, () => ask * (0.84 + rng.nextDouble() * 0.12));
+    if (offer >= ask - 0.0001) return const NegoResult('accept', null, 'وافق النادي البائع.');
+    if (offer >= reserve) return const NegoResult('accept', null, 'وافق النادي على عرضك.');
+    if (round >= 3) return const NegoResult('reject', null, 'انسحب البائع من المفاوضات. جرّب لاحقاً.');
+    final c = max(reserve, offer + (ask - offer) * 0.5);
+    final counter = min(ask, (c * 10).round() / 10);
+    return NegoResult('counter', counter, 'عرض مضاد من البائع: ${money1(counter)}');
+  }
+
+  void endNegotiation(Player p) => _reserve.remove(p.id);
+
+  String? buy(Player p) => completeSigning(p, buyPrice(p));
+
+  /// إتمام الصفقة: عمولة الوكيل + الفحص الطبي (قد يُلغي الصفقة أو يكشف إصابة)
+  String? completeSigning(Player p, double price) {
     if (user.squad.length >= 30) return 'التشكيلة ممتلئة (30 لاعباً كحد أقصى)';
-    if (price > user.budget) return 'الميزانية غير كافية';
-    user.budget -= price;
+    final fee = agentFee(price);
+    if (price + fee > user.budget) {
+      return 'الميزانية غير كافية (السعر + العمولة ${money1(price + fee)})';
+    }
+    if (rng.nextDouble() < 0.06) {
+      market.remove(p);
+      news.insert(0, '🩺 فشل ${p.name} في الفحص الطبي وانسحبت الصفقة');
+      unawaited(save());
+      notifyListeners();
+      return 'فشل اللاعب في الفحص الطبي — أُلغيت الصفقة';
+    }
+    user.budget -= price + fee;
     fin.add('purchases', price);
+    fin.add('agents', fee);
+    var note = '';
+    if (rng.nextDouble() < 0.1) {
+      p.injuredWeeks = 1 + rng.nextInt(3);
+      note = ' (إصابة طفيفة اكتُشفت في الفحص الطبي)';
+    }
+    p.contract = 3;
+    p.free = false;
+    p.listed = false;
+    p.onLoan = false;
+    p.morale = 75;
     user.squad.add(p);
     market.remove(p);
-    p.morale = 75;
-    news.insert(0, '💼 تعاقدت مع ${p.name} مقابل ${price.toStringAsFixed(1)}M');
+    news.insert(0, '💼 تعاقدت مع ${p.name} مقابل ${money1(price)} + عمولة وكيل ${money1(fee)}$note');
     unawaited(save());
     notifyListeners();
     return null;
   }
 
+  String? loanIn(Player p) {
+    if (user.squad.length >= 30) return 'التشكيلة ممتلئة (30 لاعباً كحد أقصى)';
+    final fee = loanFee(p);
+    if (fee > user.budget) return 'الميزانية غير كافية';
+    user.budget -= fee;
+    fin.add('loanin', fee);
+    p
+      ..onLoan = true
+      ..free = false
+      ..listed = false
+      ..contract = 1
+      ..morale = 75;
+    user.squad.add(p);
+    market.remove(p);
+    news.insert(0, '🔄 استعرت ${p.name} حتى نهاية الموسم مقابل ${money1(fee)}');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  String? _cannotLose(Player p) {
+    if (user.squad.length <= 16) return 'يجب ألا يقل عدد اللاعبين عن 16';
+    if (p.pos == Pos.gk && user.squad.where((x) => x.pos == Pos.gk).length <= 2) {
+      return 'تحتاج إلى حارسين على الأقل';
+    }
+    return null;
+  }
+
+  String? loanOut(Player p) {
+    final err = _cannotLose(p);
+    if (err != null) return err;
+    final fee = loanOutFee(p);
+    user.squad.remove(p);
+    loanedOut.add(p);
+    p.listed = false;
+    user.budget += fee;
+    fin.add('loanout', fee);
+    offers.removeWhere((o) => o.player == p);
+    user.repairLineup();
+    news.insert(0, '📤 أعرت ${p.name} حتى نهاية الموسم مقابل ${money1(fee)}');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  void toggleListed(Player p) {
+    p.listed = !p.listed;
+    notifyListeners();
+  }
+
+  String? acceptOffer(Offer o) {
+    final err = _cannotLose(o.player);
+    if (err != null) return err;
+    user.squad.remove(o.player);
+    user.budget += o.amount;
+    fin.add('sales', o.amount);
+    offers.remove(o);
+    user.repairLineup();
+    news.insert(0, '💰 بعت ${o.player.name} إلى ${o.club} مقابل ${money1(o.amount)}');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  void rejectOffer(Offer o) {
+    offers.remove(o);
+    notifyListeners();
+  }
+
+  /// كل جولة: تنتهي العروض القديمة وقد تصل عروض جديدة، وقد تخطف الأندية لاعبين من السوق
+  void _transferTick() {
+    for (final o in offers) {
+      o.weeksLeft--;
+    }
+    offers.removeWhere((o) => o.weeksLeft <= 0 || !user.squad.contains(o.player));
+    if (user.squad.length > 16 && offers.length < 3) {
+      for (final p in user.squad.where((p) => p.overall >= 58 && !offers.any((o) => o.player == p))) {
+        final chance = p.listed ? 0.22 : 0.025;
+        if (rng.nextDouble() < chance) {
+          final others = teams.where((t) => t != user).toList();
+          final club = others[rng.nextInt(others.length)];
+          final amount = ((p.value * (0.85 + rng.nextDouble() * 0.5)) * 10).round() / 10;
+          offers.add(Offer(p, club.name, max(0.1, amount), 3));
+          news.insert(0, '📨 عرض من ${club.name} لشراء ${p.name}: ${money1(amount)}');
+          break;
+        }
+      }
+    }
+    if (market.length > 8 && rng.nextDouble() < 0.25) {
+      final top = [...market]..sort((a, b) => b.overall.compareTo(a.overall));
+      final pick = top[rng.nextInt(min(6, top.length))];
+      final club = teams.where((t) => t != user).toList()[rng.nextInt(teams.length - 1)];
+      market.remove(pick);
+      news.insert(0, '🏃 سبقك ${club.name} إلى ${pick.free ? 'توقيع' : 'ضم'} ${pick.name}');
+    }
+  }
+
   String? sell(Player p) {
+    if (p.onLoan) return 'لا يمكن بيع لاعب معار';
     if (user.squad.length <= 16) return 'يجب ألا يقل عدد اللاعبين عن 16';
     if (p.pos == Pos.gk && user.squad.where((x) => x.pos == Pos.gk).length <= 2) {
       return 'تحتاج إلى حارسين على الأقل';
@@ -566,6 +720,18 @@ class GameState extends ChangeNotifier {
   void startNewSeason() {
     final pos = position;
     fin.season.clear();
+    for (final p in user.squad.where((p) => p.onLoan).toList()) {
+      user.squad.remove(p);
+      news.insert(0, '↩️ عاد المعار ${p.name} إلى ناديه');
+    }
+    if (loanedOut.isNotEmpty) {
+      for (final p in loanedOut) {
+        user.squad.add(p);
+        news.insert(0, '↩️ عاد ${p.name} من الإعارة');
+      }
+      loanedOut.clear();
+    }
+    offers.clear();
     if (pos <= objective) {
       confidence = min(100, confidence + 12);
       user.budget += 2;
