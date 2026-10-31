@@ -196,45 +196,8 @@ class TransfersTab extends StatefulWidget {
 }
 
 class _TransfersTabState extends State<TransfersTab> {
-  int mode = 0; // 0 شراء 1 بيع 2 منشآت
+  int mode = 0; // 0 شراء 1 بيع
   Pos? filter;
-
-  void _upgrade(String kind) {
-    final err = widget.gs.upgrade(kind);
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(err ?? 'تمت الترقية ✅')));
-  }
-
-  Widget _fac(String kind, String title, String desc, int lvl) {
-    final gs = widget.gs;
-    return Panel(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-          const Spacer(),
-          Text('المستوى $lvl/5', style: const TextStyle(color: kAccent, fontWeight: FontWeight.w700)),
-        ]),
-        const SizedBox(height: 4),
-        Text(desc, style: const TextStyle(color: kMuted, fontSize: 12)),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(value: lvl / 5, minHeight: 8, color: kAccent, backgroundColor: kCard2),
-        ),
-        const SizedBox(height: 10),
-        if (lvl < 5)
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.tonal(
-              onPressed: () => _upgrade(kind),
-              child: Text('ترقية مقابل ${money(gs.upgradeCost(lvl))}'),
-            ),
-          )
-        else
-          const Text('أقصى مستوى ✅', style: TextStyle(color: kMuted)),
-      ]),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -258,54 +221,123 @@ class _TransfersTabState extends State<TransfersTab> {
       SegmentedButton<int>(
         showSelectedIcon: false,
         segments: const [
-          ButtonSegment(value: 0, label: Text('السوق')),
-          ButtonSegment(value: 1, label: Text('بيع')),
-          ButtonSegment(value: 2, label: Text('المنشآت')),
+          ButtonSegment(value: 0, label: Text('سوق الانتقالات')),
+          ButtonSegment(value: 1, label: Text('بيع لاعبين')),
         ],
         selected: {mode},
         onSelectionChanged: (s) => setState(() => mode = s.first),
       ),
       const SizedBox(height: 10),
-      if (mode == 2) ...[
-        _fac('stadium', '🏟️ الملعب', 'يرفع دخل المباريات على أرضك.', gs.user.stadium),
-        _fac('training', '🏋️ مركز التدريب', 'يسرّع تطور اللاعبين ويحسّن التعافي الأسبوعي.', gs.user.trainingLvl),
-        _fac('academy', '🌱 الأكاديمية', 'تنتج مواهب شابة بإمكانات عالية في نهاية كل موسم.', gs.user.academy),
-      ] else ...[
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(children: [
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 6),
+            child: ChoiceChip(label: const Text('الكل'), selected: filter == null, onSelected: (_) => setState(() => filter = null)),
+          ),
+          for (final p in Pos.values)
             Padding(
               padding: const EdgeInsetsDirectional.only(end: 6),
-              child: ChoiceChip(label: const Text('الكل'), selected: filter == null, onSelected: (_) => setState(() => filter = null)),
+              child: ChoiceChip(label: Text(p.label), selected: filter == p, onSelected: (_) => setState(() => filter = p)),
             ),
-            for (final p in Pos.values)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 6),
-                child: ChoiceChip(label: Text(p.label), selected: filter == p, onSelected: (_) => setState(() => filter = p)),
-              ),
-          ]),
+        ]),
+      ),
+      const SizedBox(height: 10),
+      if (mode == 0)
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text('يتجدد السوق كل 4 أسابيع ومع بداية كل موسم.', style: TextStyle(color: kMuted, fontSize: 12)),
         ),
-        const SizedBox(height: 10),
-        if (mode == 0)
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Text('يتجدد السوق كل 4 أسابيع ومع بداية كل موسم.', style: TextStyle(color: kMuted, fontSize: 12)),
-          ),
-        Panel(
-          padding: EdgeInsets.zero,
-          child: Column(children: [
-            for (final p in list)
-              PlayerTile(
-                p: p,
-                onTap: () => showPlayerSheet(context, gs, p, market: mode == 0),
-                trailing: Text(
-                  money(mode == 0 ? gs.buyPrice(p) : gs.sellPrice(p)),
-                  style: const TextStyle(fontWeight: FontWeight.w700, color: kAccent),
+      Panel(
+        padding: EdgeInsets.zero,
+        child: Column(children: [
+          for (final p in list)
+            PlayerTile(
+              p: p,
+              onTap: () => showPlayerSheet(context, gs, p, market: mode == 0),
+              trailing: Text(
+                money(mode == 0 ? gs.buyPrice(p) : gs.sellPrice(p)),
+                style: const TextStyle(fontWeight: FontWeight.w700, color: kAccent),
+              ),
+            ),
+        ]),
+      ),
+    ]);
+  }
+}
+
+/// قائمة العقود: الأقرب انتهاءً أولاً، مع تجديد أو إنهاء العقد
+class ContractsView extends StatelessWidget {
+  final GameState gs;
+  const ContractsView({super.key, required this.gs});
+
+  Future<void> _release(BuildContext context, Player p) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('إنهاء العقد'),
+        content: Text('إنهاء عقد ${p.name} يكلّفك تعويضاً قدره ${money(gs.releaseCost(p))}. هل أنت متأكد؟'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('إنهاء')),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final err = gs.release(p);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تم إنهاء العقد')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final list = [...gs.user.squad]
+      ..sort((a, b) {
+        final c = a.contract.compareTo(b.contract);
+        return c != 0 ? c : b.overall.compareTo(a.overall);
+      });
+    return ListView(padding: const EdgeInsets.all(14), children: [
+      Panel(
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+          Column(children: [
+            Text(money(gs.weeklyWages), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            const Text('الرواتب/أسبوع', style: TextStyle(color: kMuted, fontSize: 11)),
+          ]),
+          Column(children: [
+            Text('${gs.expiring.length}', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: gs.expiring.isEmpty ? null : const Color(0xFFFFCA28))),
+            const Text('عقود تنتهي هذا الموسم', style: TextStyle(color: kMuted, fontSize: 11)),
+          ]),
+        ]),
+      ),
+      Panel(
+        padding: EdgeInsets.zero,
+        child: Column(children: [
+          for (final p in list)
+            PlayerTile(
+              p: p,
+              onTap: () => showPlayerSheet(context, gs, p),
+              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  Text('${p.contract} ${p.contract == 1 ? 'سنة' : 'سنوات'}',
+                      style: TextStyle(fontWeight: FontWeight.w700, color: p.contract <= 1 ? const Color(0xFFFFCA28) : null)),
+                  Text('${money(p.wage)}/أسبوع', style: const TextStyle(color: kMuted, fontSize: 11)),
+                ]),
+                IconButton(
+                  tooltip: 'تجديد',
+                  icon: const Icon(Icons.autorenew, size: 20),
+                  onPressed: () {
+                    final err = gs.renew(p);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تم تجديد العقد ✅')));
+                  },
                 ),
-              ),
-          ]),
-        ),
-      ],
+                IconButton(
+                  tooltip: 'إنهاء العقد',
+                  icon: const Icon(Icons.logout, size: 20, color: Color(0xFFFF8A65)),
+                  onPressed: () => _release(context, p),
+                ),
+              ]),
+            ),
+        ]),
+      ),
     ]);
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data.dart';
 import 'engine.dart';
+import 'finance.dart';
 import 'models.dart';
 
 class Fixture {
@@ -43,6 +44,7 @@ class GameState extends ChangeNotifier {
   final List<String> roundResults = [];
   List<Player> market = [];
   MatchSim? sim;
+  Finance fin = Finance();
 
   Set<Player> _suspBefore = {};
   Set<Player> _injBefore = {};
@@ -74,6 +76,7 @@ class GameState extends ChangeNotifier {
     week = j['week'] as int;
     objective = j['objective'] as int;
     leagueName = (j['league'] as String?) ?? leagueName;
+    if (j['fin'] != null) fin = Finance.fromJson(j['fin'] as Map<String, dynamic>);
     confidence = (j['conf'] as num).toDouble();
     training = j['training'] as String;
     fired = j['fired'] as bool;
@@ -114,6 +117,7 @@ class GameState extends ChangeNotifier {
         'week': week,
         'objective': objective,
         'league': leagueName,
+        'fin': fin.toJson(),
         'conf': confidence,
         'training': training,
         'fired': fired,
@@ -353,7 +357,18 @@ class GameState extends ChangeNotifier {
 
     final home = f.home == user.id;
     final gate = home ? (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) : 0.0;
-    user.budget += 0.6 + 0.2 * user.reputation + gate - weeklyWages;
+    final broadcast = 0.35 + 0.1 * user.reputation;
+    final sponsor = 0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0);
+    final maintenance = 0.03 * (user.stadium + user.trainingLvl + user.academy);
+    final interest = fin.debt * 0.004;
+    fin.add('tickets', gate);
+    fin.add('broadcast', broadcast);
+    fin.add('sponsor', sponsor);
+    fin.add('wages', weeklyWages);
+    fin.add('maintenance', maintenance);
+    fin.add('interest', interest);
+    user.budget += gate + broadcast + sponsor - weeklyWages - maintenance - interest;
+    fin.record(user.budget);
 
     if (week >= 4) {
       final expected = (teams.toList()..sort((a, b) => b.strength.compareTo(a.strength)))
@@ -412,6 +427,7 @@ class GameState extends ChangeNotifier {
     if (user.squad.length >= 30) return 'التشكيلة ممتلئة (30 لاعباً كحد أقصى)';
     if (price > user.budget) return 'الميزانية غير كافية';
     user.budget -= price;
+    fin.add('purchases', price);
     user.squad.add(p);
     market.remove(p);
     p.morale = 75;
@@ -430,6 +446,7 @@ class GameState extends ChangeNotifier {
     user.squad.remove(p);
     user.repairLineup();
     user.budget += price;
+    fin.add('sales', price);
     news.insert(0, '💰 بعت ${p.name} مقابل ${price.toStringAsFixed(1)}M');
     unawaited(save());
     notifyListeners();
@@ -440,6 +457,7 @@ class GameState extends ChangeNotifier {
     final cost = renewCost(p);
     if (cost > user.budget) return 'الميزانية غير كافية';
     user.budget -= cost;
+    fin.add('renewals', cost);
     p.contract = 3;
     news.insert(0, '✍️ جدّدت عقد ${p.name} لـ 3 سنوات');
     unawaited(save());
@@ -460,6 +478,7 @@ class GameState extends ChangeNotifier {
     final cost = upgradeCost(lvl);
     if (cost > user.budget) return 'الميزانية غير كافية';
     user.budget -= cost;
+    fin.add('upgrades', cost);
     switch (kind) {
       case 'stadium':
         user.stadium++;
@@ -475,6 +494,53 @@ class GameState extends ChangeNotifier {
   }
 
   String money1(double v) => '${v.toStringAsFixed(1)}M';
+
+  // ───────── الديون والعقود ─────────
+  static const maxDebt = 30.0;
+
+  double get squadValue => user.squad.fold(0.0, (a, p) => a + p.value);
+
+  String? takeLoan(double amount) {
+    if (fin.debt + amount > maxDebt) return 'سقف الديون ${maxDebt.toStringAsFixed(0)}M';
+    user.budget += amount;
+    fin.debt += amount;
+    news.insert(0, '🏦 اقترضت ${money1(amount)} (فائدة أسبوعية 0.4%)');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  String? repay(double amount) {
+    final a = min(amount, fin.debt);
+    if (a <= 0) return 'لا توجد ديون';
+    if (a > user.budget) return 'الميزانية غير كافية';
+    user.budget -= a;
+    fin.debt -= a;
+    if (fin.debt < 0.05) fin.debt = 0;
+    news.insert(0, '✅ سدّدت ${money1(a)} من الديون');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  double releaseCost(Player p) => max(0.1, (p.wage * 10 * p.contract * 10).round() / 10);
+
+  String? release(Player p) {
+    if (user.squad.length <= 16) return 'يجب ألا يقل عدد اللاعبين عن 16';
+    if (p.pos == Pos.gk && user.squad.where((x) => x.pos == Pos.gk).length <= 2) {
+      return 'تحتاج إلى حارسين على الأقل';
+    }
+    final cost = releaseCost(p);
+    if (cost > user.budget) return 'الميزانية غير كافية للتعويض';
+    user.budget -= cost;
+    fin.add('severance', cost);
+    user.squad.remove(p);
+    user.repairLineup();
+    news.insert(0, '📄 أنهيت عقد ${p.name} (تعويض ${money1(cost)})');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
 
   // ───────── نهاية الموسم ─────────
   void _grow(Player p, int d) {
@@ -499,9 +565,11 @@ class GameState extends ChangeNotifier {
 
   void startNewSeason() {
     final pos = position;
+    fin.season.clear();
     if (pos <= objective) {
       confidence = min(100, confidence + 12);
       user.budget += 2;
+      fin.add('prize', 2);
       news.insert(0, '🎯 حققت هدف الإدارة (المركز $pos)! مكافأة 2.0M');
     } else {
       confidence = max(0, confidence - (pos > objective + 2 ? 15 : 10));
@@ -509,6 +577,7 @@ class GameState extends ChangeNotifier {
     }
     final prize = max(0.0, (teams.length + 1 - pos) * 0.9 * 12 / teams.length);
     user.budget += prize;
+    fin.add('prize', prize);
     news.insert(0, '🏆 أنهيت الموسم $season في المركز $pos — جائزة ${prize.toStringAsFixed(1)}M');
 
     for (final t in teams) {

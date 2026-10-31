@@ -457,3 +457,9 @@ class _MatchScreenState extends State<MatchScreen> {
     );
   }
 }
+
+/// يبدأ مباراة الجولة الحالية ويفتح شاشة المباراة
+Future<void> playMatch(BuildContext context, GameState gs) async {
+  gs.startMatch();
+  await Navigator.of(context).push(MaterialPageRoute(builder: (_) => MatchScreen(gs: gs)));
+}
