@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'facilities_screen.dart';
+import 'club_screens.dart';
 import 'cups_screen.dart';
 import 'finance_screen.dart';
 import 'game_state.dart';
@@ -77,9 +78,9 @@ class MoreTab extends StatelessWidget {
                 body: SafeArea(child: ListenableBuilder(listenable: gs, builder: (_, __) => TableTab(gs: gs))),
               ))),
       _tile(context, Icons.military_tech_outlined, 'البطولات', 'كأس الدوري والبطولة القارية', () => _push(context, CupsScreen(gs: gs))),
-      _tile(context, Icons.badge_outlined, 'الموظفون', 'المدربون والكشافة والأطباء', () => _soon(context, 'الموظفون'), soon: true),
-      _tile(context, Icons.campaign_outlined, 'الإعلام والجماهير', 'شعبية النادي والصحافة', () => _soon(context, 'الإعلام والجماهير'), soon: true),
-      _tile(context, Icons.history_edu_outlined, 'تاريخ النادي', 'الألقاب والأرقام القياسية', () => _soon(context, 'تاريخ النادي'), soon: true),
+      _tile(context, Icons.badge_outlined, 'الموظفون', 'المدربون والكشافة والأطباء', () => _push(context, StaffScreen(gs: gs))),
+      _tile(context, Icons.campaign_outlined, 'الإعلام والجماهير', 'شعبية النادي والصحافة', () => _push(context, MediaScreen(gs: gs))),
+      _tile(context, Icons.history_edu_outlined, 'تاريخ النادي', 'الألقاب والأرقام القياسية', () => _push(context, HistoryScreen(gs: gs))),
       _tile(context, Icons.settings_outlined, 'الإعدادات', 'حفظ والخروج', () => _settings(context)),
     ]);
   }

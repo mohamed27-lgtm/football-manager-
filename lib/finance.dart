@@ -17,6 +17,7 @@ class Finance {
     'interest',
     'agents',
     'loanin',
+    'staff',
   ];
 
   static const labels = <String, String>{
@@ -34,6 +35,7 @@ class Finance {
     'interest': 'فوائد القروض',
     'agents': 'عمولات الوكلاء',
     'loanin': 'استعارة لاعبين',
+    'staff': 'رواتب الطاقم',
     'loanout': 'إعارة لاعبين',
   };
 

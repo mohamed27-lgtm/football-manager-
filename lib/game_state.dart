@@ -54,6 +54,12 @@ class GameState extends ChangeNotifier {
   Cup? activeCup;
   final Map<int, Team> foreign = {};
   final List<String> honours = [];
+  final Map<String, int> staff = {'coach': 0, 'scout': 0, 'doctor': 0};
+  double fans = 50;
+  final List<Map<String, dynamic>> history = [];
+  String bigWin = '', bigLoss = '';
+  int bigWinD = 0, bigLossD = 0;
+  int pressWeek = -1;
 
   Set<Player> _suspBefore = {};
   Set<Player> _injBefore = {};
@@ -63,6 +69,7 @@ class GameState extends ChangeNotifier {
     user = teams.firstWhere((t) => t.id == userTeamId);
     _buildFixtures();
     _setupCups(null);
+    fans = 20.0 + user.reputation * 12;
     market = generateMarket(rng);
     _setObjective();
     news.add('مرحباً بك مدرباً لنادي ${user.name}. هدف الإدارة: المركز $objective أو أفضل.');
@@ -73,6 +80,7 @@ class GameState extends ChangeNotifier {
     user = teams.firstWhere((x) => x.id == userId);
     _buildFixtures();
     _setupCups(null);
+    fans = 20.0 + user.reputation * 12;
     market = generateMarket(rng);
     _setObjective();
     news.add('مرحباً بك مدرباً لنادي ${user.name} في $leagueName. هدف الإدارة: المركز $objective أو أفضل.');
@@ -120,6 +128,17 @@ class GameState extends ChangeNotifier {
       foreign[tm.id] = tm;
     }
     honours.addAll(((j['honours'] as List?) ?? const []).cast<String>());
+    final st = j['staff'] as Map<String, dynamic>?;
+    if (st != null) st.forEach((k, v) => staff[k] = v as int);
+    fans = (j['fans'] as num?)?.toDouble() ?? (20.0 + user.reputation * 12);
+    for (final h in (j['history'] as List?) ?? const []) {
+      history.add(Map<String, dynamic>.from(h as Map));
+    }
+    bigWin = (j['bigWin'] as String?) ?? '';
+    bigLoss = (j['bigLoss'] as String?) ?? '';
+    bigWinD = (j['bigWinD'] as int?) ?? 0;
+    bigLossD = (j['bigLossD'] as int?) ?? 0;
+    pressWeek = (j['pressWeek'] as int?) ?? -1;
     final cj = j['cups'] as Map<String, dynamic>?;
     if (cj != null) {
       domestic = Cup.fromJson(cj['dom'] as Map<String, dynamic>);
@@ -154,6 +173,14 @@ class GameState extends ChangeNotifier {
         'offers': [for (final o in offers) o.toJson()],
         'foreign': [for (final t in foreign.values) t.toJson()],
         'honours': honours,
+        'staff': staff,
+        'fans': fans,
+        'history': history,
+        'bigWin': bigWin,
+        'bigLoss': bigLoss,
+        'bigWinD': bigWinD,
+        'bigLossD': bigLossD,
+        'pressWeek': pressWeek,
         'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson()},
         'loanedOut': [for (final p in loanedOut) p.toJson()],
         'conf': confidence,
@@ -363,6 +390,18 @@ class GameState extends ChangeNotifier {
     final myG = f.home == user.id ? f.hg! : f.ag!;
     final opG = f.home == user.id ? f.ag! : f.hg!;
     final opp = team(f.home == user.id ? f.away : f.home);
+    final diff = myG - opG;
+    final line = '${team(f.home).name} ${f.hg}-${f.ag} ${team(f.away).name} (موسم $season)';
+    if (diff > bigWinD) {
+      bigWinD = diff;
+      bigWin = line;
+    }
+    if (-diff > bigLossD) {
+      bigLossD = -diff;
+      bigLoss = line;
+    }
+    fans = (fans + (diff > 0 ? 1.2 : (diff < 0 ? -1.0 : 0.0)) + (position <= 3 ? 0.3 : 0.0)).clamp(0, 100).toDouble();
+    _pressHeadline(opp.name, myG, opG);
     if (myG > opG) {
       confidence += 3;
       news.insert(0, '✅ فوز على ${opp.name} ($myG-$opG)');
@@ -379,6 +418,8 @@ class GameState extends ChangeNotifier {
         if (_injBefore.contains(p) && p.injuredWeeks > 0) p.injuredWeeks--;
         var rec = 22.0;
         if (t == user) {
+          rec += 1.5 * (staff['doctor'] ?? 0);
+          if (p.injuredWeeks > 1 && rng.nextDouble() < 0.1 * (staff['doctor'] ?? 0)) p.injuredWeeks--;
           if (training == 'rest') rec += 12;
           if (training == 'fitness') rec += 4;
           rec += 1.5 * (user.trainingLvl - 1);
@@ -394,18 +435,19 @@ class GameState extends ChangeNotifier {
     }
 
     final home = f.home == user.id;
-    final gate = home ? (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) : 0.0;
+    final gate = home ? (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (0.75 + 0.5 * fans / 100) : 0.0;
     final broadcast = 0.35 + 0.1 * user.reputation;
-    final sponsor = 0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0);
+    final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * (0.8 + 0.4 * fans / 100);
     final maintenance = 0.03 * (user.stadium + user.trainingLvl + user.academy);
     final interest = fin.debt * 0.004;
     fin.add('tickets', gate);
     fin.add('broadcast', broadcast);
     fin.add('sponsor', sponsor);
     fin.add('wages', weeklyWages);
+    fin.add('staff', staffWages);
     fin.add('maintenance', maintenance);
     fin.add('interest', interest);
-    user.budget += gate + broadcast + sponsor - weeklyWages - maintenance - interest;
+    user.budget += gate + broadcast + sponsor - weeklyWages - staffWages - maintenance - interest;
     fin.record(user.budget);
 
     if (week >= 4) {
@@ -420,7 +462,7 @@ class GameState extends ChangeNotifier {
 
     _transferTick();
     week++;
-    if (week % 4 == 0) market = generateMarket(rng);
+    if (week % 4 == 0) market = _scoutedMarket();
     if (week >= rounds.length) seasonOver = true;
     _advanceCups();
     sim = null;
@@ -432,7 +474,7 @@ class GameState extends ChangeNotifier {
     if (training == 'rest' || training == 'fitness') return;
     if (p.overall >= p.potential) return;
     final base = p.age <= 24 ? 0.14 : (p.age <= 29 ? 0.06 : 0.02);
-    final chance = base * (1 + 0.25 * (user.trainingLvl - 1));
+    final chance = base * (1 + 0.25 * (user.trainingLvl - 1)) * (1 + 0.1 * (staff['coach'] ?? 0));
     if (rng.nextDouble() > chance) return;
     if (p.pos == Pos.gk) {
       p.gk = min(95, p.gk + 1);
@@ -744,6 +786,7 @@ class GameState extends ChangeNotifier {
   void startNewSeason() {
     final pos = position;
     final qual = [for (final t in table.take(3)) t.id];
+    _recordSeason(pos);
     fin.season.clear();
     for (final p in user.squad.where((p) => p.onLoan).toList()) {
       user.squad.remove(p);
@@ -827,7 +870,7 @@ class GameState extends ChangeNotifier {
     roundResults.clear();
     _buildFixtures();
     _setupCups(qual);
-    market = generateMarket(rng);
+    market = _scoutedMarket();
     _setObjective();
     if (confidence <= 0) fired = true;
     news.insert(0, '📋 هدف الإدارة للموسم $season: المركز $objective أو أفضل');
@@ -1038,5 +1081,117 @@ class GameState extends ChangeNotifier {
     sim = null;
     unawaited(save());
     notifyListeners();
+  }
+
+  // ───────── الطاقم والإعلام والتاريخ ─────────
+  static const staffRoles = <String, (String, String)>{
+    'coach': ('المدرب المساعد', 'يسرّع تطور اللاعبين (+10% لكل مستوى)'),
+    'scout': ('الكشّاف', 'يضيف مواهب أفضل إلى سوق الانتقالات'),
+    'doctor': ('الطبيب', 'يقلل مدة الإصابات ويسرّع التعافي'),
+  };
+
+  double get staffWages => staff.values.fold(0, (a, v) => a + v * 0.04);
+  double staffCost(String role) => 4.0 * ((staff[role] ?? 0) + 1);
+
+  String? upgradeStaff(String role) {
+    final lvl = staff[role] ?? 0;
+    if (lvl >= 5) return 'أقصى مستوى';
+    final cost = staffCost(role);
+    if (cost > user.budget) return 'الميزانية غير كافية';
+    user.budget -= cost;
+    fin.add('upgrades', cost);
+    staff[role] = lvl + 1;
+    news.insert(0, '🧑\u200d🏫 ${staffRoles[role]!.$1} أصبح بالمستوى ${lvl + 1}');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  List<Player> _scoutedMarket() {
+    final m = generateMarket(rng);
+    final lvl = staff['scout'] ?? 0;
+    for (var i = 0; i < lvl; i++) {
+      final p = makePlayer(rng, Pos.values[rng.nextInt(4)], 66 + rng.nextInt(10) + lvl, 19 + rng.nextInt(8));
+      p.potential = min(95, max(p.potential, p.overall + 4 + rng.nextInt(8)));
+      m.add(p);
+    }
+    return m;
+  }
+
+  void _pressHeadline(String opp, int my, int op) {
+    final d = my - op;
+    final h = d >= 3
+        ? '📰 الصحافة: اكتساح مدوٍّ لـ${user.name} أمام $opp'
+        : d > 0
+            ? '📰 الصحافة: ${user.name} يواصل الانتصارات'
+            : d == 0
+                ? '📰 الصحافة: تعادل بطعم باهت أمام $opp'
+                : d <= -3
+                    ? '📰 الصحافة: كارثة! والجماهير غاضبة على المدرب'
+                    : '📰 الصحافة: خسارة موجعة أمام $opp';
+    news.insert(0, h);
+  }
+
+  /// مؤتمر صحفي واحد في كل أسبوع
+  String? pressConference(int choice) {
+    if (pressWeek == week) return 'عقدت مؤتمراً صحفياً هذا الأسبوع بالفعل';
+    pressWeek = week;
+    switch (choice) {
+      case 0:
+        confidence = min(100, confidence + 1);
+        _morale(user, 2);
+        fans = min(100, fans + 0.5);
+        news.insert(0, '🎤 صرّحت بثقتك الكبيرة في الفريق');
+      case 1:
+        fans = min(100, fans + 1.5);
+        if (rng.nextDouble() < 0.4) {
+          confidence = max(0, confidence - 2);
+          news.insert(0, '🎤 انتقدت الحكام فغضبت الإدارة');
+        } else {
+          news.insert(0, '🎤 هجومك على الحكام أشعل حماس الجماهير');
+        }
+      case 2:
+        _morale(user, 4);
+        news.insert(0, '🎤 أشدت بلاعبيك فارتفعت معنوياتهم');
+      default:
+        confidence = min(100, confidence + 2);
+        fans = min(100, fans + 0.2);
+        news.insert(0, '🎤 تحدثت بتواضع واحترمت المنافسين');
+    }
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  String _cupResult(Cup c) {
+    if (c.champion == user.id) return 'بطل 🏆';
+    String? last;
+    for (final l in c.log) {
+      if (l.contains(user.name)) last = l.substring(0, l.indexOf('|'));
+    }
+    if (last != null) return 'خرج في $last';
+    return c.continental ? 'لم يتأهل' : 'لم يلعب';
+  }
+
+  void _recordSeason(int pos) {
+    final top = [...user.squad]..sort((a, b) => b.goals.compareTo(a.goals));
+    history.add({
+      's': season,
+      'pos': pos,
+      'pts': user.points,
+      'w': user.won,
+      'd': user.drawn,
+      'l': user.lost,
+      'gf': user.gf,
+      'ga': user.ga,
+      'cup': domestic == null ? '-' : _cupResult(domestic!),
+      'con': continental == null ? '-' : _cupResult(continental!),
+      'scorer': top.isEmpty || top.first.goals == 0 ? '-' : '${top.first.name} (${top.first.goals})',
+    });
+    if (pos == 1) {
+      honours.add('🏆 الدوري — الموسم $season');
+      news.insert(0, '🏆🏆 بطل الدوري!');
+      fans = min(100, fans + 6);
+    }
   }
 }
