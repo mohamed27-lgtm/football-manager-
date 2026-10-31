@@ -12,9 +12,6 @@ class MoreTab extends StatelessWidget {
   final VoidCallback onRestart;
   const MoreTab({super.key, required this.gs, required this.onRestart});
 
-  void _soon(BuildContext c, String what) => ScaffoldMessenger.of(c).showSnackBar(
-      SnackBar(content: Text('$what — قيد التطوير في المراحل القادمة')));
-
   Widget _tile(BuildContext c, IconData icon, String title, String sub, VoidCallback onTap, {bool soon = false}) {
     return Panel(
       padding: EdgeInsets.zero,
