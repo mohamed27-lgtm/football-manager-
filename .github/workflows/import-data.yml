@@ -1,0 +1,65 @@
+name: Import football data
+
+# يستورد الدوريات والفرق واللاعبين وصورهم، ويخزّنها في المستودع، ويبني الحزم التي تنزّلها اللعبة.
+# الخطة المجانية 100 طلب يومياً، لذلك يكمل تلقائياً كل يوم من حيث توقف حتى يكتمل كل شيء.
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: 'الموسم (الخطة المجانية قد تقتصر على 2021-2023)'
+        default: '2023'
+      leagues:
+        description: 'معرّفات دوريات مفصولة بفواصل (فارغ = الكل)'
+        default: ''
+  schedule:
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-data
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Import data and images
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          SEASON: ${{ inputs.season || vars.SEASON || '2023' }}
+          LEAGUES: ${{ inputs.leagues }}
+        run: python tools/fetch_data.py
+
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "no changes"
+          else
+            git commit -m "data: import $(date -u +%F)"
+            git pull --rebase origin "${GITHUB_REF_NAME}" || true
+            git push
+          fi
+
+      - name: Publish packs to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ls packs/*.zip >/dev/null 2>&1; then
+            gh release view data-latest >/dev/null 2>&1 || \
+              gh release create data-latest --title "Data packs" --notes "Auto-generated data packs for the game"
+            gh release upload data-latest packs/* --clobber
+          else
+            echo "no packs yet"
+          fi

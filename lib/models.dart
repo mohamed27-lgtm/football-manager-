@@ -1,0 +1,296 @@
+import 'dart:math';
+
+enum Pos { gk, def, mid, att }
+
+extension PosX on Pos {
+  String get label => switch (this) {
+        Pos.gk => 'حارس',
+        Pos.def => 'مدافع',
+        Pos.mid => 'وسط',
+        Pos.att => 'مهاجم',
+      };
+  String get short => switch (this) {
+        Pos.gk => 'GK',
+        Pos.def => 'DF',
+        Pos.mid => 'MF',
+        Pos.att => 'FW',
+      };
+  String get plural => switch (this) {
+        Pos.gk => 'الحراس',
+        Pos.def => 'المدافعون',
+        Pos.mid => 'لاعبو الوسط',
+        Pos.att => 'المهاجمون',
+      };
+}
+
+class Player {
+  final int id;
+  final String name;
+  int age;
+  final Pos pos;
+  int atk, def, pas, gk, potential;
+  int contract; // سنوات متبقية
+  String? photo;
+  double fitness = 100;
+  double morale = 70;
+  int injuredWeeks = 0;
+  int suspendedMatches = 0;
+  int goals = 0, assists = 0, apps = 0, yellows = 0;
+
+  Player({
+    required this.id,
+    required this.name,
+    required this.age,
+    required this.pos,
+    required this.atk,
+    required this.def,
+    required this.pas,
+    required this.gk,
+    required this.potential,
+    this.contract = 2,
+    this.photo,
+  });
+
+  int get overall => switch (pos) {
+        Pos.gk => gk,
+        Pos.def => (def * 0.65 + pas * 0.2 + atk * 0.15).round(),
+        Pos.mid => (pas * 0.45 + atk * 0.25 + def * 0.3).round(),
+        Pos.att => (atk * 0.7 + pas * 0.2 + def * 0.1).round(),
+      };
+
+  double get effective =>
+      overall * (0.55 + 0.45 * fitness / 100) * (0.92 + 0.16 * morale / 100);
+
+  bool get available => injuredWeeks == 0 && suspendedMatches == 0;
+
+  double get value {
+    var m = 1.0;
+    if (age <= 23) m += max(0, potential - overall) / 25;
+    if (age >= 31) m *= 0.6;
+    final v = pow(overall / 50, 6).toDouble() * m;
+    return max(0.1, (v * 10).round() / 10);
+  }
+
+  double get wage => (overall - 40).clamp(1, 60) * 0.0015;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'age': age,
+        'pos': pos.index,
+        'atk': atk,
+        'def': def,
+        'pas': pas,
+        'gk': gk,
+        'pot': potential,
+        'con': contract,
+        'fit': fitness,
+        'mor': morale,
+        'inj': injuredWeeks,
+        'sus': suspendedMatches,
+        'goals': goals,
+        'ast': assists,
+        'apps': apps,
+        'yel': yellows,
+        'photo': photo,
+      };
+
+  factory Player.fromJson(Map<String, dynamic> j) => Player(
+        id: j['id'] as int,
+        name: j['name'] as String,
+        age: j['age'] as int,
+        pos: Pos.values[j['pos'] as int],
+        atk: j['atk'] as int,
+        def: j['def'] as int,
+        pas: j['pas'] as int,
+        gk: j['gk'] as int,
+        potential: j['pot'] as int,
+        contract: j['con'] as int,
+      )
+        ..fitness = (j['fit'] as num).toDouble()
+        ..morale = (j['mor'] as num).toDouble()
+        ..injuredWeeks = j['inj'] as int
+        ..suspendedMatches = j['sus'] as int
+        ..goals = j['goals'] as int
+        ..assists = j['ast'] as int
+        ..apps = j['apps'] as int
+        ..yellows = j['yel'] as int
+        ..photo = j['photo'] as String?;
+}
+
+class Formation {
+  final String name;
+  final int d, m, a;
+  const Formation(this.name, this.d, this.m, this.a);
+}
+
+const formations = <Formation>[
+  Formation('4-4-2', 4, 4, 2),
+  Formation('4-3-3', 4, 3, 3),
+  Formation('3-5-2', 3, 5, 2),
+  Formation('5-3-2', 5, 3, 2),
+  Formation('4-5-1', 4, 5, 1),
+];
+
+class Team {
+  final int id;
+  final String name;
+  final int reputation;
+  List<Player> squad;
+  Formation formation = formations[0];
+  int mentality = 1;
+  int pressing = 1;
+  int tempo = 1;
+  List<Player> lineup = [];
+  double budget;
+  int played = 0, won = 0, drawn = 0, lost = 0, gf = 0, ga = 0;
+  int stadium = 1, trainingLvl = 1, academy = 1;
+  String? badge, venue;
+
+  Team({
+    required this.id,
+    required this.name,
+    required this.reputation,
+    required this.squad,
+    required this.budget,
+  });
+
+  int get points => won * 3 + drawn;
+  int get gd => gf - ga;
+
+  List<Pos> get slots => [
+        Pos.gk,
+        ...List.filled(formation.d, Pos.def),
+        ...List.filled(formation.m, Pos.mid),
+        ...List.filled(formation.a, Pos.att),
+      ];
+
+  double get strength {
+    final l = squad.map((p) => p.overall).toList()
+      ..sort((a, b) => b.compareTo(a));
+    final top = l.take(11);
+    return top.fold(0, (a, b) => a + b) / max(1, top.length);
+  }
+
+  List<Player> get bench => squad
+      .where((p) => p.available && !lineup.contains(p))
+      .toList()
+    ..sort((a, b) => b.effective.compareTo(a.effective));
+
+  Player _choose(Pos slot, Set<Player> used) {
+    List<Player> pool(bool strict) => squad
+        .where((p) =>
+            !used.contains(p) &&
+            p.available &&
+            (strict
+                ? p.pos == slot
+                : (slot == Pos.gk ? true : p.pos != Pos.gk)))
+        .toList()
+      ..sort((a, b) => b.effective.compareTo(a.effective));
+    var c = pool(true);
+    if (c.isEmpty) c = pool(false);
+    if (c.isEmpty) {
+      c = squad.where((p) => !used.contains(p)).toList()
+        ..sort((a, b) => b.effective.compareTo(a.effective));
+    }
+    return c.first;
+  }
+
+  void autoPick() {
+    final used = <Player>{};
+    final res = <Player>[];
+    for (final s in slots) {
+      final p = _choose(s, used);
+      used.add(p);
+      res.add(p);
+    }
+    lineup = res;
+  }
+
+  void repairLineup() {
+    final s = slots;
+    if (lineup.length != 11) {
+      autoPick();
+      return;
+    }
+    final used = <Player>{};
+    final bad = <int>[];
+    for (var i = 0; i < 11; i++) {
+      final p = lineup[i];
+      if (squad.contains(p) && p.available && !used.contains(p)) {
+        used.add(p);
+      } else {
+        bad.add(i);
+      }
+    }
+    for (final i in bad) {
+      final p = _choose(s[i], used);
+      used.add(p);
+      lineup[i] = p;
+    }
+  }
+
+  void setFormation(Formation f) {
+    formation = f;
+    autoPick();
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'rep': reputation,
+        'squad': [for (final p in squad) p.toJson()],
+        'formation': formations.indexOf(formation),
+        'ment': mentality,
+        'press': pressing,
+        'tempo': tempo,
+        'lineup': [for (final p in lineup) p.id],
+        'budget': budget,
+        'played': played,
+        'won': won,
+        'drawn': drawn,
+        'lost': lost,
+        'gf': gf,
+        'ga': ga,
+        'stadium': stadium,
+        'trainingLvl': trainingLvl,
+        'academy': academy,
+        'badge': badge,
+        'venue': venue,
+      };
+
+  factory Team.fromJson(Map<String, dynamic> j) {
+    final squad = [
+      for (final p in j['squad'] as List)
+        Player.fromJson(p as Map<String, dynamic>)
+    ];
+    final byId = {for (final p in squad) p.id: p};
+    final t = Team(
+      id: j['id'] as int,
+      name: j['name'] as String,
+      reputation: j['rep'] as int,
+      squad: squad,
+      budget: (j['budget'] as num).toDouble(),
+    );
+    t.formation = formations[(j['formation'] as int).clamp(0, formations.length - 1)];
+    t.mentality = j['ment'] as int;
+    t.pressing = j['press'] as int;
+    t.tempo = j['tempo'] as int;
+    t.lineup = [
+      for (final id in j['lineup'] as List)
+        if (byId[id] != null) byId[id]!
+    ];
+    t.played = j['played'] as int;
+    t.won = j['won'] as int;
+    t.drawn = j['drawn'] as int;
+    t.lost = j['lost'] as int;
+    t.gf = j['gf'] as int;
+    t.ga = j['ga'] as int;
+    t.stadium = j['stadium'] as int;
+    t.trainingLvl = j['trainingLvl'] as int;
+    t.academy = j['academy'] as int;
+    t.badge = j['badge'] as String?;
+    t.venue = j['venue'] as String?;
+    return t;
+  }
+}

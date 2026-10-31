@@ -1,0 +1,16 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+build/
+pubspec.lock
+android/.gradle/
+android/local.properties
+*.iml
+.idea/
+
+# ملفات مؤقتة للاستيراد (تُرفع كأصول إصدار ولا تُحفظ في git)
+packs/
+__pycache__/
