@@ -1,0 +1,31 @@
+name: Ping
+
+# اختبار سريع: هل يعمل GitHub Actions أصلاً؟ يكتب ملفاً في فرع ci-ping
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write ping
+        shell: bash
+        run: |
+          mkdir -p ping
+          echo "sha=${GITHUB_SHA}" > ping/ping.txt
+          echo "run=${GITHUB_RUN_ID}" >> ping/ping.txt
+          echo "time=$(date -u +%FT%TZ)" >> ping/ping.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan ci-ping-tmp
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          git add -f ping
+          git commit -m "ping for ${GITHUB_SHA::7}"
+          git push -f origin HEAD:ci-ping
