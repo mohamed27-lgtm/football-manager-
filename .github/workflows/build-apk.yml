@@ -66,6 +66,34 @@ jobs:
           mkdir -p logs
           flutter build apk --release 2>&1 | tee logs/build_full.log
 
+      - name: Fail if the build failed
+        if: steps.build.outcome == 'failure'
+        run: exit 1
+
+      - name: Name the APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk football_manager.apk
+
+      - name: Upload artifact (optional)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: football_manager-apk
+          path: football_manager.apk
+
+      - name: Publish APK to release
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          mkdir -p logs
+          {
+            gh release view apk-latest >/dev/null 2>&1 || \
+              gh release create apk-latest --title "Latest APK" --notes "Auto-built APK (debug-signed, for testing)"
+            gh release upload apk-latest football_manager.apk --clobber
+            gh release view apk-latest --json url,assets --jq '.url, (.assets[] | .name + " " + (.size|tostring))'
+          } 2>&1 | tee logs/publish.txt
+
       - name: Save logs to ci-logs branch
         if: always()
         shell: bash
@@ -77,25 +105,5 @@ jobs:
           git checkout --orphan ci-logs-tmp
           git rm -rf --cached . >/dev/null 2>&1 || true
           git add -f logs
-          git commit -m "ci logs for ${GITHUB_SHA::7}: build ${{ steps.build.outcome }}"
+          git commit -m "ci logs for ${GITHUB_SHA::7}: build ${{ steps.build.outcome }}, publish ${{ steps.publish.outcome }}"
           git push -f origin HEAD:ci-logs
-
-      - name: Fail if the build failed
-        if: steps.build.outcome == 'failure'
-        run: exit 1
-
-      - name: Name the APK
-        run: cp build/app/outputs/flutter-apk/app-release.apk football_manager.apk
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: football_manager-apk
-          path: football_manager.apk
-
-      - name: Publish APK to release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release view apk-latest >/dev/null 2>&1 || \
-            gh release create apk-latest --title "Latest APK" --notes "Auto-built APK (debug-signed, for testing)"
-          gh release upload apk-latest football_manager.apk --clobber
