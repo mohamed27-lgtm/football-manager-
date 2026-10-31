@@ -58,7 +58,7 @@ class Side {
       .toList()
     ..sort((a, b) => b.effective.compareTo(a.effective));
 
-  int get mentality => (team.mentality + mentalityBoost).clamp(0, 2);
+  int get mentality => (team.mentality + mentalityBoost).clamp(0, 2).toInt();
 
   int count(Pos p) => slots.where((s) => s.pos == p).length;
 
@@ -108,7 +108,7 @@ class MatchSim {
   bool get finished => minute >= 90;
 
   int get homePoss =>
-      minute == 0 ? 50 : (home.poss * 100 / minute).round().clamp(0, 100);
+      minute == 0 ? 50 : (home.poss * 100 / minute).round().clamp(0, 100).toInt();
   int get awayPoss => 100 - homePoss;
 
   String get lastText => events.isEmpty ? 'صافرة البداية' : events.last.text;
@@ -139,7 +139,7 @@ class MatchSim {
   void _setBall(Side a, double prog, double spread) {
     final y = 0.62 - 0.54 * prog;
     ballY = a.isHome ? y : 1 - y;
-    ballX = (0.5 + (rng.nextDouble() - 0.5) * spread).clamp(0.12, 0.88);
+    ballX = (0.5 + (rng.nextDouble() - 0.5) * spread).clamp(0.12, 0.88).toDouble();
   }
 
   Player? _gk(Side s) {

@@ -478,7 +478,7 @@ class GameState extends ChangeNotifier {
 
   // ───────── نهاية الموسم ─────────
   void _grow(Player p, int d) {
-    int c(int v) => (v + d).clamp(20, 95);
+    int c(int v) => (v + d).clamp(20, 95).toInt();
     switch (p.pos) {
       case Pos.gk:
         p.gk = c(p.gk);

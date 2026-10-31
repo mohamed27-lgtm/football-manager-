@@ -57,7 +57,7 @@ class LivePitch extends StatelessWidget {
       for (var i = 0; i < line.length; i++) {
         final id = line[i].p.id;
         final shift = (pos == Pos.gk ? 0.05 : 0.3) * (ballD - 0.5);
-        final d = (base[pos]! + shift + sin(sim.minute * 0.7 + id) * 0.012).clamp(0.03, 0.97);
+        final d = (base[pos]! + shift + sin(sim.minute * 0.7 + id) * 0.012).clamp(0.03, 0.97).toDouble();
         final x = ((i + 1) / (line.length + 1)) * 0.82 +
             0.09 +
             (sim.ballX - 0.5) * 0.12 +
@@ -106,7 +106,7 @@ class LivePitch extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: LayoutBuilder(builder: (context, cons) {
         final w = cons.maxWidth, h = cons.maxHeight;
-        final r = (w * 0.032).clamp(10.0, 15.0);
+        final r = (w * 0.032).clamp(10.0, 15.0).toDouble();
         final sides = [sim.home, sim.away];
         final layouts = [for (final s in sides) _layout(s)];
 

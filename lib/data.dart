@@ -40,7 +40,7 @@ String randomName(Random rng) =>
 Player makePlayer(Random rng, Pos pos, int ov, int age,
     {String? name, String? photo}) {
   int n(int v, [int spread = 3]) =>
-      (v + rng.nextInt(spread * 2 + 1) - spread).clamp(20, 95);
+      (v + rng.nextInt(spread * 2 + 1) - spread).clamp(20, 95).toInt();
   var atk = 10, def = 10, pas = 10, gk = 10;
   switch (pos) {
     case Pos.gk:

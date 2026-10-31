@@ -272,7 +272,7 @@ class Team {
       squad: squad,
       budget: (j['budget'] as num).toDouble(),
     );
-    t.formation = formations[(j['formation'] as int).clamp(0, formations.length - 1)];
+    t.formation = formations[(j['formation'] as int).clamp(0, formations.length - 1).toInt()];
     t.mentality = j['ment'] as int;
     t.pressing = j['press'] as int;
     t.tempo = j['tempo'] as int;
