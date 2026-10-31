@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'cups.dart';
 import 'data.dart';
 import 'engine.dart';
 import 'finance.dart';
@@ -49,6 +50,10 @@ class GameState extends ChangeNotifier {
   final List<Offer> offers = [];
   final List<Player> loanedOut = [];
   final Map<int, double> _reserve = {};
+  Cup? domestic, continental;
+  Cup? activeCup;
+  final Map<int, Team> foreign = {};
+  final List<String> honours = [];
 
   Set<Player> _suspBefore = {};
   Set<Player> _injBefore = {};
@@ -57,6 +62,7 @@ class GameState extends ChangeNotifier {
     teams = createLeague(rng);
     user = teams.firstWhere((t) => t.id == userTeamId);
     _buildFixtures();
+    _setupCups(null);
     market = generateMarket(rng);
     _setObjective();
     news.add('مرحباً بك مدرباً لنادي ${user.name}. هدف الإدارة: المركز $objective أو أفضل.');
@@ -66,6 +72,7 @@ class GameState extends ChangeNotifier {
     teams = t;
     user = teams.firstWhere((x) => x.id == userId);
     _buildFixtures();
+    _setupCups(null);
     market = generateMarket(rng);
     _setObjective();
     news.add('مرحباً بك مدرباً لنادي ${user.name} في $leagueName. هدف الإدارة: المركز $objective أو أفضل.');
@@ -108,8 +115,21 @@ class GameState extends ChangeNotifier {
     for (final p in (j['loanedOut'] as List?) ?? const []) {
       loanedOut.add(Player.fromJson(p as Map<String, dynamic>));
     }
+    for (final t in (j['foreign'] as List?) ?? const []) {
+      final tm = Team.fromJson(t as Map<String, dynamic>);
+      foreign[tm.id] = tm;
+    }
+    honours.addAll(((j['honours'] as List?) ?? const []).cast<String>());
+    final cj = j['cups'] as Map<String, dynamic>?;
+    if (cj != null) {
+      domestic = Cup.fromJson(cj['dom'] as Map<String, dynamic>);
+      continental = Cup.fromJson(cj['con'] as Map<String, dynamic>);
+    } else {
+      _setupCups(null);
+      _advanceCups();
+    }
     var maxId = 0;
-    for (final t in teams) {
+    for (final t in [...teams, ...foreign.values]) {
       for (final p in t.squad) {
         maxId = max(maxId, p.id);
       }
@@ -120,7 +140,7 @@ class GameState extends ChangeNotifier {
     pidCounter = max(pidCounter, maxId);
   }
 
-  Team team(int id) => teams[id];
+  Team team(int id) => id >= 1000 ? foreign[id]! : teams[id];
 
   // ───────── الحفظ ─────────
   Map<String, dynamic> toJson() => {
@@ -132,6 +152,9 @@ class GameState extends ChangeNotifier {
         'league': leagueName,
         'fin': fin.toJson(),
         'offers': [for (final o in offers) o.toJson()],
+        'foreign': [for (final t in foreign.values) t.toJson()],
+        'honours': honours,
+        'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson()},
         'loanedOut': [for (final p in loanedOut) p.toJson()],
         'conf': confidence,
         'training': training,
@@ -399,6 +422,7 @@ class GameState extends ChangeNotifier {
     week++;
     if (week % 4 == 0) market = generateMarket(rng);
     if (week >= rounds.length) seasonOver = true;
+    _advanceCups();
     sim = null;
     unawaited(save());
     notifyListeners();
@@ -719,6 +743,7 @@ class GameState extends ChangeNotifier {
 
   void startNewSeason() {
     final pos = position;
+    final qual = [for (final t in table.take(3)) t.id];
     fin.season.clear();
     for (final p in user.squad.where((p) => p.onLoan).toList()) {
       user.squad.remove(p);
@@ -801,10 +826,216 @@ class GameState extends ChangeNotifier {
     seasonOver = false;
     roundResults.clear();
     _buildFixtures();
+    _setupCups(qual);
     market = generateMarket(rng);
     _setObjective();
     if (confidence <= 0) fired = true;
     news.insert(0, '📋 هدف الإدارة للموسم $season: المركز $objective أو أفضل');
+    unawaited(save());
+    notifyListeners();
+  }
+
+  // ───────── البطولات (كأس محلي + بطولة قارية) ─────────
+  static int _pow2(int n) {
+    var p = 1;
+    while (p < n) {
+      p *= 2;
+    }
+    return p;
+  }
+
+  void _setupCups(List<int>? qual) {
+    final w = rounds.length;
+    List<int> sched(int r, int off) {
+      final out = <int>[];
+      for (var i = 0; i < r; i++) {
+        var v = min(w - 2, ((i + 1) * w / (r + 1)).round() + off);
+        if (out.isNotEmpty && v <= out.last) v = out.last + 1;
+        out.add(v);
+      }
+      return out;
+    }
+
+    int log2c(int n) {
+      var r = 0, p = 1;
+      while (p < n) {
+        p *= 2;
+        r++;
+      }
+      return r;
+    }
+
+    domestic = Cup(
+      key: 'dom',
+      name: 'كأس الدوري',
+      continental: false,
+      schedule: sched(log2c(teams.length), 0),
+      size: 2,
+      alive: [for (final t in teams) t.id],
+    );
+    _draw(domestic!);
+
+    foreign.clear();
+    for (var i = 0; i < foreignClubNames.length; i++) {
+      foreign[1000 + i] = createTeam(rng, 1000 + i, foreignClubNames[i], 3 + rng.nextInt(3));
+    }
+    final q = qual ?? [for (final t in ([...teams]..sort((a, b) => b.strength.compareTo(a.strength))).take(3)) t.id];
+    continental = Cup(
+      key: 'con',
+      name: 'دوري الأبطال القاري',
+      continental: true,
+      schedule: sched(4, 3),
+      size: 16,
+      alive: [...q, ...foreign.keys],
+    );
+    _draw(continental!);
+  }
+
+  void _draw(Cup c) {
+    final ids = [...c.alive];
+    c.size = _pow2(ids.length);
+    final nb = c.size - ids.length;
+    ids.sort((a, b) => team(b).strength.compareTo(team(a).strength));
+    c.byes = ids.take(nb).toList();
+    final rest = ids.skip(nb).toList()..shuffle(rng);
+    c.ties = [for (var i = 0; i + 1 < rest.length; i += 2) Tie(rest[i], rest[i + 1])];
+  }
+
+  void _setTie(Tie t, int hg, int ag) {
+    t.hg = hg;
+    t.ag = ag;
+    if (hg == ag) {
+      final pHome = (0.5 + (team(t.home).strength - team(t.away).strength) * 0.01).clamp(0.35, 0.65).toDouble();
+      final homeWins = rng.nextDouble() < pHome;
+      final w = 3 + rng.nextInt(3);
+      final l = max(0, w - 1 - rng.nextInt(2));
+      t.ph = homeWins ? w : l;
+      t.pa = homeWins ? l : w;
+    }
+  }
+
+  void _playAiTie(Tie t) {
+    final m = MatchSim(team(t.home), team(t.away), random: rng)..simulateAll();
+    _setTie(t, m.home.goals, m.away.goals);
+  }
+
+  void _closeRoundIfDone(Cup c) {
+    if (c.ties.any((t) => !t.played)) return;
+    final winners = [...c.byes, for (final t in c.ties) t.winner];
+    for (final t in c.ties) {
+      c.log.add('${c.roundName}|${t.text((i) => team(i).name)}');
+    }
+    final idx = c.round;
+    final userWas = c.alive.contains(user.id);
+    if (userWas) {
+      if (winners.contains(user.id)) {
+        final prize = (c.continental ? 1.5 : 0.5) * (idx + 1);
+        user.budget += prize;
+        fin.add('prize', prize);
+        news.insert(0, '🏅 تأهلت في ${c.name} (${c.roundName}) — مكافأة ${money1(prize)}');
+      } else {
+        news.insert(0, '👋 ودّعت ${c.name} من ${c.roundName}');
+      }
+    }
+    c.alive = winners;
+    c.round++;
+    if (winners.length == 1) {
+      c.done = true;
+      c.champion = winners.first;
+      if (winners.first == user.id) {
+        final bonus = c.continental ? 10.0 : 3.0;
+        user.budget += bonus;
+        fin.add('prize', bonus);
+        confidence = min(100, confidence + 10);
+        honours.add('🏆 ${c.name} — الموسم $season');
+        news.insert(0, '🏆🏆 بطل ${c.name}! مكافأة ${money1(bonus)}');
+      } else {
+        news.insert(0, '🏆 ${team(winners.first).name} بطل ${c.name}');
+      }
+    } else {
+      _draw(c);
+    }
+  }
+
+  void _advanceCups() {
+    for (final c in [domestic, continental]) {
+      if (c == null) continue;
+      while (!c.done && c.dueWeek != null && c.dueWeek! <= week) {
+        if (c.userTie(user.id) != null) break;
+        for (final t in c.ties.where((t) => !t.played)) {
+          _playAiTie(t);
+        }
+        _closeRoundIfDone(c);
+      }
+    }
+  }
+
+  /// بطولة تنتظر مباراتك الآن (تُلعب قبل مباراة الدوري)
+  Cup? get pendingCup {
+    if (seasonOver || fired) return null;
+    for (final c in [domestic, continental]) {
+      if (c != null && !c.done && c.dueWeek != null && c.dueWeek! <= week && c.userTie(user.id) != null) {
+        return c;
+      }
+    }
+    return null;
+  }
+
+  void startCupMatch(Cup c) {
+    final t = c.userTie(user.id);
+    if (t == null) return;
+    _suspBefore = {...user.squad.where((p) => p.suspendedMatches > 0)};
+    _injBefore = {...user.squad.where((p) => p.injuredWeeks > 0)};
+    final h = team(t.home), a = team(t.away);
+    activeCup = c;
+    sim = MatchSim(h, a, userHome: h == user, userAway: a == user, random: rng);
+    notifyListeners();
+  }
+
+  /// زر «متابعة» بعد المباراة: دوري أو كأس
+  void finishCurrent() {
+    final c = activeCup;
+    if (c == null) {
+      finishMatchday();
+      return;
+    }
+    final s = sim;
+    final t = c.userTie(user.id);
+    if (s == null || t == null) {
+      activeCup = null;
+      return;
+    }
+    s.simulateAll();
+    _setTie(t, s.home.goals, s.away.goals);
+    news.insert(0, '🏆 ${c.name} (${c.roundName}): ${t.text((i) => team(i).name)}');
+    if (t.home == user.id) {
+      final gate = (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (c.continental ? 1.5 : 1.0);
+      user.budget += gate;
+      fin.add('tickets', gate);
+    }
+    for (final p in user.squad) {
+      if (_suspBefore.contains(p) && p.suspendedMatches > 0) p.suspendedMatches--;
+      if (_injBefore.contains(p) && p.injuredWeeks > 0) p.injuredWeeks--;
+      p.fitness = min(100, p.fitness + 8);
+      if (p.injuredWeeks > 0 && !_injBefore.contains(p)) {
+        news.insert(0, '🚑 أُصيب ${p.name} لمدة ${p.injuredWeeks} أسابيع');
+      }
+    }
+    if (t.winner == user.id) {
+      confidence = min(100, confidence + 2);
+    } else {
+      confidence = max(0, confidence - 2);
+      if (confidence <= 0) fired = true;
+    }
+    _morale(user, t.winner == user.id ? 3 : -3);
+    for (final o in c.ties.where((x) => !x.played)) {
+      _playAiTie(o);
+    }
+    _closeRoundIfDone(c);
+    _advanceCups();
+    fin.record(user.budget);
+    activeCup = null;
+    sim = null;
     unawaited(save());
     notifyListeners();
   }

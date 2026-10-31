@@ -413,7 +413,7 @@ class _MatchScreenState extends State<MatchScreen> {
                       width: double.infinity,
                       child: FilledButton(
                         onPressed: () {
-                          widget.gs.finishMatchday();
+                          widget.gs.finishCurrent();
                           Navigator.pop(context);
                         },
                         child: const Text('متابعة'),
@@ -460,6 +460,11 @@ class _MatchScreenState extends State<MatchScreen> {
 
 /// يبدأ مباراة الجولة الحالية ويفتح شاشة المباراة
 Future<void> playMatch(BuildContext context, GameState gs) async {
-  gs.startMatch();
+  final c = gs.pendingCup;
+  if (c != null) {
+    gs.startCupMatch(c);
+  } else {
+    gs.startMatch();
+  }
   await Navigator.of(context).push(MaterialPageRoute(builder: (_) => MatchScreen(gs: gs)));
 }

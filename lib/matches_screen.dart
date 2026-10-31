@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'cups_screen.dart';
 import 'game_state.dart';
 import 'match_screen.dart';
 import 'models.dart';
@@ -25,6 +26,8 @@ class _MatchesTabState extends State<MatchesTab> {
             style: const TextStyle(color: kMuted)),
       );
     }
+    final pc = gs.pendingCup;
+    if (pc != null) return CupMatchCard(gs: gs, cup: pc);
     final u = gs.user;
     final isHome = f.home == u.id;
     final opp = gs.team(isHome ? f.away : f.home);

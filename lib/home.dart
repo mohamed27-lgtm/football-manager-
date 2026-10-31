@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'data.dart';
 import 'data_screen.dart';
+import 'cups_screen.dart';
 import 'game_state.dart';
 import 'match_screen.dart';
 import 'models.dart';
@@ -283,6 +284,8 @@ class DashboardTab extends StatelessWidget {
   }
 
   Widget _nextMatch(BuildContext context) {
+    final pc = gs.pendingCup;
+    if (pc != null) return CupMatchCard(gs: gs, cup: pc);
     final f = gs.userFixture!;
     final u = gs.user;
     final isHome = f.home == u.id;
