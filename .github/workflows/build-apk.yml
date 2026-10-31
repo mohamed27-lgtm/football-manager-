@@ -64,7 +64,9 @@ jobs:
         shell: bash
         run: |
           mkdir -p logs
-          flutter build apk --release 2>&1 | tee logs/build_full.log
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} 2>&1 | tee logs/build_full.log
 
       - name: Fail if the build failed
         if: steps.build.outcome == 'failure'

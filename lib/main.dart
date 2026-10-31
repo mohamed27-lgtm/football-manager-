@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'auth.dart';
+import 'auth_screen.dart';
 import 'game_state.dart';
 import 'home.dart';
 import 'models.dart';
@@ -21,6 +23,7 @@ class _ManagerAppState extends State<ManagerApp> {
   GameState? gs;
   bool hasSave = false;
   bool loading = true;
+  Account? acct;
 
   @override
   void initState() {
@@ -28,7 +31,32 @@ class _ManagerAppState extends State<ManagerApp> {
     _refresh();
   }
 
+  Future<void> _enter(Account a) async {
+    GameState.slot = AuthService.slotFor(a.email);
+    acct = a;
+    await _refresh();
+  }
+
+  Future<void> _logout() async {
+    await AuthService.signOut();
+    GameState.slot = '';
+    if (mounted) {
+      setState(() {
+        acct = null;
+        gs = null;
+        hasSave = false;
+      });
+    }
+  }
+
   Future<void> _refresh() async {
+    if (acct == null) {
+      final a = await AuthService.current();
+      if (a != null) {
+        GameState.slot = AuthService.slotFor(a.email);
+        acct = a;
+      }
+    }
     final h = await GameState.hasSave();
     if (mounted) {
       setState(() {
@@ -58,8 +86,12 @@ class _ManagerAppState extends State<ManagerApp> {
     Widget home;
     if (loading) {
       home = const Scaffold(body: Center(child: CircularProgressIndicator()));
+    } else if (acct == null) {
+      home = AuthScreen(onAuthed: _enter);
     } else if (gs == null) {
       home = StartScreen(
+        coachName: acct!.name,
+        onLogout: _logout,
         hasSave: hasSave,
         onContinue: _continue,
         onStartReal: (List<Team> teams, int id, String name) {

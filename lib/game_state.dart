@@ -27,7 +27,9 @@ const trainingModes = <String, String>{
 };
 
 class GameState extends ChangeNotifier {
-  static const _key = 'fm_save_v2';
+  /// يُضبط عند تسجيل الدخول ليكون لكل حساب حفظه الخاص
+  static String slot = '';
+  static String get _key => 'fm_save_v2$slot';
 
   final Random rng = Random();
   late final List<Team> teams;

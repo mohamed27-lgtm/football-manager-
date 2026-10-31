@@ -7,6 +7,7 @@ import 'match_screen.dart';
 import 'models.dart';
 import 'finance_screen.dart';
 import 'matches_screen.dart';
+import 'packs_screen.dart';
 import 'more_screen.dart';
 import 'squad.dart';
 import 'team_tab.dart';
@@ -18,57 +19,96 @@ class StartScreen extends StatelessWidget {
   final bool hasSave;
   final VoidCallback onContinue;
   final StartReal onStartReal;
-  const StartScreen({super.key, required this.onStart, required this.hasSave, required this.onContinue, required this.onStartReal});
+  final String coachName;
+  final VoidCallback onLogout;
+  const StartScreen({
+    super.key,
+    required this.onStart,
+    required this.hasSave,
+    required this.onContinue,
+    required this.onStartReal,
+    required this.coachName,
+    required this.onLogout,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: kBg,
+        title: Text('أهلاً $coachName 👋', style: const TextStyle(fontSize: 16)),
+        actions: [
+          IconButton(
+            tooltip: 'تسجيل الخروج',
+            icon: const Icon(Icons.logout),
+            onPressed: onLogout,
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ListView(padding: const EdgeInsets.all(16), children: [
-          const SizedBox(height: 12),
           const Text('⚽ مدرب كرة القدم',
               textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
           const SizedBox(height: 6),
           const Text('قُد ناديك نحو المجد', textAlign: TextAlign.center, style: TextStyle(color: kMuted)),
-          const SizedBox(height: 18),
+          const SizedBox(height: 22),
           if (hasSave)
             Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.only(bottom: 12),
               child: FilledButton.icon(
                 onPressed: onContinue,
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('متابعة المسيرة المحفوظة'),
               ),
             ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: FilledButton.tonalIcon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => DataScreen(onStart: onStartReal)),
-              ),
-              icon: const Icon(Icons.public),
-              label: const Text('🌍 دوريات وأندية ولاعبون حقيقيون (تنزيل)'),
+          hasSave
+              ? FilledButton.tonalIcon(
+                  onPressed: () => _newCareer(context),
+                  icon: const Icon(Icons.public),
+                  label: const Text('مسيرة جديدة — اختر دوري وفريق حقيقي'),
+                )
+              : FilledButton.icon(
+                  onPressed: () => _newCareer(context),
+                  icon: const Icon(Icons.public),
+                  label: const Text('ابدأ مسيرتك — اختر دوري وفريق حقيقي'),
+                ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => DataScreen(onStart: onStartReal)),
+            ),
+            icon: const Icon(Icons.key),
+            label: const Text('استيراد مباشر بمفتاح API'),
+          ),
+          const SizedBox(height: 16),
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('أندية تجريبية (بدون تنزيل)', style: TextStyle(color: kMuted, fontSize: 13)),
+              children: [
+                for (var i = 0; i < clubTemplates.length; i++)
+                  Panel(
+                    padding: EdgeInsets.zero,
+                    child: ListTile(
+                      onTap: () => onStart(i),
+                      leading: CircleAvatar(backgroundColor: teamColor(i), radius: 16),
+                      title: Text(clubTemplates[i].$1, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: Text('${'★' * clubTemplates[i].$2}  •  ميزانية ${12 + clubTemplates[i].$2 * 8}M'),
+                      trailing: const Icon(Icons.chevron_left),
+                    ),
+                  ),
+              ],
             ),
           ),
-          sectionTitle(hasSave ? 'أو ابدأ مسيرة جديدة بالأندية الافتراضية' : 'أو اختر نادياً افتراضياً'),
-          for (var i = 0; i < clubTemplates.length; i++)
-            Panel(
-              padding: EdgeInsets.zero,
-              child: ListTile(
-                onTap: () => onStart(i),
-                leading: CircleAvatar(backgroundColor: teamColor(i), radius: 16),
-                title: Text(clubTemplates[i].$1, style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text(
-                  '${'★' * clubTemplates[i].$2}  •  ميزانية ${12 + clubTemplates[i].$2 * 8}M  •  '
-                  '${clubTemplates[i].$2 >= 4 ? 'سهل' : clubTemplates[i].$2 == 3 ? 'متوسط' : 'تحدٍّ صعب'}',
-                ),
-                trailing: const Icon(Icons.chevron_left),
-              ),
-            ),
         ]),
       ),
     );
   }
+
+  void _newCareer(BuildContext context) => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => PacksScreen(onStart: onStartReal)),
+      );
 }
 
 class HomeShell extends StatefulWidget {

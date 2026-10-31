@@ -10,7 +10,7 @@ import 'league_store.dart';
 
 /// غيّر هذا الرابط إلى مستودعك (أو عدّله من داخل اللعبة في شاشة الحزم)
 const defaultPackBase =
-    'https://github.com/OWNER/REPO/releases/download/data-latest';
+    'https://github.com/mohamed27-lgtm/football-manager-/releases/download/data-latest';
 
 class PackInfo {
   final int id, season, tier, teams, players, bytes;
