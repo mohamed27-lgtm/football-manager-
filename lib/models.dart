@@ -31,7 +31,8 @@ class Player {
   int atk, def, pas, gk, potential;
   int contract; // سنوات متبقية
   String? photo;
-  bool free = false, onLoan = false, listed = false;
+  bool free = false, onLoan = false, listed = false, registered = true;
+  double? salary;
   double fitness = 100;
   double morale = 70;
   int injuredWeeks = 0;
@@ -62,7 +63,7 @@ class Player {
   double get effective =>
       overall * (0.55 + 0.45 * fitness / 100) * (0.92 + 0.16 * morale / 100);
 
-  bool get available => injuredWeeks == 0 && suspendedMatches == 0;
+  bool get available => injuredWeeks == 0 && suspendedMatches == 0 && registered;
 
   double get value {
     var m = 1.0;
@@ -72,7 +73,8 @@ class Player {
     return max(0.1, (v * 10).round() / 10);
   }
 
-  double get wage => (overall - 40).clamp(1, 60) * 0.0015;
+  double get baseWage => (overall - 40).clamp(1, 60) * 0.0015;
+  double get wage => salary ?? baseWage;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -97,6 +99,8 @@ class Player {
         'free': free,
         'loan': onLoan,
         'listed': listed,
+        'reg': registered,
+        'sal': salary,
       };
 
   factory Player.fromJson(Map<String, dynamic> j) => Player(
@@ -122,7 +126,9 @@ class Player {
         ..photo = j['photo'] as String?
         ..free = (j['free'] as bool?) ?? false
         ..onLoan = (j['loan'] as bool?) ?? false
-        ..listed = (j['listed'] as bool?) ?? false;
+        ..listed = (j['listed'] as bool?) ?? false
+        ..registered = (j['reg'] as bool?) ?? true
+        ..salary = (j['sal'] as num?)?.toDouble();
 }
 
 class Formation {
@@ -162,7 +168,8 @@ class Team {
     required this.budget,
   });
 
-  int get points => won * 3 + drawn;
+  int penalty = 0;
+  int get points => won * 3 + drawn - penalty;
   int get gd => gf - ga;
 
   List<Pos> get slots => [
@@ -264,6 +271,7 @@ class Team {
         'academy': academy,
         'badge': badge,
         'venue': venue,
+        'pen': penalty,
       };
 
   factory Team.fromJson(Map<String, dynamic> j) {
@@ -298,6 +306,7 @@ class Team {
     t.academy = j['academy'] as int;
     t.badge = j['badge'] as String?;
     t.venue = j['venue'] as String?;
+    t.penalty = (j['pen'] as int?) ?? 0;
     return t;
   }
 }

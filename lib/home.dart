@@ -114,7 +114,8 @@ class StartScreen extends StatelessWidget {
 class HomeShell extends StatefulWidget {
   final GameState gs;
   final VoidCallback onRestart;
-  const HomeShell({super.key, required this.gs, required this.onRestart});
+  final VoidCallback onLogout;
+  const HomeShell({super.key, required this.gs, required this.onRestart, required this.onLogout});
   @override
   State<HomeShell> createState() => _HomeShellState();
 }
@@ -133,7 +134,7 @@ class _HomeShellState extends State<HomeShell> {
           TeamTab(gs: gs),
           TransfersTab(gs: gs),
           MatchesTab(gs: gs),
-          MoreTab(gs: gs, onRestart: widget.onRestart),
+          MoreTab(gs: gs, onRestart: widget.onRestart, onLogout: widget.onLogout),
         ];
         return Scaffold(
           appBar: AppBar(

@@ -190,3 +190,9 @@ class PlayerAvatar extends StatelessWidget {
     );
   }
 }
+
+/// الراتب الأسبوعي بالآلاف
+String wageK(double w) => '${(w * 1000).round()}K';
+
+/// مبلغ بخانتين عشريتين
+String money2(double v) => '${v.toStringAsFixed(2)}M';

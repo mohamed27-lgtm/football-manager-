@@ -8,6 +8,7 @@ import 'data.dart';
 import 'engine.dart';
 import 'finance.dart';
 import 'models.dart';
+import 'sponsors.dart';
 import 'transfers.dart';
 
 class Fixture {
@@ -62,6 +63,12 @@ class GameState extends ChangeNotifier {
   String bigWin = '', bigLoss = '';
   int bigWinD = 0, bigLossD = 0;
   int pressWeek = -1;
+  final List<SponsorDeal> deals = [];
+  Map<String, List<SponsorOffer>> sponsorOffers = {};
+  int ffpBreaches = 0;
+  bool transferBan = false;
+  int pointsPenaltyNext = 0;
+  final Map<int, double> _renewRes = {};
 
   Set<Player> _suspBefore = {};
   Set<Player> _injBefore = {};
@@ -72,6 +79,7 @@ class GameState extends ChangeNotifier {
     _buildFixtures();
     _setupCups(null);
     fans = 20.0 + user.reputation * 12;
+    _genSponsorOffers();
     market = generateMarket(rng);
     _setObjective();
     news.add('مرحباً بك مدرباً لنادي ${user.name}. هدف الإدارة: المركز $objective أو أفضل.');
@@ -83,6 +91,7 @@ class GameState extends ChangeNotifier {
     _buildFixtures();
     _setupCups(null);
     fans = 20.0 + user.reputation * 12;
+    _genSponsorOffers();
     market = generateMarket(rng);
     _setObjective();
     news.add('مرحباً بك مدرباً لنادي ${user.name} في $leagueName. هدف الإدارة: المركز $objective أو أفضل.');
@@ -141,6 +150,23 @@ class GameState extends ChangeNotifier {
     bigWinD = (j['bigWinD'] as int?) ?? 0;
     bigLossD = (j['bigLossD'] as int?) ?? 0;
     pressWeek = (j['pressWeek'] as int?) ?? -1;
+    for (final d in (j['deals'] as List?) ?? const []) {
+      deals.add(SponsorDeal.fromJson(Map<String, dynamic>.from(d as Map)));
+    }
+    final so = j['sOffers'] as Map?;
+    if (so != null) {
+      sponsorOffers = {
+        for (final e in so.entries)
+          e.key as String: [
+            for (final o in e.value as List) SponsorOffer.fromJson(Map<String, dynamic>.from(o as Map))
+          ]
+      };
+    } else {
+      _genSponsorOffers();
+    }
+    ffpBreaches = (j['ffpB'] as int?) ?? 0;
+    transferBan = (j['ban'] as bool?) ?? false;
+    pointsPenaltyNext = (j['ppn'] as int?) ?? 0;
     final cj = j['cups'] as Map<String, dynamic>?;
     if (cj != null) {
       domestic = Cup.fromJson(cj['dom'] as Map<String, dynamic>);
@@ -183,6 +209,13 @@ class GameState extends ChangeNotifier {
         'bigWinD': bigWinD,
         'bigLossD': bigLossD,
         'pressWeek': pressWeek,
+        'deals': [for (final d in deals) d.toJson()],
+        'sOffers': {
+          for (final e in sponsorOffers.entries) e.key: [for (final o in e.value) o.toJson()]
+        },
+        'ffpB': ffpBreaches,
+        'ban': transferBan,
+        'ppn': pointsPenaltyNext,
         'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson()},
         'loanedOut': [for (final p in loanedOut) p.toJson()],
         'conf': confidence,
@@ -439,7 +472,8 @@ class GameState extends ChangeNotifier {
     final home = f.home == user.id;
     final gate = home ? (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (0.75 + 0.5 * fans / 100) : 0.0;
     final broadcast = 0.35 + 0.1 * user.reputation;
-    final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * (0.8 + 0.4 * fans / 100);
+    final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +
+        dealsIncome * (0.9 + 0.2 * fans / 100);
     final maintenance = 0.03 * (user.stadium + user.trainingLvl + user.academy);
     final interest = fin.debt * 0.004;
     fin.add('tickets', gate);
@@ -462,8 +496,13 @@ class GameState extends ChangeNotifier {
     confidence = confidence.clamp(0, 100).toDouble();
     if (confidence <= 0) fired = true;
 
+    if (week == rounds.length ~/ 2 && ffpRatio > 0.85) {
+      news.insert(0, '⚠️ تحذير اللعب المالي النظيف: الرواتب ${(ffpRatio * 100).round()}% من الإيرادات (الحد 85%)');
+    }
     _transferTick();
     week++;
+    if (week >= 4) transferBan = false;
+    _enforceRegistration();
     if (week % 4 == 0) market = _scoutedMarket();
     if (week >= rounds.length) seasonOver = true;
     _advanceCups();
@@ -528,6 +567,8 @@ class GameState extends ChangeNotifier {
 
   /// إتمام الصفقة: عمولة الوكيل + الفحص الطبي (قد يُلغي الصفقة أو يكشف إصابة)
   String? completeSigning(Player p, double price) {
+    final werr = _incomingErr(p.free);
+    if (werr != null) return werr;
     if (user.squad.length >= 30) return 'التشكيلة ممتلئة (30 لاعباً كحد أقصى)';
     final fee = agentFee(price);
     if (price + fee > user.budget) {
@@ -553,7 +594,9 @@ class GameState extends ChangeNotifier {
     p.listed = false;
     p.onLoan = false;
     p.morale = 75;
+    p.salary = null;
     user.squad.add(p);
+    _registerNew(p);
     market.remove(p);
     news.insert(0, '💼 تعاقدت مع ${p.name} مقابل ${money1(price)} + عمولة وكيل ${money1(fee)}$note');
     unawaited(save());
@@ -562,6 +605,8 @@ class GameState extends ChangeNotifier {
   }
 
   String? loanIn(Player p) {
+    final werr = _incomingErr(false);
+    if (werr != null) return werr;
     if (user.squad.length >= 30) return 'التشكيلة ممتلئة (30 لاعباً كحد أقصى)';
     final fee = loanFee(p);
     if (fee > user.budget) return 'الميزانية غير كافية';
@@ -574,6 +619,7 @@ class GameState extends ChangeNotifier {
       ..contract = 1
       ..morale = 75;
     user.squad.add(p);
+    _registerNew(p);
     market.remove(p);
     news.insert(0, '🔄 استعرت ${p.name} حتى نهاية الموسم مقابل ${money1(fee)}');
     unawaited(save());
@@ -590,6 +636,7 @@ class GameState extends ChangeNotifier {
   }
 
   String? loanOut(Player p) {
+    if (!windowOpen) return _closedMsg;
     final err = _cannotLose(p);
     if (err != null) return err;
     final fee = loanOutFee(p);
@@ -612,6 +659,7 @@ class GameState extends ChangeNotifier {
   }
 
   String? acceptOffer(Offer o) {
+    if (!windowOpen) return _closedMsg;
     final err = _cannotLose(o.player);
     if (err != null) return err;
     user.squad.remove(o.player);
@@ -636,7 +684,7 @@ class GameState extends ChangeNotifier {
       o.weeksLeft--;
     }
     offers.removeWhere((o) => o.weeksLeft <= 0 || !user.squad.contains(o.player));
-    if (user.squad.length > 16 && offers.length < 3) {
+    if (windowOpen && user.squad.length > 16 && offers.length < 3) {
       for (final p in user.squad.where((p) => p.overall >= 58 && !offers.any((o) => o.player == p))) {
         final chance = p.listed ? 0.22 : 0.025;
         if (rng.nextDouble() < chance) {
@@ -649,7 +697,7 @@ class GameState extends ChangeNotifier {
         }
       }
     }
-    if (market.length > 8 && rng.nextDouble() < 0.25) {
+    if (windowOpen && market.length > 8 && rng.nextDouble() < 0.25) {
       final top = [...market]..sort((a, b) => b.overall.compareTo(a.overall));
       final pick = top[rng.nextInt(min(6, top.length))];
       final club = teams.where((t) => t != user).toList()[rng.nextInt(teams.length - 1)];
@@ -660,6 +708,7 @@ class GameState extends ChangeNotifier {
 
   String? sell(Player p) {
     if (p.onLoan) return 'لا يمكن بيع لاعب معار';
+    if (!windowOpen) return _closedMsg;
     if (user.squad.length <= 16) return 'يجب ألا يقل عدد اللاعبين عن 16';
     if (p.pos == Pos.gk && user.squad.where((x) => x.pos == Pos.gk).length <= 2) {
       return 'تحتاج إلى حارسين على الأقل';
@@ -789,6 +838,7 @@ class GameState extends ChangeNotifier {
     final pos = position;
     final qual = [for (final t in table.take(3)) t.id];
     _recordSeason(pos);
+    _ffpReview();
     fin.season.clear();
     for (final p in user.squad.where((p) => p.onLoan).toList()) {
       user.squad.remove(p);
@@ -852,6 +902,7 @@ class GameState extends ChangeNotifier {
       t.lost = 0;
       t.gf = 0;
       t.ga = 0;
+      t.penalty = 0;
       if (t == user) {
         t.repairLineup();
       } else {
@@ -866,8 +917,22 @@ class GameState extends ChangeNotifier {
       news.insert(0, '🌱 الأكاديمية: انضم الموهوب ${p.name} (${p.age} سنة، إمكانات ${p.potential})');
     }
 
+    for (final d in deals) {
+      d.years--;
+    }
+    for (final d in deals.where((d) => d.years <= 0)) {
+      news.insert(0, '📄 انتهى عقد الرعاية مع ${d.brand}');
+    }
+    deals.removeWhere((d) => d.years <= 0);
     season++;
     week = 0;
+    if (pointsPenaltyNext > 0) {
+      user.penalty = pointsPenaltyNext;
+      news.insert(0, '⛔ خصم $pointsPenaltyNext نقاط من رصيدك بسبب مخالفة اللعب المالي النظيف');
+      pointsPenaltyNext = 0;
+    }
+    _genSponsorOffers();
+    _enforceRegistration();
     seasonOver = false;
     roundResults.clear();
     _buildFixtures();
@@ -1195,5 +1260,174 @@ class GameState extends ChangeNotifier {
       news.insert(0, '🏆🏆 بطل الدوري!');
       fans = min(100, fans + 6);
     }
+  }
+
+  // ───────── نوافذ الانتقالات والتسجيل ─────────
+  bool get windowOpen {
+    final h = rounds.length ~/ 2;
+    return week < 4 || (week >= h - 1 && week < h + 3);
+  }
+
+  String get windowLabel {
+    final h = rounds.length ~/ 2;
+    if (week < 4) return 'نافذة الصيف مفتوحة — تُغلق بعد ${4 - week} جولات';
+    if (week >= h - 1 && week < h + 3) return 'نافذة الشتاء مفتوحة — تُغلق بعد ${h + 3 - week} جولات';
+    if (week < h - 1) return 'النافذة مغلقة — تفتح الشتوية بعد ${h - 1 - week} جولات';
+    return 'النافذة مغلقة — تفتح الصيفية مع الموسم القادم';
+  }
+
+  static const _closedMsg = 'نافذة الانتقالات مغلقة حالياً';
+
+  String? _incomingErr(bool free) {
+    if (transferBan) return 'عليك حظر انتقالات بسبب مخالفة اللعب المالي النظيف';
+    if (!free && !windowOpen) return _closedMsg;
+    return null;
+  }
+
+  static const regLimit = 25;
+  int get registeredCount => user.squad.where((p) => p.registered && p.age > 21).length;
+
+  void _registerNew(Player p) {
+    p.registered = true;
+    if (p.age > 21 && registeredCount > regLimit) {
+      p.registered = false;
+      news.insert(0, '📝 ${p.name} غير مسجّل: قائمة الـ$regLimit ممتلئة (يمكنك تبديل التسجيل)');
+    }
+  }
+
+  void _enforceRegistration() {
+    var changed = false;
+    while (registeredCount > regLimit) {
+      final cands = user.squad.where((p) => p.registered && p.age > 21).toList()
+        ..sort((a, b) => a.overall.compareTo(b.overall));
+      cands.first.registered = false;
+      changed = true;
+    }
+    if (changed) user.repairLineup();
+  }
+
+  String? toggleRegistration(Player p) {
+    if (!windowOpen) return 'تغيير التسجيل ممكن فقط خلال نافذة الانتقالات';
+    if (p.registered) {
+      p.registered = false;
+      user.repairLineup();
+    } else {
+      if (p.age > 21 && registeredCount >= regLimit) return 'قائمة التسجيل ممتلئة ($regLimit لاعباً فوق 21 سنة)';
+      p.registered = true;
+    }
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  // ───────── اللعب المالي النظيف ─────────
+  double get ffpRevenue =>
+      (fin.season['tickets'] ?? 0) + (fin.season['broadcast'] ?? 0) + (fin.season['sponsor'] ?? 0) + (fin.season['prize'] ?? 0);
+  double get ffpWages => (fin.season['wages'] ?? 0) + (fin.season['staff'] ?? 0);
+  double get ffpRatio => ffpRevenue <= 0 ? 0 : ffpWages / ffpRevenue;
+
+  void _ffpReview() {
+    final r = ffpRatio;
+    if (ffpRevenue <= 0) return;
+    if (r > 0.85) {
+      ffpBreaches++;
+      final fine = 2.0 * ffpBreaches;
+      user.budget -= fine;
+      fin.add('upgrades', fine);
+      news.insert(0, '⚖️ مخالفة اللعب المالي النظيف (الرواتب ${(r * 100).round()}% من الإيرادات): غرامة ${money1(fine)}');
+      if (ffpBreaches >= 2) {
+        transferBan = true;
+        news.insert(0, '⛔ حظر انتقالات في الصيف القادم');
+      }
+      if (r > 1.0 || ffpBreaches >= 3) pointsPenaltyNext = 6;
+    } else {
+      ffpBreaches = max(0, ffpBreaches - 1);
+    }
+  }
+
+  // ───────── الرعاة ─────────
+  double get dealsIncome => deals.fold(0.0, (a, d) => a + d.weekly);
+
+  void _genSponsorOffers() {
+    sponsorOffers = {};
+    for (final type in sponsorTypes.keys) {
+      if (deals.any((d) => d.type == type)) continue;
+      final pool = sponsorBrands[type]!.where((b) => tierFans[b.$2]! <= fans).toList()..shuffle(rng);
+      final offers = <SponsorOffer>[];
+      for (final b in pool.take(3)) {
+        final years = 1 + rng.nextInt(4);
+        final base = (0.2 + 0.09 * user.reputation) * typeMult[type]! * tierMult[b.$2]! * (1 + 0.05 * (4 - years));
+        final weekly = (base * 100).round() / 100;
+        final bonus = years >= 3 ? (weekly * 4 * 10).round() / 10 : 0.0;
+        offers.add(SponsorOffer(SponsorDeal(type, b.$1, weekly, years), bonus));
+      }
+      sponsorOffers[type] = offers;
+    }
+  }
+
+  String? signSponsor(SponsorOffer o) {
+    if (deals.any((d) => d.type == o.deal.type)) return 'لديك صفقة سارية من هذا النوع';
+    deals.add(SponsorDeal(o.deal.type, o.deal.brand, o.deal.weekly, o.deal.years));
+    sponsorOffers.remove(o.deal.type);
+    if (o.bonus > 0) {
+      user.budget += o.bonus;
+      fin.add('sponsor', o.bonus);
+    }
+    news.insert(0, '🤝 وقّعت مع ${o.deal.brand} (${sponsorTypes[o.deal.type]}) لمدة ${o.deal.years} سنوات');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  double cancelCost(SponsorDeal d) => (d.weekly * 8 * 10).round() / 10 + 0.1;
+
+  String? cancelSponsor(SponsorDeal d) {
+    final c = cancelCost(d);
+    if (c > user.budget) return 'الميزانية لا تكفي للغرامة';
+    user.budget -= c;
+    fin.add('upgrades', c);
+    deals.remove(d);
+    fans = max(0, fans - 1);
+    news.insert(0, '✂️ أنهيت عقد ${d.brand} بغرامة ${money1(c)}');
+    _genSponsorOffers();
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  // ───────── تجديد العقود بالتفاوض ─────────
+  double renewDemand(Player p) {
+    var m = 1.1;
+    if (p.age <= 27) m += 0.2;
+    if (p.morale < 50) m += 0.2;
+    if (p.overall >= 72) m += 0.15;
+    return max(p.wage, p.baseWage) * m;
+  }
+
+  double renewBonus(double wage) => (wage * 10 * 100).round() / 100;
+
+  NegoResult renewOffer(Player p, double wage, int years) {
+    final dem = renewDemand(p);
+    final res = _renewRes.putIfAbsent(p.id, () => dem * (0.92 + rng.nextDouble() * 0.08));
+    final bonus = renewBonus(wage);
+    final fee = agentFee(bonus);
+    if (bonus + fee > user.budget) {
+      return NegoResult('reject', null, 'الميزانية لا تكفي لمكافأة التوقيع (${(bonus + fee).toStringAsFixed(2)}M)');
+    }
+    if (wage >= res) {
+      user.budget -= bonus + fee;
+      fin.add('renewals', bonus);
+      fin.add('agents', fee);
+      p.salary = wage;
+      p.contract = years;
+      p.morale = min(100, p.morale + 6);
+      _renewRes.remove(p.id);
+      news.insert(0, '✍️ جدّدت عقد ${p.name} لـ$years سنوات براتب ${(wage * 1000).round()}K أسبوعياً');
+      unawaited(save());
+      notifyListeners();
+      return const NegoResult('accept', null, 'وافق اللاعب على التجديد');
+    }
+    final counter = (dem * 1000).ceil() / 1000;
+    return NegoResult('counter', counter, 'اللاعب يطلب راتباً لا يقل عن ${(counter * 1000).round()}K أسبوعياً');
   }
 }

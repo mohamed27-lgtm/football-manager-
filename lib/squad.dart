@@ -9,7 +9,9 @@ String? statusOf(Player p) => p.injuredWeeks > 0
     ? 'مصاب (${p.injuredWeeks} أسبوع)'
     : p.suspendedMatches > 0
         ? 'موقوف'
-        : null;
+        : !p.registered
+            ? 'غير مسجّل'
+            : null;
 
 class PlayerTile extends StatelessWidget {
   final Player p;
@@ -165,14 +167,25 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () {
-                      final err = gs.renew(p);
                       Navigator.pop(ctx);
-                      snack(err, 'تم تجديد العقد ✅');
+                      showRenewal(context, gs, p);
                     },
-                    child: Text('تجديد ${money(gs.renewCost(p))}'),
+                    child: const Text('تجديد العقد'),
                   ),
                 ),
               ]),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    final err = gs.toggleRegistration(p);
+                    Navigator.pop(ctx);
+                    snack(err, p.registered ? 'تم تسجيل اللاعب' : 'أُلغي تسجيل اللاعب');
+                  },
+                  child: Text(p.registered ? 'إلغاء التسجيل في القائمة' : 'تسجيل في القائمة (${gs.registeredCount}/${GameState.regLimit})'),
+                ),
+              ),
               const SizedBox(height: 8),
               Row(children: [
                 Expanded(
@@ -293,7 +306,10 @@ class _TransfersTabState extends State<TransfersTab> {
         selected: {mode},
         onSelectionChanged: (s) => setState(() => mode = s.first),
       ),
-      const SizedBox(height: 10),
+      const SizedBox(height: 8),
+      Text('${gs.windowOpen ? '🟢' : '🔴'} ${gs.windowLabel}${gs.transferBan ? ' • ⛔ حظر انتقالات' : ''}',
+          style: TextStyle(color: gs.windowOpen ? kAccent : const Color(0xFFFF8A65), fontSize: 12)),
+      const SizedBox(height: 8),
       if (mode == 3) ..._offers(context, gs) else ...[
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -452,10 +468,7 @@ class ContractsView extends StatelessWidget {
                 IconButton(
                   tooltip: 'تجديد',
                   icon: const Icon(Icons.autorenew, size: 20),
-                  onPressed: () {
-                    final err = gs.renew(p);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تم تجديد العقد ✅')));
-                  },
+                  onPressed: () => showRenewal(context, gs, p),
                 ),
                 IconButton(
                   tooltip: 'إنهاء العقد',

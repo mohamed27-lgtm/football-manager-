@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'engine.dart';
 import 'game_state.dart';
 import 'models.dart';
+import 'settings.dart';
 import 'pitch_view.dart';
 import 'tactics.dart';
 import 'widgets.dart';
@@ -19,7 +20,7 @@ class _MatchScreenState extends State<MatchScreen> {
   Timer? _timer;
   Timer? _flashTimer;
   bool running = false;
-  int speed = 1;
+  int speed = AppSettings.i.speed;
   String? banner;
   String? flash;
   bool halftime = false;
@@ -60,6 +61,8 @@ class _MatchScreenState extends State<MatchScreen> {
   }
 
   void _showFlash(String text) {
+    if (AppSettings.i.haptics) HapticFeedback.heavyImpact();
+    if (!AppSettings.i.goalFlash) return;
     flash = text;
     _flashTimer?.cancel();
     _flashTimer = Timer(const Duration(milliseconds: 1800), () {

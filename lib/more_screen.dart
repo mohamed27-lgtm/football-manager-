@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'facilities_screen.dart';
+import 'business_screens.dart';
 import 'club_screens.dart';
+import 'settings_screen.dart';
 import 'cups_screen.dart';
 import 'finance_screen.dart';
 import 'game_state.dart';
@@ -10,7 +12,8 @@ import 'widgets.dart';
 class MoreTab extends StatelessWidget {
   final GameState gs;
   final VoidCallback onRestart;
-  const MoreTab({super.key, required this.gs, required this.onRestart});
+  final VoidCallback onLogout;
+  const MoreTab({super.key, required this.gs, required this.onRestart, required this.onLogout});
 
   Widget _tile(BuildContext c, IconData icon, String title, String sub, VoidCallback onTap, {bool soon = false}) {
     return Panel(
@@ -32,36 +35,6 @@ class MoreTab extends StatelessWidget {
 
   void _push(BuildContext c, Widget w) => Navigator.of(c).push(MaterialPageRoute(builder: (_) => w));
 
-  void _settings(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('الإعدادات'),
-        content: const Text('تُحفظ اللعبة تلقائياً بعد كل مباراة وكل صفقة.'),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              await gs.save();
-              if (ctx.mounted) Navigator.pop(ctx);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم الحفظ ✅')));
-              }
-            },
-            child: const Text('حفظ الآن'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              await gs.save();
-              if (ctx.mounted) Navigator.pop(ctx);
-              onRestart();
-            },
-            child: const Text('حفظ والخروج للقائمة'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return ListView(padding: const EdgeInsets.all(14), children: [
@@ -75,10 +48,12 @@ class MoreTab extends StatelessWidget {
                 body: SafeArea(child: ListenableBuilder(listenable: gs, builder: (_, __) => TableTab(gs: gs))),
               ))),
       _tile(context, Icons.military_tech_outlined, 'البطولات', 'كأس الدوري والبطولة القارية', () => _push(context, CupsScreen(gs: gs))),
+      _tile(context, Icons.handshake_outlined, 'الرعاة', 'دخل الرعاة ${wageK(gs.dealsIncome)}/جولة', () => _push(context, SponsorsScreen(gs: gs))),
+      _tile(context, Icons.gavel_outlined, 'اللعب المالي النظيف', 'الرواتب ${(gs.ffpRatio * 100).round()}% من الإيرادات', () => _push(context, FfpScreen(gs: gs))),
       _tile(context, Icons.badge_outlined, 'الموظفون', 'المدربون والكشافة والأطباء', () => _push(context, StaffScreen(gs: gs))),
       _tile(context, Icons.campaign_outlined, 'الإعلام والجماهير', 'شعبية النادي والصحافة', () => _push(context, MediaScreen(gs: gs))),
       _tile(context, Icons.history_edu_outlined, 'تاريخ النادي', 'الألقاب والأرقام القياسية', () => _push(context, HistoryScreen(gs: gs))),
-      _tile(context, Icons.settings_outlined, 'الإعدادات', 'حفظ والخروج', () => _settings(context)),
+      _tile(context, Icons.settings_outlined, 'الإعدادات', 'حفظ والخروج', () => _push(context, SettingsScreen(gs: gs, onRestart: onRestart, onLogout: onLogout))),
     ]);
   }
 }

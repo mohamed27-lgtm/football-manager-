@@ -5,10 +5,12 @@ import 'auth_screen.dart';
 import 'game_state.dart';
 import 'home.dart';
 import 'models.dart';
+import 'settings.dart';
 import 'widgets.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppSettings.i.load();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const ManagerApp());
 }
@@ -106,7 +108,7 @@ class _ManagerAppState extends State<ManagerApp> {
         },
       );
     } else {
-      home = HomeShell(gs: gs!, onRestart: _menu);
+      home = HomeShell(gs: gs!, onRestart: _menu, onLogout: _logout);
     }
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -122,7 +124,13 @@ class _ManagerAppState extends State<ManagerApp> {
           labelTextStyle: WidgetStatePropertyAll(TextStyle(fontSize: 11)),
         ),
       ),
-      builder: (context, child) => Directionality(textDirection: TextDirection.rtl, child: child!),
+      builder: (context, child) => ListenableBuilder(
+        listenable: AppSettings.i,
+        builder: (context, _) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(AppSettings.i.textScale)),
+          child: Directionality(textDirection: TextDirection.rtl, child: child!),
+        ),
+      ),
       home: home,
     );
   }

@@ -91,3 +91,87 @@ void showNegotiation(BuildContext context, GameState gs, Player p) {
     }),
   );
 }
+
+/// تجديد عقد بالتفاوض: اختر عدد السنوات والراتب
+void showRenewal(BuildContext context, GameState gs, Player p) {
+  final cur = p.wage;
+  final lo = (cur * 700).round() / 1000;
+  final hi = (cur * 2600).round() / 1000;
+  var wage = (gs.renewDemand(p) * 1000).round() / 1000;
+  wage = wage.clamp(lo, hi).toDouble();
+  var years = 3;
+  var done = false;
+  var msg = 'راتبه الحالي ${wageK(cur)} أسبوعياً، وعقده ${p.contract} ${p.contract == 1 ? 'سنة' : 'سنوات'}.';
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: kCard,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (ctx) => StatefulBuilder(builder: (ctx, set) {
+      final bonus = gs.renewBonus(wage);
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              PlayerAvatar(p, size: 48),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(p.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                  Text('${p.pos.label} • ${p.age} سنة • تقييم ${p.overall}', style: const TextStyle(color: kMuted, fontSize: 13)),
+                ]),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            Panel(color: kCard2, child: Text(msg, style: const TextStyle(height: 1.5))),
+            const Text('مدة العقد', style: TextStyle(color: kMuted, fontSize: 12)),
+            const SizedBox(height: 6),
+            Wrap(spacing: 6, children: [
+              for (var y = 1; y <= 5; y++)
+                ChoiceChip(
+                  label: Text('$y ${y == 1 ? 'سنة' : 'سنوات'}'),
+                  selected: years == y,
+                  onSelected: done ? null : (_) => set(() => years = y),
+                ),
+            ]),
+            const SizedBox(height: 8),
+            Text('الراتب المعروض: ${wageK(wage)} / أسبوع', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: kAccent)),
+            Slider(
+              value: wage.clamp(lo, hi).toDouble(),
+              min: lo,
+              max: hi,
+              divisions: max(1, ((hi - lo) * 1000).round()),
+              label: wageK(wage),
+              onChanged: done ? null : (v) => set(() => wage = (v * 1000).round() / 1000),
+            ),
+            Text('مكافأة التوقيع ${money2(bonus)} + عمولة الوكيل ${money2(gs.agentFee(bonus))}',
+                style: const TextStyle(color: kMuted, fontSize: 12)),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: done
+                  ? OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('إغلاق'))
+                  : FilledButton(
+                      onPressed: () {
+                        final r = gs.renewOffer(p, wage, years);
+                        if (r.status == 'accept') {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم تجديد العقد ✅')));
+                        } else {
+                          set(() {
+                            msg = r.msg;
+                            if (r.counter != null) wage = r.counter!.clamp(lo, hi).toDouble();
+                            if (r.status == 'reject') done = true;
+                          });
+                        }
+                      },
+                      child: const Text('قدّم عرض التجديد'),
+                    ),
+            ),
+          ]),
+        ),
+      );
+    }),
+  );
+}
