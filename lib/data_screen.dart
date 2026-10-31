@@ -100,7 +100,7 @@ class _DataScreenState extends State<DataScreen> {
         );
         await LeagueStore.save(existing);
       }
-      final d = existing!;
+      final d = existing;
       for (final t in d.teams.where((t) => !t.squadLoaded).toList()) {
         if (cancel) break;
         _set(() {

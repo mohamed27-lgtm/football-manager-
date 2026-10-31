@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'game_state.dart';
 import 'squad.dart';
 import 'tactics.dart';
-import 'widgets.dart';
 
 /// صفحة الفريق: اللاعبون • التشكيلة والتكتيك • العقود
 class TeamTab extends StatefulWidget {

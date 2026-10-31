@@ -1,5 +1,7 @@
 /// دفتر مالي بسيط للنادي: إيرادات ومصاريف الموسم + منحنى الرصيد + الديون
 class Finance {
+  Finance();
+
   double debt = 0;
   final Map<String, double> season = {};
   final List<double> history = [];
