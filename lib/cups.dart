@@ -31,6 +31,8 @@ class Cup {
   bool done = false;
   int? champion;
   final List<String> log = [];
+  List<List<int>> groups = [];
+  List<Tie> gdone = [];
 
   Cup({
     required this.key,
@@ -41,7 +43,9 @@ class Cup {
     required this.alive,
   });
 
-  String get roundName => switch (size) {
+  bool get inGroups => groups.isNotEmpty && round < 3;
+
+  String get roundName => inGroups ? 'دور المجموعات — الجولة ${round + 1}' : switch (size) {
         2 => 'النهائي',
         4 => 'نصف النهائي',
         8 => 'ربع النهائي',
@@ -70,6 +74,8 @@ class Cup {
         'done': done,
         'champ': champion,
         'log': log,
+        'groups': groups,
+        'gdone': [for (final t in gdone) t.toJson()],
       };
 
   factory Cup.fromJson(Map<String, dynamic> j) {
@@ -87,6 +93,8 @@ class Cup {
       ..done = j['done'] as bool
       ..champion = j['champ'] as int?;
     c.log.addAll((j['log'] as List).cast<String>());
+    c.groups = [for (final g in (j['groups'] as List?) ?? const []) (g as List).cast<int>()];
+    c.gdone = [for (final t in (j['gdone'] as List?) ?? const []) Tie.fromJson(t as List)];
     return c;
   }
 }
@@ -106,3 +114,44 @@ const foreignClubNames = <String>[
   'أياكس القنوات',
   'كاراكوم إسطنبول',
 ];
+
+class GroupRow {
+  final int id;
+  int p = 0, w = 0, d = 0, l = 0, gf = 0, ga = 0;
+  GroupRow(this.id);
+  int get pts => w * 3 + d;
+  int get gd => gf - ga;
+}
+
+/// ترتيب مجموعة من نتائج المباريات المنتهية
+List<GroupRow> groupTable(Cup c, List<int> g) {
+  final rows = {for (final id in g) id: GroupRow(id)};
+  for (final t in c.gdone) {
+    final h = rows[t.home], a = rows[t.away];
+    if (h == null || a == null) continue;
+    h.p++;
+    a.p++;
+    h.gf += t.hg!;
+    h.ga += t.ag!;
+    a.gf += t.ag!;
+    a.ga += t.hg!;
+    if (t.hg! > t.ag!) {
+      h.w++;
+      a.l++;
+    } else if (t.hg! < t.ag!) {
+      a.w++;
+      h.l++;
+    } else {
+      h.d++;
+      a.d++;
+    }
+  }
+  return rows.values.toList()
+    ..sort((x, y) {
+      final k = y.pts.compareTo(x.pts);
+      if (k != 0) return k;
+      final k2 = y.gd.compareTo(x.gd);
+      if (k2 != 0) return k2;
+      return y.gf.compareTo(x.gf);
+    });
+}

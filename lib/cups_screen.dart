@@ -52,20 +52,24 @@ class CupsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cups = [gs.domestic!, gs.continental!, if (gs.superCup != null) gs.superCup!];
     return DefaultTabController(
-      length: 2,
+      length: cups.length,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('🏆 البطولات'),
           backgroundColor: kBg,
-          bottom: const TabBar(tabs: [Tab(text: 'كأس الدوري'), Tab(text: 'القاري')]),
+          bottom: TabBar(tabs: [
+            const Tab(text: 'كأس الدوري'),
+            const Tab(text: 'القاري'),
+            if (cups.length > 2) const Tab(text: 'السوبر'),
+          ]),
         ),
         body: SafeArea(
           child: ListenableBuilder(
             listenable: gs,
             builder: (context, _) => TabBarView(children: [
-              _CupView(gs: gs, cup: gs.domestic!),
-              _CupView(gs: gs, cup: gs.continental!),
+              for (final c in cups) _CupView(gs: gs, cup: c),
             ]),
           ),
         ),
@@ -92,7 +96,7 @@ class _CupView extends StatelessWidget {
     } else if (everIn) {
       status = 'خرجت من البطولة';
     } else {
-      status = cup.continental ? 'لم تتأهل هذا الموسم (يتأهل أول 3 في الدوري)' : 'خرجت من البطولة';
+      status = cup.continental ? 'لم تتأهل هذا الموسم (يتأهل أول 3 في الدوري)' : (cup.key == 'sup' ? 'لا تشارك في السوبر' : 'خرجت من البطولة');
     }
     final due = cup.dueWeek;
     final logs = <String, List<String>>{};
@@ -111,6 +115,38 @@ class _CupView extends StatelessWidget {
           Text('${cup.alive.length} فرق متبقية', style: const TextStyle(color: kMuted, fontSize: 12)),
         ]),
       ),
+      if (cup.groups.isNotEmpty)
+        for (var gi = 0; gi < cup.groups.length; gi++) ...[
+          sectionTitle('المجموعة ${String.fromCharCode(65 + gi)}'),
+          Panel(
+            child: Column(children: [
+              const Row(children: [
+                Expanded(child: Text('', style: TextStyle(fontSize: 11))),
+                SizedBox(width: 26, child: Text('لعب', style: TextStyle(color: kMuted, fontSize: 11))),
+                SizedBox(width: 30, child: Text('فارق', style: TextStyle(color: kMuted, fontSize: 11))),
+                SizedBox(width: 30, child: Text('نقاط', style: TextStyle(color: kMuted, fontSize: 11))),
+              ]),
+              for (final (i, r) in groupTable(cup, cup.groups[gi]).indexed)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(children: [
+                    Expanded(
+                      child: Text(
+                        '${i + 1}. ${gs.team(r.id).name}',
+                        style: TextStyle(
+                          fontWeight: r.id == uid ? FontWeight.w800 : FontWeight.w400,
+                          color: i < 2 ? kAccent : null,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 26, child: Text('${r.p}')),
+                    SizedBox(width: 30, child: Text('${r.gd}')),
+                    SizedBox(width: 30, child: Text('${r.pts}', style: const TextStyle(fontWeight: FontWeight.w800))),
+                  ]),
+                ),
+            ]),
+          ),
+        ],
       if (!cup.done) ...[
         sectionTitle('قرعة ${cup.roundName}'),
         Panel(

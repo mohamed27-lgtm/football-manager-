@@ -53,7 +53,7 @@ class GameState extends ChangeNotifier {
   final List<Offer> offers = [];
   final List<Player> loanedOut = [];
   final Map<int, double> _reserve = {};
-  Cup? domestic, continental;
+  Cup? domestic, continental, superCup;
   Cup? activeCup;
   final Map<int, Team> foreign = {};
   final List<String> honours = [];
@@ -171,6 +171,7 @@ class GameState extends ChangeNotifier {
     if (cj != null) {
       domestic = Cup.fromJson(cj['dom'] as Map<String, dynamic>);
       continental = Cup.fromJson(cj['con'] as Map<String, dynamic>);
+      if (cj['sup'] != null) superCup = Cup.fromJson(cj['sup'] as Map<String, dynamic>);
     } else {
       _setupCups(null);
       _advanceCups();
@@ -216,7 +217,7 @@ class GameState extends ChangeNotifier {
         'ffpB': ffpBreaches,
         'ban': transferBan,
         'ppn': pointsPenaltyNext,
-        'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson()},
+        'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson(), 'sup': superCup?.toJson()},
         'loanedOut': [for (final p in loanedOut) p.toJson()],
         'conf': confidence,
         'training': training,
@@ -837,7 +838,11 @@ class GameState extends ChangeNotifier {
   void startNewSeason() {
     final pos = position;
     final qual = [for (final t in table.take(3)) t.id];
-    _recordSeason(pos);
+    final champId = table.first.id;
+    final runnerId = table.length > 1 ? table[1].id : table.first.id;
+    final cupWinner = domestic?.champion;
+    final aw = _seasonAwards(pos);
+    _recordSeason(pos, aw);
     _ffpReview();
     fin.season.clear();
     for (final p in user.squad.where((p) => p.onLoan).toList()) {
@@ -937,9 +942,11 @@ class GameState extends ChangeNotifier {
     roundResults.clear();
     _buildFixtures();
     _setupCups(qual);
+    _setupSuper(champId, cupWinner, runnerId);
     market = _scoutedMarket();
     _setObjective();
     if (confidence <= 0) fired = true;
+    _advanceCups();
     news.insert(0, '📋 هدف الإدارة للموسم $season: المركز $objective أو أفضل');
     unawaited(save());
     notifyListeners();
@@ -994,14 +1001,34 @@ class GameState extends ChangeNotifier {
       key: 'con',
       name: 'دوري الأبطال القاري',
       continental: true,
-      schedule: sched(4, 3),
+      schedule: sched(6, 3),
       size: 16,
       alive: [...q, ...foreign.keys],
     );
+    final sorted = [...continental!.alive]..sort((a, b) => team(b).strength.compareTo(team(a).strength));
+    final pots = [
+      for (var k = 0; k < 4; k++) (sorted.sublist(k * 4, k * 4 + 4)..shuffle(rng))
+    ];
+    continental!.groups = [
+      for (var gI = 0; gI < 4; gI++) [for (final pot in pots) pot[gI]]
+    ];
     _draw(continental!);
   }
 
   void _draw(Cup c) {
+    if (c.inGroups) {
+      const pat = [
+        [(0, 1), (2, 3)],
+        [(0, 2), (3, 1)],
+        [(3, 0), (1, 2)],
+      ];
+      c.byes = [];
+      c.ties = [
+        for (final g in c.groups)
+          for (final pr in pat[c.round]) Tie(g[pr.$1], g[pr.$2])
+      ];
+      return;
+    }
     final ids = [...c.alive];
     c.size = _pow2(ids.length);
     final nb = c.size - ids.length;
@@ -1011,10 +1038,10 @@ class GameState extends ChangeNotifier {
     c.ties = [for (var i = 0; i + 1 < rest.length; i += 2) Tie(rest[i], rest[i + 1])];
   }
 
-  void _setTie(Tie t, int hg, int ag) {
+  void _setTie(Tie t, int hg, int ag, {bool pens = true}) {
     t.hg = hg;
     t.ag = ag;
-    if (hg == ag) {
+    if (hg == ag && pens) {
       final pHome = (0.5 + (team(t.home).strength - team(t.away).strength) * 0.01).clamp(0.35, 0.65).toDouble();
       final homeWins = rng.nextDouble() < pHome;
       final w = 3 + rng.nextInt(3);
@@ -1024,13 +1051,42 @@ class GameState extends ChangeNotifier {
     }
   }
 
-  void _playAiTie(Tie t) {
+  void _playAiTie(Tie t, {bool pens = true}) {
     final m = MatchSim(team(t.home), team(t.away), random: rng)..simulateAll();
-    _setTie(t, m.home.goals, m.away.goals);
+    _setTie(t, m.home.goals, m.away.goals, pens: pens);
   }
 
   void _closeRoundIfDone(Cup c) {
     if (c.ties.any((t) => !t.played)) return;
+    if (c.inGroups) {
+      c.gdone.addAll(c.ties);
+      for (final t in c.ties) {
+        c.log.add('${c.roundName}|${t.text((i) => team(i).name)}');
+      }
+      c.round++;
+      if (c.round < 3) {
+        _draw(c);
+        return;
+      }
+      final q = <int>[];
+      for (final grp in c.groups) {
+        final tb = groupTable(c, grp);
+        q..add(tb[0].id)..add(tb[1].id);
+      }
+      final userWas = c.alive.contains(user.id);
+      c.alive = q;
+      if (userWas) {
+        if (q.contains(user.id)) {
+          user.budget += 3.0;
+          fin.add('prize', 3.0);
+          news.insert(0, '🏅 تأهلت من دور المجموعات في ${c.name} — مكافأة ${money1(3.0)}');
+        } else {
+          news.insert(0, '👋 ودّعت ${c.name} من دور المجموعات');
+        }
+      }
+      _draw(c);
+      return;
+    }
     final winners = [...c.byes, for (final t in c.ties) t.winner];
     for (final t in c.ties) {
       c.log.add('${c.roundName}|${t.text((i) => team(i).name)}');
@@ -1053,7 +1109,7 @@ class GameState extends ChangeNotifier {
       c.done = true;
       c.champion = winners.first;
       if (winners.first == user.id) {
-        final bonus = c.continental ? 10.0 : 3.0;
+        final bonus = c.continental ? 10.0 : (c.key == 'sup' ? 2.0 : 3.0);
         user.budget += bonus;
         fin.add('prize', bonus);
         confidence = min(100, confidence + 10);
@@ -1068,12 +1124,12 @@ class GameState extends ChangeNotifier {
   }
 
   void _advanceCups() {
-    for (final c in [domestic, continental]) {
+    for (final c in [domestic, continental, superCup]) {
       if (c == null) continue;
       while (!c.done && c.dueWeek != null && c.dueWeek! <= week) {
         if (c.userTie(user.id) != null) break;
         for (final t in c.ties.where((t) => !t.played)) {
-          _playAiTie(t);
+          _playAiTie(t, pens: !c.inGroups);
         }
         _closeRoundIfDone(c);
       }
@@ -1083,7 +1139,7 @@ class GameState extends ChangeNotifier {
   /// بطولة تنتظر مباراتك الآن (تُلعب قبل مباراة الدوري)
   Cup? get pendingCup {
     if (seasonOver || fired) return null;
-    for (final c in [domestic, continental]) {
+    for (final c in [domestic, continental, superCup]) {
       if (c != null && !c.done && c.dueWeek != null && c.dueWeek! <= week && c.userTie(user.id) != null) {
         return c;
       }
@@ -1116,7 +1172,11 @@ class GameState extends ChangeNotifier {
       return;
     }
     s.simulateAll();
-    _setTie(t, s.home.goals, s.away.goals);
+    final grp = c.inGroups;
+    _setTie(t, s.home.goals, s.away.goals, pens: !grp);
+    final mine = t.home == user.id ? s.home.goals - s.away.goals : s.away.goals - s.home.goals;
+    final won = grp ? mine > 0 : t.winner == user.id;
+    final lost = grp ? mine < 0 : t.winner != user.id;
     news.insert(0, '🏆 ${c.name} (${c.roundName}): ${t.text((i) => team(i).name)}');
     if (t.home == user.id) {
       final gate = (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (c.continental ? 1.5 : 1.0);
@@ -1131,15 +1191,15 @@ class GameState extends ChangeNotifier {
         news.insert(0, '🚑 أُصيب ${p.name} لمدة ${p.injuredWeeks} أسابيع');
       }
     }
-    if (t.winner == user.id) {
+    if (won) {
       confidence = min(100, confidence + 2);
-    } else {
+    } else if (lost) {
       confidence = max(0, confidence - 2);
       if (confidence <= 0) fired = true;
     }
-    _morale(user, t.winner == user.id ? 3 : -3);
+    _morale(user, won ? 3 : (lost ? -3 : 0));
     for (final o in c.ties.where((x) => !x.played)) {
-      _playAiTie(o);
+      _playAiTie(o, pens: !grp);
     }
     _closeRoundIfDone(c);
     _advanceCups();
@@ -1240,7 +1300,7 @@ class GameState extends ChangeNotifier {
     return c.continental ? 'لم يتأهل' : 'لم يلعب';
   }
 
-  void _recordSeason(int pos) {
+  void _recordSeason(int pos, List<String> awards) {
     final top = [...user.squad]..sort((a, b) => b.goals.compareTo(a.goals));
     history.add({
       's': season,
@@ -1254,6 +1314,7 @@ class GameState extends ChangeNotifier {
       'cup': domestic == null ? '-' : _cupResult(domestic!),
       'con': continental == null ? '-' : _cupResult(continental!),
       'scorer': top.isEmpty || top.first.goals == 0 ? '-' : '${top.first.name} (${top.first.goals})',
+      'awards': awards,
     });
     if (pos == 1) {
       honours.add('🏆 الدوري — الموسم $season');
@@ -1429,5 +1490,88 @@ class GameState extends ChangeNotifier {
     }
     final counter = (dem * 1000).ceil() / 1000;
     return NegoResult('counter', counter, 'اللاعب يطلب راتباً لا يقل عن ${(counter * 1000).round()}K أسبوعياً');
+  }
+
+  // ───────── كأس السوبر والجوائز الفردية ─────────
+  void _setupSuper(int champ, int? cupWinner, int runner) {
+    final other = (cupWinner == null || cupWinner == champ) ? runner : cupWinner;
+    if (other == champ) {
+      superCup = null;
+      return;
+    }
+    superCup = Cup(
+      key: 'sup',
+      name: 'كأس السوبر',
+      continental: false,
+      schedule: [0],
+      size: 2,
+      alive: [champ, other],
+    );
+    _draw(superCup!);
+    news.insert(0, '🏟️ كأس السوبر: ${team(champ).name} × ${team(other).name}');
+  }
+
+  List<String> _seasonAwards(int pos) {
+    final out = <String>[];
+    final tb = table;
+    int rankOf(Team t) => tb.indexOf(t) + 1;
+    final all = <(Player, Team)>[
+      for (final t in teams)
+        for (final p in t.squad)
+          if (p.apps > 0) (p, t)
+    ];
+    if (all.isEmpty) return out;
+    double sc((Player, Team) e) =>
+        e.$1.goals * 2.0 + e.$1.assists * 1.5 + e.$1.overall * 0.25 + (teams.length - rankOf(e.$2)) * 0.2;
+    (Player, Team) best(Iterable<(Player, Team)> l, double Function((Player, Team)) f) =>
+        l.reduce((a, b) => f(b) > f(a) ? b : a);
+
+    void give(String title, (Player, Team) e, String extra) {
+      out.add('$title: ${e.$1.name} (${e.$2.name}) $extra');
+      if (e.$2 == user) {
+        honours.add('$title — ${e.$1.name} (الموسم $season)');
+        fans = min(100, fans + 3);
+        news.insert(0, '🥇 $title لاعبك ${e.$1.name}!');
+      }
+    }
+
+    final bd = best(all, sc);
+    give('🥇 الكرة الذهبية', bd, '— ${bd.$1.goals} هدف');
+    final gb = best(all, (e) => e.$1.goals * 100.0 + e.$1.assists);
+    give('👟 الحذاء الذهبي', gb, '— ${gb.$1.goals} هدف');
+    final pm = best(all, (e) => e.$1.assists * 100.0 + e.$1.goals);
+    give('🎯 أفضل صانع ألعاب', pm, '— ${pm.$1.assists} تمريرة حاسمة');
+    final gks = all.where((e) => e.$1.pos == Pos.gk);
+    if (gks.isNotEmpty) {
+      final gk = best(gks, (e) => e.$1.gk - e.$2.ga * 0.5);
+      give('🧤 أفضل حارس', gk, '— ${gk.$2.ga} هدفاً دخل مرماه');
+    }
+    final young = all.where((e) => e.$1.age <= 21);
+    if (young.isNotEmpty) give('🌟 أفضل لاعب شاب', best(young, sc), '');
+    // مدرب العام: أكبر تفوق على ترتيب القوة
+    final byStrength = [...teams]..sort((a, b) => b.strength.compareTo(a.strength));
+    Team coach = tb.first;
+    var bestGain = -99;
+    for (final t in teams) {
+      final gain = (byStrength.indexOf(t) + 1) - rankOf(t);
+      if (gain > bestGain || (gain == bestGain && rankOf(t) < rankOf(coach))) {
+        bestGain = gain;
+        coach = t;
+      }
+    }
+    out.add('🎖️ مدرب العام: مدرب ${coach.name}');
+    if (coach == user) {
+      honours.add('🎖️ مدرب العام — الموسم $season');
+      confidence = min(100, confidence + 6);
+      news.insert(0, '🎖️ اخترت مدرب العام!');
+    }
+    // التشكيلة المثالية
+    final xi = <String>[];
+    for (final e in const [(Pos.gk, 1), (Pos.def, 4), (Pos.mid, 3), (Pos.att, 3)]) {
+      final l = all.where((x) => x.$1.pos == e.$1).toList()..sort((a, b) => sc(b).compareTo(sc(a)));
+      xi.addAll(l.take(e.$2).map((x) => x.$1.name));
+    }
+    out.add('⭐ التشكيلة المثالية: ${xi.join('، ')}');
+    return out;
   }
 }

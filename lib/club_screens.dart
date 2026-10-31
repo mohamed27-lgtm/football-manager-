@@ -178,6 +178,12 @@ class HistoryScreen extends StatelessWidget {
                       style: const TextStyle(color: kMuted, fontSize: 12)),
                   Text('الكأس: ${h['cup']} • القاري: ${h['con']}', style: const TextStyle(fontSize: 13)),
                   Text('هداف الفريق: ${h['scorer']}', style: const TextStyle(fontSize: 13)),
+                  if ((h['awards'] as List?)?.isNotEmpty ?? false) ...[
+                    const Divider(),
+                    const Text('جوائز الموسم', style: TextStyle(fontWeight: FontWeight.w700, color: kAccent)),
+                    for (final a in (h['awards'] as List))
+                      Padding(padding: const EdgeInsets.only(top: 3), child: Text('$a', style: const TextStyle(fontSize: 12.5, height: 1.4))),
+                  ],
                 ]),
               ),
           ]),
