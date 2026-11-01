@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'data.dart';
 import 'data_screen.dart';
 import 'cups_screen.dart';
 import 'game_state.dart';
