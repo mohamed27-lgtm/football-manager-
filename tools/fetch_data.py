@@ -362,7 +362,12 @@ def main():
 
         fetch_sportsdb.run()
     except Exception as e:  # noqa: BLE001
+        import traceback
+
         print(f"⚠️ تخطّي صور TheSportsDB: {e}")
+        traceback.print_exc()
+        (Path(__file__).resolve().parent.parent / "data" / "sportsdb_status.txt").write_text(
+            f"⚠️ خطأ: {e!r}\n{traceback.format_exc()}", encoding="utf-8")
     phase_packs()
     print(f"انتهى. طلبات API في هذا التشغيل: {api.calls}")
 

@@ -22,6 +22,7 @@ DATA = ROOT / "data"
 LEAGUES_DIR = DATA / "leagues"
 IMG = DATA / "images" / "players"
 MAP_FILE = DATA / "sportsdb_photos.json"
+STATUS_FILE = DATA / "sportsdb_status.txt"
 
 KEY = os.environ.get("SDB_KEY", "123").strip() or "123"
 BASE = f"https://www.thesportsdb.com/api/v1/json/{KEY}"
@@ -100,7 +101,13 @@ def save_image(url, dest):
     im.save(dest, "PNG", optimize=True)
 
 
+def status(msg):
+    print(msg)
+    STATUS_FILE.write_text(time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()) + "\n" + msg + "\n", encoding="utf-8")
+
+
 def run():
+    status("بدأ")
     done = {}
     if MAP_FILE.exists():
         try:
@@ -117,7 +124,7 @@ def run():
                     if pid in done:
                         continue
                     if searches >= MAX_SEARCH:
-                        print(f"⏸ بلغ حد البحث ({MAX_SEARCH}) — يكمل لاحقاً")
+                        status(f"⏸ بلغ حد البحث ({MAX_SEARCH})")
                         return
                     name = p["n"]
                     toks = norm(name)
@@ -143,7 +150,7 @@ def run():
                         except Exception:  # noqa: BLE001
                             break
                     else:
-                        print("⛔ حد المعدل مستمر — يكمل لاحقاً")
+                        status("⛔ حد المعدل مستمر — يكمل لاحقاً")
                         return
                     searches += 1
                     time.sleep(GAP)
@@ -164,7 +171,7 @@ def run():
                         print(f"   … {searches} بحثاً، {replaced} صورة محدّثة")
     finally:
         MAP_FILE.write_text(json.dumps(done), encoding="utf-8")
-        print(f"📷 TheSportsDB: {searches} بحثاً، {replaced} صورة استُبدلت في هذا التشغيل")
+        status(f"📷 TheSportsDB: {searches} بحثاً، {replaced} صورة استُبدلت، المعالَج الكلي {len(done)}")
 
 
 if __name__ == "__main__":
