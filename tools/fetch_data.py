@@ -357,6 +357,12 @@ def main():
     api = Api()
     phase_data(api)
     phase_images()
+    try:
+        import fetch_sportsdb
+
+        fetch_sportsdb.run()
+    except Exception as e:  # noqa: BLE001
+        print(f"⚠️ تخطّي صور TheSportsDB: {e}")
     phase_packs()
     print(f"انتهى. طلبات API في هذا التشغيل: {api.calls}")
 
