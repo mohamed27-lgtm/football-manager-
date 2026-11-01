@@ -28,6 +28,8 @@ KEY = os.environ.get("SDB_KEY", "123").strip() or "123"
 BASE = f"https://www.thesportsdb.com/api/v1/json/{KEY}"
 MAX_SEARCH = int(os.environ.get("SDB_MAX") or 1200)
 GAP = 3.0
+BUDGET = float(os.environ.get('SDB_BUDGET_MIN') or 90) * 60
+T0 = time.time()
 UA = {"User-Agent": "Mozilla/5.0 (football-manager importer)"}
 
 
@@ -123,6 +125,9 @@ def run():
                     pid = str(p["id"])
                     if pid in done:
                         continue
+                    if time.time() - T0 > BUDGET:
+                        status('⏸ انتهت ميزانية الوقت — يكمل لاحقاً')
+                        return
                     if searches >= MAX_SEARCH:
                         status(f"⏸ بلغ حد البحث ({MAX_SEARCH})")
                         return
