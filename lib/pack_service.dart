@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'api_football.dart';
 import 'league_store.dart';
 
@@ -43,15 +42,8 @@ class PackInfo {
 }
 
 class PackService {
-  static Future<String> getBase() async {
-    final p = await SharedPreferences.getInstance();
-    return p.getString('pack_base') ?? defaultPackBase;
-  }
-
-  static Future<void> setBase(String s) async {
-    final p = await SharedPreferences.getInstance();
-    await p.setString('pack_base', s.trim().replaceAll(RegExp(r'/+$'), ''));
-  }
+  /// رابط الحزم ثابت داخل التطبيق: المستخدم لا يرى ولا يكتب أي رابط
+  static Future<String> getBase() async => defaultPackBase;
 
   static Future<List<PackInfo>> manifest(String base) async {
     final http.Response r;
@@ -63,8 +55,7 @@ class PackService {
       throw ApiException('تعذّر الاتصال بالإنترنت');
     }
     if (r.statusCode != 200) {
-      throw ApiException(
-          'تعذّر جلب قائمة الحزم (${r.statusCode}). تأكد من صحة الرابط ومن أن المستودع عام وأن الـ workflow أنهى أول استيراد.');
+      throw ApiException('الدوريات غير متاحة حالياً (${r.statusCode}). حاول لاحقاً.');
     }
     final j = jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
     return [

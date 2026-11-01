@@ -16,7 +16,7 @@ class PacksScreen extends StatefulWidget {
 }
 
 class _PacksScreenState extends State<PacksScreen> {
-  final _baseCtl = TextEditingController();
+  String _base = '';
   List<PackInfo>? packs;
   final Set<String> have = {};
   bool loading = false;
@@ -30,28 +30,17 @@ class _PacksScreenState extends State<PacksScreen> {
     _init();
   }
 
-  @override
-  void dispose() {
-    _baseCtl.dispose();
-    super.dispose();
-  }
-
   void _set(VoidCallback f) {
     if (mounted) setState(f);
   }
 
   Future<void> _init() async {
-    _baseCtl.text = await PackService.getBase();
+    _base = await PackService.getBase();
     await _refresh();
   }
 
   Future<void> _refresh() async {
-    final base = _baseCtl.text.trim();
-    if (base.contains('OWNER/REPO')) {
-      _set(() => error = 'اضبط رابط المستودع أولاً (https://github.com/اسمك/المستودع/releases/download/data-latest)');
-      return;
-    }
-    await PackService.setBase(base);
+    final base = _base;
     _set(() {
       loading = true;
       error = null;
@@ -84,7 +73,7 @@ class _PacksScreenState extends State<PacksScreen> {
       error = null;
     });
     try {
-      final d = await PackService.download(_baseCtl.text.trim(), p, (v) => _set(() => progress = v));
+      final d = await PackService.download(_base, p, (v) => _set(() => progress = v));
       _set(() => have.add('${p.id}_${p.season}'));
       if (mounted) _pick(d);
     } on ApiException catch (e) {
@@ -112,33 +101,33 @@ class _PacksScreenState extends State<PacksScreen> {
   Widget build(BuildContext context) {
     final busy = downloadingId != null;
     return Scaffold(
-      appBar: AppBar(title: const Text('📦 حزم الدوريات'), backgroundColor: kBg),
+      appBar: AppBar(
+        title: const Text('⬇️ تنزيل الدوريات'),
+        backgroundColor: kBg,
+        actions: [
+          IconButton(
+            tooltip: 'تحديث القائمة',
+            onPressed: busy || loading ? null : _refresh,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ListView(padding: const EdgeInsets.all(14), children: [
           const Panel(
             child: Text(
-              'تنزّل كل حزمة مرة واحدة (بيانات الدوري + شعارات الأندية + صور اللاعبين) '
-              'فتعمل اللعبة بعدها دون إنترنت. يتحدّث المستودع تلقائياً مع اكتمال الاستيراد.',
+              'اضغط «تنزيل» على أي دوري: يُحمَّل مرة واحدة بأنديته الحقيقية '
+              'وصور لاعبيه وشعاراته، ثم تعمل اللعبة بدون إنترنت. يُفضَّل استخدام الواي فاي.',
               style: TextStyle(fontSize: 12.5, color: kMuted, height: 1.5),
             ),
-          ),
-          TextField(
-            controller: _baseCtl,
-            enabled: !busy,
-            textDirection: TextDirection.ltr,
-            decoration: const InputDecoration(labelText: 'رابط الحزم', border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 8),
-          FilledButton.tonalIcon(
-            onPressed: busy || loading ? null : _refresh,
-            icon: const Icon(Icons.refresh),
-            label: Text(loading ? 'جارٍ التحديث…' : 'تحديث القائمة'),
           ),
           const SizedBox(height: 10),
           if (error != null)
             Panel(color: const Color(0xFF2A1414), child: Text(error!, style: const TextStyle(color: Color(0xFFFF8A65)))),
+          if (loading && packs == null)
+            const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator())),
           if (packs != null && packs!.isEmpty)
-            const Panel(child: Text('لا توجد حزم جاهزة بعد. شغّل workflow الاستيراد في GitHub وانتظر اكتمال أول دوري.', style: TextStyle(color: kMuted))),
+            const Panel(child: Text('لا توجد دوريات متاحة للتنزيل بعد، حاول لاحقاً.', style: TextStyle(color: kMuted))),
           for (final p in packs ?? const <PackInfo>[])
             Panel(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
