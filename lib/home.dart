@@ -6,7 +6,7 @@ import 'match_screen.dart';
 import 'models.dart';
 import 'finance_screen.dart';
 import 'matches_screen.dart';
-import 'packs_screen.dart';
+import 'leagues_screen.dart';
 import 'more_screen.dart';
 import 'squad.dart';
 import 'team_tab.dart';
@@ -83,7 +83,7 @@ class StartScreen extends StatelessWidget {
   }
 
   void _newCareer(BuildContext context) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => PacksScreen(onStart: onStartReal)),
+        MaterialPageRoute(builder: (_) => LeaguesScreen(onStart: onStartReal)),
       );
 }
 

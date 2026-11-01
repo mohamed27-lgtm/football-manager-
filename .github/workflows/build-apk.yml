@@ -6,6 +6,7 @@ on:
     paths:
       - 'lib/**'
       - 'pubspec.yaml'
+      - 'tools/make_assets.py'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 
@@ -48,6 +49,9 @@ jobs:
           s = re.sub(r'android:label="[^"]*"', 'android:label="مدرب كرة القدم"', s, count=1)
           p.write_text(s, encoding='utf-8')
           EOF
+
+      - name: Bundle league data into the app
+        run: python3 tools/make_assets.py
 
       - run: flutter pub get
 

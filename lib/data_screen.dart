@@ -4,7 +4,6 @@ import 'api_football.dart';
 import 'importer.dart';
 import 'league_store.dart';
 import 'models.dart';
-import 'packs_screen.dart';
 import 'widgets.dart';
 
 typedef StartReal = void Function(List<Team> teams, int userId, String leagueName);
@@ -182,25 +181,6 @@ class _DataScreenState extends State<DataScreen> {
       appBar: AppBar(title: const Text('🌍 دوريات حقيقية'), backgroundColor: kBg),
       body: SafeArea(
         child: ListView(padding: const EdgeInsets.all(14), children: [
-          Panel(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('الطريقة الأسهل: حزم جاهزة', style: TextStyle(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 4),
-              const Text('بيانات حقيقية وصور اللاعبين والشعارات جاهزة في مستودعك، تنزّلها بضغطة واحدة.',
-                  style: TextStyle(color: kMuted, fontSize: 12.5)),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => PacksScreen(onStart: widget.onStart)),
-                  ),
-                  icon: const Icon(Icons.download),
-                  label: const Text('📦 تنزيل الحزم الجاهزة'),
-                ),
-              ),
-            ]),
-          ),
           const Panel(
             child: Text(
               'أو (متقدم) حمّل مباشرة بمفتاحك الخاص: تُحمَّل البيانات مرة واحدة ثم تُخزَّن على الهاتف وتعمل دون إنترنت.\n'

@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: import-data
@@ -63,3 +64,9 @@ jobs:
           else
             echo "no packs yet"
           fi
+
+      - name: Rebuild the app so it bundles the new leagues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        continue-on-error: true
+        run: gh workflow run build-apk.yml --ref "${GITHUB_REF_NAME}"
