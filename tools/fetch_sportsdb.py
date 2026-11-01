@@ -26,7 +26,7 @@ MAP_FILE = DATA / "sportsdb_photos.json"
 KEY = os.environ.get("SDB_KEY", "123").strip() or "123"
 BASE = f"https://www.thesportsdb.com/api/v1/json/{KEY}"
 MAX_SEARCH = int(os.environ.get("SDB_MAX") or 1200)
-GAP = 2.3
+GAP = 3.0
 UA = {"User-Agent": "Mozilla/5.0 (football-manager importer)"}
 
 
@@ -107,7 +107,7 @@ def run():
             done = json.loads(MAP_FILE.read_text(encoding="utf-8"))
         except Exception:  # noqa: BLE001
             done = {}
-    searches = replaced = 0
+    searches = replaced = blocked = 0
     try:
         for f in sorted(LEAGUES_DIR.glob("*.json")):
             d = json.loads(f.read_text(encoding="utf-8"))
@@ -126,16 +126,25 @@ def run():
                         continue
                     query = " ".join(toks) if len(toks[0]) > 2 else toks[-1]
                     url = f"{BASE}/searchplayers.php?p={urllib.parse.quote(query)}"
-                    try:
-                        res = get_json(url).get("player")
-                    except urllib.error.HTTPError as e:
-                        if e.code == 429:
-                            print("⛔ حد المعدل (429) — يكمل لاحقاً")
-                            return
-                        done[pid] = None
-                        res = None
-                    except Exception:  # noqa: BLE001
-                        res = None
+                    res = None
+                    for attempt in range(4):
+                        try:
+                            res = get_json(url).get("player")
+                            blocked = 0
+                            break
+                        except urllib.error.HTTPError as e:
+                            if e.code == 429:
+                                blocked += 1
+                                print(f"   ⏳ 429 — انتظار 70ث (محاولة {attempt + 1})")
+                                time.sleep(70)
+                                continue
+                            done[pid] = None
+                            break
+                        except Exception:  # noqa: BLE001
+                            break
+                    else:
+                        print("⛔ حد المعدل مستمر — يكمل لاحقاً")
+                        return
                     searches += 1
                     time.sleep(GAP)
                     m = best_match(name, t["name"], res)
