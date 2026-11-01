@@ -15,7 +15,6 @@ import 'facilities_screen.dart';
 import 'widgets.dart';
 
 class StartScreen extends StatelessWidget {
-  final void Function(int teamId) onStart;
   final bool hasSave;
   final VoidCallback onContinue;
   final StartReal onStartReal;
@@ -23,7 +22,6 @@ class StartScreen extends StatelessWidget {
   final VoidCallback onLogout;
   const StartScreen({
     super.key,
-    required this.onStart,
     required this.hasSave,
     required this.onContinue,
     required this.onStartReal,
@@ -79,27 +77,6 @@ class StartScreen extends StatelessWidget {
             ),
             icon: const Icon(Icons.key),
             label: const Text('استيراد مباشر بمفتاح API'),
-          ),
-          const SizedBox(height: 16),
-          Theme(
-            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-            child: ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              title: const Text('أندية تجريبية (بدون تنزيل)', style: TextStyle(color: kMuted, fontSize: 13)),
-              children: [
-                for (var i = 0; i < clubTemplates.length; i++)
-                  Panel(
-                    padding: EdgeInsets.zero,
-                    child: ListTile(
-                      onTap: () => onStart(i),
-                      leading: CircleAvatar(backgroundColor: teamColor(i), radius: 16),
-                      title: Text(clubTemplates[i].$1, style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: Text('${'★' * clubTemplates[i].$2}  •  ميزانية ${12 + clubTemplates[i].$2 * 8}M'),
-                      trailing: const Icon(Icons.chevron_left),
-                    ),
-                  ),
-              ],
-            ),
           ),
         ]),
       ),

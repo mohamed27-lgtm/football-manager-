@@ -1,20 +1,6 @@
 import 'dart:math';
 import 'models.dart';
 
-const clubTemplates = <(String, int)>[
-  ('نجوم الصحراء', 5),
-  ('أسود الجبل', 5),
-  ('فرسان الشرق', 4),
-  ('صقور الخليج', 4),
-  ('نسور الأطلس', 4),
-  ('ذئاب الوادي', 3),
-  ('رياح الغرب', 3),
-  ('أمواج الساحل', 3),
-  ('الجوارح', 3),
-  ('شهب الليل', 2),
-  ('قلعة الشمال', 2),
-  ('أبطال المدينة', 2),
-];
 
 const _first = [
   'كريم', 'يوسف', 'أمين', 'سمير', 'هشام', 'طارق', 'ياسين', 'عمر', 'زياد',
@@ -98,10 +84,6 @@ Team createTeam(Random rng, int id, String name, int rep) {
   return t;
 }
 
-List<Team> createLeague(Random rng) => [
-      for (var i = 0; i < clubTemplates.length; i++)
-        createTeam(rng, i, clubTemplates[i].$1, clubTemplates[i].$2),
-    ];
 
 List<Player> generateMarket(Random rng) {
   const counts = {Pos.gk: 3, Pos.def: 6, Pos.mid: 6, Pos.att: 5};

@@ -101,11 +101,6 @@ class _ManagerAppState extends State<ManagerApp> {
           g.save();
           setState(() => gs = g);
         },
-        onStart: (id) {
-          final g = GameState(id);
-          g.save();
-          setState(() => gs = g);
-        },
       );
     } else {
       home = HomeShell(gs: gs!, onRestart: _menu, onLogout: _logout);

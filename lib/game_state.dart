@@ -73,18 +73,6 @@ class GameState extends ChangeNotifier {
   Set<Player> _suspBefore = {};
   Set<Player> _injBefore = {};
 
-  GameState(int userTeamId) {
-    teams = createLeague(rng);
-    user = teams.firstWhere((t) => t.id == userTeamId);
-    _buildFixtures();
-    _setupCups(null);
-    fans = 20.0 + user.reputation * 12;
-    _genSponsorOffers();
-    market = generateMarket(rng);
-    _setObjective();
-    news.add('مرحباً بك مدرباً لنادي ${user.name}. هدف الإدارة: المركز $objective أو أفضل.');
-  }
-
   GameState.fromData(List<Team> t, int userId, this.leagueName) {
     teams = t;
     user = teams.firstWhere((x) => x.id == userId);
