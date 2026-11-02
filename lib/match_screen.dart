@@ -216,27 +216,39 @@ class _MatchScreenState extends State<MatchScreen> {
 
   Widget _scoreboard() {
     final s = sim;
+    Widget side(Team t, {required bool home}) => Expanded(
+          child: Column(children: [
+            teamBadge(t, size: 40),
+            const SizedBox(height: 6),
+            Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+            Text(home ? 'المضيف' : 'الضيف', style: const TextStyle(color: kMuted, fontSize: 10)),
+          ]),
+        );
+    final hc = teamColor(s.home.team.id), ac = teamColor(s.away.team.id);
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-      decoration: const BoxDecoration(color: kCard, border: Border(bottom: BorderSide(color: kLine))),
-      child: Row(children: [
-        Expanded(
-          child: Row(children: [
-            teamBadge(s.home.team, size: 22),
-            const SizedBox(width: 6),
-            Flexible(child: Text(s.home.team.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [hc.withOpacity(0.35), kCard, ac.withOpacity(0.35)]),
+        border: const Border(bottom: BorderSide(color: kLine)),
+      ),
+      child: Column(children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          side(s.home.team, home: true),
+          Column(children: [
+            Text('${s.home.goals} - ${s.away.goals}', style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: 1)),
+            Container(
+              margin: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              decoration: BoxDecoration(color: s.finished ? kCard2 : const Color(0x3300E676), borderRadius: BorderRadius.circular(12)),
+              child: Text(s.finished ? 'انتهت' : "${s.minute}'", style: TextStyle(color: s.finished ? kMuted : kAccent, fontSize: 13, fontWeight: FontWeight.w900)),
+            ),
           ]),
-        ),
-        Column(children: [
-          Text('${s.home.goals} - ${s.away.goals}', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900)),
-          Text(s.finished ? 'انتهت' : "${s.minute}'", style: const TextStyle(color: kAccent, fontSize: 12, fontWeight: FontWeight.w700)),
+          side(s.away.team, home: false),
         ]),
-        Expanded(
-          child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            Flexible(child: Text(s.away.team.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))),
-            const SizedBox(width: 6),
-            teamBadge(s.away.team, size: 22),
-          ]),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(value: (s.minute / 90).clamp(0.0, 1.0).toDouble(), minHeight: 3, color: kAccent, backgroundColor: kCard2),
         ),
       ]),
     );

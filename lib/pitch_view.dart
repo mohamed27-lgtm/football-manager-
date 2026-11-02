@@ -70,6 +70,28 @@ class LivePitch extends StatelessWidget {
 
   Widget _dot(Slot sl, Color color, bool carrier, double r) {
     final isGk = sl.pos == Pos.gk;
+    final nm = sl.p.name.split(' ').last;
+    return OverflowBox(
+      maxWidth: 80,
+      maxHeight: 2 * r + 16,
+      alignment: Alignment.topCenter,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        _dotCircle(sl, color, carrier, r, isGk),
+        SizedBox(
+          width: 70,
+          child: Text(
+            nm,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: Colors.white, shadows: [Shadow(color: Colors.black, blurRadius: 3)]),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _dotCircle(Slot sl, Color color, bool carrier, double r, bool isGk) {
     return Container(
       width: 2 * r,
       height: 2 * r,

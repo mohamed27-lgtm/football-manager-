@@ -45,11 +45,27 @@ class PlayerTile extends StatelessWidget {
             ]),
           ),
           trailing ??
-              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text('لياقة ${p.fitness.round()}%',
-                    style: TextStyle(fontSize: 12, color: p.fitness < 70 ? const Color(0xFFFF8A65) : kMuted)),
-                Text(p.morale >= 75 ? '😄' : p.morale >= 50 ? '🙂' : '😟'),
-              ]),
+              SizedBox(
+                width: 64,
+                child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text('${p.fitness.round()}%',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: p.fitness < 70 ? const Color(0xFFFF8A65) : kMuted)),
+                    const SizedBox(width: 4),
+                    Text(p.morale >= 75 ? '😄' : p.morale >= 50 ? '🙂' : '😟', style: const TextStyle(fontSize: 14)),
+                  ]),
+                  const SizedBox(height: 5),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: (p.fitness / 100).clamp(0.0, 1.0).toDouble(),
+                      minHeight: 4,
+                      color: p.fitness < 60 ? const Color(0xFFFF5252) : (p.fitness < 80 ? kGold : kAccent),
+                      backgroundColor: kCard2,
+                    ),
+                  ),
+                ]),
+              ),
         ]),
       ),
     );
