@@ -111,12 +111,54 @@ class _ManagerAppState extends State<ManagerApp> {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
+        fontFamily: 'Tajawal',
         colorScheme: scheme,
         scaffoldBackgroundColor: kBg,
-        navigationBarTheme: const NavigationBarThemeData(
+        appBarTheme: const AppBarTheme(
+          backgroundColor: kBg,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          titleTextStyle: TextStyle(fontFamily: 'Tajawal', fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white),
+        ),
+        cardTheme: CardTheme(color: kCard, surfaceTintColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+        bottomSheetTheme: const BottomSheetThemeData(
           backgroundColor: kCard,
-          indicatorColor: Color(0x3300E676),
-          labelTextStyle: WidgetStatePropertyAll(TextStyle(fontSize: 11)),
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+            textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            side: const BorderSide(color: kLine),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        chipTheme: ChipThemeData(
+          backgroundColor: kCard2,
+          side: const BorderSide(color: kLine),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        dividerTheme: const DividerThemeData(color: kLine, space: 1),
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: kCard,
+          surfaceTintColor: Colors.transparent,
+          height: 68,
+          indicatorColor: const Color(0x3300E676),
+          labelTextStyle: WidgetStateProperty.resolveWith((st) => TextStyle(
+                fontFamily: 'Tajawal',
+                fontSize: 11,
+                fontWeight: st.contains(WidgetState.selected) ? FontWeight.w800 : FontWeight.w500,
+                color: st.contains(WidgetState.selected) ? kAccent : kMuted,
+              )),
+          iconTheme: WidgetStateProperty.resolveWith((st) => IconThemeData(color: st.contains(WidgetState.selected) ? kAccent : kMuted)),
         ),
       ),
       builder: (context, child) => ListenableBuilder(

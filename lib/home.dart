@@ -9,6 +9,8 @@ import 'matches_screen.dart';
 import 'leagues_screen.dart';
 import 'more_screen.dart';
 import 'squad.dart';
+import 'business_screens.dart';
+import 'club_screens.dart';
 import 'team_tab.dart';
 import 'facilities_screen.dart';
 import 'widgets.dart';
@@ -115,15 +117,29 @@ class _HomeShellState extends State<HomeShell> {
         return Scaffold(
           appBar: AppBar(
             backgroundColor: kBg,
-            title: Text(gs.user.name),
+            titleSpacing: 14,
+            title: Row(children: [
+              teamBadge(gs.user, size: 26),
+              const SizedBox(width: 10),
+              Expanded(child: Text(gs.user.name, overflow: TextOverflow.ellipsis)),
+            ]),
             actions: [
-              Center(
-                child: Text('💰 ${money(gs.user.budget)}', style: const TextStyle(fontWeight: FontWeight.w700)),
-              ),
-              IconButton(
-                tooltip: 'المالية',
-                icon: const Icon(Icons.account_balance_wallet_outlined),
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs))),
+              GestureDetector(
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs))),
+                child: Container(
+                  margin: const EdgeInsets.only(left: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: kCard2,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: kLine),
+                  ),
+                  child: Row(children: [
+                    const Text('💰 ', style: TextStyle(fontSize: 13)),
+                    Text(money(gs.user.budget),
+                        style: TextStyle(fontWeight: FontWeight.w900, color: gs.user.budget < 0 ? const Color(0xFFFF7043) : kAccent)),
+                  ]),
+                ),
               ),
             ],
           ),
@@ -151,41 +167,144 @@ class DashboardTab extends StatelessWidget {
   final void Function(int) onNavigate;
   const DashboardTab({super.key, required this.gs, required this.onRestart, required this.onNavigate});
 
-  Widget _kv(String k, String v, {Color? color}) => Column(children: [
-        Text(v, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: color)),
-        const SizedBox(height: 2),
-        Text(k, style: const TextStyle(color: kMuted, fontSize: 11)),
-      ]);
+  void _push(BuildContext c, Widget w) => Navigator.of(c).push(MaterialPageRoute(builder: (_) => w));
 
-  Widget _header() {
+  Widget _hero() {
     final u = gs.user;
-    return Panel(
+    final c = teamColor(u.id);
+    final dark = HSLColor.fromColor(c).withLightness(0.16).toColor();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, colors: [c.withOpacity(0.85), dark]),
+        boxShadow: [BoxShadow(color: c.withOpacity(0.25), blurRadius: 20, offset: const Offset(0, 8))],
+      ),
       child: Row(children: [
-        teamBadge(u, size: 56),
+        teamBadge(u, size: 64),
         const SizedBox(width: 14),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(u.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 3),
-            Text('${gs.leagueName} • الموسم ${gs.season}', style: const TextStyle(color: kMuted, fontSize: 13)),
+            Text(u.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 4),
+            Text('${gs.leagueName} • الموسم ${gs.season}', style: const TextStyle(color: Colors.white70, fontSize: 13)),
             Text('الأسبوع ${(gs.week + 1).clamp(1, gs.rounds.length)} من ${gs.rounds.length}${u.venue != null ? ' • ${u.venue}' : ''}',
-                style: const TextStyle(color: kMuted, fontSize: 12)),
+                style: const TextStyle(color: Colors.white60, fontSize: 12)),
+          ]),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(16)),
+          child: Column(children: [
+            Text('${gs.position}', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: kGold)),
+            const Text('المركز', style: TextStyle(fontSize: 11, color: Colors.white70)),
           ]),
         ),
       ]),
     );
   }
 
-  Widget _shortcuts(BuildContext context) {
-    Widget chip(IconData i, String t, VoidCallback f) => ActionChip(avatar: Icon(i, size: 18), label: Text(t), onPressed: f);
-    void push(Widget w) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => w));
+  Widget _tile(IconData i, String label, String value, Color color) => Expanded(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+          decoration: BoxDecoration(
+            color: kCard,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: kLine),
+          ),
+          child: Column(children: [
+            Icon(i, color: color, size: 20),
+            const SizedBox(height: 6),
+            FittedBox(child: Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color))),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(color: kMuted, fontSize: 11)),
+          ]),
+        ),
+      );
+
+  Widget _stats() {
+    final u = gs.user;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(children: [
+        _tile(Icons.account_balance_wallet_outlined, 'الرصيد', money(u.budget), u.budget < 0 ? const Color(0xFFFF7043) : kAccent),
+        _tile(Icons.diamond_outlined, 'قيمة التشكيلة', money(gs.squadValue), kBlue),
+        _tile(Icons.flag_outlined, 'النقاط', '${u.points}', kGold),
+        _tile(Icons.trending_up, 'فارق الأهداف', '${u.gd >= 0 ? '+' : ''}${u.gd}', Colors.white),
+      ]),
+    );
+  }
+
+  Widget _actions(BuildContext context) {
+    Widget a(IconData i, String t, Color c, VoidCallback f) => Expanded(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: f,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [c.withOpacity(0.35), c.withOpacity(0.12)]),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: c.withOpacity(0.5)),
+                  ),
+                  child: Icon(i, color: c, size: 26),
+                ),
+                const SizedBox(height: 6),
+                Text(t, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+              ]),
+            ),
+          ),
+        );
     return Panel(
-      child: Wrap(spacing: 8, runSpacing: 4, children: [
-        chip(Icons.groups_outlined, 'التشكيلة', () => onNavigate(1)),
-        chip(Icons.swap_horiz, 'السوق', () => onNavigate(2)),
-        chip(Icons.sports_soccer_outlined, 'المباريات', () => onNavigate(3)),
-        chip(Icons.account_balance_wallet_outlined, 'المالية', () => push(FinanceScreen(gs: gs))),
-        chip(Icons.stadium_outlined, 'المنشآت', () => push(FacilitiesScreen(gs: gs))),
+      child: Column(children: [
+        Row(children: [
+          a(Icons.groups_outlined, 'التشكيلة', kAccent, () => onNavigate(1)),
+          a(Icons.swap_horiz, 'السوق', kBlue, () => onNavigate(2)),
+          a(Icons.sports_soccer_outlined, 'المباريات', kGold, () => onNavigate(3)),
+          a(Icons.account_balance_wallet_outlined, 'المالية', const Color(0xFFFF8A65), () => _push(context, FinanceScreen(gs: gs))),
+        ]),
+        Row(children: [
+          a(Icons.stadium_outlined, 'المنشآت', const Color(0xFF26C6DA), () => _push(context, FacilitiesScreen(gs: gs))),
+          a(Icons.military_tech_outlined, 'البطولات', const Color(0xFFBA68C8), () => _push(context, CupsScreen(gs: gs))),
+          a(Icons.handshake_outlined, 'الرعاة', kGold, () => _push(context, SponsorsScreen(gs: gs))),
+          a(Icons.badge_outlined, 'الطاقم', kBlue, () => _push(context, StaffScreen(gs: gs))),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _miniTable() {
+    final t = gs.table;
+    final i = t.indexOf(gs.user);
+    var from = (i - 2).clamp(0, t.length - 1);
+    final to = (from + 5).clamp(0, t.length);
+    from = (to - 5).clamp(0, t.length);
+    return Panel(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Column(children: [
+        for (var k = from; k < to; k++)
+          Container(
+            decoration: BoxDecoration(
+              color: t[k] == gs.user ? const Color(0x2200E676) : null,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 6),
+            child: Row(children: [
+              SizedBox(width: 26, child: Text('${k + 1}', style: TextStyle(fontWeight: FontWeight.w800, color: k < 4 ? kAccent : (k >= t.length - 3 ? const Color(0xFFFF5252) : kMuted)))),
+              teamBadge(t[k], size: 22),
+              const SizedBox(width: 10),
+              Expanded(child: Text(t[k].name, style: TextStyle(fontWeight: t[k] == gs.user ? FontWeight.w800 : FontWeight.w600))),
+              Text('${t[k].played} لعب', style: const TextStyle(color: kMuted, fontSize: 11)),
+              const SizedBox(width: 12),
+              SizedBox(width: 30, child: Text('${t[k].points}', textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w900))),
+            ]),
+          ),
       ]),
     );
   }
@@ -196,7 +315,7 @@ class DashboardTab extends StatelessWidget {
     final exp = gs.expiring;
     final showExp = exp.isNotEmpty && !gs.seasonOver && !gs.fired && gs.rounds.length - gs.week <= 8;
     return ListView(padding: const EdgeInsets.all(14), children: [
-      _header(),
+      _hero(),
       if (gs.fired)
         Panel(
           color: const Color(0xFF2A1414),
@@ -205,12 +324,12 @@ class DashboardTab extends StatelessWidget {
             const SizedBox(height: 8),
             const Text('فقدت ثقة مجلس الإدارة.', style: TextStyle(color: kMuted)),
             const SizedBox(height: 12),
-            FilledButton(
+            GradientButton(
+              label: 'ابدأ مسيرة جديدة',
               onPressed: () async {
                 await GameState.clearSave();
                 onRestart();
               },
-              child: const Text('ابدأ مسيرة جديدة'),
             ),
           ]),
         )
@@ -221,30 +340,27 @@ class DashboardTab extends StatelessWidget {
             const SizedBox(height: 8),
             Text('أنهيت الدوري في المركز ${gs.position} (الهدف: ${gs.objective})', style: const TextStyle(color: kMuted)),
             const SizedBox(height: 12),
-            FilledButton(onPressed: gs.startNewSeason, child: const Text('ابدأ موسماً جديداً')),
+            GradientButton(label: 'ابدأ موسماً جديداً', icon: Icons.play_arrow, onPressed: gs.startNewSeason),
           ]),
         )
       else
         _nextMatch(context),
-      Panel(
-        child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-          _kv('الرصيد', money(u.budget), color: u.budget < 0 ? const Color(0xFFFF7043) : kAccent),
-          _kv('قيمة التشكيلة', money(gs.squadValue)),
-          _kv('المركز', '${gs.position}'),
-          _kv('النقاط', '${u.points}'),
-        ]),
-      ),
-      _shortcuts(context),
+      _stats(),
+      _actions(context),
+      sectionTitle('الترتيب', trailing: TextButton(onPressed: () => onNavigate(3), child: const Text('الجدول كاملاً'))),
+      _miniTable(),
       Panel(
         child: Column(children: [
           Row(children: [
-            const Text('ثقة الإدارة'),
+            const Icon(Icons.verified_user_outlined, size: 18, color: kMuted),
+            const SizedBox(width: 8),
+            const Text('ثقة الإدارة', style: TextStyle(fontWeight: FontWeight.w700)),
             const Spacer(),
-            Text('${gs.confidence.round()}%', style: const TextStyle(fontWeight: FontWeight.w800)),
+            Text('${gs.confidence.round()}%', style: TextStyle(fontWeight: FontWeight.w900, color: ratingColor(gs.confidence))),
           ]),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: gs.confidence / 100,
               minHeight: 10,
@@ -253,12 +369,15 @@ class DashboardTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Text('🎯 هدف الموسم: المركز ${gs.objective} أو أفضل',
-              style: TextStyle(color: gs.position <= gs.objective ? kAccent : const Color(0xFFFFCA28), fontSize: 13)),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text('🎯 هدف الموسم: المركز ${gs.objective} أو أفضل',
+                style: TextStyle(color: gs.position <= gs.objective ? kAccent : kGold, fontSize: 13, fontWeight: FontWeight.w600)),
+          ),
         ]),
       ),
       if (showExp) ...[
-        sectionTitle('⏳ عقود تنتهي هذا الموسم'),
+        sectionTitle('عقود تنتهي هذا الموسم'),
         Panel(
           child: Column(children: [
             for (final p in exp)
@@ -294,9 +413,17 @@ class DashboardTab extends StatelessWidget {
       sectionTitle('آخر الأخبار'),
       Panel(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          for (final n in gs.news.take(6)) Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(n)),
+          for (final n in gs.news.take(6))
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Container(width: 6, height: 6, margin: const EdgeInsets.only(top: 7, left: 8), decoration: const BoxDecoration(color: kAccent, shape: BoxShape.circle)),
+                Expanded(child: Text(n, style: const TextStyle(height: 1.4))),
+              ]),
+            ),
         ]),
       ),
+      SizedBox(height: u.budget < 0 ? 0 : 6),
     ]);
   }
 
@@ -309,39 +436,66 @@ class DashboardTab extends StatelessWidget {
     final opp = gs.team(isHome ? f.away : f.home);
     final lineupFit = u.lineup.isEmpty ? 100 : u.lineup.fold(0.0, (a, p) => a + p.fitness) / u.lineup.length;
     final absent = u.squad.where((p) => !p.available).length;
+    final my = u.strength, op = opp.strength;
+    final share = (my / (my + op)).clamp(0.2, 0.8).toDouble();
     return Panel(
+      padding: const EdgeInsets.all(16),
       child: Column(children: [
-        Text('الجولة ${gs.week + 1} من ${gs.rounds.length} • ${isHome ? 'على أرضك' : 'خارج أرضك'}',
-            style: const TextStyle(color: kMuted, fontSize: 13)),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(child: _teamBox(u)),
-          const Text('VS', style: TextStyle(fontWeight: FontWeight.w900, color: kMuted)),
-          Expanded(child: _teamBox(opp)),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(20)),
+          child: Text('الجولة ${gs.week + 1} من ${gs.rounds.length} • ${isHome ? 'على أرضك' : 'خارج أرضك'}',
+              style: const TextStyle(color: kMuted, fontSize: 12, fontWeight: FontWeight.w600)),
+        ),
+        const SizedBox(height: 16),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: _teamBox(isHome ? u : opp, strong: isHome)),
+          const Padding(
+            padding: EdgeInsets.only(top: 24),
+            child: Text('VS', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kGold)),
+          ),
+          Expanded(child: _teamBox(isHome ? opp : u, strong: !isHome)),
         ]),
-        const SizedBox(height: 10),
-        if (lineupFit < 80)
-          Text('⚠️ متوسط لياقة التشكيلة ${lineupFit.round()}% — فكّر في التدوير',
-              style: const TextStyle(color: Color(0xFFFFCA28), fontSize: 12)),
-        if (absent > 0)
+        const SizedBox(height: 14),
+        Row(children: [
+          Text(my.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w800, color: kAccent)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Row(children: [
+                Expanded(flex: (share * 100).round(), child: Container(height: 8, color: kAccent)),
+                Expanded(flex: 100 - (share * 100).round(), child: Container(height: 8, color: const Color(0xFFFF5252))),
+              ]),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(op.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFFFF5252))),
+        ]),
+        const SizedBox(height: 4),
+        const Text('القوة: أنت (أخضر) / الخصم (أحمر)', style: TextStyle(color: kMuted, fontSize: 11)),
+        if (lineupFit < 80) ...[
+          const SizedBox(height: 8),
+          Text('⚠️ متوسط لياقة التشكيلة ${lineupFit.round()}% — فكّر في التدوير', style: const TextStyle(color: kGold, fontSize: 12)),
+        ],
+        if (absent > 0) ...[
+          const SizedBox(height: 4),
           Text('🚑 $absent لاعبين غائبين (إصابة/إيقاف)', style: const TextStyle(color: Color(0xFFFF8A65), fontSize: 12)),
-        const SizedBox(height: 10),
+        ],
+        const SizedBox(height: 14),
         SizedBox(
           width: double.infinity,
-          child: FilledButton.icon(
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('ادخل المباراة'),
-            onPressed: () => playMatch(context, gs),
-          ),
+          child: GradientButton(label: 'ادخل المباراة', icon: Icons.play_arrow_rounded, onPressed: () => playMatch(context, gs)),
         ),
       ]),
     );
   }
 
-  Widget _teamBox(Team t) => Column(children: [
-        teamBadge(t, size: 40),
+  Widget _teamBox(Team t, {bool strong = false}) => Column(children: [
+        teamBadge(t, size: 58),
+        const SizedBox(height: 8),
+        Text(t.name, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(fontWeight: strong ? FontWeight.w900 : FontWeight.w700)),
         const SizedBox(height: 6),
-        Text(t.name, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
-        Text('قوة ${t.strength.toStringAsFixed(1)}', style: const TextStyle(color: kMuted, fontSize: 12)),
+        FormDots(t.form),
       ]);
 }

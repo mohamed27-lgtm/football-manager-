@@ -188,6 +188,12 @@ class Team {
   });
 
   int penalty = 0;
+  List<String> form = []; // آخر النتائج: W/D/L
+  void addForm(String r) {
+    form.add(r);
+    if (form.length > 6) form.removeAt(0);
+  }
+
   int get points => won * 3 + drawn - penalty;
   int get gd => gf - ga;
 
@@ -294,6 +300,7 @@ class Team {
         'badge': badge,
         'venue': venue,
         'pen': penalty,
+        'form': form,
       };
 
   factory Team.fromJson(Map<String, dynamic> j) {
@@ -332,6 +339,7 @@ class Team {
     t.badge = j['badge'] as String?;
     t.venue = j['venue'] as String?;
     t.penalty = (j['pen'] as int?) ?? 0;
+    t.form = [for (final x in (j['form'] as List?) ?? const []) x as String];
     return t;
   }
 }

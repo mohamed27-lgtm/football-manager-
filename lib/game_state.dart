@@ -392,6 +392,8 @@ class GameState extends ChangeNotifier {
     h.ga += ag;
     a.gf += ag;
     a.ga += hg;
+    h.addForm(hg > ag ? 'W' : (hg < ag ? 'L' : 'D'));
+    a.addForm(hg < ag ? 'W' : (hg > ag ? 'L' : 'D'));
     if (hg > ag) {
       h.won++;
       a.lost++;
@@ -918,6 +920,7 @@ class GameState extends ChangeNotifier {
       }
       _topUp(t);
       t.played = 0;
+      t.form = [];
       t.won = 0;
       t.drawn = 0;
       t.lost = 0;

@@ -53,6 +53,17 @@ jobs:
       - name: Bundle league data into the app
         run: python3 tools/make_assets.py
 
+      - name: Add Arabic font (Tajawal)
+        continue-on-error: true
+        run: |
+          mkdir -p assets/fonts
+          ok=1
+          for w in Regular Medium Bold ExtraBold Black; do
+            curl -fsSL --retry 4 -o assets/fonts/Tajawal-$w.ttf \
+              https://raw.githubusercontent.com/google/fonts/main/ofl/tajawal/Tajawal-$w.ttf || ok=0
+          done
+          if [ "$ok" = 1 ]; then python3 tools/add_font.py; else rm -rf assets/fonts; echo "font skipped"; fi
+
       - run: flutter pub get
 
       - name: Analyze (log only)
