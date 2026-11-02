@@ -25,6 +25,7 @@ class _MatchScreenState extends State<MatchScreen> {
   String? flash;
   bool halftime = false;
   bool talkDone = false;
+  int view = 0; // 0 الملعب، 1 التعليق، 2 الأرقام
 
   MatchSim get sim => widget.gs.sim!;
   bool get userHome => sim.home.isUser;
@@ -273,6 +274,24 @@ class _MatchScreenState extends State<MatchScreen> {
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
           child: Text(banner!, style: const TextStyle(color: Color(0xFFFFCA28), fontSize: 13)),
         ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+        child: SegmentedButton<int>(
+          showSelectedIcon: false,
+          segments: const [
+            ButtonSegment(value: 0, label: Text('الملعب', style: TextStyle(fontSize: 12)), icon: Icon(Icons.sports_soccer, size: 16)),
+            ButtonSegment(value: 1, label: Text('التعليق', style: TextStyle(fontSize: 12)), icon: Icon(Icons.chat_bubble_outline, size: 16)),
+            ButtonSegment(value: 2, label: Text('الأرقام', style: TextStyle(fontSize: 12)), icon: Icon(Icons.bar_chart, size: 16)),
+          ],
+          selected: {view},
+          onSelectionChanged: (v) => setState(() => view = v.first),
+        ),
+      ),
+      if (view == 1)
+        Expanded(child: _commentary())
+      else if (view == 2)
+        Expanded(child: _liveStats())
+      else ...[
       Expanded(
         child: Padding(
           padding: const EdgeInsets.all(10),
@@ -299,6 +318,79 @@ class _MatchScreenState extends State<MatchScreen> {
       Padding(
         padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
         child: Text(sim.lastText, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted)),
+      ),
+      ],
+    ]);
+  }
+
+
+  Widget _commentary() {
+    final list = sim.events.reversed.toList();
+    if (list.isEmpty) return const Center(child: Text('لم تبدأ المباراة بعد', style: TextStyle(color: kMuted)));
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      itemCount: list.length,
+      itemBuilder: (_, i) {
+        final e = list[i];
+        final big = e.major && e.type != 'info';
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            SizedBox(width: 40, child: Text("${e.minute}'", style: const TextStyle(color: kMuted))),
+            Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.only(top: 6, left: 8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: e.type == 'info' ? kMuted : teamColor(e.home ? sim.home.team.id : sim.away.team.id),
+              ),
+            ),
+            Expanded(
+              child: Text(e.text,
+                  style: TextStyle(
+                      fontWeight: big ? FontWeight.w700 : FontWeight.w400,
+                      color: big || e.type == 'info' ? null : kMuted)),
+            ),
+          ]),
+        );
+      },
+    );
+  }
+
+  Widget _liveStats() {
+    final side = mySide;
+    final rows = side.slots.toList();
+    return ListView(padding: const EdgeInsets.all(12), children: [
+      _statsPanel(),
+      sectionTitle('لاعبوك الآن'),
+      Panel(
+        child: Column(children: [
+          for (final sl in rows)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(children: [
+                SizedBox(width: 44, child: Text(sl.pos.label, style: const TextStyle(color: kMuted, fontSize: 11))),
+                Expanded(child: Text(sl.p.name, overflow: TextOverflow.ellipsis)),
+                SizedBox(
+                  width: 70,
+                  child: LinearProgressIndicator(
+                    value: (sl.p.fitness / 100).clamp(0.0, 1.0).toDouble(),
+                    minHeight: 6,
+                    color: sl.p.fitness < 60 ? const Color(0xFFEF5350) : const Color(0xFF29B6F6),
+                    backgroundColor: kLine,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text((side.ratings[sl.p] ?? 6.0).toStringAsFixed(1),
+                    style: TextStyle(fontWeight: FontWeight.w800, color: ratingColor((side.ratings[sl.p] ?? 6.0) * 10 + 15))),
+              ]),
+            ),
+        ]),
+      ),
+      const Padding(
+        padding: EdgeInsets.only(top: 6),
+        child: Text('الشريط الأزرق = اللياقة، والرقم = تقييم اللاعب في المباراة.', style: TextStyle(color: kMuted, fontSize: 12)),
       ),
     ]);
   }
@@ -354,6 +446,74 @@ class _MatchScreenState extends State<MatchScreen> {
     });
   }
 
+
+  Widget _report() {
+    final s = sim;
+    final me = mySide;
+    final op = identical(me, s.home) ? s.away : s.home;
+    final diff = me.goals - op.goals;
+    final head = diff > 0
+        ? (diff >= 3 ? 'فوز كاسح ${me.goals}-${op.goals} 🔥' : 'فوز ${me.goals}-${op.goals} ✅')
+        : diff < 0
+            ? (diff <= -3 ? 'خسارة قاسية ${me.goals}-${op.goals} 😞' : 'خسارة ${me.goals}-${op.goals}')
+            : 'تعادل ${me.goals}-${op.goals}';
+    final myPoss = identical(me, s.home) ? s.homePoss : s.awayPoss;
+    final lines = <String>[];
+    if (myPoss >= 58) {
+      lines.add('سيطرت على الكرة بنسبة $myPoss% وفرضت إيقاعك.');
+    } else if (myPoss <= 42) {
+      lines.add('تركت الكرة للخصم (${100 - myPoss}%) واعتمدت على التنظيم.');
+    } else {
+      lines.add('مباراة متكافئة في الاستحواذ ($myPoss%).');
+    }
+    if (me.shots > op.shots + 4) {
+      lines.add('هجومك كان الأخطر: ${me.shots} تسديدة مقابل ${op.shots}.');
+    } else if (op.shots > me.shots + 4) {
+      lines.add('عانى دفاعك: واجه ${op.shots} تسديدة مقابل ${me.shots} فقط.');
+    }
+    if (diff < 0 && me.shots > op.shots) {
+      lines.add('خسرت رغم الأفضلية — حارس الخصم أو نقص الفعالية أمام المرمى.');
+    } else if (diff > 0 && op.shots > me.shots) {
+      lines.add('فزت بفضل الفعالية، لكن عليك تحصين الدفاع.');
+    }
+    final reds = s.events.where((e) => e.type == 'red').length;
+    final inj = s.events.where((e) => e.type == 'injury' && e.home == identical(me, s.home)).length;
+    if (reds > 0) lines.add('شهدت المباراة $reds بطاقة حمراء.');
+    if (inj > 0) lines.add('خسرت ${inj == 1 ? 'لاعباً' : '$inj لاعبين'} بسبب الإصابة.');
+    final goals = s.events.where((e) => e.type == 'goal').toList();
+    final tired = me.slots.where((x) => x.p.fitness < 55).map((x) => x.p.name).toList();
+    if (tired.isNotEmpty) lines.add('منهكون: ${tired.take(3).join('، ')} — فكّر في إراحتهم.');
+    final mine = me.ratings.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    return Panel(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('تقرير المباراة', style: TextStyle(color: kMuted, fontSize: 12)),
+        const SizedBox(height: 4),
+        Text(head, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+        const SizedBox(height: 8),
+        for (final l in lines) Padding(padding: const EdgeInsets.only(bottom: 3), child: Text('• $l', style: const TextStyle(height: 1.4))),
+        if (goals.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          for (final g in goals)
+            Text("${g.minute}'  ${g.text.replaceAll('⚽ ', '').replaceAll('هدف! ', '')}", style: const TextStyle(color: kMuted, fontSize: 13)),
+        ],
+        if (mine.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          const Text('تقييم لاعبيك', style: TextStyle(color: kMuted, fontSize: 12)),
+          const SizedBox(height: 4),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            for (final r in mine)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.circular(8), border: Border.all(color: kLine)),
+                child: Text('${r.key.name.split(' ').last} ${r.value.toStringAsFixed(1)}',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: ratingColor(r.value * 10 + 15))),
+              ),
+          ]),
+        ],
+      ]),
+    );
+  }
+
   Widget _summary() {
     final s = sim;
     final mom = s.manOfMatch;
@@ -363,6 +523,7 @@ class _MatchScreenState extends State<MatchScreen> {
     }
     all.sort((a, b) => b.$3.compareTo(a.$3));
     return ListView(padding: const EdgeInsets.all(14), children: [
+      _report(),
       _statsPanel(),
       if (mom != null)
         Panel(

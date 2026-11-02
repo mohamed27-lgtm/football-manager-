@@ -103,6 +103,37 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
             chip('إنذارات', '${p.yellows}'),
           ]),
           const SizedBox(height: 10),
+          Row(children: [
+            chip('متوسط التقييم', p.rated == 0 ? '—' : p.avgRating.toStringAsFixed(1)),
+            chip('إصابات', '${p.injuryCount}'),
+            chip('الحالة', p.injuredWeeks > 0 ? 'مصاب' : (p.suspendedMatches > 0 ? 'موقوف' : 'جاهز')),
+          ]),
+          if (p.injuredWeeks > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text('🚑 مصاب — يعود بعد ${p.injuredWeeks} أسابيع', style: const TextStyle(color: Color(0xFFEF5350), fontSize: 13)),
+            ),
+          if (p.suspendedMatches > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text('🟥 موقوف ${p.suspendedMatches} مباراة', style: const TextStyle(color: Color(0xFFEF5350), fontSize: 13)),
+            ),
+          if (p.career.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text('مسيرته', style: TextStyle(color: kMuted, fontSize: 13)),
+            const SizedBox(height: 4),
+            for (final c in p.career.reversed.take(6))
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(children: [
+                  SizedBox(width: 56, child: Text('موسم ${c['s']}', style: const TextStyle(color: kMuted, fontSize: 12))),
+                  Expanded(child: Text('${c['t']}', overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+                  Text('${c['a']} م • ${c['g']} ه • ${c['as']} ص • ${(c['r'] as num).toStringAsFixed(1)}',
+                      style: const TextStyle(fontSize: 12, color: kMuted)),
+                ]),
+              ),
+          ],
+          const SizedBox(height: 10),
           Text('القيمة السوقية: ${money(p.value)}   •   الراتب الأسبوعي: ${money(p.wage)}',
               style: const TextStyle(color: kMuted, fontSize: 13)),
           if (!market)

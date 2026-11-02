@@ -85,6 +85,8 @@ class Side {
   double get midPower =>
       lineAvg(Pos.mid) *
       (1 + 0.04 * (team.pressing - 1)) *
+      (1 - 0.03 * (team.passing - 1)) *
+      (1 + 0.025 * (team.defLine - 1)) *
       pow(max(1, count(Pos.mid)) / 4, 0.35) *
       _man;
 }
@@ -159,7 +161,11 @@ class MatchSim {
     if (minute == 1) _log('info', '🟢 صافرة البداية', true, major: false);
 
     for (final s in [home, away]) {
-      final f = 0.2 * (1 + 0.3 * (s.team.pressing - 1) + 0.2 * (s.team.tempo - 1));
+      final f = 0.2 *
+          (1 +
+              0.3 * (s.team.pressing - 1) +
+              0.2 * (s.team.tempo - 1) +
+              0.1 * (s.team.defLine - 1));
       for (final sl in s.slots) {
         sl.p.fitness = max(0, sl.p.fitness - f);
       }
@@ -185,7 +191,13 @@ class MatchSim {
     _setBall(a, rng.nextDouble() * 0.75, 0.85);
 
     final ratio = a.attackPower / max(1, d.defensePower);
-    final pShot = (0.27 * pow(ratio, 1.3) * (1 + 0.08 * (a.team.tempo - 1)))
+    // عرض اللعب والتمرير المباشر يزيدان عدد الفرص، وخط دفاع الخصم المرتفع يترك مساحات خلفه
+    final pShot = (0.27 *
+            pow(ratio, 1.3) *
+            (1 + 0.08 * (a.team.tempo - 1)) *
+            (1 + 0.05 * (a.team.width - 1)) *
+            (1 + 0.06 * (a.team.passing - 1)) *
+            (1 + 0.07 * (d.team.defLine - 1)))
         .clamp(0.05, 0.6)
         .toDouble();
     if (rng.nextDouble() < pShot) {
@@ -214,6 +226,10 @@ class MatchSim {
         if (o.goals == 0 && back) s.bump(sl.p, 0.5);
         if (o.goals >= 3 && back) s.bump(sl.p, -0.4);
       }
+      s.ratings.forEach((p, r) {
+        p.ratingSum += r;
+        p.rated++;
+      });
     }
   }
 
@@ -234,7 +250,11 @@ class MatchSim {
     final gkR = gks.isEmpty ? 30.0 : gks.first.rate;
     final q = shooter.atk * (0.7 + 0.3 * shooter.fitness / 100);
 
-    final onT = (0.36 + 0.004 * (q - 65)).clamp(0.2, 0.6);
+    final onT = (0.36 +
+            0.004 * (q - 65) -
+            0.025 * (a.team.width - 1) -
+            0.02 * (a.team.passing - 1))
+        .clamp(0.2, 0.6);
     if (rng.nextDouble() > onT) {
       if (rng.nextDouble() < 0.35) {
         _log('miss', '${shooter.name} يسدد بعيداً عن المرمى', a.isHome,
@@ -342,6 +362,7 @@ class MatchSim {
     final sl = _weighted(s.slots, s.slots.map((x) => 110 - x.p.fitness).toList());
     final p = sl.p;
     p.injuredWeeks = 1 + rng.nextInt(5) + (rng.nextDouble() < 0.15 ? 4 : 0);
+    p.injuryCount++;
     _log('injury', '🚑 إصابة ${p.name} (${p.injuredWeeks} أسابيع)', s.isHome);
     Player? rep;
     if (s.subsLeft > 0) {

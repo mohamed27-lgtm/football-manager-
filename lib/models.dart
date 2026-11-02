@@ -38,6 +38,11 @@ class Player {
   int injuredWeeks = 0;
   int suspendedMatches = 0;
   int goals = 0, assists = 0, apps = 0, yellows = 0;
+  double ratingSum = 0;
+  int rated = 0;
+  int injuryCount = 0;
+  List<Map<String, dynamic>> career = [];
+  double get avgRating => rated == 0 ? 0 : ratingSum / rated;
 
   Player({
     required this.id,
@@ -101,6 +106,10 @@ class Player {
         'listed': listed,
         'reg': registered,
         'sal': salary,
+        'rs': ratingSum,
+        'rn': rated,
+        'ic': injuryCount,
+        'career': career,
       };
 
   factory Player.fromJson(Map<String, dynamic> j) => Player(
@@ -128,7 +137,14 @@ class Player {
         ..onLoan = (j['loan'] as bool?) ?? false
         ..listed = (j['listed'] as bool?) ?? false
         ..registered = (j['reg'] as bool?) ?? true
-        ..salary = (j['sal'] as num?)?.toDouble();
+        ..salary = (j['sal'] as num?)?.toDouble()
+        ..ratingSum = (j['rs'] as num?)?.toDouble() ?? 0
+        ..rated = (j['rn'] as int?) ?? 0
+        ..injuryCount = (j['ic'] as int?) ?? 0
+        ..career = [
+          for (final c in (j['career'] as List?) ?? const [])
+            Map<String, dynamic>.from(c as Map)
+        ];
 }
 
 class Formation {
@@ -154,6 +170,9 @@ class Team {
   int mentality = 1;
   int pressing = 1;
   int tempo = 1;
+  int width = 1; // 0 ضيق، 1 متوازن، 2 عريض
+  int defLine = 1; // 0 منخفض، 1 متوسط، 2 مرتفع
+  int passing = 1; // 0 قصير، 1 مختلط، 2 مباشر
   List<Player> lineup = [];
   double budget;
   int played = 0, won = 0, drawn = 0, lost = 0, gf = 0, ga = 0;
@@ -258,6 +277,9 @@ class Team {
         'ment': mentality,
         'press': pressing,
         'tempo': tempo,
+        'wid': width,
+        'dl': defLine,
+        'pass': passing,
         'lineup': [for (final p in lineup) p.id],
         'budget': budget,
         'played': played,
@@ -291,6 +313,9 @@ class Team {
     t.mentality = j['ment'] as int;
     t.pressing = j['press'] as int;
     t.tempo = j['tempo'] as int;
+    t.width = (j['wid'] as int?) ?? 1;
+    t.defLine = (j['dl'] as int?) ?? 1;
+    t.passing = (j['pass'] as int?) ?? 1;
     t.lineup = [
       for (final id in j['lineup'] as List)
         if (byId[id] != null) byId[id]!

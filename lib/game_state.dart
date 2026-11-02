@@ -328,6 +328,21 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setWidth(int v) {
+    user.width = v;
+    notifyListeners();
+  }
+
+  void setDefLine(int v) {
+    user.defLine = v;
+    notifyListeners();
+  }
+
+  void setPassing(int v) {
+    user.passing = v;
+    notifyListeners();
+  }
+
   void autoPickUser() {
     user.autoPick();
     notifyListeners();
@@ -868,6 +883,19 @@ class GameState extends ChangeNotifier {
         } else if (p.age >= 31) {
           _grow(p, -rng.nextInt(3));
         }
+        if (p.apps > 0) {
+          p.career.add({
+            's': season,
+            't': t.name,
+            'a': p.apps,
+            'g': p.goals,
+            'as': p.assists,
+            'r': double.parse(p.avgRating.toStringAsFixed(2)),
+          });
+          if (p.career.length > 12) p.career.removeAt(0);
+        }
+        p.ratingSum = 0;
+        p.rated = 0;
         p.fitness = 100;
         p.morale = 70;
         p.injuredWeeks = 0;

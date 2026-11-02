@@ -48,10 +48,19 @@ class TacticsControls extends StatelessWidget {
           _seg(['منخفض', 'متوسط', 'عالٍ'], t.pressing, gs.setPressing),
           _label('إيقاع اللعب'),
           _seg(['بطيء', 'متوازن', 'سريع'], t.tempo, gs.setTempo),
+          _label('عرض اللعب'),
+          _seg(['ضيّق', 'متوازن', 'عريض'], t.width, gs.setWidth),
+          _label('خط الدفاع'),
+          _seg(['منخفض', 'متوسط', 'مرتفع'], t.defLine, gs.setDefLine),
+          _label('أسلوب التمرير'),
+          _seg(['قصير', 'مختلط', 'مباشر'], t.passing, gs.setPassing),
           const SizedBox(height: 8),
           const Text(
-            'الضغط العالي والإيقاع السريع يرفعان السيطرة والفرص، لكنهما يستنزفان اللياقة ويزيدان الإنذارات.',
-            style: TextStyle(color: kMuted, fontSize: 12),
+            'الضغط العالي والإيقاع السريع يرفعان السيطرة والفرص، لكنهما يستنزفان اللياقة ويزيدان الإنذارات.\n'
+            '• اللعب العريض والتمرير المباشر: فرص أكثر لكن بدقة أقل.\n'
+            '• الدفاع المرتفع: سيطرة أكبر في الوسط، لكنه يترك مساحات خلفك للهجمات المرتدة.\n'
+            '• الدفاع المنخفض: يحمي مرماك لكنه يمنح الخصم الكرة.',
+            style: TextStyle(color: kMuted, fontSize: 12, height: 1.5),
           ),
         ]);
       },
