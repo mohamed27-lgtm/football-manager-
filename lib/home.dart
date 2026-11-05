@@ -130,6 +130,39 @@ class _HomeShellState extends State<HomeShell> {
       listenable: widget.gs,
       builder: (context, _) {
         final gs = widget.gs;
+        if (gs.celebration != null) {
+          final name = gs.celebration!;
+          gs.celebration = null;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            showDialog(
+              context: context,
+              builder: (c) => Dialog(
+                backgroundColor: kCard,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: const BorderSide(color: kGold)),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.2, end: 1),
+                      duration: const Duration(milliseconds: 900),
+                      curve: Curves.elasticOut,
+                      builder: (_, v, ch) => Transform.scale(scale: v, child: ch),
+                      child: const Text('🏆', style: TextStyle(fontSize: 84)),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text('مبروك! بطل', style: TextStyle(color: kMuted)),
+                    Text(name, textAlign: TextAlign.center, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: kGold)),
+                    const SizedBox(height: 6),
+                    Text('أُضيف اللقب إلى خزانة البطولات', style: const TextStyle(color: kMuted, fontSize: 12.5)),
+                    const SizedBox(height: 16),
+                    GradientButton(label: 'رائع!', onPressed: () => Navigator.pop(c)),
+                  ]),
+                ),
+              ),
+            );
+          });
+        }
         final pages = <Widget>[
           DashboardTab(gs: gs, onRestart: widget.onRestart, onNavigate: (i) => setState(() => tab = i)),
           TeamTab(gs: gs),
@@ -159,7 +192,7 @@ class _HomeShellState extends State<HomeShell> {
                   ),
                   child: Row(children: [
                     const Text('💰 ', style: TextStyle(fontSize: 13)),
-                    Text(money(gs.user.budget),
+                    AnimatedMoney(gs.user.budget,
                         style: TextStyle(fontWeight: FontWeight.w900, color: gs.user.budget < 0 ? const Color(0xFFFF7043) : kAccent)),
                   ]),
                 ),
@@ -174,8 +207,8 @@ class _HomeShellState extends State<HomeShell> {
               NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
               NavigationDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups), label: 'الفريق'),
               NavigationDestination(icon: Icon(Icons.swap_horiz), selectedIcon: Icon(Icons.swap_horiz), label: 'الانتقالات'),
-              NavigationDestination(icon: Icon(Icons.sports_soccer_outlined), selectedIcon: Icon(Icons.sports_soccer), label: 'المباريات'),
-              NavigationDestination(icon: Icon(Icons.apps_outlined), selectedIcon: Icon(Icons.apps), label: 'المزيد'),
+              NavigationDestination(icon: Icon(Icons.emoji_events_outlined), selectedIcon: Icon(Icons.emoji_events), label: 'المسابقات'),
+              NavigationDestination(icon: Icon(Icons.shield_outlined), selectedIcon: Icon(Icons.shield), label: 'النادي'),
             ],
           ),
         );
@@ -267,6 +300,72 @@ class DashboardTab extends StatelessWidget {
         ]),
       ]),
     );
+  }
+
+  Widget _offersCard() => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => onNavigate(2),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: kGold.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: kGold.withOpacity(0.5)),
+            ),
+            child: Row(children: [
+              const Icon(Icons.notifications_active, color: kGold),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('لديك ${gs.offers.length} عرض لشراء لاعبيك', style: const TextStyle(fontWeight: FontWeight.w800)),
+                  Text('${gs.offers.first.club} يعرض ${money(gs.offers.first.amount)} على ${gs.offers.first.player.name}',
+                      maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 12)),
+                ]),
+              ),
+              const Icon(Icons.chevron_left, color: kGold),
+            ]),
+          ),
+        ),
+      );
+
+  Widget _recent() {
+    final r = gs.recentResults();
+    if (r.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      sectionTitle('آخر النتائج'),
+      Panel(
+        padding: EdgeInsets.zero,
+        child: Column(children: [
+          for (final e in r.reversed)
+            () {
+              final f = e.$1, home = e.$2;
+              final my = home ? f.hg! : f.ag!, op = home ? f.ag! : f.hg!;
+              final c = my > op ? kAccent : (my < op ? const Color(0xFFFF5252) : const Color(0xFFFFB300));
+              final l = my > op ? 'ف' : (my < op ? 'خ' : 'ت');
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                child: Row(children: [
+                  teamBadge(gs.team(f.home), size: 24),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(gs.team(f.home).name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(8)),
+                    child: Text('${f.hg} - ${f.ag}', style: const TextStyle(fontWeight: FontWeight.w900)),
+                  ),
+                  Expanded(child: Text(gs.team(f.away).name, textAlign: TextAlign.end, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+                  const SizedBox(width: 8),
+                  teamBadge(gs.team(f.away), size: 24),
+                  const SizedBox(width: 8),
+                  CircleAvatar(radius: 11, backgroundColor: c, child: Text(l, style: const TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.w900))),
+                ]),
+              );
+            }(),
+        ]),
+      ),
+    ]);
   }
 
   Widget _stats() {
@@ -390,8 +489,10 @@ class DashboardTab extends StatelessWidget {
         )
       else
         _nextMatch(context),
+      if (gs.offers.isNotEmpty) _offersCard(),
       if (gs.boardKind != null) _board(context),
       _stats(),
+      _recent(),
       _actions(context),
       sectionTitle('الترتيب', trailing: TextButton(onPressed: () => onNavigate(3), child: const Text('الجدول كاملاً'))),
       _miniTable(),

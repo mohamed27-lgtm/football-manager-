@@ -63,7 +63,10 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
     }
   }
 
+  LeagueData? _last;
+
   Future<void> _downloadImages(LeagueData d) async {
+    _last = d;
     final p = packs[_k(d)];
     if (p == null) {
       _set(() => error = 'تنزيل الصور غير متاح لهذا الدوري حالياً، حاول لاحقاً.');
@@ -134,7 +137,9 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
       appBar: AppBar(title: const Text('⚽ اختر الدوري'), backgroundColor: kBg),
       body: SafeArea(
         child: l == null
-            ? const Center(child: CircularProgressIndicator())
+            ? ListView(padding: const EdgeInsets.all(14), children: [
+                for (var i = 0; i < 7; i++) const Padding(padding: EdgeInsets.only(bottom: 10), child: SkeletonBox(height: 64)),
+              ])
             : ListView(padding: const EdgeInsets.all(14), children: [
                 const Panel(
                   child: Text(
@@ -144,7 +149,18 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
                   ),
                 ),
                 if (error != null)
-                  Panel(color: const Color(0xFF2A1414), child: Text(error!, style: const TextStyle(color: Color(0xFFFF8A65)))),
+                  Panel(
+                    color: const Color(0xFF2A1414),
+                    child: Column(children: [
+                      Text(error!, style: const TextStyle(color: Color(0xFFFF8A65))),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _last == null ? () => _set(() => error = null) : () => _downloadImages(_last!),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('إعادة المحاولة'),
+                      ),
+                    ]),
+                  ),
                 if (l.isEmpty)
                   const Panel(child: Text('لا توجد دوريات في هذه النسخة بعد. حدّث التطبيق لاحقاً.', style: TextStyle(color: kMuted))),
                 if (missing > 1)

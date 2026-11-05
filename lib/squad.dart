@@ -176,6 +176,21 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
               ),
             ),
           const SizedBox(height: 14),
+          if (market)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    gs.toggleWatch(p);
+                    Navigator.pop(ctx);
+                  },
+                  icon: Icon(gs.watch.contains(p.id) ? Icons.star : Icons.star_border, color: kGold),
+                  label: Text(gs.watch.contains(p.id) ? 'إزالة من المراقبة' : 'إضافة إلى قائمة المراقبة'),
+                ),
+              ),
+            ),
           if (market && p.free)
             SizedBox(
               width: double.infinity,
@@ -378,6 +393,7 @@ class _TransfersTabState extends State<TransfersTab> {
   Pos? filter;
   int sort = 0; // 0 تقييم 1 سعر 2 عمر
   int minOvr = 0;
+  bool watchOnly = false;
 
   @override
   Widget build(BuildContext context) {
@@ -388,7 +404,7 @@ class _TransfersTabState extends State<TransfersTab> {
       _ => gs.user.squad,
     };
     final list = src
-        .where((p) => (filter == null || p.pos == filter) && p.overall >= minOvr)
+        .where((p) => (filter == null || p.pos == filter) && p.overall >= minOvr && (!watchOnly || gs.watch.contains(p.id)))
         .toList()
       ..sort((a, b) => switch (sort) {
             1 => (mode >= 2 ? gs.sellPrice(b) : gs.buyPrice(b)).compareTo(mode >= 2 ? gs.sellPrice(a) : gs.buyPrice(a)),
@@ -400,7 +416,7 @@ class _TransfersTabState extends State<TransfersTab> {
         child: Row(children: [
           const Text('💰 الميزانية', style: TextStyle(color: kMuted)),
           const Spacer(),
-          Text(money(gs.user.budget),
+          AnimatedMoney(gs.user.budget,
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -426,6 +442,10 @@ class _TransfersTabState extends State<TransfersTab> {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(children: [
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 6),
+              child: FilterChip(label: const Text('⭐ المراقبة'), selected: watchOnly, onSelected: (v) => setState(() => watchOnly = v)),
+            ),
             Padding(
               padding: const EdgeInsetsDirectional.only(end: 6),
               child: ChoiceChip(label: const Text('الكل'), selected: filter == null, onSelected: (_) => setState(() => filter = null)),
@@ -468,7 +488,7 @@ class _TransfersTabState extends State<TransfersTab> {
           padding: EdgeInsets.zero,
           child: Column(children: [
             if (list.isEmpty)
-              const Padding(padding: EdgeInsets.all(14), child: Text('لا نتائج', style: TextStyle(color: kMuted))),
+              const EmptyState(icon: Icons.search_off, title: 'لا نتائج', subtitle: 'جرّب تخفيف الفلاتر أو تغيير المركز.'),
             for (final p in list)
               PlayerTile(
                 p: p,
@@ -478,6 +498,7 @@ class _TransfersTabState extends State<TransfersTab> {
                     money(mode < 2 ? gs.buyPrice(p) : gs.sellPrice(p)),
                     style: const TextStyle(fontWeight: FontWeight.w700, color: kAccent),
                   ),
+                  if (gs.watch.contains(p.id)) const Text('⭐', style: TextStyle(fontSize: 12)),
                   if (p.listed) const Text('معروض للبيع', style: TextStyle(color: Color(0xFFFFCA28), fontSize: 11)),
                   if (p.onLoan) const Text('معار', style: TextStyle(color: kMuted, fontSize: 11)),
                 ]),
@@ -491,7 +512,7 @@ class _TransfersTabState extends State<TransfersTab> {
   List<Widget> _offers(BuildContext context, GameState gs) {
     if (gs.offers.isEmpty) {
       return const [
-        Panel(child: Text('لا عروض حالياً. اعرض لاعبين للبيع لزيادة احتمال وصول العروض.', style: TextStyle(color: kMuted))),
+        Panel(child: EmptyState(icon: Icons.mark_email_unread_outlined, title: 'لا عروض حالياً', subtitle: 'اعرض لاعبين للبيع لزيادة احتمال وصول العروض.')),
       ];
     }
     return [

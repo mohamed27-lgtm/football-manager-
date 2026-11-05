@@ -51,21 +51,29 @@ class CupsScreen extends StatelessWidget {
   const CupsScreen({super.key, required this.gs});
 
   @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: const Text('🏆 البطولات'), backgroundColor: kBg),
+        body: SafeArea(child: CupsBody(gs: gs)),
+      );
+}
+
+/// محتوى البطولات (يُستخدم داخل تبويب المسابقات)
+class CupsBody extends StatelessWidget {
+  final GameState gs;
+  const CupsBody({super.key, required this.gs});
+
+  @override
   Widget build(BuildContext context) {
     final cups = [gs.domestic!, gs.continental!, if (gs.superCup != null) gs.superCup!];
     return DefaultTabController(
       length: cups.length,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('🏆 البطولات'),
-          backgroundColor: kBg,
-          bottom: TabBar(tabs: [
-            const Tab(text: 'كأس الدوري'),
-            const Tab(text: 'القاري'),
-            if (cups.length > 2) const Tab(text: 'السوبر'),
-          ]),
-        ),
-        body: SafeArea(
+      child: Column(children: [
+        TabBar(tabs: [
+          const Tab(text: 'كأس الدوري'),
+          const Tab(text: 'القاري'),
+          if (cups.length > 2) const Tab(text: 'السوبر'),
+        ]),
+        Expanded(
           child: ListenableBuilder(
             listenable: gs,
             builder: (context, _) => TabBarView(children: [
@@ -73,7 +81,7 @@ class CupsScreen extends StatelessWidget {
             ]),
           ),
         ),
-      ),
+      ]),
     );
   }
 }

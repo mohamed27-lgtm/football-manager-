@@ -57,6 +57,25 @@ class GameState extends ChangeNotifier {
   MatchSim? sim;
   Finance fin = Finance();
   final List<Offer> offers = [];
+  final Set<int> watch = {};
+  String? celebration;
+  void toggleWatch(Player p) {
+    if (!watch.remove(p.id)) watch.add(p.id);
+    notifyListeners();
+    save();
+  }
+
+  /// آخر نتائج النادي (من جدول المباريات الفعلي)
+  List<(Fixture, bool)> recentResults([int n = 3]) {
+    final out = <(Fixture, bool)>[];
+    for (final r in rounds) {
+      for (final f in r) {
+        if (f.played && (f.home == user.id || f.away == user.id)) out.add((f, f.home == user.id));
+      }
+    }
+    return out.length <= n ? out : out.sublist(out.length - n);
+  }
+
   final List<Player> loanedOut = [];
   final Map<int, double> _reserve = {};
   Cup? domestic, continental, superCup;
@@ -148,6 +167,7 @@ class GameState extends ChangeNotifier {
       foreign[tm.id] = tm;
     }
     honours.addAll(((j['honours'] as List?) ?? const []).cast<String>());
+    watch.addAll(((j['watch'] as List?) ?? const []).cast<int>());
     final st = j['staff'] as Map<String, dynamic>?;
     if (st != null) st.forEach((k, v) => staff[k] = v as int);
     boardKind = j['bk'] as int?;
@@ -214,6 +234,7 @@ class GameState extends ChangeNotifier {
         'offers': [for (final o in offers) o.toJson()],
         'foreign': [for (final t in foreign.values) t.toJson()],
         'honours': honours,
+        'watch': watch.toList(),
         'staff': staff,
         'bk': boardKind,
         'div': div,
@@ -1467,6 +1488,7 @@ class GameState extends ChangeNotifier {
         fin.add('prize', bonus);
         confidence = min(100, confidence + 10);
         honours.add('🏆 ${c.name} — الموسم $season');
+        celebration = c.name;
         news.insert(0, '🏆🏆 بطل ${c.name}! مكافأة ${money1(bonus)}');
       } else {
         news.insert(0, '🏆 ${team(winners.first).name} بطل ${c.name}');
@@ -1686,6 +1708,7 @@ class GameState extends ChangeNotifier {
     });
     if (pos == 1) {
       honours.add('🏆 الدوري — الموسم $season');
+      celebration = 'الدوري';
       news.insert(0, '🏆🏆 بطل الدوري!');
       fans = min(100, fans + 6);
     }

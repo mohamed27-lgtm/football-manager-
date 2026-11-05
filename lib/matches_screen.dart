@@ -129,14 +129,15 @@ class _MatchesTabState extends State<MatchesTab> {
             showSelectedIcon: false,
             segments: const [
               ButtonSegment(value: 0, label: Text('المباريات')),
-              ButtonSegment(value: 1, label: Text('الترتيب والهدافون')),
+              ButtonSegment(value: 1, label: Text('الترتيب')),
+              ButtonSegment(value: 2, label: Text('الكؤوس')),
             ],
             selected: {view},
             onSelectionChanged: (s) => setState(() => view = s.first),
           ),
         ),
       ),
-      Expanded(child: view == 0 ? _fixtures(context) : TableTab(gs: gs)),
+      Expanded(child: view == 0 ? _fixtures(context) : (view == 1 ? TableTab(gs: gs) : CupsBody(gs: gs))),
     ]);
   }
 }

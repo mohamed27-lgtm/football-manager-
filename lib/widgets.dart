@@ -357,3 +357,78 @@ String wageK(double w) => '${(w * 1000).round()}K';
 
 /// مبلغ بخانتين عشريتين
 String money2(double v) => '${v.toStringAsFixed(2)}M';
+
+
+/// حالة فارغة مصمّمة بدل الصفحة البيضاء
+class EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  const EmptyState({super.key, required this.icon, required this.title, this.subtitle});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(color: kCard2, shape: BoxShape.circle, border: Border.all(color: kLine)),
+            child: Icon(icon, color: kMuted, size: 30),
+          ),
+          const SizedBox(height: 12),
+          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(subtitle!, textAlign: TextAlign.center, style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
+          ],
+        ]),
+      );
+}
+
+/// هيكل تحميل نابض (Skeleton)
+class SkeletonBox extends StatefulWidget {
+  final double height;
+  final double? width;
+  const SkeletonBox({super.key, this.height = 16, this.width});
+  @override
+  State<SkeletonBox> createState() => _SkeletonBoxState();
+}
+
+class _SkeletonBoxState extends State<SkeletonBox> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _c,
+        builder: (_, __) => Container(
+          height: widget.height,
+          width: widget.width,
+          decoration: BoxDecoration(
+            color: Color.lerp(kCard2, const Color(0xFF243246), _c.value),
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+}
+
+/// مبلغ يتحرك عند تغيّره (زيادة/نقصان)
+class AnimatedMoney extends StatelessWidget {
+  final double value;
+  final TextStyle? style;
+  const AnimatedMoney(this.value, {super.key, this.style});
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+        tween: Tween<double>(end: value),
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeOutCubic,
+        builder: (_, v, __) => Text(money(v), style: style),
+      );
+}
