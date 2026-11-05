@@ -437,6 +437,8 @@ class _MatchScreenState extends State<MatchScreen> {
           _statRow('الاستحواذ %', sim.homePoss, sim.awayPoss),
           _statRow('التسديدات', sim.home.shots, sim.away.shots),
           _statRow('على المرمى', sim.home.onTarget, sim.away.onTarget),
+          _statRow('الركنيات', sim.home.corners, sim.away.corners),
+          _statRow('الأخطاء', sim.home.fouls, sim.away.fouls),
         ]),
       );
 

@@ -32,7 +32,7 @@ class Side {
   final Set<Player> out = {};
   final Map<int, int> yellowCount = {};
   final Map<Player, double> ratings = {};
-  int goals = 0, shots = 0, onTarget = 0, poss = 0, subsLeft = 3;
+  int goals = 0, shots = 0, onTarget = 0, poss = 0, subsLeft = 3, fouls = 0, corners = 0;
   int mentalityBoost = 0;
 
   Side(this.team, this.isHome, this.isUser) {
@@ -70,16 +70,21 @@ class Side {
 
   double get _man => pow(slots.length / 11, 1.5).toDouble();
 
+  /// الانسجام وتحليل الطاقم
+  double get _form => (0.97 + 0.06 * team.cohesion / 100) * (1 + 0.008 * team.analystLvl);
+
   double get attackPower =>
       (0.55 * lineAvg(Pos.att) + 0.45 * lineAvg(Pos.mid)) *
       (1 + 0.06 * (mentality - 1)) *
       pow(max(1, count(Pos.att)) / 2, 0.25) *
+      _form *
       _man;
 
   double get defensePower =>
       (0.6 * lineAvg(Pos.def) + 0.25 * lineAvg(Pos.mid) + 0.15 * lineAvg(Pos.gk)) *
       (1 - 0.05 * (mentality - 1)) *
       pow(max(1, count(Pos.def)) / 4, 0.3) *
+      _form *
       _man;
 
   double get midPower =>
@@ -88,6 +93,7 @@ class Side {
       (1 - 0.03 * (team.passing - 1)) *
       (1 + 0.025 * (team.defLine - 1)) *
       pow(max(1, count(Pos.mid)) / 4, 0.35) *
+      _form *
       _man;
 }
 
@@ -260,6 +266,7 @@ class MatchSim {
         _log('miss', '${shooter.name} يسدد بعيداً عن المرمى', a.isHome,
             major: false);
       }
+      if (rng.nextDouble() < 0.25) _corner(a);
       return;
     }
     a.onTarget++;
@@ -286,11 +293,17 @@ class MatchSim {
           a.isHome);
     } else {
       if (gkP != null) d.bump(gkP, 0.4);
+      if (rng.nextDouble() < 0.4) _corner(a);
       if (rng.nextDouble() < 0.6) {
         _log('save', '🧤 تصدٍّ رائع لتسديدة ${shooter.name}', a.isHome,
             major: false);
       }
     }
+  }
+
+  void _corner(Side a) {
+    a.corners++;
+    _log('info', '🚩 ركنية لصالح ${a.team.name}', a.isHome, major: false);
   }
 
   void _penalty(Side a, Side d) {
@@ -321,6 +334,7 @@ class MatchSim {
 
   void _discipline(Side d) {
     if (d.slots.isEmpty) return;
+    if (rng.nextDouble() < 0.13 * (1 + 0.25 * (d.team.pressing - 1))) d.fouls++;
     if (rng.nextDouble() < 0.03 * (1 + 0.4 * (d.team.pressing - 1))) {
       final c = d.slots.where((s) => s.pos != Pos.gk).toList();
       if (c.isEmpty) return;

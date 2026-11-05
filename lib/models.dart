@@ -41,6 +41,8 @@ class Player {
   double ratingSum = 0;
   int rated = 0;
   int injuryCount = 0;
+  double? optionFee; // إعارة بخيار/إلزامية شراء
+  bool obligation = false;
   List<Map<String, dynamic>> career = [];
   double get avgRating => rated == 0 ? 0 : ratingSum / rated;
 
@@ -109,6 +111,8 @@ class Player {
         'rs': ratingSum,
         'rn': rated,
         'ic': injuryCount,
+        'opt': optionFee,
+        'obl': obligation,
         'career': career,
       };
 
@@ -141,6 +145,8 @@ class Player {
         ..ratingSum = (j['rs'] as num?)?.toDouble() ?? 0
         ..rated = (j['rn'] as int?) ?? 0
         ..injuryCount = (j['ic'] as int?) ?? 0
+        ..optionFee = (j['opt'] as num?)?.toDouble()
+        ..obligation = (j['obl'] as bool?) ?? false
         ..career = [
           for (final c in (j['career'] as List?) ?? const [])
             Map<String, dynamic>.from(c as Map)
@@ -173,6 +179,8 @@ class Team {
   int width = 1; // 0 ضيق، 1 متوازن، 2 عريض
   int defLine = 1; // 0 منخفض، 1 متوسط، 2 مرتفع
   int passing = 1; // 0 قصير، 1 مختلط، 2 مباشر
+  int analystLvl = 0; // يُضبط قبل كل مباراة من الطاقم
+  double cohesion = 65; // الانسجام 30-100
   List<Player> lineup = [];
   double budget;
   int played = 0, won = 0, drawn = 0, lost = 0, gf = 0, ga = 0;
@@ -286,6 +294,7 @@ class Team {
         'wid': width,
         'dl': defLine,
         'pass': passing,
+        'coh': cohesion,
         'lineup': [for (final p in lineup) p.id],
         'budget': budget,
         'played': played,
@@ -323,6 +332,7 @@ class Team {
     t.width = (j['wid'] as int?) ?? 1;
     t.defLine = (j['dl'] as int?) ?? 1;
     t.passing = (j['pass'] as int?) ?? 1;
+    t.cohesion = (j['coh'] as num?)?.toDouble() ?? 65;
     t.lineup = [
       for (final id in j['lineup'] as List)
         if (byId[id] != null) byId[id]!

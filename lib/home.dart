@@ -247,6 +247,28 @@ class DashboardTab extends StatelessWidget {
         ),
       );
 
+  Widget _board(BuildContext context) {
+    final b = GameState.boardTitles[gs.boardKind!]!;
+    return Panel(
+      color: const Color(0xFF1E1A10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.account_balance, color: kGold, size: 20),
+          const SizedBox(width: 8),
+          Text(b.$1, style: const TextStyle(fontWeight: FontWeight.w900, color: kGold)),
+        ]),
+        const SizedBox(height: 8),
+        Text(b.$2, style: const TextStyle(height: 1.5)),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(child: FilledButton(onPressed: () => gs.answerBoard(true), child: Text(b.$3))),
+          const SizedBox(width: 8),
+          Expanded(child: OutlinedButton(onPressed: () => gs.answerBoard(false), child: Text(b.$4))),
+        ]),
+      ]),
+    );
+  }
+
   Widget _stats() {
     final u = gs.user;
     return Padding(
@@ -368,6 +390,7 @@ class DashboardTab extends StatelessWidget {
         )
       else
         _nextMatch(context),
+      if (gs.boardKind != null) _board(context),
       _stats(),
       _actions(context),
       sectionTitle('الترتيب', trailing: TextButton(onPressed: () => onNavigate(3), child: const Text('الجدول كاملاً'))),

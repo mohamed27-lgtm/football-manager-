@@ -127,6 +127,19 @@ class SettingsScreen extends StatelessWidget {
                   ]),
                   const SizedBox(height: 8),
                   OutlinedButton(
+                    onPressed: () => _confirm(context, 'استعادة النسخة الاحتياطية', 'ستُستبدل مسيرتك الحالية بآخر نسخة احتياطية تلقائية (أقدم بقليل). تُحفظ هذه النسخة كل بضع جولات.', () async {
+                      final ok = await GameState.restoreBackup();
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok ? 'تمت الاستعادة — اختر «متابعة المسيرة»' : 'لا توجد نسخة احتياطية بعد')));
+                      if (ok) {
+                        Navigator.of(context).popUntil((r) => r.isFirst);
+                        onRestart();
+                      }
+                    }),
+                    child: const Text('استعادة النسخة الاحتياطية'),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
                     style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFFF8A65)),
                     onPressed: () => _confirm(context, 'حذف المسيرة', 'سيُحذف حفظ هذه المسيرة نهائياً ولا يمكن التراجع.', () async {
                       await GameState.clearSave();

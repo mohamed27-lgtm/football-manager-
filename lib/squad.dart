@@ -159,6 +159,22 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
                   style: TextStyle(
                       fontSize: 13, color: p.contract <= 1 ? const Color(0xFFFFCA28) : kMuted)),
             ),
+          if (market)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                switch (gs.joinOutlook(p)) {
+                  0 => '😊 اللاعب يرحّب بالانضمام إلى ناديك',
+                  1 => '🤔 اللاعب متردد في الانضمام إلى ناديك',
+                  _ => '🙅 يرى اللاعب ناديك أقل من طموحه وقد يرفض',
+                },
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: switch (gs.joinOutlook(p)) { 0 => kAccent, 1 => kGold, _ => const Color(0xFFFF5252) },
+                ),
+              ),
+            ),
           const SizedBox(height: 14),
           if (market && p.free)
             SizedBox(
@@ -173,6 +189,7 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
               ),
             )
           else if (market)
+            Column(children: [
             Row(children: [
               Expanded(
                 child: FilledButton(
@@ -194,6 +211,54 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
                   child: Text('إعارة ${money(gs.loanFee(p))}'),
                 ),
               ),
+            ])
+            const SizedBox(height: 8),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    final err = gs.loanInOption(p);
+                    Navigator.pop(ctx);
+                    snack(err, 'تمت الإعارة بخيار شراء ✅');
+                  },
+                  child: const Text('إعارة بخيار شراء', style: TextStyle(fontSize: 12.5)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    final err = gs.loanInOption(p, obligation: true);
+                    Navigator.pop(ctx);
+                    snack(err, 'تمت الإعارة بإلزامية شراء ✅');
+                  },
+                  child: const Text('إعارة بإلزامية شراء', style: TextStyle(fontSize: 12.5)),
+                ),
+              ),
+            ]),
+          ])
+          else if (p.onLoan && p.optionFee != null)
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(
+                p.obligation
+                    ? 'معار بإلزامية شراء: يُشترى تلقائياً نهاية الموسم مقابل ${money(p.optionFee!)}'
+                    : 'معار بخيار شراء مقابل ${money(p.optionFee!)}',
+                style: const TextStyle(color: kMuted),
+              ),
+              if (!p.obligation) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      final err = gs.exerciseOption(p);
+                      Navigator.pop(ctx);
+                      snack(err, 'تم تفعيل خيار الشراء ✅');
+                    },
+                    child: Text('فعّل خيار الشراء (${money(p.optionFee!)})'),
+                  ),
+                ),
+              ],
             ])
           else if (p.onLoan)
             const Text('لاعب معار — يعود إلى ناديه نهاية الموسم.', style: TextStyle(color: kMuted))

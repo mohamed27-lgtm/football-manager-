@@ -57,7 +57,10 @@ class GameState extends ChangeNotifier {
   Cup? activeCup;
   final Map<int, Team> foreign = {};
   final List<String> honours = [];
-  final Map<String, int> staff = {'coach': 0, 'scout': 0, 'doctor': 0};
+  final Map<String, int> staff = {'coach': 0, 'scout': 0, 'doctor': 0, 'analyst': 0, 'marketing': 0, 'director': 0};
+  int? boardKind; // اجتماع إدارة معلّق
+  bool boardPledge = false; // تعهّد للإدارة بإنهاء الدوري ضمن الثلاثة الأوائل
+  List<int> lastXI = [];
   double fans = 50;
   final List<Map<String, dynamic>> history = [];
   String bigWin = '', bigLoss = '';
@@ -129,6 +132,9 @@ class GameState extends ChangeNotifier {
     honours.addAll(((j['honours'] as List?) ?? const []).cast<String>());
     final st = j['staff'] as Map<String, dynamic>?;
     if (st != null) st.forEach((k, v) => staff[k] = v as int);
+    boardKind = j['bk'] as int?;
+    boardPledge = (j['bp'] as bool?) ?? false;
+    lastXI = [for (final x in (j['lxi'] as List?) ?? const []) x as int];
     fans = (j['fans'] as num?)?.toDouble() ?? (20.0 + user.reputation * 12);
     for (final h in (j['history'] as List?) ?? const []) {
       history.add(Map<String, dynamic>.from(h as Map));
@@ -191,6 +197,9 @@ class GameState extends ChangeNotifier {
         'foreign': [for (final t in foreign.values) t.toJson()],
         'honours': honours,
         'staff': staff,
+        'bk': boardKind,
+        'bp': boardPledge,
+        'lxi': lastXI,
         'fans': fans,
         'history': history,
         'bigWin': bigWin,
@@ -226,8 +235,36 @@ class GameState extends ChangeNotifier {
   Future<void> save() async {
     try {
       final p = await SharedPreferences.getInstance();
+      final old = p.getString(_key);
+      // نسخة احتياطية: تُحفظ نسخة سابقة كل 6 حفظات حتى لا تضيع المسيرة عند خلل
+      _saves++;
+      if (old != null && _saves % 6 == 1) await p.setString('${_key}_bak', old);
       await p.setString(_key, jsonEncode(toJson()));
     } catch (_) {}
+  }
+
+  static int _saves = 0;
+
+  static Future<bool> hasBackup() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      return p.containsKey('${_key}_bak');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// يستعيد النسخة الاحتياطية مكان الحفظ الحالي
+  static Future<bool> restoreBackup() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      final b = p.getString('${_key}_bak');
+      if (b == null) return false;
+      await p.setString(_key, b);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<bool> hasSave() async {
@@ -372,6 +409,7 @@ class GameState extends ChangeNotifier {
       for (final t in teams) ...t.squad.where((p) => p.injuredWeeks > 0)
     };
     final h = team(f.home), a = team(f.away);
+    _prepMatch();
     sim = MatchSim(h, a, userHome: h == user, userAway: a == user, random: rng);
     notifyListeners();
   }
@@ -476,20 +514,22 @@ class GameState extends ChangeNotifier {
     }
 
     final home = f.home == user.id;
-    final gate = home ? (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (0.75 + 0.5 * fans / 100) : 0.0;
+    final mk = staff['marketing'] ?? 0;
+    final gate = home ? (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (0.75 + 0.5 * fans / 100) * (1 + 0.04 * mk) : 0.0;
     final broadcast = 0.35 + 0.1 * user.reputation;
     final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +
         dealsIncome * (0.9 + 0.2 * fans / 100);
+    final sponsorX = sponsor * (1 + 0.05 * mk);
     final maintenance = 0.03 * (user.stadium + user.trainingLvl + user.academy);
     final interest = fin.debt * 0.004;
     fin.add('tickets', gate);
     fin.add('broadcast', broadcast);
-    fin.add('sponsor', sponsor);
+    fin.add('sponsor', sponsorX);
     fin.add('wages', weeklyWages);
     fin.add('staff', staffWages);
     fin.add('maintenance', maintenance);
     fin.add('interest', interest);
-    user.budget += gate + broadcast + sponsor - weeklyWages - staffWages - maintenance - interest;
+    user.budget += gate + broadcast + sponsorX - weeklyWages - staffWages - maintenance - interest;
     fin.record(user.budget);
 
     if (week >= 4) {
@@ -506,6 +546,7 @@ class GameState extends ChangeNotifier {
       news.insert(0, '⚠️ تحذير اللعب المالي النظيف: الرواتب ${(ffpRatio * 100).round()}% من الإيرادات (الحد 85%)');
     }
     _transferTick();
+    _boardTick();
     week++;
     if (week >= 4) transferBan = false;
     _enforceRegistration();
@@ -513,6 +554,65 @@ class GameState extends ChangeNotifier {
     if (week >= rounds.length) seasonOver = true;
     _advanceCups();
     sim = null;
+    unawaited(save());
+    notifyListeners();
+  }
+
+  // ───────── مجلس الإدارة ─────────
+  static const boardTitles = <int, (String, String, String, String)>{
+    0: ('عرض من مجلس الإدارة', 'تُخصَّص 6M لتعزيز الفريق مقابل تعهّدك بإنهاء الدوري ضمن الثلاثة الأوائل.', 'أقبل التعهد', 'أرفض'),
+    1: ('غضب الجماهير من الأسعار', 'الجماهير تطالب بخفض أسعار التذاكر. الخفض يرضيهم لكنه يكلّف النادي.', 'أخفّض الأسعار', 'أُبقيها'),
+    2: ('ضغط مالي', 'الرئيس يطلب بيع أحد النجوم لتخفيف الأعباء المالية.', 'أسمح بعروض', 'أرفض'),
+  };
+
+  void _boardTick() {
+    if (boardKind != null || seasonOver || week < 5 || week % 9 != 0) return;
+    boardKind = rng.nextInt(3);
+    news.insert(0, '🏛️ دعاك مجلس الإدارة إلى اجتماع: ${boardTitles[boardKind]!.$1}');
+  }
+
+  void answerBoard(bool yes) {
+    final k = boardKind;
+    if (k == null) return;
+    switch (k) {
+      case 0:
+        if (yes) {
+          user.budget += 6;
+          fin.add('prize', 6);
+          boardPledge = true;
+          news.insert(0, '🏛️ قبلت التعهد وحصلت على 6.0M');
+        } else {
+          confidence = max(0, confidence - 2);
+          news.insert(0, '🏛️ رفضت عرض الإدارة');
+        }
+      case 1:
+        if (yes) {
+          fans = min(100, fans + 4);
+          user.budget -= 1.5;
+          fin.add('upgrades', 1.5);
+          news.insert(0, '🏛️ خفّضت الأسعار: الجماهير سعيدة (تكلفة 1.5M)');
+        } else {
+          fans = max(0, fans - 3);
+          user.budget += 1.5;
+          fin.add('tickets', 1.5);
+          news.insert(0, '🏛️ أبقيت الأسعار: +1.5M لكن الجماهير غاضبة');
+        }
+      default:
+        if (yes) {
+          final cand = user.squad.where((p) => !p.onLoan).toList()..sort((a, b) => b.value.compareTo(a.value));
+          if (cand.isNotEmpty && windowOpen && !offers.any((o) => o.player == cand.first)) {
+            final others = teams.where((t) => t != user).toList();
+            offers.add(Offer(cand.first, others[rng.nextInt(others.length)].name, max(0.1, (cand.first.value * 1.2 * 10).round() / 10), 3));
+            news.insert(0, '🏛️ وصل عرض مغرٍ لـ${cand.first.name}');
+          } else {
+            news.insert(0, '🏛️ لا يمكن بيع لاعب الآن (نافذة الانتقالات مغلقة)');
+          }
+        } else {
+          confidence = max(0, confidence - 4);
+          news.insert(0, '🏛️ رفضت طلب الرئيس، وثقته بك تراجعت');
+        }
+    }
+    boardKind = null;
     unawaited(save());
     notifyListeners();
   }
@@ -551,16 +651,23 @@ class GameState extends ChangeNotifier {
   double buyPrice(Player p) => p.free ? signingBonus(p) : (p.value * 1.15 * 10).round() / 10;
   double sellPrice(Player p) => (p.value * 0.85 * 10).round() / 10;
   double renewCost(Player p) => max(0.1, (p.value * 0.08 * 10).round() / 10);
-  double agentFee(double price) => price <= 0 ? 0 : max(0.1, (price * 0.05 * 10).round() / 10);
+  double agentFee(double price) =>
+      price <= 0 ? 0 : max(0.1, (price * 0.05 * (1 - 0.1 * (staff['director'] ?? 0)) * 10).round() / 10);
   double loanFee(Player p) => max(0.1, (p.value * 0.12 * 10).round() / 10);
   double loanOutFee(Player p) => max(0.1, (p.value * 0.1 * 10).round() / 10);
 
   /// جولة تفاوض: يقبل البائع إذا بلغ عرضك حدّه الخفي، وإلا يعرض سعراً مضاداً (3 جولات)
   NegoResult evaluateOffer(Player p, double offer, int round) {
     final ask = buyPrice(p);
-    final reserve = _reserve.putIfAbsent(p.id, () => ask * (0.84 + rng.nextDouble() * 0.12));
+    final reserve = _reserve.putIfAbsent(p.id, () => ask * (0.84 + rng.nextDouble() * 0.12) * (1 - 0.02 * (staff['director'] ?? 0)));
     if (offer >= ask - 0.0001) return const NegoResult('accept', null, 'وافق النادي البائع.');
     if (offer >= reserve) return const NegoResult('accept', null, 'وافق النادي على عرضك.');
+    if (round >= 2 && rng.nextDouble() < 0.1 + (p.overall >= 75 ? 0.08 : 0.0)) {
+      market.remove(p);
+      _reserve.remove(p.id);
+      news.insert(0, '🏃 خطف نادٍ منافس ${p.name} أثناء تفاوضك');
+      return const NegoResult('reject', null, 'تدخّل نادٍ منافس بعرض أعلى وخطف اللاعب!');
+    }
     if (round >= 3) return const NegoResult('reject', null, 'انسحب البائع من المفاوضات. جرّب لاحقاً.');
     final c = max(reserve, offer + (ask - offer) * 0.5);
     final counter = min(ask, (c * 10).round() / 10);
@@ -569,6 +676,24 @@ class GameState extends ChangeNotifier {
 
   void endNegotiation(Player p) => _reserve.remove(p.id);
 
+  /// استعداد اللاعب للانضمام: 0 يرحّب، 1 متردد، 2 يرفض
+  int joinOutlook(Player p) {
+    final a = user.strength + user.reputation * 2 + (position <= 4 ? 2 : 0) + (p.age >= 30 ? 4 : 0) + (p.free ? 3 : 0);
+    final gap = p.overall - a;
+    if (gap <= 2) return 0;
+    if (gap <= 6) return 1;
+    return 2;
+  }
+
+  String? _refusal(Player p) {
+    final o = joinOutlook(p);
+    if (o == 2 || (o == 1 && (p.id + week) % 2 == 0)) {
+      news.insert(0, '🙅 رفض ${p.name} الانضمام إلى ${user.name}');
+      return 'رفض ${p.name} الانتقال: يرى ناديك أقل من طموحه الآن';
+    }
+    return null;
+  }
+
   String? buy(Player p) => completeSigning(p, buyPrice(p));
 
   /// إتمام الصفقة: عمولة الوكيل + الفحص الطبي (قد يُلغي الصفقة أو يكشف إصابة)
@@ -576,6 +701,8 @@ class GameState extends ChangeNotifier {
     final werr = _incomingErr(p.free);
     if (werr != null) return werr;
     if (user.squad.length >= 30) return 'التشكيلة ممتلئة (30 لاعباً كحد أقصى)';
+    final refused = _refusal(p);
+    if (refused != null) return refused;
     final fee = agentFee(price);
     if (price + fee > user.budget) {
       return 'الميزانية غير كافية (السعر + العمولة ${money1(price + fee)})';
@@ -605,6 +732,51 @@ class GameState extends ChangeNotifier {
     _registerNew(p);
     market.remove(p);
     news.insert(0, '💼 تعاقدت مع ${p.name} مقابل ${money1(price)} + عمولة وكيل ${money1(fee)}$note');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  /// إعارة بخيار شراء (إلزامية إن كان obligation) بقيمة محددة سلفاً
+  String? loanInOption(Player p, {bool obligation = false}) {
+    final werr = _incomingErr(false);
+    if (werr != null) return werr;
+    if (user.squad.length >= 30) return 'التشكيلة ممتلئة (30 لاعباً كحد أقصى)';
+    final refused = _refusal(p);
+    if (refused != null) return refused;
+    final fee = max(0.1, (loanFee(p) * (obligation ? 0.6 : 0.85) * 10).round() / 10);
+    if (fee > user.budget) return 'الميزانية غير كافية';
+    user.budget -= fee;
+    fin.add('loanin', fee);
+    p
+      ..onLoan = true
+      ..free = false
+      ..listed = false
+      ..contract = 1
+      ..morale = 75
+      ..optionFee = max(0.1, (buyPrice(p) * (obligation ? 1.0 : 1.05) * 10).round() / 10)
+      ..obligation = obligation;
+    user.squad.add(p);
+    _registerNew(p);
+    market.remove(p);
+    news.insert(0, '🔄 استعرت ${p.name} ${obligation ? 'بإلزامية شراء' : 'بخيار شراء'} (${money1(p.optionFee!)}) مقابل ${money1(fee)}');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  String? exerciseOption(Player p) {
+    final fee = p.optionFee;
+    if (!p.onLoan || fee == null) return 'لا يوجد خيار شراء';
+    if (fee > user.budget) return 'الميزانية غير كافية لتفعيل الخيار (${money1(fee)})';
+    user.budget -= fee;
+    fin.add('purchases', fee);
+    p
+      ..onLoan = false
+      ..optionFee = null
+      ..obligation = false
+      ..contract = 3;
+    news.insert(0, '✅ فعّلت خيار شراء ${p.name} مقابل ${money1(fee)}');
     unawaited(save());
     notifyListeners();
     return null;
@@ -851,6 +1023,18 @@ class GameState extends ChangeNotifier {
     _ffpReview();
     fin.season.clear();
     for (final p in user.squad.where((p) => p.onLoan).toList()) {
+      if (p.obligation && p.optionFee != null) {
+        user.budget -= p.optionFee!;
+        fin.add('purchases', p.optionFee!);
+        news.insert(0, '📝 فُعّلت إلزامية شراء ${p.name} (${money1(p.optionFee!)})');
+        p
+          ..onLoan = false
+          ..optionFee = null
+          ..obligation = false
+          ..contract = 3;
+        continue;
+      }
+      p.optionFee = null;
       user.squad.remove(p);
       news.insert(0, '↩️ عاد المعار ${p.name} إلى ناديه');
     }
@@ -862,6 +1046,16 @@ class GameState extends ChangeNotifier {
       loanedOut.clear();
     }
     offers.clear();
+    if (boardPledge) {
+      if (pos <= 3) {
+        confidence = min(100, confidence + 10);
+        news.insert(0, '🤝 وفيت بتعهدك للإدارة بإنهاء الدوري ضمن الثلاثة الأوائل');
+      } else {
+        confidence = max(0, confidence - 10);
+        news.insert(0, '😠 أخلفت تعهدك للإدارة، وثقتهم بك تراجعت');
+      }
+      boardPledge = false;
+    }
     if (pos <= objective) {
       confidence = min(100, confidence + 12);
       user.budget += 2;
@@ -1166,6 +1360,17 @@ class GameState extends ChangeNotifier {
     return null;
   }
 
+  /// قبل كل مباراة: مستوى المحلل + تحديث الانسجام حسب استقرار التشكيلة
+  void _prepMatch() {
+    user.analystLvl = staff['analyst'] ?? 0;
+    final ids = [for (final p in user.lineup) p.id];
+    if (lastXI.isNotEmpty && ids.length == 11) {
+      final changes = 11 - ids.where(lastXI.contains).length;
+      user.cohesion = (user.cohesion + (changes <= 2 ? 1.5 : -1.2 * (changes - 2))).clamp(30, 100).toDouble();
+    }
+    if (ids.length == 11) lastXI = ids;
+  }
+
   void startCupMatch(Cup c) {
     final t = c.userTie(user.id);
     if (t == null) return;
@@ -1173,6 +1378,7 @@ class GameState extends ChangeNotifier {
     _injBefore = {...user.squad.where((p) => p.injuredWeeks > 0)};
     final h = team(t.home), a = team(t.away);
     activeCup = c;
+    _prepMatch();
     sim = MatchSim(h, a, userHome: h == user, userAway: a == user, random: rng);
     notifyListeners();
   }
@@ -1234,6 +1440,9 @@ class GameState extends ChangeNotifier {
     'coach': ('المدرب المساعد', 'يسرّع تطور اللاعبين (+10% لكل مستوى)'),
     'scout': ('الكشّاف', 'يضيف مواهب أفضل إلى سوق الانتقالات'),
     'doctor': ('الطبيب', 'يقلل مدة الإصابات ويسرّع التعافي'),
+    'analyst': ('المحلل', 'يرفع كفاءة الفريق في المباريات (+0.8% لكل مستوى)'),
+    'marketing': ('مدير التسويق', 'يزيد دخل الرعاة (+5%) والتذاكر (+4%) لكل مستوى'),
+    'director': ('المدير الرياضي', 'يخفض عمولات الوكلاء ويسهّل التفاوض على الأسعار'),
   };
 
   double get staffWages => staff.values.fold(0, (a, v) => a + v * 0.04);
