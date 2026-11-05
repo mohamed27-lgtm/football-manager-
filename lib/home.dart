@@ -405,21 +405,50 @@ class DashboardTab extends StatelessWidget {
             ),
           ),
         );
-    return Panel(
-      child: Column(children: [
-        Row(children: [
-          a(Icons.groups_outlined, 'التشكيلة', kAccent, () => onNavigate(1)),
-          a(Icons.swap_horiz, 'السوق', kBlue, () => onNavigate(2)),
-          a(Icons.sports_soccer_outlined, 'المباريات', kGold, () => onNavigate(3)),
-          a(Icons.account_balance_wallet_outlined, 'المالية', const Color(0xFFFF8A65), () => _push(context, FinanceScreen(gs: gs))),
-        ]),
-        Row(children: [
-          a(Icons.stadium_outlined, 'المنشآت', const Color(0xFF26C6DA), () => _push(context, FacilitiesScreen(gs: gs))),
-          a(Icons.military_tech_outlined, 'البطولات', const Color(0xFFBA68C8), () => _push(context, CupsScreen(gs: gs))),
-          a(Icons.handshake_outlined, 'الرعاة', kGold, () => _push(context, SponsorsScreen(gs: gs))),
-          a(Icons.badge_outlined, 'الطاقم', kBlue, () => _push(context, StaffScreen(gs: gs))),
-        ]),
-      ]),
+    Widget tile(IconData i, String t, String sub, Color c, VoidCallback f) => InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: f,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: kCard,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: kLine),
+            ),
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(color: c.withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
+                child: Icon(i, color: c, size: 25),
+              ),
+              const SizedBox(height: 8),
+              Text(t, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 2),
+              Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: kMuted)),
+            ]),
+          ),
+        );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.55,
+        children: [
+          tile(Icons.account_balance_wallet_outlined, 'المالية', money(gs.user.budget), kGold, () => _push(context, FinanceScreen(gs: gs))),
+          tile(Icons.groups_outlined, 'التشكيلة', 'الفريق والتكتيك', kAccent, () => onNavigate(1)),
+          tile(Icons.swap_horiz, 'الانتقالات', gs.offers.isEmpty ? 'سوق اللاعبين' : '${gs.offers.length} عرض جديد', kBlue, () => onNavigate(2)),
+          tile(Icons.stadium_outlined, 'الملعب', 'المنشآت والأكاديمية', const Color(0xFF26C6DA), () => _push(context, FacilitiesScreen(gs: gs))),
+          tile(Icons.handshake_outlined, 'الرعاة', 'دخل ${wageK(gs.dealsIncome)}', kGold, () => _push(context, SponsorsScreen(gs: gs))),
+          tile(Icons.badge_outlined, 'الطاقم', 'مدربون وكشافة', const Color(0xFFBA68C8), () => _push(context, StaffScreen(gs: gs))),
+          tile(Icons.emoji_events_outlined, 'المسابقات', gs.leagueName, kAccent, () => onNavigate(3)),
+          tile(Icons.shield_outlined, 'النادي', 'الإرث والإعدادات', const Color(0xFFFF8A65), () => onNavigate(4)),
+        ],
+      ),
     );
   }
 
@@ -490,10 +519,10 @@ class DashboardTab extends StatelessWidget {
       else
         _nextMatch(context),
       if (gs.offers.isNotEmpty) _offersCard(),
+      _actions(context),
       if (gs.boardKind != null) _board(context),
       _stats(),
       _recent(),
-      _actions(context),
       sectionTitle('الترتيب', trailing: TextButton(onPressed: () => onNavigate(3), child: const Text('الجدول كاملاً'))),
       _miniTable(),
       Panel(
