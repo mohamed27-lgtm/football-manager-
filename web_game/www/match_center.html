@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <script src="common.js"></script>
+<script src="realism.js"></script>
     <script>
         // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
         (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
@@ -338,7 +339,7 @@
                     candidates.sort((a,b) => (parseFloat(b.market_value_cur)||0) - (parseFloat(a.market_value_cur)||0));
                     const pick = candidates[0];
                     used.add(pick.tmid);
-                    return { name: pick.player_name, rating: computePlayerRating(parseFloat(pick.market_value_cur)||0), position: slot.pos, isReal:true };
+                    return { name: pick.player_name, rating: RLM.rating(pick.tmid, parseFloat(pick.market_value_cur)||0), position: slot.pos, isReal:true };
                 });
                 return { formation: formationKey, slots, lineup, isRealSquad:true };
             }
@@ -448,7 +449,8 @@
                 do { idxB = (daySeed + i*17 + 31) % uniquePool.length; } while (usedIdx.has(idxB) || idxB === idxA);
                 usedIdx.add(idxB);
                 const matchSeed = seedHash(uniquePool[idxA] + uniquePool[idxB] + dateLabel);
-                picks.push({ home: uniquePool[idxA], away: uniquePool[idxB], hs: matchSeed % 4, as: (matchSeed >> 3) % 4,
+                const _sim = RLM.sim(matchSeed % 1000, uniquePool[idxA], uniquePool[idxB]);
+                picks.push({ home: uniquePool[idxA], away: uniquePool[idxB], hs: _sim[0], as: _sim[1],
                     comp: (sameComp.find(r=>r.team.trim()===uniquePool[idxA])||{}).competition || '' });
             }
             if (!picks.length) { container.innerHTML = `<div style="padding:14px; color:var(--muted); font-size:11px; text-align:center;">لا مباريات أخرى مسجَّلة اليوم.</div>`; return; }

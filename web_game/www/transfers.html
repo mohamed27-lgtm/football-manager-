@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <script src="common.js"></script>
+<script src="realism.js"></script>
     <script>
         // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
         (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
@@ -529,7 +530,8 @@
                 contract_until: r.contract_until || '',
                 market_value: val,
                 market_value_short: r.market_value_cur_short || (val > 0 ? '€' + (val/1000000).toFixed(1) + 'M' : 'حر'),
-                rating: computePlayerRating(val)
+                rating: RLM.rating(r.tmid, val),
+                potential: RLM.potential(r.tmid)
             };
         }
 
@@ -960,6 +962,7 @@
             if (fedIsForeign(p.nationality) && squad.overForeign) { showToast('⛔ حصة الأجانب المسموحة مكتملة في دوريك.'); return; }
 
             const free = isFreeAgent(p);
+            if (!free && !RLM.windowOpen()) { showToast('⛔ ' + RLM.windowInfo().label + ' — يمكنك التعاقد مع اللاعبين الأحرار فقط.'); return; }
 
             if (free) {
                 // لا نادٍ بائع هنا — الانتقال الحر يذهب مباشرة لقائمة التفاوض الشخصي مع اللاعب على راتبه
@@ -1483,9 +1486,13 @@
                 return;
             }
 
+            if (!RLM.windowOpen()) {
+                addMessageToSystem('وكيل انتقالات', `${RLM.windowInfo().label}. ستصلك العروض على ${player.player_name} عند فتح السوق.`);
+                return;
+            }
             const tier = BUYER_TIERS.find(t => rating >= t.min);
             const seed = seedHash(player.player_name + Date.now());
-            const buyer = tier.clubs[seed % tier.clubs.length];
+            const buyer = RLM.pickBuyer(rating, player.player_name + seed, localStorage.getItem('presidentialClub'));
             const offerRatio = tier.ratio[0] + (seed % 100)/100 * (tier.ratio[1] - tier.ratio[0]);
             const offerAmount = Math.round(value * offerRatio);
 
@@ -1846,6 +1853,12 @@
 
         window.onload = async function() {
             refreshBudgetChip();
+            try {
+                const wi = RLM.windowInfo(), t = document.querySelector('.page-title');
+                if (t) { const b = document.createElement('div');
+                    b.style.cssText = 'margin:8px 12px;padding:9px 12px;border-radius:12px;font-size:12px;text-align:center;font-weight:700;' + (wi.open ? 'background:rgba(50,184,121,.15);color:#32B879;border:1px solid #32B879' : 'background:rgba(224,82,82,.12);color:#E05252;border:1px solid #E05252');
+                    b.textContent = (wi.open ? '🟢 ' : '🔴 ') + wi.label; t.parentNode.insertBefore(b, t.nextSibling); }
+            } catch (e) {}
             await loadAllPlayers();
             document.getElementById('needPosition').innerHTML = document.getElementById('posFilter').innerHTML;
             renderClubNeedBanner();

@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <script src="common.js"></script>
+<script src="realism.js"></script>
     <script>
         // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
         (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
@@ -216,7 +217,7 @@
                         hScore = found?found.homeScore:0; aScore = found?found.awayScore:0;
                     } else {
                         let seed = i + match.home.length + match.away.length;
-                        hScore = seed%3; aScore = (seed+1)%3;
+                        { const _r = RLM.sim(i, match.home, match.away); hScore = _r[0]; aScore = _r[1]; }
                     }
                     let home=standings[match.home], away=standings[match.away];
                     if (home && away) {

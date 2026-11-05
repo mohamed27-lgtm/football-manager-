@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <script src="common.js"></script>
+<script src="realism.js"></script>
     <script>
         // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
         (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
@@ -209,7 +210,7 @@
                             hScore = found.homeScore; aScore = found.awayScore;
                         } else {
                             const seed = i + match.home.length + match.away.length;
-                            hScore = seed % 3; aScore = (seed + 1) % 3;
+                            { const _r = RLM.sim(i, match.home, match.away); hScore = _r[0]; aScore = _r[1]; }
                         }
                         if (hScore > aScore) points[match.home] = (points[match.home]||0) + Math.round(3 * opponentStrengthMult(match.away));
                         else if (hScore === aScore) { points[match.home] = (points[match.home]||0) + 1; points[match.away] = (points[match.away]||0) + 1; }
@@ -290,7 +291,7 @@
                 const rawPos = (p.main_position||'CM').trim();
                 return {
                     name: p.player_name, club: p.club, nationality: p.nationality, age: parseFloat(p.age)||0,
-                    position: OLD_POS_MAP[rawPos] || rawPos, marketValue: val, rating: computePlayerRating(val),
+                    position: OLD_POS_MAP[rawPos] || rawPos, marketValue: val, rating: RLM.rating(p.tmid, val),
                 };
             }).filter(p => p.name && p.marketValue > 0);
             players.sort((a,b) => b.rating - a.rating || b.marketValue - a.marketValue);
