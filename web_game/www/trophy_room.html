@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>خزينة البطولات - إدارة النادي</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, system-ui, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        :root {
+            --bg: #0a0b10;
+            --card-bg: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-dim: #8b949e;
+            --gold: #c5a059;
+            --gold-dark: #a8853a;
+            --shadow: 0 8px 32px rgba(0,0,0,0.6);
+        }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card-bg: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --text-dim: #6b7385;
+            --gold: #8a6b28;
+            --gold-dark: #7a5d20;
+        }
+        
+        body {
+            background: radial-gradient(circle at 20% 30%, #0c0f15, #030407);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 0 0 30px 0;
+        }
+        .header {
+            background: linear-gradient(135deg, rgba(22,27,34,0.98), rgba(8,9,14,0.98));
+            backdrop-filter: blur(10px);
+            padding: 20px 15px 15px;
+            border-bottom: 2px solid var(--gold);
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-top .back-btn {
+            color: var(--gold);
+            background: rgba(197,160,89,0.12);
+            padding: 8px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        .header-top .back-btn:active { background: rgba(197,160,89,0.3); }
+        .club-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .club-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            padding: 5px;
+            border: 1px solid var(--border);
+        }
+        .club-info h1 {
+            font-size: 22px;
+            color: var(--gold);
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .club-info .sub {
+            font-size: 12px;
+            color: var(--text-dim);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .club-info .sub span i { margin-left: 4px; color: var(--gold); }
+
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 8px 0 2px;
+            border-top: 1px solid var(--border);
+            margin-top: 5px;
+        }
+        .stat-item {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+        .stat-item strong {
+            color: var(--text);
+            font-size: 16px;
+            margin-left: 3px;
+        }
+        .stat-item .num {
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .container {
+            padding: 15px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .trophy-shelf {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 20px 18px 25px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            transition: 0.3s;
+        }
+        .trophy-shelf:hover { border-color: var(--gold-dark); }
+        .shelf-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            padding-bottom: 12px;
+        }
+        .shelf-header img {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+        }
+        .shelf-header .title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--text);
+        }
+        .shelf-header .count {
+            font-size: 14px;
+            color: var(--gold);
+            background: rgba(197,160,89,0.12);
+            padding: 2px 14px;
+            border-radius: 40px;
+            margin-right: auto;
+        }
+        .shelf-header .trophy-icon {
+            font-size: 22px;
+            color: var(--gold);
+        }
+
+        .trophy-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            padding: 6px 0;
+            min-height: 70px;
+            align-items: center;
+        }
+        .trophy-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            padding: 12px 6px 8px 6px;
+            border-radius: 12px;
+            background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01) 40%, rgba(0,0,0,0.15));
+            border: 1px solid rgba(197,160,89,0.15);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 10px rgba(0,0,0,0.35);
+            min-width: 70px;
+            position: relative;
+            overflow: hidden;
+        }
+        /* لمعة زجاجية علوية ثابتة — تحاكي انعكاس الضوء على واجهة فترينة عرض حقيقية */
+        .trophy-item::before {
+            content: ''; position: absolute; top: -60%; left: -20%; width: 140%; height: 90%;
+            background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.08) 48%, rgba(255,255,255,0.02) 55%, transparent 62%);
+            pointer-events: none;
+        }
+        /* توهّج إضاءة متحفية ثابت خلف الكأس — بؤرة ضوء دائمة كإضاءة الفترينات الحقيقية */
+        .trophy-item::after {
+            content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+            width: 46px; height: 46px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(197,160,89,0.22), transparent 70%);
+            pointer-events: none;
+        }
+        .trophy-item:active { transform: scale(0.92); background: rgba(197,160,89,0.1); }
+        .trophy-item img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+            transition: 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+        .trophy-item img:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 15px rgba(197,160,89,0.4));
+        }
+        /* ظل قاعدة واقعي أسفل الكأس مباشرة — يعطي إحساساً بأن الكأس يقف فعلياً على رف مادي */
+        .trophy-item .pedestal-shadow {
+            width: 30px; height: 5px; border-radius: 50%;
+            background: radial-gradient(ellipse, rgba(0,0,0,0.5), transparent 75%);
+            margin-top: -2px;
+        }
+        .trophy-item .year {
+            font-size: 10px;
+            color: var(--text-dim);
+            background: rgba(0,0,0,0.4);
+            padding: 2px 8px;
+            border-radius: 30px;
+            line-height: 1.4;
+            position: relative;
+            z-index: 1;
+        }
+        .trophy-item .year:hover {
+            background: var(--gold);
+            color: #000;
+        }
+        .empty-shelf-msg {
+            color: var(--text-dim);
+            font-size: 14px;
+            padding: 15px 0;
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--gold-dark);
+            border-radius: 28px;
+            max-width: 420px;
+            width: 100%;
+            padding: 28px 24px 30px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-card .close-modal {
+            position: absolute;
+            top: 14px;
+            left: 18px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 22px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .modal-card .close-modal:hover { color: var(--text); }
+        .modal-trophy-img {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 10px 0 16px;
+        }
+        .modal-trophy-img img {
+            width: 72px;
+            height: 72px;
+            object-fit: contain;
+        }
+        .modal-title {
+            font-size: 20px;
+            color: var(--gold);
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .modal-sub {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .modal-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 16px;
+            background: rgba(0,0,0,0.2);
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 13px;
+        }
+        .modal-details .label {
+            color: var(--text-dim);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .modal-details .value {
+            color: var(--text);
+            font-weight: 500;
+        }
+        .modal-details .full-width {
+            grid-column: 1 / -1;
+        }
+        .modal-season {
+            background: var(--gold);
+            color: #000;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-weight: bold;
+            display: inline-block;
+            font-size: 13px;
+        }
+        .modal-years {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .modal-years .year-badge {
+            background: var(--border);
+            color: var(--text);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .club-header { gap: 10px; }
+            .club-logo { width: 50px; height: 50px; }
+            .club-info h1 { font-size: 18px; }
+            .stats-row { gap: 10px; }
+            .stat-item { font-size: 11px; }
+            .trophy-item img { width: 38px; height: 38px; }
+            .shelf-header .title { font-size: 15px; }
+            .modal-details { grid-template-columns: 1fr; }
+            .container { padding: 10px 12px; }
+        }
+        @media (max-width: 400px) {
+            .trophy-item { min-width: 55px; }
+            .trophy-item img { width: 32px; height: 32px; }
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+
+        .loading-placeholder {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-dim);
+        }
+        .loading-placeholder i { font-size: 40px; color: var(--gold); margin-bottom: 15px; }
+    .shelf-section { padding: 10px; background: linear-gradient(180deg, rgba(255,255,255,0.025), transparent 60%); border: 1px solid rgba(197,160,89,0.1); border-radius: 14px; }
+    .shelf-title { font-size: 14px; font-weight: 800; padding: 0 4px 12px 4px; display: flex; align-items: center; gap: 8px; }
+    .vault-door-strip {
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        background: linear-gradient(180deg, #2a2f38, #14171c 70%);
+        padding: 10px 12px; border-bottom: 2px solid var(--gold-dark);
+        box-shadow: inset 0 -6px 14px rgba(0,0,0,0.5);
+        position: relative;
+    }
+    .vault-wheel {
+        width: 34px; height: 34px; border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #d9c08a, #8a6f3b 55%, #4a3a1f 100%);
+        border: 2px solid #6b5528;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.6), inset 0 0 6px rgba(0,0,0,0.4);
+        position: relative; flex-shrink: 0;
+    }
+    .vault-wheel::before, .vault-wheel::after {
+        content: ''; position: absolute; background: #3a2e18; border-radius: 2px;
+    }
+    .vault-wheel::before { width: 3px; height: 22px; top: 6px; left: 50%; transform: translateX(-50%); }
+    .vault-wheel::after { width: 22px; height: 3px; left: 6px; top: 50%; transform: translateY(-50%); }
+    .vault-rivet { width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #d9c08a, #6b5528); position: absolute; }
+    .vault-label { font-size: 10px; color: var(--gold); font-weight: 800; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+
+<div class="vault-door-strip">
+    <div class="vault-rivet" style="top:8px; left:14px;"></div>
+    <div class="vault-rivet" style="top:8px; right:14px;"></div>
+    <div class="vault-rivet" style="bottom:8px; left:14px;"></div>
+    <div class="vault-rivet" style="bottom:8px; right:14px;"></div>
+    <div class="vault-wheel"></div>
+    <span class="vault-label"><i class="fas fa-lock"></i> الغرفة الآمنة — خزينة الأمجاد</span>
+    <div class="vault-wheel"></div>
+</div>
+
+<div class="header">
+    <div class="header-top">
+        <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i> العودة</a>
+        <span style="color:var(--gold); font-size:14px;"><i class="fas fa-trophy"></i> خزينة البطولات</span>
+    </div>
+    <div class="club-header" id="clubHeader">
+        <img id="clubLogo" class="club-logo" src="teams_logos/default.png" alt="شعار النادي">
+        <div class="club-info">
+            <h1 id="clubName">النادي</h1>
+            <div class="sub">
+                <span><i class="fas fa-calendar-alt"></i> تأسس: <span id="foundedYear">----</span></span>
+                <span><i class="fas fa-map-marker-alt"></i> <span id="clubCountry">----</span></span>
+                <span><i class="fas fa-trophy"></i> الدوري: <span id="clubLeague">----</span></span>
+            </div>
+        </div>
+    </div>
+    <div class="stats-row" id="statsRow">
+        <div class="stat-item"><i class="fas fa-trophy"></i> الإجمالي: <strong class="num" id="totalTrophies">0</strong></div>
+        <div class="stat-item"><i class="fas fa-house"></i> محلي: <strong class="num" id="localTrophies">0</strong></div>
+        <div class="stat-item"><i class="fas fa-earth-africa"></i> قاري: <strong class="num" id="continentalTrophies">0</strong></div>
+        <div class="stat-item"><i class="fas fa-globe"></i> عالمي: <strong class="num" id="worldTrophies">0</strong></div>
+    </div>
+</div>
+
+<div class="container" id="trophyContainer">
+    <div class="loading-placeholder" id="loadingIndicator">
+        <i class="fas fa-spinner fa-spin"></i>
+        <div>جاري تحميل خزينة البطولات...</div>
+    </div>
+    <div id="achievementsContainer"></div>
+    <div id="individualAwardsContainer"></div>
+    <div id="shelvesContainer"></div>
+</div>
+
+<!-- مودال عرض تفاصيل الكأس -->
+<div class="modal-overlay" id="trophyModal">
+    <div class="modal-card">
+        <button class="close-modal" onclick="closeModal()"><i class="fas fa-times"></i></button>
+        <div class="modal-trophy-img">
+            <img id="modalTrophyImg" src="" alt="كأس">
+            <img id="modalCompLogo" src="" alt="شعار البطولة">
+        </div>
+        <div class="modal-title" id="modalTitle">كأس البطولة</div>
+        <div style="text-align:center; margin-bottom:10px;">
+            <span class="modal-season" id="modalSeason">2025</span>
+        </div>
+        <div class="modal-years" id="modalYearsContainer"></div>
+        <div class="modal-sub" id="modalOpponent">النهائي: الخصم | النتيجة</div>
+        <div class="modal-details" id="modalDetails">
+            <div><span class="label">الملعب</span><div class="value" id="modalStadium">----</div></div>
+            <div><span class="label">الدولة</span><div class="value" id="modalCountry">----</div></div>
+            <div><span class="label">المدرب</span><div class="value" id="modalCoach">----</div></div>
+            <div><span class="label">القائد</span><div class="value" id="modalCaptain">----</div></div>
+            <div class="full-width"><span class="label">رجل المباراة</span><div class="value" id="modalMotm">----</div></div>
+            <div class="full-width"><span class="label">الهداف</span><div class="value" id="modalTopScorer">----</div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    //  قاعدة بيانات البطولات
+    // ============================================================
+    let trophiesDatabase = {};
+    let competitionsDB = {};
+    let currentTrophies = [];
+    let teamNameMap = {};
+
+    // ============================================================
+    //  قائمة ملفات CSV المطلوب تحميلها
+    // ============================================================
+    const CSV_FILES = [
+        'Spain.csv',
+        'England.csv',
+        'France.csv',
+        'Germany.csv',
+        'Italy.csv',
+        'Netherlands.csv',
+        'Portugal.csv',
+        'Brazil.csv',
+        'Argentina.csv',
+        'Saudi Arabia.csv',
+        'Turkey.csv',
+        'Egypt.csv',
+        'Russia.csv',
+        'Austria.csv',
+        'Wales.csv',
+        'Ukraine.csv',
+        'Ireland.csv',
+        'Norway.csv',
+        'belgium.csv',
+        'Morocco.csv',
+        'Tunisia.csv',
+        'Algeria.csv',
+        'Japan.csv',
+        'Qatar.csv',
+        'UAE.csv'
+    ];
+
+    // ============================================================
+    //  دالة للحصول على مسار صورة الكأس
+    // ============================================================
+    function getTrophyImagePath(competitionName, competitionId) {
+        // تنظيف اسم البطولة لاستخدامه كاسم ملف
+        let cleanName = competitionName
+            .replace(/[^a-zA-Z0-9]/g, '_')
+            .replace(/_+/g, '_')
+            .toLowerCase();
+        
+        // محاولة استخدام competition_id أولاً (أكثر دقة)
+        const idBasedPath = `trophies/${competitionId}.png`;
+        const nameBasedPath = `trophies/${cleanName}.png`;
+        const defaultPath = 'trophies/default_trophy.png';
+        
+        // نعيد المسارين، وسيتم التعامل مع عدم وجود الصورة عبر onerror
+        return nameBasedPath;
+    }
+
+    // ============================================================
+    //  خريطة أسماء البطولات لأسماء ملفات الصور (يدوية)
+    // ============================================================
+    const TROPHY_IMAGE_MAP = {
+        // إنجلترا
+        'Premier League': 'premier_league.png',
+        'FA Cup': 'fa_cup.png',
+        'EFL Cup': 'efl_cup.png',
+        'Community Shield': 'community_shield.png',
+        'UEFA Champions League': 'uefa_champions_league.png',
+        'UEFA Europa League': 'uefa_europa_league.png',
+        'UEFA Conference League': 'uefa_conference_league.png',
+        'UEFA Cup Winners\' Cup': 'uefa_cup_winners.png',
+        'UEFA Super Cup': 'uefa_super_cup.png',
+        'FIFA Club World Cup': 'fifa_club_world_cup.png',
+        'Intercontinental Cup': 'intercontinental_cup.png',
+        'Inter-Cities Fairs Cup': 'inter_cities_fairs_cup.png',
+        'UEFA Europa Conference League': 'uefa_conference_league.png',
+        'CAF Champions League':'caf_champions_league.png',
+        'CAF Super Cup':'caf_super_cup.png',
+        'CAF Confederation Cup':'caf_confederation_cup.png',
+        'AFC Champions League':'afc_champions_league.png',
+        'Recopa Sudamericana':'recopa_sudamericana.png',
+        'Crown Prince Cup':'crown_prince_cup.png',
+        'Copa Libertadores':'cop_libertadores.png',
+        // إسبانيا
+        'LaLiga': 'laliga.png',
+        'Copa del Rey': 'copa_del_rey.png',
+        'Supercopa de España': 'supercopa_de_españa.png',
+        'Segunda División': 'segunda_division.png',
+        'Copa Eva Duarte': 'copa_eva_duarte.png',
+        'Copa de la Liga': 'copa_de_la_liga.png',
+        'Latin Cup': 'latin_cup.png',
+        
+        // ألمانيا
+        'Bundesliga': 'bundesliga.png',
+        'DFB-Pokal': 'dfb_pokal.png',
+        'DFL-Supercup': 'dfl_supercup.png',
+        
+        // إيطاليا
+        'Serie A': 'serie_a.png',
+        'Coppa Italia': 'coppa_italia.png',
+        'Supercoppa Italiana': 'supercoppa_italiana.png',
+        
+        // فرنسا
+        'Ligue 1': 'ligue_1.png',
+        'Coupe de France': 'coupe_de_france.png',
+        'Coupe de la Ligue': 'coupe_de_la_ligue.png',
+        'Trophée des Champions': 'trophee_des_champions.png',
+        
+        // هولندا
+        'Eredivisie': 'eredivisie.png',
+        'KNVB Cup': 'knvb_cup.png',
+        'Johan Cruyff Shield': 'johan_cruyff_shield.png',
+        
+//البرتغال
+        'Liga Portugal': 'liga_portugal.png',
+        'Taça de Portugal': 'taca_de_portugal.png',
+        'Supertaça': 'Supertaca_Cândido_de_Oliveira.png',           // ✅ يطابق اسم الملف
+        'Supertaça Cândido de Oliveira': 'Supertaca_Cândido_de_Oliveira.png',  // ✅ الاسم الكامل
+        'Taça de liga': 'Taça_de_Liga.png',                         // ✅ يطابق اسم الملف
+        'Taça da Liga': 'Taça_de_Liga.png',                         // ✅ الاسم الكامل
+       
+        
+        // تركيا
+        'Super Lig': 'super_lig.png',
+        'Turkish Cup': 'turkish_cup.png',
+        'Turkish Super Cup': 'turkish_super_cup.png',
+        
+        // السعودية
+        'Saudi Pro League': 'saudi_pro_league.png',
+        "King's Cup": 'kings_cup.png',
+        'Saudi Super Cup': 'saudi_super_cup.png',
+        
+        // مصر
+        'Egyptian Premier League': 'premier_league_egyption.png',
+        'Egypt Cup': 'egypt_cup.png',
+        'Egyptian Super Cup': 'super_cup_egyption.png',
+        
+        // المغرب
+        'Botola Pro': 'botola_pro.png',
+        'Moroccan Cup': 'moroccan_cup.png',
+        'Moroccan Super Cup': 'moroccan_super_cup.png',
+        
+        // تونس
+        'Tunisia Ligue 1': 'tunisia_ligue_1.png',
+        'Tunisian Cup': 'tunisian_cup.png',
+        'Tunisian Super Cup': 'tunisian_super_cup.png',
+        
+        // الجزائر
+        'Algeria Ligue 1': 'algeria_ligue_1.png',
+        'Algerian Cup': 'algerian_cup.png',
+        'Algerian Super Cup': 'algerian_super_cup.png',
+        
+        // البرازيل
+        'Campeonato Brasileiro Série A': 'serie_a_brazil.png',
+        'Brasileirão':'serie_a_brazil.png',
+        'Copa do Brasil': 'copa_do_brasil.png',
+        'Supercopa Rei': 'supercopa_rei.png',
+        
+        // الأرجنتين
+        'Torneo Apertura': 'torneo_apertura.png',
+        'Copa Argentina': 'copa_argentina.png',
+        'Supercopa Internacional': 'supercopa_internacional.png',
+        
+        // اليابان
+        'J1 League': 'j1_league.png',
+        "Emperors Cup": 'emperors_cup.png',
+        'Japanese Super Cup': 'japanese_super_cup.png',
+        'J.League Cup':'j.league_cup.png',
+        
+        // قطر
+        'Qatar Stars League': 'qatar_stars_league.png',
+        'Amir Cup': 'amir_cup.png',
+        'Qatar Cup': 'qatar_cup.png',
+        
+        // الإمارات
+        'UAE Pro League': 'uae_pro_league.png',
+        "UAE President's Cup": 'uae_presidents_cup.png',
+        'UAE Super Cup': 'uae_super_cup.png',
+        
+        // أمريكا
+        'MLS': 'mls.png',
+        'US Open Cup': 'us_open_cup.png',
+        
+        //السلام
+        'J1 League':'j1_league.png',
+        '1.League_Cup':'1_league_cup.png',
+        
+        //النوريج
+        'Eliteserien':'eliteserien.png',
+        'Norwegian Cup':'norwegian_cup.png',
+        
+        //البلجيكي
+        'Pro League':'pro_league.png',
+        'Belgian Cup':'belgian_cup.png',
+        'Belgian Super Cup':'belgian_super_cup.png',
+        
+        //النمسا
+        'Austrian Bundesliga':'austrian_bundesliga.png',
+        'Austrian Cup':'austrian_cup.png',
+        
+        //أوكرانيا
+        'Ukrainian Premier League':'ukrainian_premier_league.png',
+        'Ukrainian Cup':'ukrainian_cup.png',
+        'Ukrainian Super Cup':'ukrainian_super_cup.png',
+        
+        //ويلز
+        'Cymru Premier':'cymru_premier.png',
+    };
+
+     // ============================================================
+//  خريطة شعارات البطولات (مباشرة من CSV)
+// ============================================================
+const COMPETITION_LOGO_MAP = {
+    // 🏴󠁧󠁢󠁥󠁮󠁧󠁿 إنجلترا
+    'Premier League': 'premier_league.png',
+    'FA Cup': 'fa_cup.png',
+    'EFL Cup': 'efl_cup.png',
+    'Community Shield': 'community_shield.png',
+    
+    // 🇪🇸 إسبانيا
+    'LaLiga': 'laliga.png',
+    'Copa del Rey': 'copa_del_rey.png',
+    'Supercopa de España': 'supercopa.png',
+    'Supercopa de España': 'Supercopa de España.png',
+    
+    // 🇩🇪 ألمانيا
+    'Bundesliga': 'bundesliga.png',
+    'DFB-Pokal': 'dfb_pokal.png',
+    'DFL-Supercup': 'dfl_supercup.png',
+    
+    // 🇮🇹 إيطاليا
+    'Serie A': 'Serie A.png',
+    'Coppa Italia': 'Italy Cup.png',
+    'Supercoppa Italiana': 'supercoppa_italiana.png',
+    
+    // 🇫🇷 فرنسا
+    'Ligue 1': 'ligue_1.png',
+    'Coupe de France': 'coupe_de_france.png',
+    'Trophée des Champions': 'trophee_des_champions.png',
+    
+    // 🇳🇱 هولندا
+    'Eredivisie': 'eredivisie.png',
+    'KNVB Cup': 'KNVB_cup.png',
+    'Johan Cruijff Schaal': 'Johan_Cruyff_Shield.png',
+    
+    // 🇵🇹 البرتغال
+    'Liga Portugal': 'liga_portugal.png',
+    'Taça de Portugal': 'taca_de_portugal.png',
+    'Taça da Liga':'taca_da_liga.png',
+    'Supertaça': 'supertaca.png',
+    
+    // 🇹🇷 تركيا
+    'Süper Lig': 'super_lig.png',
+    'Türkiye Kupasi': 'turkish_cup.png',
+    'TFF Süper Kupa': 'turkish_super_cup.png',
+    
+    // 🇸🇦 السعودية
+    'Saudi Pro League': 'saudi_pro_league.png',
+    'King\'s Cup': 'kings_cup.png',
+    'Crown Prince Cup':'crown_prince_cup.png',
+    'Saudi Super Cup': 'saudi_super_cup.png',
+    
+    // 🇪🇬 مصر
+    'Egyptian Premier League': 'egyptian_premier_league.png',
+    'Egypt Cup': 'egypt_cup.png',
+    'Egyptian Super Cup': 'egyptian_super_cup.png',
+    
+    // 🇲🇦 المغرب
+    'Botola Pro': 'botola_pro_inwi.png',
+    'Moroccan Cup': 'maroccan_cup.png',
+    
+    // 🇹🇳 تونس
+    'Ligue 1': 'tunisia_ligue_1.png',
+    'Tunisian Cup': 'tunisian_cup.png',
+    
+    // 🇩🇿 الجزائر
+    'Ligue 1': 'algeria_ligue_1.png',
+    'Coupe d\'Algerie': 'algerian_cup.png',
+    
+    // 🇧🇷 البرازيل
+    'Brasileirão': 'Campeonato Brasileiro Série A.png',
+    'Copa do Brasil': 'copa_do_brasil.png',
+    'Supercopa Rei': 'supercopa_rei.png',
+    
+    // 🇦🇷 الأرجنتين
+    'Torneo Apertura': 'torneo_apertura.png',
+    'Copa Argentina': 'copa_argentina.png',
+    'Supercopa Internacional': 'supercopa_internacional.png',
+    
+    // 🇯🇵 اليابان
+    'J1 League': 'j1_league.png',
+    'J2 League': 'j2_league.png',
+    'J3 League': 'j3_league.png',
+    'J.League Cup':'j.league_cup.png',
+    'Emperors Cup':'emperors_cup.png',
+    
+    // 🇶🇦 قطر
+    'Qatar Stars League': 'qatar_stars_league.png',
+    'Amir Cup': 'amir_cup.png',
+    
+    // 🇦🇪 الإمارات
+    'UAE Pro League': 'uae_pro_league.png',
+    'UAE President\'s Cup': 'uae_presidents_cup.png',
+    'UAE Super Cup': 'uae_super_cup.png',
+    
+    // 🌍 قاري
+    'UEFA Champions League': 'uefa_champions_league.png',
+    'UEFA Europa League': 'uefa_europa_league.png',
+    'UEFA Europa Conference League': 'uefa_conference_league.png',
+    'UEFA Super Cup': 'uefa_super_cup.png',
+    'FIFA Club World Cup': 'fifa_club_world_cup.png',
+    'CAF Champions League': 'caf_champions_league.png',
+    'AFC Champions League': 'afc_champions_league.png',
+    'Copa Libertadores': 'cop_libertadores.png',
+    
+    // 🏴󠁧󠁢󠁷󠁬󠁳󠁿 ويلز
+    'Cymru Premier': 'cymru_premier.png',
+    
+    //اوكرانيا
+    'Ukrainian Premier League':'Ukraine Premier Liga.png',
+};
+
+// دالة الحصول على شعار البطولة
+function getCompetitionLogo(compName) {
+    // 1. البحث في الخريطة
+    if (COMPETITION_LOGO_MAP[compName]) {
+        return `competition_logos/${COMPETITION_LOGO_MAP[compName]}`;
+    }
+    
+    // 2. محاولة تنظيف الاسم
+    let cleanName = compName
+        .replace(/[^a-zA-Z0-9]/g, '_')
+        .replace(/_+/g, '_')
+        .toLowerCase();
+    
+    // 3. محاولة مع إزالة الكلمات الشائعة
+    const commonWords = ['league', 'cup', 'super', 'premier', 'championship', 'professional', 'national', 'football'];
+    let simpleName = compName;
+    commonWords.forEach(word => {
+        simpleName = simpleName.replace(new RegExp(word, 'gi'), '');
+    });
+    simpleName = simpleName.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+    
+    // 4. محاولة مع الحذف بعد - أو (
+    const parts = compName.split(/[-\(]/);
+    const shortName = parts[0].trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+    
+    // 5. إرجاع جميع الخيارات
+    return `competition_logos/${cleanName}.png`;
+}
+    function getTrophyImage(competitionName, competitionId) {
+        // 1. محاولة البحث في الخريطة
+        if (TROPHY_IMAGE_MAP[competitionName]) {
+            return `trophies/${TROPHY_IMAGE_MAP[competitionName]}`;
+        }
+        
+        // 2. محاولة استخدام competition_id
+        if (competitionId) {
+            return `trophies/${competitionId}.png`;
+        }
+        
+        // 3. استخدام اسم البطولة بعد تنظيفه
+        let cleanName = competitionName
+            .replace(/[^a-zA-Z0-9]/g, '_')
+            .replace(/_+/g, '_')
+            .toLowerCase();
+        return `trophies/${cleanName}.png`;
+    }
+
+    // ============================================================
+    //  تحميل جميع ملفات CSV
+    // ============================================================
+    function loadAllCSVFiles() {
+        return new Promise((resolve) => {
+            let loaded = 0;
+            const total = CSV_FILES.length + 1;
+
+            // تحميل competition_detailed.csv للشعارات
+            fetch('competition_detailed.csv')
+                .then(r => r.text())
+                .then(csv => {
+                    Papa.parse(csv, { header: true, complete: (res) => {
+                        res.data.forEach(row => {
+                            if (row.competition_id) {
+                                competitionsDB[row.competition_id] = {
+                                    id: row.competition_id,
+                                    name: row.competition || row.competition_short || '',
+                                    type_id: parseInt(row.competition_type_id) || 0,
+                                    country: row.country || '',
+                                    area: row.area || '',
+                                    logo: row.logo_url || '',
+                                };
+                            }
+                        });
+                        loaded++;
+                        checkComplete();
+                    }});
+                })
+                .catch(() => { loaded++; checkComplete(); });
+
+            // تحميل ملفات البطولات
+            CSV_FILES.forEach(filename => {
+                fetch(filename)
+                    .then(r => r.text())
+                    .then(csv => {
+                        Papa.parse(csv, { header: true, complete: (res) => {
+                            res.data.forEach(row => {
+                                const teamId = row.team_id?.trim();
+                                const teamName = row.team_name?.trim();
+                                const teamNameAr = row.team_name_ar?.trim();
+                                const compId = row.competition_id?.trim();
+                                const compName = row.competition?.trim();
+                                const compType = row.competition_type?.trim();
+                                const count = parseInt(row.titles_count) || 0;
+                                const years = row.years?.trim() || '';
+                                
+                                if (teamId && compId && count > 0) {
+                                    if (teamName) teamNameMap[teamName] = { id: teamId, ar: teamNameAr };
+                                    if (teamNameAr) teamNameMap[teamNameAr] = { id: teamId, en: teamName };
+                                    
+                                    if (!trophiesDatabase[teamId]) {
+                                        trophiesDatabase[teamId] = {
+                                            name: teamName,
+                                            name_ar: teamNameAr,
+                                            country: row.country || '',
+                                            country_id: row.country_id || '',
+                                            area: row.area || '',
+                                            area_id: row.area_id || '',
+                                            competitions: {}
+                                        };
+                                    }
+                                    trophiesDatabase[teamId].competitions[compId] = {
+                                        count: count,
+                                        years: years,
+                                        competition: compName,
+                                        competition_type: compType,
+                                        competition_id: compId
+                                    };
+                                }
+                            });
+                            loaded++;
+                            checkComplete();
+                        }});
+                    })
+                    .catch(() => { loaded++; checkComplete(); });
+            });
+
+            function checkComplete() {
+                if (loaded >= total) {
+                    resolve();
+                }
+            }
+
+            setTimeout(() => resolve(), 10000);
+        });
+    }
+
+    // ============================================================
+    //  الحصول على بطولات النادي الحالي
+    // ============================================================
+    function getClubTrophies() {
+        const clubName = localStorage.getItem('presidentialClub') || 'ريال مدريد';
+        const leagueName = localStorage.getItem('current_league_name') || 'LaLiga';
+        const cleanLeague = leagueName.replace('مسيرة ', '').trim();
+        
+        let teamId = null;
+        let teamData = null;
+        
+        for (const [name, info] of Object.entries(teamNameMap)) {
+            if (clubName.includes(name) || name.includes(clubName)) {
+                teamId = info.id;
+                break;
+            }
+        }
+
+        if (teamId && trophiesDatabase[teamId]) {
+            teamData = trophiesDatabase[teamId];
+        } else {
+            for (const [id, data] of Object.entries(trophiesDatabase)) {
+                if (data.name && clubName.includes(data.name)) {
+                    teamData = data;
+                    teamId = id;
+                    break;
+                }
+                if (data.name_ar && clubName.includes(data.name_ar)) {
+                    teamData = data;
+                    teamId = id;
+                    break;
+                }
+            }
+        }
+
+        if (!teamData) {
+            return generateDefaultTrophies(clubName, cleanLeague);
+        }
+
+        const result = [];
+        const comps = teamData.competitions || {};
+        
+        for (const compId in comps) {
+            const comp = comps[compId];
+            const compInfo = competitionsDB[compId] || {};
+            const compName = comp.competition || compInfo.name || '';
+            const compType = comp.competition_type || '';
+            
+            let type = 'محلي';
+            const typeLower = compType.toLowerCase();
+            if (typeLower.includes('continental') || typeLower.includes('uefa') || typeLower.includes('caf') || 
+                typeLower.includes('afc') || typeLower.includes('conmebol') || typeLower.includes('concacaf')) {
+                type = 'قاري';
+            }
+            if (typeLower.includes('world') || typeLower.includes('global') || typeLower.includes('intercontinental') || typeLower.includes('fifa')) {
+                type = 'عالمي';
+            }
+            
+            const yearsList = comp.years ? comp.years.split(',').map(y => y.trim()).filter(y => y !== '' && y !== '·') : [];
+            
+            // الحصول على صورة الكأس
+            const trophyImage = getTrophyImage(compName, compId);
+            
+            if (yearsList.length > 0) {
+                yearsList.forEach(year => {
+                    result.push({
+                        club: teamData.name || clubName,
+                        club_ar: teamData.name_ar || clubName,
+                        competition: compName,
+                        competition_id: compId,
+                        competition_type: compType,
+                        type: type,
+                        season: year,
+                        count: comp.count,
+                        years: comp.years,
+                        country: teamData.country || '',
+                        area: teamData.area || '',
+                        logo: compInfo.logo || '',
+                        trophy_image: trophyImage,
+                        opponent: '-',
+                        score: '-',
+                        stadium: '-',
+                        coach: '-',
+                        captain: '-',
+                        motm: '-',
+                        topScorer: '-'
+                    });
+                });
+            } else {
+                for (let i = 0; i < comp.count; i++) {
+                    result.push({
+                        club: teamData.name || clubName,
+                        club_ar: teamData.name_ar || clubName,
+                        competition: compName,
+                        competition_id: compId,
+                        competition_type: compType,
+                        type: type,
+                        season: (2025 - i).toString(),
+                        count: comp.count,
+                        years: comp.years,
+                        country: teamData.country || '',
+                        area: teamData.area || '',
+                        logo: compInfo.logo || '',
+                        trophy_image: trophyImage,
+                        opponent: '-',
+                        score: '-',
+                        stadium: '-',
+                        coach: '-',
+                        captain: '-',
+                        motm: '-',
+                        topScorer: '-'
+                    });
+                }
+            }
+        }
+
+        if (result.length === 0) {
+            return generateDefaultTrophies(clubName, cleanLeague);
+        }
+
+        return result;
+    }
+
+    function generateDefaultTrophies(clubName, leagueName) {
+        const defaultTrophies = [];
+        const comps = [
+            { name: leagueName || 'الدوري المحلي', type: 'محلي', count: 3 },
+            { name: 'كأس البطولة', type: 'محلي', count: 2 },
+            { name: 'دوري أبطال القارة', type: 'قاري', count: 1 },
+        ];
+        comps.forEach(comp => {
+            for (let i = 0; i < comp.count; i++) {
+                defaultTrophies.push({
+                    club: clubName,
+                    competition: comp.name,
+                    type: comp.type,
+                    season: (2020 + i).toString(),
+                    count: comp.count,
+                    years: '',
+                    trophy_image: 'trophies/default_trophy.png',
+                    opponent: i % 2 === 0 ? 'الخصم الأول' : 'الخصم الثاني',
+                    score: `${2 + i % 3}-${1 + i % 2}`,
+                    stadium: 'الملعب الرئيسي',
+                    coach: 'المدرب الأسطوري',
+                    captain: 'القائد',
+                    motm: 'رجل المباراة',
+                    topScorer: 'الهداف'
+                });
+            }
+        });
+        return defaultTrophies;
+    }
+
+    // ============================================================
+    //  عرض الخزينة
+    // ============================================================
+    const PRIORITY_ORDER = [
+        { key: 'عالمي', label: '<i class="fas fa-globe"></i> البطولات العالمية' },
+        { key: 'قاري', label: '<i class="fas fa-earth-africa"></i> البطولات القارية' },
+        { key: 'محلي', label: '<i class="fas fa-house"></i> البطولات المحلية' },
+        { key: 'إقليمي', label: '<i class="fas fa-map-location-dot"></i> البطولات الإقليمية' },
+        { key: 'ودي', label: '<i class="fas fa-handshake"></i> البطولات الودية' },
+    ];
+
+    function getGameDateTR() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+
+    // ============================================================
+    // الإنجازات التاريخية — مرتبطة مباشرة بمحرك المسابقات الحقيقي (نفس السجل الذي يكتبه league_table.html فعلياً)
+    // وليست كؤوساً — هذا تاريخ إدارتك الفعلي، منفصل تماماً عن رفوف الكؤوس
+    // ============================================================
+    const ACHIEVEMENT_META = {
+        league_title: { icon: 'fa-crown', color: '#e8b84b' },
+        double: { icon: 'fa-layer-group', color: '#22c55e' },
+        streak: { icon: 'fa-fire', color: '#ef4444' },
+    };
+    function getRealAchievements() {
+        const club = localStorage.getItem('presidentialClub') || 'النادي';
+        try { return JSON.parse(localStorage.getItem('club_real_achievements_' + club) || '[]'); }
+        catch(e) { return []; }
+    }
+    function renderAchievements() {
+        const el = document.getElementById('achievementsContainer');
+        const achievements = getRealAchievements();
+        const club = localStorage.getItem('presidentialClub') || 'النادي';
+
+        // إبراز "أول" إنجاز من كل نوع فعلياً كنقطة تاريخية مهمة، بدل عرض كل التكرارات بنفس الوزن
+        const firstLeagueTitle = achievements.find(a => a.type === 'league_title');
+        const firstDouble = achievements.find(a => a.type === 'double');
+        const bestStreak = achievements.filter(a => a.type === 'streak').sort((a,b)=>b.value-a.value)[0];
+        const leagueTitleCount = achievements.filter(a => a.type === 'league_title').length;
+
+        if (!achievements.length) {
+            el.innerHTML = `<div class="shelf-section" style="margin-bottom:20px;">
+                <div class="shelf-title" style="color:#a78bfa;"><i class="fas fa-timeline"></i> الإنجازات التاريخية لإدارتك</div>
+                <div style="padding:16px; color:#94a3b8; font-size:12.5px; text-align:center;">لا إنجازات مسجَّلة بعد من إدارتك الحالية — ستُسجَّل تلقائياً فور تحققها فعلياً (بطولة دوري، ثنائية، سلسلة انتصارات...).</div>
+            </div>`;
+            return;
+        }
+        const cards = [];
+        if (firstLeagueTitle) cards.push({ label: 'أول لقب دوري لإدارتك', detail: firstLeagueTitle.label + ' — ' + firstLeagueTitle.recordedAt, icon: 'fa-crown', color: '#e8b84b' });
+        if (firstDouble) cards.push({ label: 'أول ثنائية (دوري + كأس)', detail: firstDouble.recordedAt, icon: 'fa-layer-group', color: '#22c55e' });
+        if (bestStreak) cards.push({ label: 'أطول سلسلة انتصارات', detail: `${bestStreak.value} انتصارات متتالية — ${bestStreak.recordedAt}`, icon: 'fa-fire', color: '#ef4444' });
+        if (leagueTitleCount >= 2) cards.push({ label: 'أكبر لقب في مسيرتك حتى الآن', detail: `${leagueTitleCount} ألقاب دوري متراكمة`, icon: 'fa-star', color: '#3b82f6' });
+
+        el.innerHTML = `<div class="shelf-section" style="margin-bottom:20px;">
+            <div class="shelf-title" style="color:#a78bfa;"><i class="fas fa-timeline"></i> الإنجازات التاريخية لإدارتك — ${club}</div>
+            <div style="display:grid; grid-template-columns:1fr; gap:8px; padding:0 4px;">
+                ${cards.map(c => `
+                    <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 12px;">
+                        <div style="width:36px; height:36px; border-radius:10px; background:${c.color}22; color:${c.color}; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;"><i class="fas ${c.icon}"></i></div>
+                        <div><div style="font-size:12px; font-weight:800; color:#fff;">${c.label}</div><div style="font-size:10.5px; color:#94a3b8; margin-top:2px;">${c.detail}</div></div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    }
+
+    // ============================================================
+    // الجوائز الفردية — منفصلة تماماً عن ألقاب الفريق، من بيانات لاعبيك الحقيقية الفعلية (لا اختلاق)
+    // ============================================================
+    function getRealSquadForAwards() {
+        const club = localStorage.getItem('presidentialClub') || 'النادي';
+        try { return (JSON.parse(localStorage.getItem('signed_players_by_club'))||{})[club] || []; }
+        catch(e) { return []; }
+    }
+    function renderIndividualAwards() {
+        const el = document.getElementById('individualAwardsContainer');
+        const squad = getRealSquadForAwards();
+        if (!squad.length) { el.innerHTML = ''; return; }
+
+        const topScorer = squad.slice().sort((a,b)=>(parseFloat(b.goals)||0)-(parseFloat(a.goals)||0))[0];
+        const bestPlayer = squad.slice().sort((a,b)=>(parseFloat(b.rating)||0)-(parseFloat(a.rating)||0))[0];
+        const topAssister = squad.slice().sort((a,b)=>(parseFloat(b.assists)||0)-(parseFloat(a.assists)||0))[0];
+
+        const awards = [];
+        if (topScorer && (parseFloat(topScorer.goals)||0) > 0) awards.push({ label:'هداف الفريق', name: topScorer.player_name||topScorer.name, detail: `${topScorer.goals} هدفاً`, icon:'fa-futbol', color:'#22c55e' });
+        if (bestPlayer) awards.push({ label:'أفضل لاعب في الفريق', name: bestPlayer.player_name||bestPlayer.name, detail: `تقييم ${Math.round(bestPlayer.rating)}`, icon:'fa-star', color:'#e8b84b' });
+        if (topAssister && (parseFloat(topAssister.assists)||0) > 0) awards.push({ label:'صانع الألعاب', name: topAssister.player_name||topAssister.name, detail: `${topAssister.assists} تمريرة حاسمة`, icon:'fa-shoe-prints', color:'#3b82f6' });
+
+        if (!awards.length) { el.innerHTML = ''; return; }
+        el.innerHTML = `<div class="shelf-section" style="margin-bottom:20px;">
+            <div class="shelf-title" style="color:#f59e0b;"><i class="fas fa-medal"></i> الجوائز الفردية — منفصلة عن ألقاب الفريق</div>
+            <div style="display:grid; grid-template-columns:1fr; gap:8px; padding:0 4px;">
+                ${awards.map(a => `
+                    <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 12px;">
+                        <div style="width:36px; height:36px; border-radius:10px; background:${a.color}22; color:${a.color}; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;"><i class="fas ${a.icon}"></i></div>
+                        <div><div style="font-size:12px; font-weight:800; color:#fff;">${a.label}: ${a.name}</div><div style="font-size:10.5px; color:#94a3b8; margin-top:2px;">${a.detail}</div></div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    }
+
+    function renderShelves() {
+        const container = document.getElementById('shelvesContainer');
+        const loading = document.getElementById('loadingIndicator');
+        if (loading) loading.style.display = 'none';
+
+        if (!currentTrophies || currentTrophies.length === 0) {
+            container.innerHTML = `
+                <div class="trophy-shelf" style="text-align:center; padding:40px;">
+                    <i class="fas fa-trophy" style="font-size:48px; color:var(--gold); opacity:0.4;"></i>
+                    <h3 style="color:var(--text-dim); margin-top:15px;">لا توجد بطولات في الخزينة بعد</h3>
+                    <p style="color:var(--text-dim); font-size:13px;">ابدأ رحلتك لكتابة تاريخ النادي</p>
+                </div>
+            `;
+            updateStats();
+            return;
+        }
+
+        const groups = {};
+        currentTrophies.forEach(t => {
+            const type = t.type || 'محلي';
+            if (!groups[type]) groups[type] = [];
+            groups[type].push(t);
+        });
+
+        let html = '';
+        PRIORITY_ORDER.forEach(priority => {
+            const type = priority.key;
+            const items = groups[type] || [];
+            if (items.length === 0) return;
+            html += renderShelf(priority.label, items, type);
+        });
+
+        for (const type in groups) {
+            if (!PRIORITY_ORDER.some(p => p.key === type)) {
+                html += renderShelf(`<i class="fas fa-medal"></i> ${type}`, groups[type], type);
+            }
+        }
+
+        container.innerHTML = html;
+        updateStats();
+    }
+
+    function renderShelf(label, items, type) {
+        const compMap = {};
+        items.forEach(t => {
+            const key = t.competition;
+            if (!compMap[key]) compMap[key] = [];
+            compMap[key].push(t);
+        });
+
+        let trophiesHtml = '';
+        for (const compName in compMap) {
+            const compItems = compMap[compName];
+            let logoUrl = compItems[0]?.logo || '';
+if (!logoUrl || logoUrl === 'competition_logos/default_league.png') {
+    logoUrl = getCompetitionLogo(compName);
+}
+// إذا لم توجد الصورة، استخدم الافتراضية
+const finalLogo = logoUrl || 'competition_logos/default_league.png';
+            const count = compItems[0]?.count || compItems.length;
+
+            const uniqueYears = [...new Set(compItems.map(t => t.season).filter(y => y && y !== '----' && y !== '·'))];
+            const cupsHtml = uniqueYears.map(year => {
+                // الحصول على صورة الكأس لهذه البطولة
+                const trophyImg = compItems[0]?.trophy_image || 'trophies/default_trophy.png';
+                return `
+                    <div class="trophy-item" onclick="openTrophyModal('${compName}', '${year}')">
+                        <img src="${trophyImg}" alt="كأس ${compName}" loading="lazy" onerror="this.src='trophies/default_trophy.png'">
+                        <div class="pedestal-shadow"></div>
+                        <span class="year">${year}</span>
+                    </div>
+                `;
+            }).join('');
+
+            trophiesHtml += `
+                <div style="width:100%; margin-top: 8px;">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                        <img src="${logoUrl}" style="width:28px; height:28px; object-fit:contain;" onerror="this.src='competition_logos/default league.png'">
+                        <span style="font-weight:600; font-size:14px; color:var(--text);">${compName}</span>
+                        <span style="color:var(--text-dim); font-size:12px; background:rgba(255,255,255,0.05); padding:0 12px; border-radius:40px;">${count}</span>
+                    </div>
+                    <div class="trophy-grid">
+                        ${cupsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="trophy-shelf">
+                <div class="shelf-header">
+                    <span class="trophy-icon"><i class="fas fa-trophy"></i></span>
+                    <span class="title">${label}</span>
+                    <span class="count">${items.length} لقب</span>
+                </div>
+                ${trophiesHtml}
+            </div>
+        `;
+    }
+
+    function updateStats() {
+        const uniqueTrophies = {};
+        currentTrophies.forEach(t => {
+            const key = t.competition + '|' + t.season;
+            if (!uniqueTrophies[key]) {
+                uniqueTrophies[key] = t;
+            }
+        });
+        const uniqueList = Object.values(uniqueTrophies);
+        
+        const total = uniqueList.length;
+        const local = uniqueList.filter(t => t.type === 'محلي').length;
+        const continental = uniqueList.filter(t => t.type === 'قاري').length;
+        const world = uniqueList.filter(t => t.type === 'عالمي').length;
+
+        document.getElementById('totalTrophies').textContent = total;
+        document.getElementById('localTrophies').textContent = local;
+        document.getElementById('continentalTrophies').textContent = continental;
+        document.getElementById('worldTrophies').textContent = world;
+    }
+
+    // ============================================================
+    //  مودال التفاصيل
+    // ============================================================
+    function openTrophyModal(compName, year) {
+        const trophy = currentTrophies.find(t => t.competition === compName && t.season === year);
+        if (!trophy) return;
+
+        document.getElementById('modalTitle').textContent = trophy.competition || 'بطولة';
+        document.getElementById('modalSeason').textContent = trophy.season || '----';
+        document.getElementById('modalOpponent').textContent = trophy.opponent ? `النهائي: ${trophy.opponent} | ${trophy.score || '---'}` : 'بطولة دوري';
+        document.getElementById('modalStadium').textContent = trophy.stadium || '----';
+        document.getElementById('modalCountry').textContent = trophy.country || '----';
+        document.getElementById('modalCoach').textContent = trophy.coach || '----';
+        document.getElementById('modalCaptain').textContent = trophy.captain || '----';
+        document.getElementById('modalMotm').textContent = trophy.motm || '----';
+        document.getElementById('modalTopScorer').textContent = trophy.topScorer || '----';
+
+        document.getElementById('modalTrophyImg').src = trophy.trophy_image || 'trophies/default_trophy.png';
+        document.getElementById('modalCompLogo').src = trophy.logo || 'competition_logos/default league.png';
+
+        const yearsContainer = document.getElementById('modalYearsContainer');
+        const allYears = currentTrophies
+            .filter(t => t.competition === compName)
+            .map(t => t.season)
+            .filter(y => y && y !== '----' && y !== '·');
+        
+        const uniqueYears = [...new Set(allYears)].sort();
+        yearsContainer.innerHTML = uniqueYears.map(y => 
+            `<span class="year-badge"><i class="fas fa-trophy"></i> ${y}</span>`
+        ).join('');
+
+        document.getElementById('trophyModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('trophyModal').classList.remove('active');
+    }
+    document.getElementById('trophyModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // ============================================================
+    //  إضافة بطولة جديدة
+    // ============================================================
+    window.addNewTrophy = function(trophyData) {
+        const newTrophy = {
+            club: localStorage.getItem('presidentialClub') || 'النادي',
+            ...trophyData,
+            trophy_image: trophyData.trophy_image || 'trophies/default_trophy.png',
+            isNew: true
+        };
+        currentTrophies.push(newTrophy);
+        localStorage.setItem('club_trophies', JSON.stringify(currentTrophies));
+        renderShelves();
+        setTimeout(() => {
+            newTrophy.isNew = false;
+            renderShelves();
+        }, 5000);
+        showNotification(`<i class="fas fa-trophy"></i> تم إضافة كأس ${newTrophy.competition} إلى الخزينة!`);
+    };
+
+    function showNotification(msg) {
+        const div = document.createElement('div');
+        div.style.cssText = `
+            position: fixed; bottom: 30px; left: 20px; right: 20px;
+            background: var(--gold); color: #000; padding: 16px 20px;
+            border-radius: 20px; text-align: center; font-weight: bold;
+            z-index: 2000; box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+            animation: fadeUp 3s forwards;
+            max-width: 400px; margin: 0 auto;
+        `;
+        div.innerHTML = msg;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 3000);
+    }
+
+    // ============================================================
+    //  تهيئة الصفحة
+    // ============================================================
+    async function init() {
+        const clubName = localStorage.getItem('presidentialClub') || 'ريال مدريد';
+        const clubLogo = `teams_logos/${clubName}.png`;
+        const founded = localStorage.getItem('clubFounded') || '1902';
+        const country = localStorage.getItem('homeCountry') || 'إسبانيا';
+        const leagueName = localStorage.getItem('current_league_name') || 'LaLiga';
+        const cleanLeague = leagueName.replace('مسيرة ', '').trim();
+
+        document.getElementById('clubName').textContent = clubName;
+        document.getElementById('clubLogo').src = clubLogo;
+        document.getElementById('foundedYear').textContent = founded;
+        document.getElementById('clubCountry').textContent = country;
+        document.getElementById('clubLeague').textContent = cleanLeague;
+
+        await loadAllCSVFiles();
+
+        currentTrophies = getClubTrophies();
+        localStorage.setItem('club_trophies', JSON.stringify(currentTrophies));
+
+        renderAchievements();
+        renderIndividualAwards();
+        renderShelves();
+
+        console.log('✅ خزينة البطولات جاهزة!');
+        console.log(`📊 عدد البطولات: ${currentTrophies.length}`);
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>       

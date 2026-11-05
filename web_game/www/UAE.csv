@@ -1,0 +1,41 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+AIN,Al-Ain FC,العين,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,15,"1977,1981,1984,1993,1998,2000,2002,2003,2004,2012,2013,2015,2018,2022,2026"
+AIN,Al-Ain FC,العين,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,7,"1999,2001,2005,2006,2009,2014,2018"
+AIN,Al-Ain FC,العين,الإمارات,210,AFC,27,USC,UAE Super Cup,Domestic Super Cup,6,"1995,2003,2009,2012,2015,2022"
+AIN,Al-Ain FC,العين,الإمارات,210,AFC,27,ACL,AFC Champions League,Continental,1,2003
+AIN,Al-Ain FC,العين,الإمارات,210,AFC,27,CWC,FIFA Club World Cup,Global,0,·
+SHB,Shabab Al-Ahli,شباب الأهلي,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,9,"1975,1976,1980,1982,1985,1988,2016,2025,2026"
+SHB,Shabab Al-Ahli,شباب الأهلي,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,10,"1974,1975,1977,1988,1989,1996,2002,2004,2008,2019"
+SHB,Shabab Al-Ahli,شباب الأهلي,الإمارات,210,AFC,27,USC,UAE Super Cup,Domestic Super Cup,7,"2008,2013,2014,2016,2020,2024,2025"
+SHB,Shabab Al-Ahli,شباب الأهلي,الإمارات,210,AFC,27,ACL,AFC Champions League,Continental,0,·
+WAS,Al-Wasl FC,الوصل,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,8,"1983,1986,1987,1990,1997,2007,2024,2026"
+WAS,Al-Wasl FC,الوصل,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,3,"1986,2007,2024"
+WAS,Al-Wasl FC,الوصل,الإمارات,210,AFC,27,USC,UAE Super Cup,Domestic Super Cup,2,"2007,2024"
+JAZ,Al-Jazira Club,الجزيرة,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,3,"2011,2017,2021"
+JAZ,Al-Jazira Club,الجزيرة,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,3,"2010,2012,2016"
+JAZ,Al-Jazira Club,الجزيرة,الإمارات,210,AFC,27,USC,UAE Super Cup,Domestic Super Cup,4,"2011,2016,2021,2023"
+WAH,Al-Wahda FC,الوحدة,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,4,"1999,2001,2005,2010"
+WAH,Al-Wahda FC,الوحدة,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,2,"2017,2025"
+WAH,Al-Wahda FC,الوحدة,الإمارات,210,AFC,27,USC,UAE Super Cup,Domestic Super Cup,4,"2001,2005,2010,2017"
+WAH,Al-Wahda FC,الوحدة,الإمارات,210,AFC,27,ACL,AFC Champions League,Continental,0,·
+NAS,Al-Nasr SC,النصر,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,0,·
+NAS,Al-Nasr SC,النصر,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,4,"1985,1986,1989,2015"
+NAS,Al-Nasr SC,النصر,الإمارات,210,AFC,27,USC,UAE Super Cup,Domestic Super Cup,3,"1990,1995,2015"
+SHJ,Sharjah FC,الشارقة,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,6,"1974,1984,1986,1989,1996,2019"
+SHJ,Sharjah FC,الشارقة,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,10,"1979,1980,1982,1983,1991,1995,1998,2003,2022,2023"
+SHJ,Sharjah FC,الشارقة,الإمارات,210,AFC,27,USC,UAE Super Cup,Domestic Super Cup,3,"1994,2019,2022"
+SHJ,Sharjah FC,الشارقة,الإمارات,210,AFC,27,ACL,AFC Champions League,Continental,0,·
+AJM,Ajman Club,عجمان,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,0,·
+AJM,Ajman Club,عجمان,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,1,1984
+BAN,Baniyas SC,بني ياس,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,0,·
+BAN,Baniyas SC,بني ياس,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,1,1992
+KAL,Kalba FC,كلباء,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,0,·
+KAL,Kalba FC,كلباء,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,0,·
+KHF,Khor Fakkan,خورفكان,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,0,·
+KHF,Khor Fakkan,خورفكان,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,0,·
+BAT,Al-Bataeh,البطائح,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,0,·
+BAT,Al-Bataeh,البطائح,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,0,·
+DHA,Al-Dhafra,الظفرة,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,0,·
+DHA,Al-Dhafra,الظفرة,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,1,2019
+DIB,Dibba SCC,دبا,الإمارات,210,AFC,27,UPL,UAE Pro League,First Tier,0,·
+DIB,Dibba SCC,دبا,الإمارات,210,AFC,27,PC,UAE President's Cup,Domestic Cup,0,·

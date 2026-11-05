@@ -1,0 +1,103 @@
+name,country,industry,base_value,potential_industry_bonus
+Saudi Aramco,Saudi Arabia,Oil & Energy,450,Defense
+Apple,USA,Technology,400,Electronics
+Microsoft,USA,Technology,380,Software
+Amazon,USA,E-commerce,370,Retail
+Alphabet (Google),USA,Technology,360,AI & Data
+Tesla,USA,Automotive,340,Green Energy
+NVIDIA,USA,Technology,350,AI & Gaming
+Meta (Facebook),USA,Social Media,310,VR & Tech
+Berkshire Hathaway,USA,Investment,300,Finance
+Tencent,China,Technology,290,Gaming
+Alibaba,China,E-commerce,280,Retail
+TSMC,Taiwan,Semiconductors,270,Electronics
+Samsung,South Korea,Electronics,260,Mobile Tech
+Volkswagen,Germany,Automotive,250,Engineering
+Toyota,Japan,Automotive,240,Reliability
+JPMorgan Chase,USA,Banking,230,Finance
+ICBC,China,Banking,220,Banking
+Walmart,USA,Retail,210,Retail
+State Grid,China,Energy,200,Infra
+Nike,USA,Apparel,190,Sports Gear
+Disney,USA,Media,180,Entertainment
+Shell,Netherlands,Oil,220,Energy
+McDonald's,USA,Fast Food,170,Food & Beverage
+Coca-Cola,USA,Beverages,160,Soft Drinks
+PepsiCo,USA,Beverages,155,Snacks
+Nestle,Switzerland,Food,150,Health
+Bayer,Germany,Pharma,145,Healthcare
+LVMH,France,Luxury,175,Fashion
+Hermes,France,Luxury,165,Luxury Goods
+Louis Vuitton,France,Fashion,160,Prestige
+Sony,Japan,Electronics,140,Entertainment
+Honda,Japan,Automotive,135,Motorsports
+Bridgestone,Japan,Tires,130,Motorsports
+Adidas,Germany,Apparel,185,Sports Kit
+Puma,Germany,Apparel,125,Sports Fashion
+Red Bull,Austria,Beverages,195,Energy Drink
+Mercedes-Benz,Germany,Automotive,230,Motorsports
+BMW,Germany,Automotive,225,Auto Design
+Ferrari,Italy,Automotive,210,Racing Heritage
+Pirelli,Italy,Tires,115,Motorsports
+Emirates,Emirates,Aviation,215,Travel & Tourism
+Qatar Airways,Qatar,Aviation,200,Travel
+Etihad,Emirates,Aviation,180,Travel
+Turkish Airlines,Turkey,Aviation,160,Logistics
+Xiaomi,China,Electronics,130,Gadgets
+Huawei,China,Telecom,155,5G Tech
+BYD,China,Automotive,145,E-Mobility
+Hyundai,South Korea,Automotive,140,Heavy Industry
+Kia,South Korea,Automotive,120,Design
+Gazprom,Russia,Energy,170,Oil & Gas
+Lukoil,Russia,Energy,150,Petroleum
+TotalEnergies,France,Energy,160,Green Fuel
+Eni,Italy,Energy,140,Energy
+Banco Santander,Spain,Banking,125,Finance
+BBVA,Spain,Banking,115,Investment
+Inditex (Zara),Spain,Retail,170,Fashion Retail
+Telefonica,Spain,Telecom,110,Communications
+Mercadona,Spain,Retail,100,Supermarkets
+Iberdrola,Spain,Energy,130,Renewables
+Ferrovial,Spain,Construction,90,Infra
+Unilever,UK,Consumer Goods,145,Household
+HSBC,UK,Banking,165,Global Banking
+BP,UK,Energy,160,Energy Transition
+Vodafone,UK,Telecom,105,Connectivity
+Barclays,UK,Banking,120,Corporate Banking
+Tesco,UK,Retail,110,Retail
+Experian,Ireland,Data,100,Analytics
+Accenture,Ireland,Consulting,140,Business Services
+CRH,Ireland,Building,95,Construction
+Ryanair,Ireland,Aviation,115,Low-Cost Travel
+Smurfit Kappa,Ireland,Packaging,85,Logistics
+P&G,USA,Consumer Goods,170,Household Brands
+Intel,USA,Technology,210,Computing
+Cisco,USA,Networking,130,IT Equip
+Oracle,USA,Software,150,Database & Cloud
+Porsche,Germany,Automotive,220,Sports Cars
+Audi,Germany,Automotive,210,Luxury Auto
+Lamborghini,Italy,Automotive,200,Supercars
+Ducati,Italy,Motorcycles,120,Two-Wheel Passion
+Monster Energy,USA,Beverages,110,Energy Drink
+Budweiser,Belgium,Beverages,105,Beer
+Heineken,Netherlands,Beverages,125,Beer
+Carlsberg,Denmark,Beverages,100,Brewing
+Michelin,France,Tires,145,Fine Dining & Tyres
+DHL,Germany,Logistics,135,Logistics
+FedEx,USA,Logistics,140,Shipping
+UPS,USA,Logistics,140,Parcel Service
+Spotify,Sweden,Technology,120,Music Streaming
+IKEA,Sweden,Retail,150,Furniture
+H&M,Sweden,Retail,115,Fast Fashion
+Volvo,Sweden,Automotive,135,Safety
+Electrolux,Sweden,Appliances,90,Home Tech
+Novo Nordisk,Denmark,Pharma,160,Healthcare
+Maersk,Denmark,Shipping,155,Maritime
+LEGO,Denmark,Toys,145,Family Entertainment
+SAP,Germany,Software,160,ERP
+Lidl,Germany,Retail,125,Discount Retail
+Aldi,Germany,Retail,130,Discount Retail
+Allianz,Germany,Insurance,150,Insurance
+Siemens,Germany,Engineering,170,Industrial Tech
+Bosch,Germany,Automotive,165,Engineering
+DB Schenker,Germany,Logistics,110,Freight

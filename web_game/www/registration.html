@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<!-- skill:chrome -->
+<style>
+/* Credit line — bottom-right */
+.design-ui-credit {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  font: 11px/1 system-ui, sans-serif;
+  color: rgba(128,128,128,0.5);
+  pointer-events: none;
+  z-index: 2147483647;
+  transition: opacity 0.4s ease;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* Hide chrome on touch devices */
+@media (hover: none) {
+  .design-ui-credit { display: none; }
+}
+
+/* Print fixes */
+@media print {
+  * {
+    transition: none !important;
+    animation: none !important;
+    box-shadow: none !important;
+  }
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .design-ui-credit { display: none !important; }
+}
+
+</style>
+<script>
+(function () {
+    // Design-ui pages are single compositions, so the whole body is editable.
+    function markEditable() {
+        document.body.classList.add('artifact-editable');
+    }
+
+    // Credit badge with idle-fade. Hover devices only.
+    function initChromeUI() {
+        if (!matchMedia('(hover: hover)').matches) return;
+
+        var credit = document.createElement('div');
+        credit.className = 'design-ui-credit';
+        credit.setAttribute('aria-hidden', 'true');
+        credit.innerHTML = '\u{1F49C} by ClickUp Brain';
+        document.body.appendChild(credit);
+
+        var timer = null;
+        var fade = function (out) { credit.style.opacity = out ? '0' : ''; };
+        fade(true);
+        var show = function () {
+            fade(false);
+            clearTimeout(timer);
+            timer = setTimeout(function () { fade(true); }, 3000);
+        };
+        document.addEventListener('mousemove', show);
+        show();
+    }
+
+    function init() {
+        markEditable();
+        initChromeUI();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+
+</script>
+<!-- /skill:chrome -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>غرفة التسجيل | Football Manager World</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{
+    --bg:#090f1d; --card:#111a2e; --card-2:#15203a; --border:#1e293b;
+    --text:#f1f5f9; --muted:#94a3b8; --gold:#c5a059; --green:#10b981;
+    --blue:#3b82f6; --red:#ef4444; --amber:#f59e0b; --purple:#8b5cf6;
+    --ease:cubic-bezier(0.22,1,0.36,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--bg);color:var(--text);padding:12px;padding-bottom:40px;display:flex;flex-direction:column;gap:12px;min-height:100vh;}
+
+  .page-header{display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:12px 14px;border-radius:10px;border:1px solid var(--border);gap:10px;flex-wrap:wrap;}
+  .page-header .left{display:flex;align-items:center;gap:10px;}
+  .page-header h2{font-size:15px;font-weight:700;}
+  .page-header .sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .back-btn{background:var(--border);color:#fff;border:none;padding:8px 12px;font-size:12px;border-radius:8px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+  .header-links{display:flex;gap:8px;flex-wrap:wrap;}
+  .link-btn{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.28);color:#93c5fd;padding:7px 12px;font-size:11px;border-radius:8px;text-decoration:none;font-weight:600;}
+  .link-btn.gold{background:rgba(197,160,89,0.1);border-color:rgba(197,160,89,0.3);color:var(--gold);}
+
+  /* rules panel */
+  .rules-panel{background:linear-gradient(150deg,#15203a,#0c1322);border:1px solid var(--border);border-radius:12px;padding:14px;}
+  .rules-panel .rp-head{font-size:12px;color:var(--gold);font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .rules-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+  .rule-cell{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 12px;}
+  .rule-cell .rc-top{display:flex;justify-content:space-between;align-items:baseline;}
+  .rule-cell .rc-lbl{font-size:11px;color:var(--muted);}
+  .rule-cell .rc-val{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .rule-cell .rc-val.ok{color:var(--green);} .rule-cell .rc-val.warn{color:var(--amber);} .rule-cell .rc-val.bad{color:var(--red);}
+  .rule-cell .rc-bar{height:6px;background:var(--border);border-radius:20px;margin-top:8px;overflow:hidden;}
+  .rule-cell .rc-fill{height:100%;border-radius:20px;transition:width .6s var(--ease);}
+  .rule-cell .rc-fill.ok{background:var(--green);} .rule-cell .rc-fill.warn{background:var(--amber);} .rule-cell .rc-fill.bad{background:var(--red);}
+
+  .window-note{font-size:11px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:8px;}
+  .window-note.closed{color:#fde68a;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.06);}
+  .window-note.blocked{color:#fecaca;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.06);}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .toolbar .title{font-size:14px;font-weight:700;}
+  .toolbar .title span{color:var(--muted);font-weight:500;font-size:12px;}
+  .btn-bulk{background:linear-gradient(135deg,var(--gold),#a8814a);color:#1a1303;border:none;padding:10px 16px;border-radius:9px;font-weight:800;font-size:12.5px;cursor:pointer;transition:transform .1s var(--ease),opacity .2s;}
+  .btn-bulk:active{transform:scale(.97);} .btn-bulk:disabled{opacity:.4;cursor:not-allowed;}
+
+  .reg-list{display:flex;flex-direction:column;gap:10px;}
+  .rcard{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s var(--ease);}
+  .rcard.eligible{border-color:rgba(16,185,129,.3);}
+  .rcard.blocked{border-color:rgba(239,68,68,.28);}
+  .rcard-top{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:13px 14px;}
+  .ovr{display:flex;flex-direction:column;align-items:center;justify-content:center;width:50px;height:56px;border-radius:10px;background:var(--card-2);border:1px solid var(--border);flex-shrink:0;}
+  .ovr .n{font-size:21px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;}
+  .ovr .p{font-size:9px;color:var(--muted);margin-top:3px;letter-spacing:.05em;}
+  .ovr.elite .n{color:var(--gold);} .ovr.good .n{color:var(--green);} .ovr.avg .n{color:var(--text);}
+  .rinfo{min-width:0;}
+  .rname{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .flag{font-size:14px;}
+  .tag{font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;}
+  .tag.foreign{background:rgba(139,92,246,.18);color:#c4b5fd;border:1px solid rgba(139,92,246,.35);}
+  .tag.local{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3);}
+  .tag.regional{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3);}
+  .rmeta{font-size:11.5px;color:var(--muted);margin-top:5px;display:flex;gap:10px;flex-wrap:wrap;}
+  .rmeta b{color:var(--text);font-weight:600;}
+  .ractions{display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
+  .btn-reg{background:var(--green);color:#04120b;border:none;padding:9px 16px;border-radius:9px;font-weight:800;font-size:12.5px;cursor:pointer;transition:transform .1s var(--ease);white-space:nowrap;}
+  .btn-reg:active{transform:scale(.97);} .btn-reg:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;}
+  .btn-release{background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.3);padding:7px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;}
+
+  .checks{border-top:1px solid var(--border);padding:11px 14px;display:flex;flex-wrap:wrap;gap:8px;background:rgba(0,0,0,.15);}
+  .check{font-size:11px;display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:20px;border:1px solid var(--border);}
+  .check.pass{color:#6ee7b7;border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.06);}
+  .check.fail{color:#fca5a5;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.06);}
+
+  .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;background:var(--card);border:1px dashed var(--border);border-radius:12px;}
+  .empty i{display:block;font-size:30px;margin-bottom:12px;color:var(--border);}
+  .empty a{color:var(--gold);text-decoration:none;font-weight:700;}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(18px);width:92%;max-width:420px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 16px;z-index:1100;opacity:0;pointer-events:none;transition:all .3s var(--ease);text-align:center;box-shadow:0 12px 34px rgba(0,0,0,.5);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.ok{border-color:var(--green);} .toast.bad{border-color:var(--red);}
+  .toast .tt{font-size:13px;font-weight:800;margin-bottom:4px;}
+  .toast.ok .tt{color:var(--green);} .toast.bad .tt{color:#fca5a5;}
+  .toast .td{font-size:12px;color:var(--muted);line-height:1.6;}
+
+  @media(max-width:640px){
+    .rcard-top{grid-template-columns:auto 1fr;grid-template-areas:"ovr info" "act act";}
+    .ovr{grid-area:ovr;} .rinfo{grid-area:info;} .ractions{grid-area:act;flex-direction:row;justify-content:space-between;}
+    .ractions .btn-reg{flex:1;}
+  }
+</style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="left">
+      <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+      <div>
+        <h2>غرفة التسجيل</h2>
+        <div class="sub" id="clubSub">—</div>
+      </div>
+    </div>
+    <div class="header-links">
+      <a class="link-btn" href="transfers.html"><i class="fas fa-right-left"></i> السوق</a>
+      <a class="link-btn gold" href="player.html"><i class="fas fa-users"></i> القائمة الرسمية</a>
+      <a class="link-btn" href="federation.html"><i class="fas fa-landmark"></i> اللائحة</a>
+    </div>
+  </header>
+
+  <div class="rules-panel">
+    <div class="rp-head"><i class="fas fa-scale-balanced"></i> قيود الاتحاد المطبّقة على التسجيل <span id="confedLabel" style="color:var(--muted);font-weight:500;margin-right:auto;"></span></div>
+    <div class="rules-grid">
+      <div class="rule-cell">
+        <div class="rc-top"><span class="rc-lbl">حجم القائمة</span><span class="rc-val" id="valSquad">0/0</span></div>
+        <div class="rc-bar"><div class="rc-fill" id="barSquad"></div></div>
+      </div>
+      <div class="rule-cell">
+        <div class="rc-top"><span class="rc-lbl">اللاعبون الأجانب</span><span class="rc-val" id="valForeign">0/0</span></div>
+        <div class="rc-bar"><div class="rc-fill" id="barForeign"></div></div>
+      </div>
+      <div class="rule-cell" id="cellHome" style="display:none;">
+        <div class="rc-top"><span class="rc-lbl">محليّو النشأة (حد أدنى)</span><span class="rc-val" id="valHome">0/0</span></div>
+        <div class="rc-bar"><div class="rc-fill" id="barHome"></div></div>
+      </div>
+      <div class="rule-cell">
+        <div class="rc-top"><span class="rc-lbl">سقف الرواتب (FFP)</span><span class="rc-val" id="valFFP">0%</span></div>
+        <div class="rc-bar"><div class="rc-fill" id="barFFP"></div></div>
+      </div>
+    </div>
+    <div style="font-size:0.68rem; color:var(--muted); margin-top:10px; line-height:1.6;">
+      <i class="fas fa-circle-info"></i> لاعبو اتحادك القاري (<span id="confedNote"></span>) لا يُحتسبون ضمن حصة الأجانب — تماماً كأنظمة الاتحادات الحقيقية.
+    </div>
+  </div>
+
+  <div class="window-note" id="windowNote"><i class="fas fa-calendar-check"></i><span id="windowText"></span></div>
+
+  <div class="toolbar">
+    <div class="title">اللاعبون بانتظار الاعتماد <span id="pendCount"></span></div>
+    <button class="btn-bulk" id="bulkBtn" onclick="registerAllEligible()"><i class="fas fa-stamp"></i> تسجيل كل المؤهّلين</button>
+  </div>
+
+  <div class="reg-list" id="regList"></div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   نفس مفاتيح التخزين المشتركة مع transfers.html و finance.html و player.html
+   ============================================================ */
+const CLUB = localStorage.getItem('presidentialClub') || 'نادي المستقبل';
+const HOME = localStorage.getItem('homeCountry') || 'Saudi Arabia';
+const HOME_AR = {'Saudi Arabia':'السعودية','Egypt':'مصر','Morocco':'المغرب','Spain':'إسبانيا','England':'إنجلترا','France':'فرنسا','Italy':'إيطاليا','Germany':'ألمانيا','Japan':'اليابان'}[HOME] || 'السعودية';
+
+/* ============================================================
+   ★ قاعدة بيانات شاملة لدول العالم ★
+   ============================================================ */
+const COUNTRY_DB = {"england":["gb-eng","UEFA"],"scotland":["gb-sct","UEFA"],"wales":["gb-wls","UEFA"],"northern ireland":["gb-nir","UEFA"],"republic of ireland":["ie","UEFA"],"ireland":["ie","UEFA"],"spain":["es","UEFA"],"france":["fr","UEFA"],"germany":["de","UEFA"],"italy":["it","UEFA"],"portugal":["pt","UEFA"],"netherlands":["nl","UEFA"],"belgium":["be","UEFA"],"croatia":["hr","UEFA"],"serbia":["rs","UEFA"],"switzerland":["ch","UEFA"],"austria":["at","UEFA"],"poland":["pl","UEFA"],"sweden":["se","UEFA"],"norway":["no","UEFA"],"denmark":["dk","UEFA"],"greece":["gr","UEFA"],"turkey":["tr","UEFA"],"ukraine":["ua","UEFA"],"russia":["ru","UEFA"],"czech republic":["cz","UEFA"],"czechia":["cz","UEFA"],"slovakia":["sk","UEFA"],"slovenia":["si","UEFA"],"hungary":["hu","UEFA"],"romania":["ro","UEFA"],"bulgaria":["bg","UEFA"],"bosnia and herzegovina":["ba","UEFA"],"bosnia":["ba","UEFA"],"north macedonia":["mk","UEFA"],"macedonia":["mk","UEFA"],"albania":["al","UEFA"],"montenegro":["me","UEFA"],"kosovo":["xk","UEFA"],"finland":["fi","UEFA"],"iceland":["is","UEFA"],"estonia":["ee","UEFA"],"latvia":["lv","UEFA"],"lithuania":["lt","UEFA"],"luxembourg":["lu","UEFA"],"malta":["mt","UEFA"],"cyprus":["cy","UEFA"],"belarus":["by","UEFA"],"moldova":["md","UEFA"],"georgia":["ge","UEFA"],"armenia":["am","UEFA"],"azerbaijan":["az","UEFA"],"andorra":["ad","UEFA"],"san marino":["sm","UEFA"],"liechtenstein":["li","UEFA"],"gibraltar":["gi","UEFA"],"kazakhstan":["kz","UEFA"],"faroe islands":["fo","UEFA"],"brazil":["br","CONMEBOL"],"argentina":["ar","CONMEBOL"],"uruguay":["uy","CONMEBOL"],"colombia":["co","CONMEBOL"],"chile":["cl","CONMEBOL"],"peru":["pe","CONMEBOL"],"ecuador":["ec","CONMEBOL"],"paraguay":["py","CONMEBOL"],"bolivia":["bo","CONMEBOL"],"venezuela":["ve","CONMEBOL"],"united states":["us","CONCACAF"],"usa":["us","CONCACAF"],"mexico":["mx","CONCACAF"],"canada":["ca","CONCACAF"],"costa rica":["cr","CONCACAF"],"jamaica":["jm","CONCACAF"],"honduras":["hn","CONCACAF"],"panama":["pa","CONCACAF"],"el salvador":["sv","CONCACAF"],"guatemala":["gt","CONCACAF"],"trinidad and tobago":["tt","CONCACAF"],"haiti":["ht","CONCACAF"],"curacao":["cw","CONCACAF"],"cuba":["cu","CONCACAF"],"nicaragua":["ni","CONCACAF"],"dominican republic":["do","CONCACAF"],"suriname":["sr","CONCACAF"],"guyana":["gy","CONCACAF"],"belize":["bz","CONCACAF"],"bermuda":["bm","CONCACAF"],"barbados":["bb","CONCACAF"],"egypt":["eg","CAF"],"morocco":["ma","CAF"],"algeria":["dz","CAF"],"tunisia":["tn","CAF"],"nigeria":["ng","CAF"],"ghana":["gh","CAF"],"senegal":["sn","CAF"],"cameroon":["cm","CAF"],"ivory coast":["ci","CAF"],"cote d'ivoire":["ci","CAF"],"côte d'ivoire":["ci","CAF"],"south africa":["za","CAF"],"mali":["ml","CAF"],"dr congo":["cd","CAF"],"democratic republic of the congo":["cd","CAF"],"congo":["cg","CAF"],"kenya":["ke","CAF"],"zambia":["zm","CAF"],"zimbabwe":["zw","CAF"],"angola":["ao","CAF"],"guinea":["gn","CAF"],"mozambique":["mz","CAF"],"uganda":["ug","CAF"],"tanzania":["tz","CAF"],"ethiopia":["et","CAF"],"burkina faso":["bf","CAF"],"gabon":["ga","CAF"],"benin":["bj","CAF"],"togo":["tg","CAF"],"libya":["ly","CAF"],"sudan":["sd","CAF"],"namibia":["na","CAF"],"botswana":["bw","CAF"],"rwanda":["rw","CAF"],"madagascar":["mg","CAF"],"equatorial guinea":["gq","CAF"],"guinea-bissau":["gw","CAF"],"sierra leone":["sl","CAF"],"comoros":["km","CAF"],"mauritania":["mr","CAF"],"niger":["ne","CAF"],"chad":["td","CAF"],"cape verde":["cv","CAF"],"gambia":["gm","CAF"],"liberia":["lr","CAF"],"eswatini":["sz","CAF"],"lesotho":["ls","CAF"],"malawi":["mw","CAF"],"burundi":["bi","CAF"],"central african republic":["cf","CAF"],"djibouti":["dj","CAF"],"eritrea":["er","CAF"],"somalia":["so","CAF"],"seychelles":["sc","CAF"],"mauritius":["mu","CAF"],"south sudan":["ss","CAF"],"saudi arabia":["sa","AFC"],"qatar":["qa","AFC"],"united arab emirates":["ae","AFC"],"uae":["ae","AFC"],"iraq":["iq","AFC"],"iran":["ir","AFC"],"jordan":["jo","AFC"],"kuwait":["kw","AFC"],"bahrain":["bh","AFC"],"oman":["om","AFC"],"lebanon":["lb","AFC"],"syria":["sy","AFC"],"palestine":["ps","AFC"],"yemen":["ye","AFC"],"japan":["jp","AFC"],"south korea":["kr","AFC"],"korea republic":["kr","AFC"],"north korea":["kp","AFC"],"china":["cn","AFC"],"china pr":["cn","AFC"],"australia":["au","AFC"],"uzbekistan":["uz","AFC"],"india":["in","AFC"],"indonesia":["id","AFC"],"thailand":["th","AFC"],"vietnam":["vn","AFC"],"malaysia":["my","AFC"],"singapore":["sg","AFC"],"philippines":["ph","AFC"],"myanmar":["mm","AFC"],"cambodia":["kh","AFC"],"laos":["la","AFC"],"kyrgyzstan":["kg","AFC"],"tajikistan":["tj","AFC"],"turkmenistan":["tm","AFC"],"afghanistan":["af","AFC"],"pakistan":["pk","AFC"],"bangladesh":["bd","AFC"],"nepal":["np","AFC"],"sri lanka":["lk","AFC"],"bhutan":["bt","AFC"],"maldives":["mv","AFC"],"hong kong":["hk","AFC"],"chinese taipei":["tw","AFC"],"taiwan":["tw","AFC"],"timor-leste":["tl","AFC"],"brunei":["bn","AFC"],"macau":["mo","AFC"],"new zealand":["nz","OFC"],"fiji":["fj","OFC"],"papua new guinea":["pg","OFC"],"solomon islands":["sb","OFC"],"vanuatu":["vu","OFC"],"new caledonia":["nc","OFC"],"tahiti":["pf","OFC"],"samoa":["ws","OFC"],"tonga":["to","OFC"],"tuvalu":["tv","OFC"],"cookinseln":["ck","OFC"],"cook islands":["ck","OFC"],"american virgin islands":["vi","CONCACAF"],"antigua and barbuda":["ag","CONCACAF"],"aruba":["aw","CONCACAF"],"bonaire":["bq","CONCACAF"],"bosnia-herzegovina":["ba","UEFA"],"british virgin islands":["vg","CONCACAF"],"brunei darussalam":["bn","AFC"],"cayman islands":["ky","CONCACAF"],"french guiana":["gf","CONMEBOL"],"grenada":["gd","CONCACAF"],"guadeloupe":["gp","CONCACAF"],"guernsey":["gg","UEFA"],"hongkong":["hk","AFC"],"israel":["il","UEFA"],"jersey":["je","UEFA"],"korea, north":["kp","AFC"],"korea, south":["kr","AFC"],"macao":["mo","AFC"],"martinique":["mq","CONCACAF"],"mongolia":["mn","AFC"],"montserrat":["ms","CONCACAF"],"puerto rico":["pr","CONCACAF"],"saint-martin":["mf","CONCACAF"],"sao tome and principe":["st","CAF"],"sint maarten":["sx","CONCACAF"],"southern sudan":["ss","CAF"],"st. kitts & nevis":["kn","CONCACAF"],"st. lucia":["lc","CONCACAF"],"st. vincent & grenadinen":["vc","CONCACAF"],"the gambia":["gm","CAF"],"türkiye":["tr","UEFA"]};
+
+function confederationOf(nat){
+    if(!nat) return null;
+    return (COUNTRY_DB[String(nat).trim().toLowerCase()]||[null,null])[1];
+}
+function isoOf(nat){
+    if(!nat) return null;
+    return (COUNTRY_DB[String(nat).trim().toLowerCase()]||[null,null])[0];
+}
+function isoToEmoji(iso){
+    if(!iso || iso.length!==2) return '🌍';
+    const A=0x1F1E6;
+    try { return String.fromCodePoint(...[...iso.toUpperCase()].map(c=>A+(c.charCodeAt(0)-65))); } catch(e){ return '🌍'; }
+}
+function flagEmoji(nat){
+    const SPECIAL = {'gb-eng':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','gb-sct':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','gb-wls':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','gb-nir':'🇬🇧'};
+    const iso = isoOf(nat);
+    if(iso && SPECIAL[iso]) return SPECIAL[iso];
+    if(!iso){
+        const arabicIso = {'السعودية':'sa','مصر':'eg','المغرب':'ma','إسبانيا':'es','إنجلترا':'gb-eng','فرنسا':'fr','إيطاليا':'it','ألمانيا':'de','اليابان':'jp','البرازيل':'br','الأرجنتين':'ar','البرتغال':'pt','هولندا':'nl','بلجيكا':'be','كرواتيا':'hr','النرويج':'no','كندا':'ca','نيجيريا':'ng'}[String(nat).trim()];
+        if(arabicIso) return SPECIAL[arabicIso] || isoToEmoji(arabicIso);
+        return '🏳️';
+    }
+    return isoToEmoji(iso);
+}
+
+/* ============================================================
+   ★ تصنيف اللاعبين: محلي / إقليمي / أجنبي ★
+   ============================================================ */
+function getPlayerStatus(nat){
+    if(!nat) return {type:'unknown', label:'غير معروف', badge:''};
+    const natLower = String(nat).trim().toLowerCase();
+    const homeLower = String(HOME).trim().toLowerCase();
+    if(natLower===homeLower || String(nat).trim()===HOME_AR){
+        return {type:'home', label:'محلي', badge:'<span class="tag local">🏠 محلي</span>'};
+    }
+    const rules = getRules();
+    const natConf = confederationOf(nat);
+    if(natConf && rules.confederation && natConf===rules.confederation){
+        return {type:'regional', label:'إقليمي', badge:'<span class="tag regional">🌐 إقليمي</span>'};
+    }
+    return {type:'foreign', label:'أجنبي', badge:'<span class="tag foreign">🛫 أجنبي</span>'};
+}
+function isFullForeign(nat){ return getPlayerStatus(nat).type === 'foreign'; }
+function isRegional(nat){ return getPlayerStatus(nat).type === 'regional'; }
+
+/* ============================================================
+   دوال البيانات
+   ============================================================ */
+function getRules(){ return JSON.parse(localStorage.getItem('federationRules')) || {tier:1,squadMax:25,foreignMax:7,homegrownMin:0,wageCapPct:70,minStadium:12000,tierLabel:'الدرجة الأولى (الممتاز)',confederationLabel:'الاتحاد الآسيوي (AFC)',confederation:'AFC'}; }
+function getBudget(){ return parseFloat(localStorage.getItem('clubBudget')) || 150.0; }
+function getSigned(){ const a=JSON.parse(localStorage.getItem('signed_players_by_club'))||{}; return a[CLUB]||[]; }
+function setSigned(list){ const a=JSON.parse(localStorage.getItem('signed_players_by_club'))||{}; a[CLUB]=list; localStorage.setItem('signed_players_by_club',JSON.stringify(a)); }
+function getPending(){ const a=JSON.parse(localStorage.getItem('pending_registration_by_club'))||{}; return a[CLUB]||[]; }
+function setPending(list){ const a=JSON.parse(localStorage.getItem('pending_registration_by_club'))||{}; a[CLUB]=list; localStorage.setItem('pending_registration_by_club',JSON.stringify(a)); }
+function inbox(sender,text){ const i=JSON.parse(localStorage.getItem('gameInbox'))||[]; i.unshift({sender,text,time:new Date().toLocaleTimeString('ar-EG'),read:false}); localStorage.setItem('gameInbox',JSON.stringify(i)); localStorage.setItem('hasNewMessage','true'); }
+function gameMonth(){ return parseInt(localStorage.getItem('game_month')||'6'); }
+function windowOpen(){ const m=gameMonth(); return (m>=6&&m<=8)||m===1; }
+function fedBlocked(){ return localStorage.getItem('clubRegistrationBlocked')==='true'; }
+
+/* FFP */
+function ffpWith(extraWeekly){
+  const wk=getSigned().reduce((s,p)=>s+(parseFloat(p.weekly_wage)||0),0)+(extraWeekly||0);
+  const annual=wk*52/1000000; const b=getBudget();
+  return b<=0?100:Math.round(annual/b*100);
+}
+function ovrClass(o){ return o>=88?'elite':o>=83?'good':'avg'; }
+
+/* ============================================================
+   ★ دالة مساعدة للحصول على اسم اللاعب (تدعم كلا التنسيقين) ★
+   ============================================================ */
+function getPlayerName(p) {
+    return p.player_name || p.name || 'لاعب';
+}
+
+function getPlayerPosition(p) {
+    return p.main_position || p.position || '-';
+}
+
+function getPlayerRating(p) {
+    return p.rating || p.overall || 50;
+}
+
+function getPlayerAge(p) {
+    return p.age || '-';
+}
+
+function getPlayerClub(p) {
+    return p.fromClub || p.club || '-';
+}
+
+function getPlayerFee(p) {
+    return p.fee || p.transferFee || 0;
+}
+
+function getPlayerId(p) {
+    return p.tmid || p.id || 'unknown';
+}
+
+function getPlayerMarketValue(p) {
+    if (p.market_value_cur) return (p.market_value_cur / 1000000).toFixed(1) + 'M €';
+    if (p.market_value_eur) return (p.market_value_eur / 1000000).toFixed(1) + 'M €';
+    if (p.market_value) return (p.market_value / 1000000).toFixed(1) + 'M €';
+    return '—';
+}
+
+/* ============================================================
+   فحص أهلية لاعب واحد للتسجيل
+   ============================================================ */
+function evaluate(player) {
+    const rules = getRules();
+    const signed = getSigned();
+    const foreign = signed.filter(p => isFullForeign(p.nationality)).length;
+    const foreignPlayer = isFullForeign(player.nationality);
+    const checks = [];
+
+    const squadOk = signed.length < rules.squadMax;
+    checks.push({ ok: squadOk, label: squadOk ? `مقعد متاح في القائمة (${signed.length}/${rules.squadMax})` : `القائمة ممتلئة (${rules.squadMax})` });
+
+    const foreignOk = !foreignPlayer || foreign < rules.foreignMax;
+    if (foreignPlayer) {
+        checks.push({ ok: foreignOk, label: foreignOk ? `حصة الأجانب متاحة (${foreign}/${rules.foreignMax})` : `تجاوز حد الأجانب (${rules.foreignMax})` });
+    } else if (isRegional(player.nationality)) {
+        checks.push({ ok: true, label: 'لاعب من اتحادكم القاري (لا يُحتسب ضمن حصة الأجانب)' });
+    } else {
+        checks.push({ ok: true, label: 'لاعب محلي (لا يحتسب على الأجانب)' });
+    }
+
+    const playerWage = parseFloat(player.weekly_wage) || 0;
+    const ffp = ffpWith(playerWage);
+    const ffpOk = ffp <= rules.wageCapPct;
+    checks.push({ ok: ffpOk, label: ffpOk ? `ضمن سقف FFP (${ffp}%/${rules.wageCapPct}%)` : `يتجاوز سقف الرواتب (${ffp}%/${rules.wageCapPct}%)` });
+
+    const winOk = windowOpen();
+    checks.push({ ok: winOk, label: winOk ? 'نافذة الانتقالات مفتوحة' : 'نافذة الانتقالات مغلقة' });
+
+    const notBlocked = !fedBlocked();
+    if (!notBlocked) checks.push({ ok: false, label: 'النادي محظور من التسجيل (FFP)' });
+
+    const eligible = squadOk && foreignOk && ffpOk && winOk && notBlocked;
+    return { eligible, checks, ffp };
+}
+
+/* ============================================================
+   تنفيذ التسجيل
+   ============================================================ */
+function registerPlayer(id, silent) {
+    const pend = getPending();
+    const idx = pend.findIndex(p => (p.tmid === id || p.id === id));
+    if (idx < 0) {
+        if (!silent) showToast('bad', 'تعذّر التسجيل', 'اللاعب غير موجود في قائمة الانتظار.');
+        return false;
+    }
+    const player = pend[idx];
+    const ev = evaluate(player);
+    if (!ev.eligible) {
+        if (!silent) {
+            const fail = ev.checks.find(c => !c.ok);
+            showToast('bad', 'تعذّر التسجيل', fail ? fail.label : 'شرط غير مستوفٍ.');
+            render();
+        }
+        return false;
+    }
+    const signed = getSigned();
+    player.status = 'registered';
+    player.registeredOn = `${localStorage.getItem('game_day') || '1'}/${localStorage.getItem('game_month') || '6'}/${localStorage.getItem('game_year') || '2026'}`;
+    signed.push(player);
+    setSigned(signed);
+    pend.splice(idx, 1);
+    setPending(pend);
+    inbox('لجنة تسجيل اللاعبين', `✅ اكتمل تسجيل ${getPlayerName(player)} رسمياً لدى الاتحاد وأصبح ضمن القائمة الأولى للنادي.`);
+    if (!silent) {
+        showToast('ok', 'تم التسجيل بنجاح', `${getPlayerName(player)} انضم رسمياً إلى قائمة ${CLUB}.`);
+        render();
+    }
+    return true;
+}
+
+function registerAllEligible() {
+    const pend = getPending().slice();
+    let done = 0;
+    for (const p of pend) {
+        const id = getPlayerId(p);
+        if (id && registerPlayer(id, true)) done++;
+    }
+    render();
+    if (done) {
+        showToast('ok', 'تم تسجيل دفعة', `اعتُمد ${done} لاعب${done > 1 ? 'ين' : ''} ضمن القائمة الرسمية.`);
+    } else {
+        showToast('bad', 'لا يوجد مؤهّلون', 'لا يمكن تسجيل أي لاعب حالياً وفق قيود الاتحاد.');
+    }
+}
+
+function releasePlayer(id) {
+    const pend = getPending();
+    const idx = pend.findIndex(p => (p.tmid === id || p.id === id));
+    if (idx < 0) return;
+    const player = pend[idx];
+    
+    let daysSinceDeal = 0;
+    if (player.dealDate) {
+        const parts = player.dealDate.split('/').map(n => parseInt(n));
+        if (parts.length === 3) {
+            const dealAbs = Date.UTC(parts[2], parts[1] - 1, parts[0]);
+            const todayAbs = Date.UTC(parseInt(localStorage.getItem('game_year') || '2026'), (parseInt(localStorage.getItem('game_month') || '6')) - 1, parseInt(localStorage.getItem('game_day') || '1'));
+            daysSinceDeal = Math.max(0, Math.round((todayAbs - dealAbs) / 86400000));
+        }
+    }
+    
+    const fee = getPlayerFee(player);
+    const refundPct = Math.max(0.35, 0.80 - daysSinceDeal * 0.03);
+    const refund = +(fee * refundPct).toFixed(2);
+    localStorage.setItem('clubBudget', (getBudget() + refund).toFixed(2));
+    pend.splice(idx, 1);
+    setPending(pend);
+    inbox('مدير التعاقدات', `تم فسخ اتفاق ${getPlayerName(player)} قبل التسجيل (بعد ${daysSinceDeal} يوم من الاتفاق). استُرجع ${refund}M € (${Math.round(refundPct * 100)}% من الرسوم) إلى الميزانية.`);
+    showToast('bad', 'تم إلغاء التعاقد', `${getPlayerName(player)} خرج من غرفة التسجيل. استُرجع ${refund}M € (${Math.round(refundPct * 100)}%).`);
+    render();
+}
+
+/* ============================================================
+   الواجهة
+   ============================================================ */
+function setCell(prefix,cur,max,invert){
+  const pct=max>0?Math.min(100,Math.round(cur/max*100)):0;
+  const val=document.getElementById('val'+prefix);
+  const bar=document.getElementById('bar'+prefix);
+  val.innerText = prefix==='FFP'? cur+'% / '+max+'%' : cur+' / '+max;
+  let state;
+  if(invert){ state = cur>=max?'ok':cur>=max*0.5?'warn':'bad'; }
+  else { state = pct>=100?'bad':pct>=80?'warn':'ok'; }
+  val.className='rc-val '+state; bar.className='rc-fill '+state; bar.style.width=pct+'%';
+}
+
+function renderRules(){
+  const rules=getRules();
+  const signed=getSigned();
+  const foreign=signed.filter(p=>isFullForeign(p.nationality)).length;
+  const homegrown=signed.filter(p=>getPlayerStatus(p.nationality).type==='home').length;
+  document.getElementById('clubSub').innerText=`${CLUB} • ${rules.tierLabel}`;
+  document.getElementById('confedLabel').innerText=rules.confederationLabel||'';
+  document.getElementById('confedNote').innerText=rules.confederationLabel||rules.confederation||'اتحادك';
+  setCell('Squad',signed.length,rules.squadMax,false);
+  setCell('Foreign',foreign,rules.foreignMax,false);
+  setCell('FFP',ffpWith(0),rules.wageCapPct,false);
+  if(rules.homegrownMin>0){ document.getElementById('cellHome').style.display='block'; setCell('Home',homegrown,rules.homegrownMin,true); }
+  else document.getElementById('cellHome').style.display='none';
+
+  const wn=document.getElementById('windowNote'); const wt=document.getElementById('windowText');
+  if(fedBlocked()){ wn.className='window-note blocked'; wt.innerHTML='<b>النادي محظور من التسجيل</b> بسبب مخالفة FFP مسجّلة. لن يُقبل أي تسجيل حتى تسوية الوضع في صفحة المالية.'; }
+  else if(!windowOpen()){ wn.className='window-note closed'; wt.innerHTML='<b>نافذة الانتقالات مغلقة.</b> يمكن الاحتفاظ باللاعبين معلّقين، لكن التسجيل يُفتح صيفاً (يونيو–أغسطس) وشتاءً (يناير).'; }
+  else { wn.className='window-note'; wt.innerHTML='<b>نافذة الانتقالات مفتوحة.</b> يمكنك اعتماد تسجيل اللاعبين المؤهّلين الآن.'; }
+}
+
+function render(){
+  renderRules();
+  const pend=getPending();
+  document.getElementById('pendCount').innerText = pend.length? '('+pend.length+')':'';
+  const anyEligible = pend.some(p=>evaluate(p).eligible);
+  document.getElementById('bulkBtn').disabled = !anyEligible;
+
+  const box=document.getElementById('regList');
+  if(!pend.length){
+    box.innerHTML=`<div class="empty"><i class="fas fa-file-circle-check"></i>لا يوجد لاعبون بانتظار التسجيل.<br><br>توجّه إلى <a href="transfers.html">سوق الانتقالات</a> للتعاقد مع لاعبين جدد.</div>`;
+    return;
+  }
+  
+  // ★ عرض اللاعبين مع دعم كلا التنسيقين ★
+  box.innerHTML = pend.map(p=>{
+    const ev=evaluate(p);
+    const playerName = getPlayerName(p);
+    const position = getPlayerPosition(p);
+    const rating = getPlayerRating(p);
+    const flag = flagEmoji(p.nationality);
+    const status = getPlayerStatus(p.nationality);
+    const marketVal = getPlayerMarketValue(p);
+    const fee = getPlayerFee(p);
+    const fromClub = getPlayerClub(p);
+    const playerId = getPlayerId(p);
+    const age = getPlayerAge(p);
+    const wage = parseFloat(p.weekly_wage) || 0;
+    const contractYears = p.contract_years || p.contractYears || '?';
+    
+    const checksHtml = ev.checks.map(c=>`<span class="check ${c.ok?'pass':'fail'}"><i class="fas fa-${c.ok?'check':'xmark'}"></i>${c.label}</span>`).join('');
+    
+    return `<div class="rcard ${ev.eligible?'eligible':'blocked'}">
+      <div class="rcard-top">
+        <div class="ovr ${ovrClass(rating)}"><div class="n">${rating}</div><div class="p">${position}</div></div>
+        <div class="rinfo">
+          <div class="rname">${playerName} <span class="flag">${flag}</span> ${status.badge}</div>
+          <div class="rmeta">
+            <span>العمر <b>${age}</b></span>
+            <span>من <b>${fromClub}</b></span>
+            <span>القيمة السوقية <b>${marketVal}</b></span>
+            <span>رسوم الصفقة <b>${fee}M €</b></span>
+            <span>الراتب المتفَق عليه <b>${(wage/1000).toFixed(1)}K/أسبوع</b></span>
+            <span>عقد <b>${contractYears} مواسم</b></span>
+          </div>
+        </div>
+        <div class="ractions">
+          <button class="btn-reg" ${ev.eligible?'':'disabled'} onclick="registerPlayer('${playerId}')"><i class="fas fa-stamp"></i> ${ev.eligible?'تسجيل رسمي':'غير مؤهّل'}</button>
+          <button class="btn-release" onclick="releasePlayer('${playerId}')">فسخ التعاقد</button>
+        </div>
+      </div>
+      <div class="checks">${checksHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function showToast(kind,title,desc){
+  const t=document.getElementById('toast');
+  t.className='toast '+kind;
+  t.innerHTML=`<div class="tt">${title}</div><div class="td">${desc}</div>`;
+  t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),4200);
+}
+
+// ★ تحميل البيانات من localStorage عند فتح الصفحة ★
+function loadData(){
+    render();
+}
+
+// ★ التنبيه إذا لم يتم العثور على بيانات ★
+function checkData(){
+    const pend = getPending();
+    if(pend.length === 0){
+        console.log('📭 لا يوجد لاعبون بانتظار التسجيل.');
+    } else {
+        console.log(`📋 ${pend.length} لاعب(ين) بانتظار التسجيل.`);
+        pend.forEach((p, i) => {
+            console.log(`  ${i+1}. ${getPlayerName(p)} (${getPlayerPosition(p)}) - تقييم ${getPlayerRating(p)}`);
+        });
+    }
+}
+
+// ★ بدء التشغيل ★
+document.addEventListener('DOMContentLoaded', function() {
+    loadData();
+    checkData();
+});
+
+// ★ مراقبة التغييرات في localStorage (عند تسجيل لاعب من صفحة أخرى) ★
+window.addEventListener('storage', function(e) {
+    if (e.key === 'pending_registration_by_club' || e.key === 'signed_players_by_club') {
+        console.log('🔄 تم تحديث البيانات، إعادة تحميل...');
+        loadData();
+    }
+});
+
+// ★ تحديث كل 3 ثوانٍ (للتأكد من التحديث) ★
+setInterval(function() {
+    const currentPend = getPending();
+    const displayedPend = document.querySelectorAll('.rcard').length;
+    if (currentPend.length !== displayedPend) {
+        loadData();
+    }
+}, 3000);
+
+render();
+</script>
+</body>
+</html>

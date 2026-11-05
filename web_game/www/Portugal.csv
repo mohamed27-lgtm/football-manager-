@@ -1,0 +1,71 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+SLB,Benfica,بنفيكا,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,38,"1936,1937,1938,1942,1943,1945,1950,1955,1957,1960,1961,1962,1963,1964,1965,1967,1968,1969,1971,1972,1973,1975,1976,1977,1981,1983,1984,1987,1989,1991,1994,2005,2010,2014,2015,2016,2017,2019,2023"
+SLB,Benfica,بنفيكا,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,26,"1940,1943,1944,1949,1951,1952,1953,1955,1957,1959,1962,1964,1969,1970,1972,1980,1981,1983,1985,1986,1987,1993,1996,2004,2014,2017"
+SLB,Benfica,بنفيكا,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,7,"2009,2010,2011,2012,2014,2015,2016"
+SLB,Benfica,بنفيكا,البرتغال,195,UEFA,12,SCP,Supertaça de Oliveira,Domestic Super Cup,9,"1980,1985,1989,2005,2014,2016,2017,2019,2023"
+SLB,Benfica,بنفيكا,البرتغال,195,UEFA,12,UCL,UEFA Champions League,Continental,2,"1961,1962"
+SLB,Benfica,بنفيكا,البرتغال,195,UEFA,12,USC,UEFA Super Cup,Continental,0,·
+SLB,Benfica,بنفيكا,البرتغال,195,UEFA,12,IC,Intercontinental Cup,Global,0,·
+POR,FC Porto,بورتو,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,30,"1935,1939,1940,1956,1959,1978,1979,1985,1986,1988,1990,1992,1993,1995,1996,1997,1998,1999,2003,2004,2006,2007,2008,2009,2011,2012,2013,2018,2020,2022"
+POR,FC Porto,بورتو,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,20,"1956,1958,1968,1977,1984,1988,1991,1994,1998,2000,2001,2003,2006,2009,2010,2011,2020,2022,2023,2024"
+POR,FC Porto,بورتو,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,1,2023
+POR,FC Porto,بورتو,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,23,"1981,1983,1984,1986,1991,1993,1994,1996,1998,1999,2001,2003,2004,2006,2009,2010,2011,2012,2013,2018,2020,2022,2023"
+POR,FC Porto,بورتو,البرتغال,195,UEFA,12,UCL,UEFA Champions League,Continental,2,"1987,2004"
+POR,FC Porto,بورتو,البرتغال,195,UEFA,12,UEL,UEFA Europa League,Continental,2,"2003,2011"
+POR,FC Porto,بورتو,البرتغال,195,UEFA,12,USC,UEFA Super Cup,Continental,1,1987
+POR,FC Porto,بورتو,البرتغال,195,UEFA,12,IC,Intercontinental Cup,Global,2,"1987,2004"
+POR,FC Porto,بورتو,البرتغال,195,UEFA,12,FIFA-CWC,FIFA Club World Cup,Global,0,·
+SCP,Sporting CP,سبورتينغ لشبونة,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,20,"1941,1944,1947,1948,1949,1951,1952,1953,1954,1958,1962,1966,1970,1974,1980,1982,2000,2002,2021,2024"
+SCP,Sporting CP,سبورتينغ لشبونة,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,17,"1941,1945,1946,1948,1954,1963,1971,1973,1974,1978,1982,1995,2002,2007,2008,2015,2019"
+SCP,Sporting CP,سبورتينغ لشبونة,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,4,"2018,2019,2021,2022"
+SCP,Sporting CP,سبورتينغ لشبونة,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,9,"1982,1987,1995,2000,2002,2007,2008,2015,2021"
+SCP,Sporting CP,سبورتينغ لشبونة,البرتغال,195,UEFA,12,UCWC,UEFA Cup Winners' Cup,Continental,1,1964
+SCP,Sporting CP,سبورتينغ لشبونة,البرتغال,195,UEFA,12,USC,UEFA Super Cup,Continental,0,·
+BRA,Sporting Braga,سبورتينغ براغا,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,0,·
+BRA,Sporting Braga,سبورتينغ براغا,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,3,"1966,2016,2021"
+BRA,Sporting Braga,سبورتينغ براغا,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,3,"2013,2020,2024"
+BRA,Sporting Braga,سبورتينغ براغا,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,0,·
+VSC,Vitória SC,فيتوريا غيمارايش,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,0,·
+VSC,Vitória SC,فيتوريا غيمارايش,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,1,2013
+VSC,Vitória SC,فيتوريا غيمارايش,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,0,·
+VSC,Vitória SC,فيتوريا غيمارايش,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,1,1988
+BOA,Boavista FC,بوافيشتا,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,1,2001
+BOA,Boavista FC,بوافيشتا,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,5,"1975,1976,1979,1992,1997"
+BOA,Boavista FC,بوافيشتا,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,0,·
+BOA,Boavista FC,بوافيشتا,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,3,"1979,1992,1997"
+BEL,Belenenses,بيلينينسش,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,1,1946
+BEL,Belenenses,بيلينينسش,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,3,"1942,1960,1989"
+BEL,Belenenses,بيلينينسش,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,0,·
+BEL,Belenenses,بيلينينسش,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,0,·
+MOR,Moreirense,موريرينسي,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,0,·
+MOR,Moreirense,موريرينسي,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,0,·
+MOR,Moreirense,موريرينسي,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,1,2017
+MOR,Moreirense,موريرينسي,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,0,·
+FCC,Famalicão,فاماليساو,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,0,·
+FCC,Famalicão,فاماليساو,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,0,·
+FCC,Famalicão,فاماليساو,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,0,·
+FCC,Famalicão,فاماليساو,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,0,·
+ARO,Arouca,أروكا,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,0,·
+ARO,Arouca,أروكا,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,0,·
+ARO,Arouca,أروكا,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,0,·
+ARO,Arouca,أروكا,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,0,·
+EST,Estoril Praia,إستوريل برايا,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,0,·
+EST,Estoril Praia,إستوريل برايا,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,0,·
+EST,Estoril Praia,إستوريل برايا,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,0,·
+EST,Estoril Praia,إستوريل برايا,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,0,·
+RIO,Rio Ave,ريو آفي,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,0,·
+RIO,Rio Ave,ريو آفي,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,0,·
+RIO,Rio Ave,ريو آفي,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,0,·
+RIO,Rio Ave,ريو آفي,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,0,·
+GIL,Gil Vicente,جيل فيسنتي,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,0,·
+GIL,Gil Vicente,جيل فيسنتي,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,0,·
+GIL,Gil Vicente,جيل فيسنتي,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,0,·
+GIL,Gil Vicente,جيل فيسنتي,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,0,·
+PTM,Portimonense,بورتيمونينسي,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,0,·
+PTM,Portimonense,بورتيمونينسي,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,0,·
+PTM,Portimonense,بورتيمونينسي,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,0,·
+PTM,Portimonense,بورتيمونينسي,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,0,·
+CHA,Chaves,تشافيس,البرتغال,195,UEFA,12,PL,Liga Portugal,First Tier,0,·
+CHA,Chaves,تشافيس,البرتغال,195,UEFA,12,TDP,Taça de Portugal,Domestic Cup,0,·
+CHA,Chaves,تشافيس,البرتغال,195,UEFA,12,CTT,Taça da Liga,Domestic League Cup,0,·
+CHA,Chaves,تشافيس,البرتغال,195,UEFA,12,SCP,Supertaça Cândido de Oliveira,Domestic Super Cup,0,·

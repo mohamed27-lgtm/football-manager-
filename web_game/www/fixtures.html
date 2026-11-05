@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>أجندة المواعيد والمسيرة الحقيقية | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="indexeddb.js"></script>
+    <style>
+        :root {
+            --bg: #090f1d;
+            --card: #111a2e;
+            --border: #1e293b;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --gold: #c5a059;
+            --green: #10b981;
+            --blue: #3b82f6;
+            --red: #ef4444;
+            --purple: #8b5cf6;
+        }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #8a6b28;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --red: #dc2626;
+            --purple: #7c3aed;
+        }
+        
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); color: var(--text); padding: 12px; display: flex; flex-direction: column; min-height: 100vh; gap: 12px; }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+        .page-header-right { display: flex; align-items: center; gap: 8px; }
+        .page-header h2 { font-size: 14px; color: var(--text); font-weight: 600; }
+        
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .filter-trigger-btn { background: none; border: none; color: var(--text); font-size: 16px; cursor: pointer; padding: 4px; transition: color 0.2s; }
+        .filter-trigger-btn:active { color: var(--gold); }
+        .back-btn { background: var(--border); color: white; border: none; padding: 6px 12px; font-size: 11px; border-radius: 4px; text-decoration: none; display: flex; align-items: center; justify-content: center; }
+
+        .season-banner { text-align: center; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+        .season-title { font-size: 13px; font-weight: bold; color: #fff; }
+        .team-subtitle { font-size: 12px; color: var(--gold); margin-top: 2px; font-weight: 600; }
+
+        .stats-summary-bar { background: #fff; color: #334155; border-radius: 8px; padding: 8px; display: flex; justify-content: space-around; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .stat-box { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .stat-label { font-size: 11px; color: #64748b; font-weight: bold; }
+        .stat-value { font-size: 13px; font-weight: 800; color: #0f172a; }
+        .stat-box.highlight .stat-value { color: var(--blue); }
+
+        .round-container { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+        .week-header { background: rgba(255, 255, 255, 0.04); padding: 8px 12px; font-size: 12px; color: var(--gold); border-bottom: 1px solid var(--border); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .round-phase { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        .phase-league { background: rgba(197, 160, 89, 0.15); color: var(--gold); }
+        .phase-cup { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+        .phase-super { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+        .phase-friendly { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
+        .match-date-tag { font-size: 9.5px; color: var(--muted); }
+
+        .match-row { display: flex; flex-direction: column; padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); position: relative; cursor: pointer; }
+        .match-row:last-child { border-bottom: none; }
+        .match-row.highlighted-match { background: rgba(197, 160, 89, 0.02); }
+        .match-row.next-to-play { background: rgba(59, 130, 246, 0.06); border-right: 4px solid var(--blue); }
+
+        .match-main { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .match-team { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; overflow: hidden; white-space: nowrap; }
+        .match-team.home { justify-content: flex-end; text-align: left; }
+        .match-team.away { justify-content: flex-start; text-align: right; }
+        .match-team.active-browsing { color: var(--gold); font-weight: bold; }
+        
+        .team-logo { width: 26px; height: 26px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--muted); flex-shrink: 0; overflow: hidden; }
+        .team-logo img { width: 100%; height: 100%; object-fit: contain; }
+        .comp-logo { width: 16px; height: 16px; object-fit: contain; border-radius: 3px; vertical-align: middle; margin-left: 4px; }
+        .match-score-space { min-width: 75px; text-align: center; font-size: 12px; font-weight: bold; display: flex; justify-content: center; align-items: center; }
+        .match-score-space .vs-sign { color: var(--muted); font-size: 11px; background: rgba(255,255,255,0.02); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); }
+        .match-score-space .final-score { background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); color: var(--text); min-width: 55px; display: inline-block; }
+        .match-score-space .final-score.win { color: var(--green); background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); }
+        .match-score-space .live-sign { color: var(--red); font-size: 10px; font-weight: bold; animation: blink 1s infinite; background: rgba(239,68,68,0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(239,68,68,0.2); }
+
+        .match-time-bar { display: flex; justify-content: center; gap: 12px; font-size: 10px; color: var(--muted); margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.01); }
+        .match-time-bar span i { margin-left: 3px; color: var(--gold); }
+        .match-tournament-tag { font-size: 9.5px; color: var(--muted); background: rgba(255,255,255,0.05); padding: 1px 5px; border-radius: 3px; margin-right: auto; font-weight: 600; }
+
+        .filter-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1000; display: none; justify-content: flex-end; }
+        .filter-content { width: 75%; max-width: 300px; background: #0c1322; height: 100%; border-right: 1px solid var(--border); display: flex; flex-direction: column; animation: slideIn 0.25s ease-out; }
+        .filter-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--card); }
+        .filter-header h3 { font-size: 14px; color: var(--gold); }
+        .close-filter-btn { background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; }
+        .teams-scroll-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .filter-team-item { background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer; }
+        .filter-team-item.active { border-color: var(--gold); background: rgba(197, 160, 89, 0.08); color: var(--gold); }
+
+        .empty-state { text-align: center; padding: 30px; color: var(--muted); font-size: 12px; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <div class="page-header-right">
+            <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+            <h2 id="leagueTitleHeader">مسيرة وأجندة مواجهات الفريق الرسمي</h2>
+        </div>
+        <div class="header-actions">
+            <button class="filter-trigger-btn" onclick="openFilterDrawer()"><i class="fas fa-sliders-h"></i></button>
+        </div>
+    </div>
+
+    <div class="season-banner">
+        <div class="season-title" id="seasonYearLabel">المسيرة الشاملة لموسم 2026/2027</div>
+        <div class="team-subtitle" id="browsingClubLabel">جاري تحميل النادي المستهدف...</div>
+    </div>
+
+    <div class="stats-summary-bar">
+        <div class="stat-box"><span class="stat-label">ل</span><span class="stat-value" id="stat-played">0</span></div>
+        <div class="stat-box"><span class="stat-label">ف</span><span class="stat-value" id="stat-wins">0</span></div>
+        <div class="stat-box"><span class="stat-label">ت</span><span class="stat-value" id="stat-draws">0</span></div>
+        <div class="stat-box"><span class="stat-label">خ</span><span class="stat-value" id="stat-losses">0</span></div>
+        <div class="stat-box"><span class="stat-label">له</span><span class="stat-value" id="stat-gf">0</span></div>
+        <div class="stat-box"><span class="stat-label">عليه</span><span class="stat-value" id="stat-ga">0</span></div>
+        <div class="stat-box"><span class="stat-label">فا</span><span class="stat-value" id="stat-gd">+0</span></div>
+        <div class="stat-box highlight"><span class="stat-label">ن</span><span class="stat-value" id="stat-pts">0</span></div>
+    </div>
+
+    <div id="fedSuspensionNotice" style="display:none; background:rgba(239,68,68,0.1); border:1px solid var(--red); border-radius:8px; padding:10px 12px; font-size:11.5px; color:#fff;">
+        <i class="fas fa-user-slash" style="color:var(--red);"></i> <span id="fedSuspensionText"></span>
+    </div>
+
+    <script>
+        (function () {
+            const club = localStorage.getItem('presidentialClub') || "نادي المستقبل";
+            const suspended = JSON.parse(localStorage.getItem('clubSuspendedPlayers')) || [];
+            if (suspended.length > 0) {
+                document.getElementById('fedSuspensionNotice').style.display = 'block';
+                document.getElementById('fedSuspensionText').innerText =
+                    `لاعبون موقوفون وفق لائحة الاتحاد للمباراة القادمة: ${suspended.map(s => `${s.name} (${s.reason})`).join('، ')}`;
+            }
+        })();
+    </script>
+
+    <div id="fixturesDynamicContainer"></div>
+
+    <div class="filter-modal" id="filterDrawer">
+        <div class="filter-content">
+            <div class="filter-header">
+                <h3>أندية وجدول المسابقة</h3>
+                <button class="close-filter-btn" onclick="closeFilterDrawer()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="teams-scroll-list" id="filterTeamsListContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let activeUserClub = localStorage.getItem('presidentialClub') || "Chelsea";
+// ============================================================
+// Session Guard (Save Slot)
+// - يضمن أن بيانات IndexedDB/المباريات الودية ترتبط بحفظة واحدة فقط
+// - عند (لعبة جديدة) يجب تغيير game_session_id لمسح/فصل البيانات القديمة
+// ============================================================
+function getGameSessionId() {
+    let sid = localStorage.getItem('game_session_id');
+    if (!sid) {
+        sid = 'S' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+        localStorage.setItem('game_session_id', sid);
+    }
+    return sid;
+}
+const GAME_SESSION_ID = getGameSessionId();
+
+        let currentLeagueName = localStorage.getItem('current_league_name') || "Premier League";
+        let currentLeagueTeams = [];
+        
+        // نظام الجلب الديناميكي لقراءة أندية الدوري الحالي (بما فيها الفرق الصاعدة)
+        try {
+            let storedTeams = localStorage.getItem('current_league_teams');
+            if (storedTeams) currentLeagueTeams = JSON.parse(storedTeams).filter(t => t !== "إستراحة" && t.trim() !== "");
+        } catch(e) { console.error("خطأ في قراءة الأندية الصاعدة والديناميكية:", e); }
+
+        // أندية افتراضية للحماية في حال لم يجد بيانات مخزنة
+        if (currentLeagueTeams.length === 0) {
+            currentLeagueTeams = [activeUserClub, "Arsenal", "Man City", "Liverpool", "Man United", "Tottenham", "Aston Villa", "Newcastle"];
+        }
+
+        // جلب أسماء الكؤوس الفرعية ديناميكياً من التخزين حسب الدولة الحالية
+        let realCupName = localStorage.getItem('current_cup_name') || "كأس المسابقة المحلية";
+        let realSuperCupName = localStorage.getItem('current_super_cup_name') || "كأس السوبر المحلي";
+
+        let currentBrowsingClub = activeUserClub;
+
+        // ميكانيكية تحديد فترات وجدولة الكؤوس الإقصائية وسط أسابيع الدوري
+        let r32Round = 4;
+        let r16Round = 12;
+        let qfRound = 20;
+        let sfRound = 28;
+        let finalCupRound = (currentLeagueTeams.length - 1) * 2 - 2; 
+
+        let currentRound = parseInt(localStorage.getItem('database_current_round')) || 0;
+        let nextMatchStage = localStorage.getItem('database_next_stage') || "super";
+        let cupTournamentData = JSON.parse(localStorage.getItem('database_cup_data')) || null;
+        let superCupData = JSON.parse(localStorage.getItem('database_super_cup_data')) || null;
+
+        // ============================================================
+        // محرك التقويم الحقيقي: ربط كل جولة وكل مباراة بتاريخ فعلي
+        // متزامن مع محرك الوقت في game_main.html (game_day/month/year)
+        // ============================================================
+        const gameNow = {
+            day: parseInt(localStorage.getItem('game_day') || '1'),
+            month: parseInt(localStorage.getItem('game_month') || '6'),
+            year: parseInt(localStorage.getItem('game_year') || '2026')
+        };
+        // نفس مسار شعارات الأندية الحقيقي المستخدم بالضبط عبر بقية اللعبة (stadium.html, medical.html...)
+        function getTeamLogoUrl(t) { return `teams_logos/${(t||'').trim()}.png`; }
+        // شعارات البطولات الحقيقية — تُطابَق حسب اسم/نوع البطولة الفعلي
+        const COMPETITION_LOGOS = {
+            'دوري أبطال أوروبا': 'comp_logos/ucl.png', 'دوري أبطال آسيا': 'comp_logos/acl.png',
+            'كأس السوبر': 'comp_logos/super_cup.png', 'الدوري المحلي': 'comp_logos/league.png',
+        };
+        function getCompetitionLogoUrl(name) {
+            for (const key in COMPETITION_LOGOS) if (name && name.includes(key)) return COMPETITION_LOGOS[key];
+            return 'comp_logos/generic_cup.png';
+        }
+        function pad(n) { return n < 10 ? '0' + n : n; }
+        function fmtDate(d) { return `${pad(d.day)}/${pad(d.month)}/${d.year}`; }
+
+        // تحويل التاريخ (object) إلى Date حقيقي للتعامل مع اليوم/الساعة
+        function toJSDate(d) {
+            return new Date(d.year, (d.month - 1), d.day, 0, 0, 0, 0);
+        }
+        function fromJSDate(dt) {
+            return { day: dt.getDate(), month: dt.getMonth() + 1, year: dt.getFullYear(), _js: dt };
+        }
+
+        // format DM/Y لــ Date
+        function formatDMY(dt) {
+            const dd = String(dt.getDate()).padStart(2, '0');
+            const mm = String(dt.getMonth() + 1).padStart(2, '0');
+            const yy = dt.getFullYear();
+            return `${dd}/${mm}/${yy}`;
+        }
+
+        // مفتاح ترتيب يدعم وجود وقت (Date) أو object
+        function dateSortKey(x) {
+            if (!x) return 0;
+            if (x instanceof Date) return x.getTime();
+            return (x.year * 10000 + x.month * 100 + x.day);
+        }
+
+        // إضافة أيام تدعم object أو Date
+        function addDaysToDate(base, days) {
+            if (base instanceof Date) {
+                const dt = new Date(base.getTime());
+                dt.setDate(dt.getDate() + (days || 0));
+                return dt;
+            }
+            let d = { ...base };
+            for (let i = 0; i < (days || 0); i++) {
+                d.day++;
+                let daysInMonth = 30;
+                if ([1,3,5,7,8,10,12].includes(d.month)) daysInMonth = 31;
+                else if (d.month === 2) daysInMonth = (d.year % 4 === 0) ? 29 : 28;
+                if (d.day > daysInMonth) { d.day = 1; d.month++; }
+                if (d.month > 12) { d.month = 1; d.year++; }
+            }
+            // دعم الأيام السالبة عند الحاجة
+            for (let i = 0; i < Math.abs(Math.min(0, days || 0)); i++) {
+                d.day--;
+                if (d.day < 1) {
+                    d.month--;
+                    if (d.month < 1) { d.month = 12; d.year--; }
+                    let daysInMonth = 30;
+                    if ([1,3,5,7,8,10,12].includes(d.month)) daysInMonth = 31;
+                    else if (d.month === 2) daysInMonth = (d.year % 4 === 0) ? 29 : 28;
+                    d.day = daysInMonth;
+                }
+            }
+            return d;
+        }
+
+        // بداية الموسم: 15 أغسطس، محسوبة تلقائياً بحيث تسبق تاريخ اليوم الحالي للعبة
+        const seasonStartYear = (gameNow.month >= 8) ? gameNow.year : gameNow.year - 1;
+        const SEASON_START = { day: 15, month: 8, year: seasonStartYear };
+        function roundDate(roundNum) {
+            const base = addDaysToDate(SEASON_START, (roundNum - 1) * 7);
+            // نرجع object كما كان سابقاً (لأجزاء الصفحة الأخرى)، لكن مع إضافة نسخة Date داخلية
+            if (base instanceof Date) return fromJSDate(base);
+            return { ...base, _js: toJSDate(base) };
+        }
+        function parseDMY(str) {
+            const [d, m, y] = (str || '').split('/').map(n => parseInt(n));
+            return { day: d || 1, month: m || 1, year: y || seasonStartYear };
+        }
+
+        // توليد مباريات الدوري ذهاب وإياب بنظام التدوير الكامل
+        function generateDoubleRoundRobin(teams) {
+            let schedule = [];
+            let pool = [...teams];
+            if (pool.length % 2 !== 0) pool.push("إستراحة");
+            let totalTeams = pool.length;
+            let roundsCount = totalTeams - 1;
+            let matchesPerRound = totalTeams / 2;
+
+            for (let round = 0; round < roundsCount; round++) {
+                let roundMatches = [];
+                for (let i = 0; i < matchesPerRound; i++) {
+                    let home = pool[i]; let away = pool[totalTeams - 1 - i];
+                    if (home === "إستراحة" || away === "إستراحة") continue;
+                    if (round % 2 === 1) { let tmp = home; home = away; away = tmp; }
+                    roundMatches.push({ home: home, away: away, type: "league", stageKey: "league", roundNum: round + 1, title: `الدوري - جولة ${round + 1}` });
+                }
+                schedule.push(roundMatches);
+                pool.splice(1, 0, pool.pop());
+            }
+            let firstHalfLength = schedule.length;
+            for (let round = 0; round < firstHalfLength; round++) {
+                let roundMatches = [];
+                schedule[round].forEach(m => {
+                    roundMatches.push({ home: m.away, away: m.home, type: "league", stageKey: "league", roundNum: round + 1 + firstHalfLength, title: `الدوري - جولة ${round + 1 + firstHalfLength}` });
+                });
+                schedule.push(roundMatches);
+            }
+            return schedule;
+        }
+
+        // =============================
+        // 🗓️ مواعيد واقعية للمباريات (اليوم + الساعة)
+        // - الدوري: نهاية الأسبوع (الجمعة/السبت/الأحد) مع توزيع تلقائي على أوقات مختلفة
+        // - الكأس: منتصف الأسبوع غالباً (الثلاثاء/الأربعاء/الخميس)
+        // - السوبر: افتتاح الموسم (غالباً مساء الجمعة/السبت)
+        // =============================
+
+        function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+        function minutesToLabel(mins) {
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            const hh = String(h).padStart(2, '0');
+            const mm = String(m).padStart(2, '0');
+            return `${hh}:${mm}`;
+        }
+
+        // يبني وقت انطلاق “واقعي” حسب نوع المباراة مع توزيع بسيط لتفادي التكدّس
+        function getRealisticKickoffForMatch({ baseDate, type, roundOrder, home, away, matchIdx, totalMatchesInRound }) {
+            // baseDate عندنا غالباً object (day/month/year) من roundDate، أو Date حقيقي
+            let dt;
+            if (baseDate instanceof Date) dt = new Date(baseDate.getTime());
+            else if (baseDate && baseDate._js instanceof Date) dt = new Date(baseDate._js.getTime());
+            else if (baseDate && typeof baseDate.year === 'number') dt = toJSDate(baseDate);
+            else dt = new Date();
+
+            let dayOffsets;
+            if (type === 'league') dayOffsets = [0, 1, -1];            // سبت/أحد/جمعة (حول تاريخ الجولة)
+            else if (type === 'cup') dayOffsets = [0, -1, 1];          // أربعاء/ثلاثاء/خميس تقريباً
+            else if (type === 'super') dayOffsets = [0, -1, 1];        // سبت/جمعة/أحد
+            else dayOffsets = [0];
+
+            const timeSlots = (type === 'league')
+                ? [15 * 60, 17 * 60 + 30, 20 * 60]                       // 15:00 / 17:30 / 20:00
+                : (type === 'cup')
+                    ? [18 * 60, 20 * 60 + 15, 21 * 60]                   // 18:00 / 20:15 / 21:00
+                    : [19 * 60 + 30, 21 * 60];                           // 19:30 / 21:00
+
+            const str = `${type}|${roundOrder}|${home}|${away}`;
+            let seed = 0;
+            for (let i = 0; i < str.length; i++) seed = (seed * 31 + str.charCodeAt(i)) >>> 0;
+
+            const dayPick = dayOffsets[seed % dayOffsets.length];
+            const slotPick = timeSlots[(seed + (matchIdx || 0)) % timeSlots.length];
+
+            const spread = clamp(totalMatchesInRound || 1, 1, 20);
+            const extra = ((seed % spread) * 15) % 60; // 0/15/30/45
+
+            dt.setHours(0, 0, 0, 0);
+            const shifted = addDaysToDate(dt, dayPick); // يرجع Date
+            const mins = slotPick + extra;
+            shifted.setHours(Math.floor(mins / 60), mins % 60, 0, 0);
+
+            const label = `${formatDMY(shifted)} • ${minutesToLabel(mins)}`;
+            return { dateObj: shifted, label };
+        }
+
+        const fullLeagueSchedule = generateDoubleRoundRobin(currentLeagueTeams);
+
+        async function renderFixturesAndStats() {
+            document.getElementById('browsingClubLabel').innerText = currentBrowsingClub + (currentBrowsingClub === activeUserClub ? " (فريقك الحالي)" : "");
+            
+            let stats = { played: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0, pts: 0 };
+            const container = document.getElementById('fixturesDynamicContainer');
+            container.innerHTML = "";
+
+            let timeline = [];
+
+            // 1. حقن مباراة السوبر المحلي الافتتاحية إن وجدت
+            if (superCupData) {
+                const superKick = getRealisticKickoffForMatch({
+                    baseDate: addDaysToDate(SEASON_START, -7),
+                    type: "super",
+                    roundOrder: 0,
+                    home: superCupData.t1,
+                    away: superCupData.t2,
+                    matchIdx: 0,
+                    totalMatchesInRound: 1
+                });
+
+                timeline.push({
+                    roundOrder: 0, stageKey: "super", type: "super", title: realSuperCupName,
+                    home: superCupData.t1, away: superCupData.t2,
+                    hScore: superCupData.s1, aScore: superCupData.s2, played: superCupData.played,
+                    sortKey: dateSortKey(superKick.dateObj),
+                    kickoffLabel: superKick.label
+                });
+            }
+
+            // 2. بناء الأجندة الزمنية للدوري وحقن أدوار الكأس بداخلها
+            fullLeagueSchedule.forEach((roundMatches, idx) => {
+                let rNum = idx + 1;
+                roundMatches.forEach(m => {
+                    let hScore = null; let aScore = null; let isPlayed = rNum <= currentRound;
+                    if (isPlayed) {
+                        hScore = Math.floor(Math.random() * 3);
+                        aScore = Math.floor(Math.random() * 3);
+                        if (m.home === activeUserClub || m.away === activeUserClub) {
+                            let savedScores = JSON.parse(localStorage.getItem('full_season_scores')) || [];
+                            let found = savedScores.find(s => s.roundIdx === idx);
+                            if (found) { hScore = found.homeScore; aScore = found.awayScore; }
+                        }
+                    }
+
+                    // موعد واقعي: الدوري غالباً في نهاية الأسبوع، وتوزيع المباريات عبر الجمعة/السبت/الأحد
+                    // (محليّاً: فرق نفس الجولة تتوزع لتفادي “كلها في نفس الدقيقة”)
+                    const leagueKick = getRealisticKickoffForMatch({
+                        baseDate: roundDate(rNum),
+                        type: "league",
+                        roundOrder: rNum,
+                        home: m.home,
+                        away: m.away,
+                        matchIdx: (m.matchIdx ?? 0),
+                        totalMatchesInRound: (roundMatches.length || 1)
+                    });
+
+                    timeline.push({
+                        roundOrder: rNum, stageKey: "league", type: "league", title: `الدوري - الجولة ${rNum}`,
+                        home: m.home, away: m.away, hScore: hScore, aScore: aScore, played: isPlayed,
+                        sortKey: dateSortKey(leagueKick.dateObj),
+                        kickoffLabel: leagueKick.label
+                    });
+                });
+
+                // جدولة أدوار الكأس المحلي بالتوازي مع أسابيع الموسم
+                if (rNum === r32Round) insertCupRoundToTimeline(timeline, "r32", `دور الـ 32 - ${realCupName}`, "cup_r32", rNum);
+                if (rNum === r16Round) insertCupRoundToTimeline(timeline, "r16", `ثمن النهائي (دور 16) - ${realCupName}`, "cup_r16", rNum);
+                if (rNum === qfRound) insertCupRoundToTimeline(timeline, "qf", `ربع النهائي (دور 8) - ${realCupName}`, "cup_qf", rNum);
+                if (rNum === sfRound) insertCupRoundToTimeline(timeline, "sf", `نصف النهائي - ${realCupName}`, "cup_sf", rNum);
+                if (rNum === finalCupRound) insertCupRoundToTimeline(timeline, "final", `المباراة النهائية الكبرى 🏆 - ${realCupName}`, "cup_final", rNum);
+            });
+
+            let filteredTimeline = timeline.filter(item => item.home === currentBrowsingClub || item.away === currentBrowsingClub);
+
+            // حقن المباريات الودية الرسمية المرتّبة عبر صفحة "المباريات الودية"
+            // (تظهر فقط عند تصفح فريق الرئاسة نفسه، لأنها بيانات خاصة بناديك)
+            if (currentBrowsingClub === activeUserClub) {
+                try {
+                    await clubDB.init();
+                    const upcomingFriendlies = (await clubDB.getAllUpcomingMatches()).filter(m => m.competition === "ودية" && (m.ownerClub === undefined || m.ownerClub === activeUserClub) && (m.sessionId === undefined || m.sessionId === GAME_SESSION_ID));
+                    const playedFriendlies = (await clubDB.getAllFriendlyMatches()).filter(m => (m.ownerClub === undefined || m.ownerClub === activeUserClub) && (m.sessionId === undefined || m.sessionId === GAME_SESSION_ID));
+
+                    upcomingFriendlies.forEach(m => {
+                        const isHomeVenue = m.venue !== "away";
+                        filteredTimeline.push({
+                            type: "friendly", stageKey: "friendly_" + m.id,
+                            title: `مباراة ودية رسمية`,
+                            home: isHomeVenue ? currentBrowsingClub : m.opponent,
+                            away: isHomeVenue ? m.opponent : currentBrowsingClub,
+                            hScore: null, aScore: null, played: false,
+                            friendlyDate: m.date, friendlyId: m.id,
+                            sortKey: m.dateSort || dateSortKey(parseDMY(m.date))
+                        });
+                    });
+
+                    playedFriendlies.forEach(m => {
+                        const isHomeVenue = m.venue !== "away";
+                        let [myScore, theirScore] = (m.result || "0-0").split("-").map(n => parseInt(n));
+                        if (isNaN(myScore)) myScore = 0; if (isNaN(theirScore)) theirScore = 0;
+                        filteredTimeline.push({
+                            type: "friendly", stageKey: "friendly_played_" + (m.id || Math.random()),
+                            title: `مباراة ودية رسمية`,
+                            home: isHomeVenue ? currentBrowsingClub : m.opponent,
+                            away: isHomeVenue ? m.opponent : currentBrowsingClub,
+                            hScore: isHomeVenue ? myScore : theirScore,
+                            aScore: isHomeVenue ? theirScore : myScore,
+                            played: true, friendlyDate: m.date,
+                            sortKey: dateSortKey(parseDMY(m.date))
+                        });
+                    });
+                } catch (e) {
+                    console.warn("تعذر تحميل المباريات الودية من قاعدة البيانات:", e);
+                }
+            }
+
+            // ترتيب زمني حقيقي كامل: من أقدم مباراة إلى أحدثها حسب التقويم الفعلي للموسم
+            filteredTimeline.sort((a, b) => (a.sortKey || 0) - (b.sortKey || 0));
+
+            if (filteredTimeline.length === 0) {
+                container.innerHTML = `<div class="empty-state">لا توجد مباريات مجدولة لهذا النادي حالياً.</div>`;
+                return;
+            }
+
+            filteredTimeline.forEach(match => {
+                let isPlayed = match.played;
+                let scoreSpace = `<span class="vs-sign">VS</span>`;
+                let rowClass = "highlighted-match";
+                let phaseBadge = `<span class="round-phase phase-league">الدوري</span>`;
+                
+                if (match.type === "cup") phaseBadge = `<span class="round-phase phase-cup">الكأس المحلي</span>`;
+                if (match.type === "super") phaseBadge = `<span class="round-phase phase-super">السوبر</span>`;
+                if (match.type === "friendly") phaseBadge = `<span class="round-phase phase-friendly">ودية</span>`;
+
+                // احتساب الإحصائيات الشاملة وإصلاح قراءة الأهداف بشكل صحيح وديناميكي
+                if (isPlayed && match.hScore !== null) {
+                    let isHome = match.home === currentBrowsingClub;
+                    let myScore = isHome ? match.hScore : match.aScore;
+                    let theirScore = isHome ? match.aScore : match.hScore;
+
+                    stats.played += 1; 
+                    stats.gf += myScore; 
+                    stats.ga += theirScore;
+
+                    if (myScore > theirScore) { stats.wins += 1; if(match.type === "league") stats.pts += 3; }
+                    else if (myScore === theirScore) { stats.draws += 1; if(match.type === "league") stats.pts += 1; }
+                    else { stats.losses += 1; }
+
+                    let scoreStyle = "final-score";
+                    if (match.home === currentBrowsingClub && match.hScore > match.aScore) scoreStyle += " win";
+                    if (match.away === currentBrowsingClub && match.aScore > match.hScore) scoreStyle += " win";
+                    scoreSpace = `<span class="${scoreStyle}">${match.hScore} - ${match.aScore}</span>`;
+                } else {
+                    let isNext = false;
+                    if (nextMatchStage === match.stageKey) isNext = true;
+                    if (nextMatchStage === "league" && match.type === "league" && match.roundOrder === (currentRound + 1)) isNext = true;
+
+                    if (isNext && currentBrowsingClub === activeUserClub) {
+                        rowClass = "next-to-play";
+                        scoreSpace = `<span class="live-sign">🔴 قريباً</span>`;
+                    }
+                }
+
+                let homeActive = (match.home === currentBrowsingClub) ? "active-browsing" : "";
+                let awayActive = (match.away === currentBrowsingClub) ? "active-browsing" : "";
+
+                container.innerHTML += `
+                    <div class="round-container ${rowClass}" onclick="handleMatchClick('${match.stageKey}', ${match.played}, '${match.type}')">
+                        <div class="week-header">
+                            <span><img class="comp-logo" src="${getCompetitionLogoUrl(match.title)}" onerror="this.style.display='none';">${match.title}</span>
+                            ${phaseBadge}
+                        </div>
+                        <div class="match-row">
+                            <div class="match-main">
+                                <div class="match-team home ${homeActive}">
+                                    <span>${match.home}</span>
+                                    <div class="team-logo"><img src="${getTeamLogoUrl(match.home)}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\\'fas fa-shield-alt\\'></i>';"></div>
+                                </div>
+                                <div class="match-score-space">${scoreSpace}</div>
+                                <div class="match-team away ${awayActive}">
+                                    <div class="team-logo"><img src="${getTeamLogoUrl(match.away)}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\\'fas fa-shield-alt\\'></i>';"></div>
+                                    <span>${match.away}</span>
+                                </div>
+                            </div>
+                            <div class="match-time-bar">
+                                <span class="match-tournament-tag">${match.type === 'league' ? currentLeagueName : match.type === 'friendly' ? 'مباراة ودية' : 'بطولة إقصائية'}</span>
+                                ${match.friendlyDate ? `<span class="match-date-tag"><i class="fas fa-calendar-day"></i> ${match.friendlyDate}</span>` : ''}
+                                ${match.kickoffLabel ? `<span class="match-date-tag"><i class="fas fa-clock"></i> ${match.kickoffLabel}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // طباعة الإحصائيات في الشريط العلوي الملون
+            document.getElementById('stat-played').innerText = stats.played;
+            document.getElementById('stat-wins').innerText = stats.wins;
+            document.getElementById('stat-draws').innerText = stats.draws;
+            document.getElementById('stat-losses').innerText = stats.losses;
+            document.getElementById('stat-gf').innerText = stats.gf;
+            document.getElementById('stat-ga').innerText = stats.ga;
+            let diff = stats.gf - stats.ga;
+            document.getElementById('stat-gd').innerText = diff >= 0 ? `+${diff}` : diff;
+            document.getElementById('stat-pts').innerText = stats.pts;
+        }
+
+        // دالة مساعدة لحقن مباريات أدوار الكأس من التخزين المحلي
+        function insertCupRoundToTimeline(timeline, cupKey, roundTitle, stageKey, rNum) {
+            if (!cupTournamentData) return;
+            let matches = [];
+            if (cupKey === "final") matches = [cupTournamentData.final];
+            else matches = cupTournamentData[cupKey] || [];
+
+            matches.forEach((m, i) => {
+                if (m && m.t1) {
+                    let played = m.s1 !== null;
+
+                    const cupKick = getRealisticKickoffForMatch({
+                        baseDate: addDaysToDate(roundDate(rNum), 3),
+                        type: "cup",
+                        roundOrder: rNum,
+                        home: m.t1,
+                        away: m.t2,
+                        matchIdx: i,
+                        totalMatchesInRound: (matches.length || 1)
+                    });
+
+                    timeline.push({
+                        roundOrder: 99, stageKey: stageKey, type: "cup", title: roundTitle,
+                        home: m.t1, away: m.t2, hScore: m.s1, aScore: m.s2, played: played,
+                        sortKey: dateSortKey(cupKick.dateObj),
+                        kickoffLabel: cupKick.label
+                    });
+                }
+            });
+        }
+
+        function handleMatchClick(stageKey, isPlayed, matchType) {
+            if (isPlayed) return;
+            if (currentBrowsingClub !== activeUserClub) return;
+            if (matchType === "friendly") {
+                window.location.href = "friendly_matches.html";
+                return;
+            }
+            if (nextMatchStage === stageKey || (nextMatchStage === "league" && stageKey === "league")) {
+                window.location.href = "match_day.html";
+            }
+        }
+
+        function openFilterDrawer() {
+            const listContainer = document.getElementById('filterTeamsListContainer');
+            listContainer.innerHTML = "";
+            currentLeagueTeams.forEach(team => {
+                let activeClass = (team === currentBrowsingClub) ? "active" : "";
+                listContainer.innerHTML += `
+                    <div class="filter-team-item ${activeClass}" onclick="selectClubToBrowse('${team}')">
+                        <div class="team-logo" style="width:22px;height:22px;"><img src="${getTeamLogoUrl(team)}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\\'fas fa-shield-alt\\'></i>';"></div>
+                        <span>${team}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('filterDrawer').style.display = 'flex';
+        }
+
+        function closeFilterDrawer() { document.getElementById('filterDrawer').style.display = 'none'; }
+        async function selectClubToBrowse(teamName) { currentBrowsingClub = teamName; closeFilterDrawer(); await renderFixturesAndStats(); }
+
+        window.onload = async function() {
+            await renderFixturesAndStats();
+        };
+    </script>
+</body>
+</html>

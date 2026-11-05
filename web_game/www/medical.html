@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>المركز الطبي | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg:#090f1d; --card:#111a2e; --border:#1e293b; --text:#f1f5f9;
+            --muted:#94a3b8; --gold:#c5a059; --green:#10b981; --red:#ef4444;
+        }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #8a6b28;
+            --green: #16a34a;
+            --red: #dc2626;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body {
+            background-color:var(--bg);
+            /* نمط بصري طبي افتراضي (صليب طبي متكرر خفيف) يعمل فوراً بدون أي صورة خارجية مطلوبة */
+            background-image:
+                linear-gradient(rgba(10,14,23,0.94), rgba(10,14,23,0.97)),
+                repeating-linear-gradient(45deg, rgba(239,68,68,0.05) 0 2px, transparent 2px 40px),
+                repeating-linear-gradient(-45deg, rgba(59,130,246,0.05) 0 2px, transparent 2px 40px);
+            color:var(--text); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:100vh;
+        }
+        /* إن وضعت صورة خلفية حقيقية باسم hospital_bg.jpg بجانب هذا الملف ستظهر فوق النمط تلقائياً */
+        .hero-banner {
+            position:relative; border-radius:16px; overflow:hidden; min-height:120px;
+            display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+            background-image: linear-gradient(rgba(10,14,23,0.55), rgba(10,14,23,0.85)), url('hospital_bg.jpg');
+            background-size:cover; background-position:center;
+            border:1px solid var(--border); padding:20px 14px;
+        }
+        .hero-banner .cross-icon {
+            width:52px; height:52px; border-radius:50%; background:rgba(239,68,68,0.15); border:2px solid var(--red);
+            display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--red); margin-bottom:10px;
+        }
+        .hero-banner .htitle { font-size:16px; font-weight:800; color:#fff; }
+        .hero-banner .hsub { font-size:11px; color:var(--muted); margin-top:4px; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:10px 12px; border-radius:12px; border:1px solid var(--border); }
+        .back-btn { background:var(--border); color:white; border:none; padding:8px 12px; font-size:12px; border-radius:8px; text-decoration:none; }
+        .page-title { font-size:14px; font-weight:700; color:var(--gold); }
+        .header-spacer { width:34px; }
+
+        .summary-row { display:flex; gap:8px; }
+        .summary-box { flex:1; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center; }
+        .summary-box .num { font-size:20px; font-weight:700; color:var(--gold); }
+        .summary-box .lbl { font-size:10.5px; color:var(--muted); margin-top:3px; }
+
+        .card { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+        .section-title { font-size:12px; color:var(--gold); font-weight:700; padding:12px 14px 6px 14px; display:flex; align-items:center; gap:6px; }
+        .empty-state { text-align:center; padding:30px 16px; color:var(--muted); font-size:13px; line-height:1.8; }
+        .empty-state i { display:block; font-size:24px; margin-bottom:8px; color:var(--border); }
+        .empty-state a { display:inline-block; margin-top:10px; background:var(--gold); color:var(--bg); padding:8px 18px; border-radius:8px; font-weight:700; text-decoration:none; font-size:12px; }
+
+        .injury-row { padding:12px 14px; border-bottom:1px solid var(--border); }
+        .injury-row:last-child { border-bottom:none; }
+        .injury-top { display:flex; align-items:center; gap:10px; }
+        .injury-top .icon { width:32px; height:32px; border-radius:8px; background:rgba(239,68,68,0.12); display:flex; align-items:center; justify-content:center; color:var(--red); flex:0 0 auto; position:relative; overflow:hidden; }
+        .injury-top .icon img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:8px; }
+        .injury-top .info { flex:1; }
+        .injury-top .pname { font-size:13px; font-weight:700; }
+        .injury-top .psub { font-size:11px; color:var(--muted); margin-top:2px; }
+        .injury-top .days-left { font-size:12px; font-weight:700; color:var(--gold); white-space:nowrap; }
+        .progress-track { height:6px; background:var(--border); border-radius:4px; overflow:hidden; margin-top:8px; }
+        .progress-fill { height:100%; background:linear-gradient(90deg, var(--red), var(--gold), var(--green)); }
+
+        .fit-row { display:flex; align-items:center; gap:8px; padding:8px 14px; font-size:12px; border-bottom:1px solid var(--border); }
+        .fit-row:last-child { border-bottom:none; }
+        .fit-row i { color:var(--green); }
+        .fit-row .mini-avatar { width:22px; height:22px; border-radius:50%; background:rgba(34,197,94,0.12); position:relative; overflow:hidden; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+        .fit-row .mini-avatar img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:50%; }
+
+        .staff-row { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--border); }
+        .staff-row:last-child { border-bottom:none; }
+        .staff-row .icon-box { width:32px; height:32px; border-radius:8px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex:0 0 auto; color:var(--gold); position:relative; overflow:hidden; }
+        .staff-row .icon-box img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:8px; }
+        .staff-row .info { flex:1; }
+        .staff-row .pname { font-size:13px; font-weight:700; }
+        .staff-row .psub { font-size:11px; color:var(--muted); margin-top:2px; }
+        .staff-row .rating { font-size:13px; font-weight:700; color:var(--gold); }
+
+        .warn-banner { display:flex; align-items:center; gap:8px; background:rgba(245,158,11,0.1); color:#f59e0b; padding:10px 14px; border-radius:10px; font-size:11.5px; line-height:1.7; border:1px solid rgba(245,158,11,0.3); }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title">🩺 المركز الطبي</div>
+        <div class="header-spacer"></div>
+    </div>
+
+    <div class="hero-banner">
+        <div class="cross-icon"><i class="fas fa-house-medical"></i></div>
+        <div class="htitle">المركز الطبي للنادي</div>
+        <div class="hsub">متابعة الإصابات والتعافي والطاقم الطبي</div>
+    </div>
+
+    <div class="summary-row">
+        <div class="summary-box"><div class="num" id="sumInjured">0</div><div class="lbl">مصابون حالياً</div></div>
+        <div class="summary-box"><div class="num" id="sumFit">0</div><div class="lbl">جاهزون</div></div>
+        <div class="summary-box"><div class="num" id="sumStaff">0</div><div class="lbl">الطاقم الطبي</div></div>
+    </div>
+
+    <div id="staffWarning"></div>
+
+    <div class="card">
+        <div class="section-title"><i class="fas fa-user-doctor"></i> الفحص الطبي للاعبين الجدد</div>
+        <div id="newSigningsMedicalContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="section-title"><i class="fas fa-house-medical-flag"></i> منشآت المركز الطبي</div>
+        <div id="medicalFacilitiesContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="section-title"><i class="fas fa-notes-medical"></i> قائمة الإصابات الحالية</div>
+        <div id="injuriesContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="section-title"><i class="fas fa-user-md"></i> الطاقم الطبي</div>
+        <div id="medicalStaffContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="section-title"><i class="fas fa-check-circle" style="color:var(--green);"></i> لاعبون جاهزون تماماً</div>
+        <div id="fitPlayersContainer"></div>
+    </div>
+
+    <div id="toast" style="position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--gold); color:var(--text); padding:10px 16px; border-radius:10px; font-size:12px; display:none; z-index:99; max-width:90%; text-align:center;"></div>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || 'نادي المستقبل';
+        const realLogosPath = 'teams_logos/';
+        function getTeamLogoUrl(t) { return `${realLogosPath}${(t||'').trim()}.png`; }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        // ============================================================
+        // التقويم الحقيقي — نفس النظام المستخدم في بقية اللعبة
+        // ============================================================
+        function getGameDate() {
+            return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||6, year: parseInt(localStorage.getItem('game_year'))||2026 };
+        }
+        function dateSortKey(d) { return d.year*10000 + d.month*100 + d.day; }
+
+        function getClubInjuries() { return JSON.parse(localStorage.getItem('club_injuries')) || []; }
+        function setClubInjuries(list) { localStorage.setItem('club_injuries', JSON.stringify(list)); }
+        function getSquad() { return JSON.parse(localStorage.getItem('signed_players_by_club')||'{}')[activeClub] || []; }
+        function getStaffByClub() { return JSON.parse(localStorage.getItem('staff_by_club')||'{}'); }
+        function setStaffForClub(list) { const all = getStaffByClub(); all[activeClub] = list; localStorage.setItem('staff_by_club', JSON.stringify(all)); }
+        function getMedicalStaff() { return (getStaffByClub()[activeClub] || []).filter(s => s.department === 'medical'); }
+
+        // ============================================================
+        // متوسط جودة الطاقم الطبي — كلما ارتفع، كلما تسارع تعافي اللاعبين فعلياً
+        // ============================================================
+        function getMedicalQualityFactor() {
+            const staff = getMedicalStaff();
+            const base = !staff.length ? 0.65 : 0.7 + (staff.reduce((s,m) => s + ((m.medical_skill||50) + (m.recovery_speed||50) + (m.diagnosis_accuracy||50)) / 3, 0) / staff.length / 99) * 0.8;
+            return base * getFacilityRecoveryBonus(); // صالة العلاج الطبيعي الحقيقية إن طُوِّرت ترفع سرعة التعافي فعلياً
+        }
+
+        // ============================================================
+        // تحديث حقيقي لحالة الإصابات عند كل دخول للصفحة — يعتمد على الأيام
+        // الفعلية المنقضية في تقويم اللعبة، ومعدَّل بجودة الطاقم الطبي الفعلي
+        // ============================================================
+        function updateInjuries() {
+            const today = dateSortKey(getGameDate());
+            const factor = getMedicalQualityFactor();
+            let injuries = getClubInjuries();
+            const stillInjured = [];
+            let healedCount = 0, healedDaysSum = 0;
+
+            injuries.forEach(inj => {
+                const rawElapsed = Math.max(0, today - inj.occurredDateSort);
+                const effectiveElapsed = rawElapsed * factor; // الطاقم الجيد "يُسرّع" مرور أيام التعافي الفعلية
+                const remaining = Math.max(0, Math.ceil(inj.totalDays - effectiveElapsed));
+                if (remaining <= 0) {
+                    healedCount++; healedDaysSum += rawElapsed;
+                    addMessageToSystem('المركز الطبي', `✅ تعافى ${inj.playerName} تماماً من إصابة (${inj.type}) وأصبح جاهزاً للمشاركة.`, 'system');
+                } else {
+                    stillInjured.push({ ...inj, remaining });
+                }
+            });
+
+            if (healedCount > 0) {
+                // تحديث إحصائيات الطاقم الطبي الحقيقية (نفس بنية بيانات staff.html)
+                let staff = getStaffByClub()[activeClub] || [];
+                let updated = false;
+                staff.forEach(s => {
+                    if (s.department !== 'medical') return;
+                    updated = true;
+                    s.stats = s.stats || { injuries_treated:0, avg_recovery_days:0, surgeries_performed:0, treatment_success:0 };
+                    const prevCount = s.stats.injuries_treated || 0;
+                    const prevAvg = s.stats.avg_recovery_days || 0;
+                    const newCount = prevCount + healedCount;
+                    s.stats.avg_recovery_days = Math.round(((prevAvg * prevCount) + healedDaysSum) / newCount);
+                    s.stats.injuries_treated = newCount;
+                    s.stats.treatment_success = Math.min(99, Math.round(70 + ((s.medical_skill||50) - 50) * 0.4));
+                });
+                if (updated) setStaffForClub(staff);
+            }
+
+            setClubInjuries(stillInjured);
+            return stillInjured;
+        }
+
+        function addMessageToSystem(sender, text, category) {
+            let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+            inbox.unshift({ id: Date.now(), sender, text, time: new Date().toLocaleTimeString('en-US', { hour12:false }), read:false, category: category || 'system' });
+            localStorage.setItem('gameInbox', JSON.stringify(inbox));
+            localStorage.setItem('hasNewMessage', 'true');
+        }
+        function getClubBudget() { return parseFloat(localStorage.getItem('clubBudget')) || 0; }
+        function setClubBudget(v) { localStorage.setItem('clubBudget', v.toFixed(2)); }
+        function toAbsDay(d) { return Math.floor(new Date(d.year, d.month-1, d.day).getTime()/86400000); }
+
+        // ============================================================
+        // توليد إصابات حقيقي فعلي — مرتبط مباشرة بشدة وحمل التدريب الحقيقيين من training.html
+        // (لا نظام منفصل مُختلَق؛ يقرأ نفس trainingIntensity/trainingGeneralLevel الحقيقيين فعلياً)
+        // ============================================================
+        const TRAINING_LOAD_RISK = { light: 0.015, normal: 0.035, high: 0.07 };
+        function getPlayerFragility(tmid) {
+            const history = JSON.parse(localStorage.getItem(`injuryHistory_${activeClub}`) || '{}');
+            return history[tmid] || 0; // عدد مرات إصابته هذا الموسم فعلياً
+        }
+        function bumpPlayerFragility(tmid) {
+            const history = JSON.parse(localStorage.getItem(`injuryHistory_${activeClub}`) || '{}');
+            history[tmid] = (history[tmid] || 0) + 1;
+            localStorage.setItem(`injuryHistory_${activeClub}`, JSON.stringify(history));
+        }
+        function seedHash(str) { let h=0; const s=String(str); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+        function processTrainingInjuryRisk() {
+            const today = getGameDate();
+            const todaySort = dateSortKey(today);
+            const weekKey = `medicalWeekChecked_${activeClub}`;
+            if ((parseInt(localStorage.getItem(weekKey))||0) >= todaySort - (todaySort % 7)) {}
+            const lastCheck = parseInt(localStorage.getItem(weekKey)) || 0;
+            if (todaySort - lastCheck < 7) return;
+            localStorage.setItem(weekKey, String(todaySort));
+
+            const intensityKey = localStorage.getItem(`trainingIntensity_${activeClub}`) || 'normal';
+            const baseRisk = TRAINING_LOAD_RISK[intensityKey] || 0.035;
+            const squad = getSquad();
+            const injuries = getClubInjuries();
+            const injuredIds = new Set(injuries.map(i=>String(i.tmid)));
+            const types = ['إجهاد عضلي','التواء في الكاحل','تمزق عضلي طفيف'];
+
+            squad.forEach(p => {
+                if (injuredIds.has(String(p.tmid))) return;
+                const age = parseFloat(p.age) || 25;
+                const ageFactor = age >= 30 ? 1.4 : age <= 21 ? 0.8 : 1.0; // لاعبون أكبر سناً أكثر عرضة فعلياً
+                const fragility = getPlayerFragility(p.tmid);
+                const fragilityFactor = 1 + fragility * 0.25; // تاريخ إصابات متكرر يرفع الخطر الفعلي مستقبلاً
+                const risk = baseRisk * ageFactor * fragilityFactor;
+                const seed = seedHash(activeClub + p.tmid + todaySort);
+                if ((seed % 1000)/1000 < risk) {
+                    const type = types[seed % types.length];
+                    const totalDays = 3 + (seed % 12);
+                    injuries.push({ tmid: p.tmid, playerName: p.player_name||p.name, type, totalDays, occurredDateSort: todaySort, remaining: totalDays });
+                    bumpPlayerFragility(p.tmid);
+                    addMessageToSystem('المركز الطبي', `🤕 أُصيب ${p.player_name||p.name} بـ"${type}" أثناء التدريب (شدة البرنامج: ${intensityKey==='high'?'مكثّفة':intensityKey==='light'?'خفيفة':'عادية'}) — يحتاج ${totalDays} يوماً للتعافي.`, 'system');
+                }
+            });
+            setClubInjuries(injuries);
+        }
+
+        // ============================================================
+        // تكلفة علاج حقيقية — الإصابات الجدّية تُكلّف فعلياً، تُخصم تلقائياً من ميزانية النادي مرة واحدة لكل إصابة
+        // ============================================================
+        function chargeTreatmentCosts() {
+            const injuries = getClubInjuries();
+            let changed = false;
+            injuries.forEach(inj => {
+                if (inj.costCharged) return;
+                const cost = Math.round((inj.totalDays * 0.015) * 20) / 20; // تكلفة واقعية تتناسب مع خطورة الإصابة (أيام التعافي)
+                if (cost > 0.01) {
+                    setClubBudget(getClubBudget() - cost);
+                    addMessageToSystem('الإدارة المالية', `💊 تكلفة علاج ${inj.playerName} (${inj.type}): ${cost.toFixed(2)}M € خُصمت من الميزانية.`, 'finance');
+                }
+                inj.costCharged = true;
+                changed = true;
+            });
+            if (changed) setClubInjuries(injuries);
+        }
+
+        // ============================================================
+        // منشآت طبية حقيقية — تُموَّل من نفس ميزانية المنشآت الحقيقية (pool_facilities) المستخدمة في training.html، لا ميزانية منفصلة مُختلقة
+        // ============================================================
+        function getFacilitiesPool() { return parseFloat(localStorage.getItem(`pool_facilities_${activeClub}`)) || 0; }
+        const MEDICAL_FACILITIES = [
+            { key:'physio', label:'غرفة العلاج الطبيعي', cost:2.5, effect:'يرفع سرعة التعافي العامة' },
+            { key:'diagnostics', label:'معدات التشخيص المتقدمة', cost:3, effect:'يقلّل خطر تفاقم الإصابات غير المشخَّصة بدقة' },
+            { key:'rehab', label:'مركز إعادة التأهيل', cost:4, effect:'يقلّل احتمال الانتكاس بعد التعافي' },
+        ];
+        function hasMedicalFacility(key) { return localStorage.getItem(`medFacility_${activeClub}_${key}`) === '1'; }
+        function investMedicalFacility(key) {
+            const f = MEDICAL_FACILITIES.find(x=>x.key===key);
+            const pool = getFacilitiesPool();
+            if (pool < f.cost) { showToast(`ميزانية المنشآت لا تكفي (تحتاج ${f.cost}M €، المتاح ${pool.toFixed(2)}M €).`); return; }
+            localStorage.setItem(`pool_facilities_${activeClub}`, (pool-f.cost).toFixed(2));
+            localStorage.setItem(`medFacility_${activeClub}_${key}`, '1');
+            addMessageToSystem('المركز الطبي', `🏥 اكتمل تطوير "${f.label}" بتكلفة ${f.cost}M € من ميزانية المنشآت.`, 'finance');
+            showToast('✅ تم التطوير');
+            renderMedicalFacilities();
+        }
+        function renderMedicalFacilities() {
+            const el = document.getElementById('medicalFacilitiesContainer');
+            if (!el) return;
+            const pool = getFacilitiesPool();
+            el.innerHTML = `<div style="padding:10px 14px; font-size:11px; color:var(--muted);">ميزانية المنشآت المتاحة: <b style="color:var(--gold);">${pool.toFixed(2)}M €</b></div>` +
+                MEDICAL_FACILITIES.map(f => {
+                    const owned = hasMedicalFacility(f.key);
+                    return `<div class="staff-row">
+                        <div class="icon-box"><i class="fas fa-kit-medical"></i></div>
+                        <div class="info"><div class="pname">${f.label}</div><div class="psub">${f.effect}</div></div>
+                        ${owned ? '<span style="color:var(--green); font-size:11px; font-weight:800;">✓ مكتمل</span>' : `<button onclick="investMedicalFacility('${f.key}')" style="background:var(--gold); color:var(--bg); border:none; padding:7px 12px; border-radius:7px; font-size:10px; font-weight:800; cursor:pointer;">${f.cost}M €</button>`}
+                    </div>`;
+                }).join('');
+        }
+
+        // تطبيق أثر المنشآت الحقيقي على معامل جودة الطاقم الطبي وخطر الانتكاس
+        function getFacilityRecoveryBonus() { return hasMedicalFacility('physio') ? 1.15 : 1.0; }
+        function getRelapseRiskFactor() { return hasMedicalFacility('rehab') ? 0.4 : 1.0; }
+
+        // ============================================================
+        // تسريع التعافي — قرار رئاسي حقيقي: علاج مكثّف بتكلفة إضافية، مع خطر انتكاس حقيقي فعلي
+        // ============================================================
+        function accelerateRecovery(tmid) {
+            const injuries = getClubInjuries();
+            const inj = injuries.find(i => String(i.tmid) === String(tmid));
+            if (!inj) return;
+            const cost = Math.max(0.3, Math.round(inj.remaining * 0.08 * 20) / 20);
+            if (cost > getClubBudget()) { showToast('الميزانية لا تكفي لتسريع العلاج!'); return; }
+            if (!confirm(`تسريع تعافي ${inj.playerName} بتكلفة إضافية ${cost.toFixed(2)}M € سيختصر نحو 40% من المدة المتبقية، لكن مع خطر انتكاس حقيقي. هل تريد المتابعة؟`)) return;
+            setClubBudget(getClubBudget() - cost);
+            const reduction = Math.round(inj.remaining * 0.4);
+            inj.totalDays = Math.max(1, inj.totalDays - reduction);
+
+            const relapseChance = 0.18 * getRelapseRiskFactor();
+            const seed = seedHash(activeClub + tmid + 'accel' + dateSortKey(getGameDate()));
+            if ((seed % 1000)/1000 < relapseChance) {
+                inj.totalDays += Math.round(reduction * 1.5); // انتكاس حقيقي: تأخير أكبر من الفائدة المكتسبة
+                addMessageToSystem('المركز الطبي', `⚠️ انتكس ${inj.playerName} بعد العلاج المكثَّف — تأخّر تعافيه بدل تسريعه فعلياً.`, 'system');
+                showToast('⚠️ حدث انتكاس! تأخّر التعافي بدل تسريعه');
+            } else {
+                addMessageToSystem('المركز الطبي', `⚡ نجح العلاج المكثَّف لـ${inj.playerName} — اختصار حقيقي في مدة التعافي المتبقية.`, 'system');
+                showToast('✅ تسارع التعافي فعلياً');
+            }
+            setClubInjuries(injuries);
+            const stillInjured = updateInjuries();
+            renderInjuries(stillInjured);
+        }
+
+        // ============================================================
+        // الفحص الطبي للاعبين الجدد المتعاقَد معهم — كان يُحسَم بصمت كاملة داخل negotiations.html فقط
+        // أصبح الآن ظاهراً ويُنجَز فعلياً هنا في المركز الطبي، حيث يجب أن يحدث فعلياً
+        // (يستخدم نفس البنية والمنطق الحقيقي بالضبط المستخدم في negotiations.html، لا نسخة منفصلة متعارضة)
+        // ============================================================
+        function getMedicalPending() { return JSON.parse(localStorage.getItem('club_medical_pending')) || []; }
+        function setMedicalPending(list) { localStorage.setItem('club_medical_pending', JSON.stringify(list)); }
+        function getPendingRegistration() { return JSON.parse(localStorage.getItem('pending_registration_by_club')||'{}')[activeClub] || []; }
+        function setPendingRegistration(list) {
+            const all = JSON.parse(localStorage.getItem('pending_registration_by_club')) || {};
+            all[activeClub] = list;
+            localStorage.setItem('pending_registration_by_club', JSON.stringify(all));
+        }
+        function addDaysToGameDate(base, days) {
+            let d = { ...base };
+            for (let i=0;i<days;i++) {
+                d.day++;
+                let dim = 30;
+                if ([1,3,5,7,8,10,12].includes(d.month)) dim = 31;
+                else if (d.month === 2) dim = (d.year % 4 === 0) ? 29 : 28;
+                if (d.day > dim) { d.day = 1; d.month++; }
+                if (d.month > 12) { d.month = 1; d.year++; }
+            }
+            return d;
+        }
+        function logNegotiationHistory(entry) {
+            const h = JSON.parse(localStorage.getItem('club_negotiation_history')) || [];
+            h.unshift({ ...entry, when: getGameDate() });
+            localStorage.setItem('club_negotiation_history', JSON.stringify(h.slice(0, 40)));
+        }
+        function resolveNewSigningMedicals() {
+            const medicals = getMedicalPending();
+            if (!medicals.length) return;
+            const todaySort = dateSortKey(getGameDate());
+            const stillPending = [];
+            medicals.forEach(m => {
+                if (todaySort < m.resolveDateSort) { stillPending.push(m); return; }
+                const failed = (seedHash(m.name + 'medical') % 100) < 5; // 5% فرصة فشل حقيقية واقعية، مطابقة تماماً لـ negotiations.html
+                if (failed) {
+                    addMessageToSystem('الطاقم الطبي', `❌ فشل ${m.name} في الفحص الطبي الشامل! انهارت الصفقة في آخر لحظة رغم الاتفاق على كل الشروط.`, 'transfer');
+                    logNegotiationHistory({ stage:'medical', outcome:'fail', dealType:'player', name:m.name, club:m.club });
+                } else {
+                    const gd = getGameDate();
+                    const years = m.contractYears || 3;
+                    const contractUntil = `${gd.year + years}-06-30`;
+                    const pending = getPendingRegistration();
+                    const installments = m.installments || 1;
+                    const installmentAmount = installments > 1 ? (m.totalFee || 0) / installments / 1000000 : 0;
+                    pending.push({ tmid:m.tmid, player_name:m.name, main_position:m.position, nationality:m.nationality,
+                        age:m.age, foot:m.foot, height:m.height, jersey:m.jersey, market_value_eur:m.market_value,
+                        market_value_cur_short:m.market_value_short, rating:m.rating, weekly_wage:Math.round(m.wageOffer),
+                        contract_until:contractUntil, release_clause: m.releaseClause || 0, club:activeClub,
+                        dealType: m.dealType || 'buy', isLoan: (m.dealType||'buy') !== 'buy',
+                        performanceBonus: m.performanceBonus || 0, performanceBonusPaid: false, performanceBonusBaseline: 0,
+                        sellOnPct: m.sellOnPct || 0 });
+                    setPendingRegistration(pending);
+                    if (installments > 1) {
+                        const schedule = JSON.parse(localStorage.getItem('club_installment_schedule')) || [];
+                        for (let i = 1; i < installments; i++) {
+                            const dueDate = addDaysToGameDate(gd, i * 365);
+                            schedule.push({ playerName:m.name, amount: installmentAmount, dueDateSort: dateSortKey(dueDate), paid:false });
+                        }
+                        localStorage.setItem('club_installment_schedule', JSON.stringify(schedule));
+                    }
+                    addMessageToSystem('الطاقم الطبي', `✅ اجتاز ${m.name} الفحص الطبي الشامل في مركزنا الطبي بنجاح! الملف الآن بانتظار التسجيل الرسمي لدى الاتحاد.`, 'transfer');
+                    logNegotiationHistory({ stage:'medical', outcome:'success', dealType:'player', name:m.name, club:m.club });
+                }
+            });
+            setMedicalPending(stillPending);
+        }
+        function renderMedicalExams() {
+            const el = document.getElementById('newSigningsMedicalContainer');
+            if (!el) return;
+            const pending = getMedicalPending();
+            if (!pending.length) { el.innerHTML = `<div class="empty-state"><i class="fas fa-user-doctor"></i>لا يوجد لاعبون متعاقَد معهم بانتظار الفحص الطبي حالياً.</div>`; return; }
+            const todaySort = dateSortKey(getGameDate());
+            el.innerHTML = pending.map(m => {
+                const daysLeft = Math.max(0, m.resolveDateSort - todaySort);
+                return `<div class="staff-row">
+                    <div class="icon-box" style="color:var(--green);"><i class="fas fa-stethoscope"></i></div>
+                    <div class="info">
+                        <div class="pname">${m.name}</div>
+                        <div class="psub">${m.position||'-'} · قادم من ${m.club||'وكيل حر'} · ${daysLeft<=0?'الفحص جارٍ الآن':`النتيجة خلال ${daysLeft} يوم`}</div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderStaffWarning(staff) {
+            const el = document.getElementById('staffWarning');
+            if (staff.length > 0) { el.innerHTML = ''; return; }
+            el.innerHTML = `<div class="warn-banner"><i class="fas fa-triangle-exclamation"></i>
+                لا يوجد طاقم طبي في ناديك حالياً — التعافي من الإصابات أبطأ بنسبة 35% من الطبيعي. وظّف طبيباً/أخصائي علاج طبيعي من سوق الانتقالات لتسريع عودة لاعبيك.</div>`;
+        }
+
+        // أيقونة تمثيلية مختلفة لكل نوع إصابة، حتى تُفهم طبيعة الإصابة بنظرة واحدة بدون قراءة النص
+        const INJURY_ICON_MAP = {
+            'إجهاد عضلي': 'fa-person-running',
+            'التواء في الكاحل': 'fa-shoe-prints',
+            'تمزق عضلي طفيف': 'fa-bandage',
+            'ارتجاج خفيف': 'fa-head-side-cough',
+            'إصابة في الركبة': 'fa-bone'
+        };
+        function injuryIcon(type) { return INJURY_ICON_MAP[type] || 'fa-notes-medical'; }
+        // لون يعكس شدة الإصابة فعلياً (نسبة الأيام المتبقية من إجمالي مدة التعافي) — فهم بصري فوري لمدى الخطورة
+        function severityColor(remaining, total) {
+            const pct = total > 0 ? remaining / total : 0;
+            if (pct > 0.6) return 'var(--red)';
+            if (pct > 0.25) return '#f59e0b';
+            return 'var(--green)';
+        }
+
+        function renderInjuries(injuries) {
+            const el = document.getElementById('injuriesContainer');
+            document.getElementById('sumInjured').innerText = injuries.length;
+            if (!injuries.length) {
+                el.innerHTML = `<div class="empty-state"><i class="fas fa-shield-heart"></i>لا توجد أي إصابات حالياً — كل الفريق سليم معافى.</div>`;
+                return;
+            }
+            el.innerHTML = injuries.map(inj => {
+                const pct = Math.min(100, Math.max(0, Math.round(((inj.totalDays - inj.remaining) / inj.totalDays) * 100)));
+                const sColor = severityColor(inj.remaining, inj.totalDays);
+                const fragility = getPlayerFragility(inj.tmid);
+                return `
+                <div class="injury-row">
+                    <div class="injury-top">
+                        <div class="icon" style="background:${sColor}22; color:${sColor};"><i class="fas ${injuryIcon(inj.type)}"></i></div>
+                        <div class="info">
+                            <div class="pname">${inj.playerName} ${fragility>=2?'<span style="font-size:9px; color:var(--red); font-weight:800;">عرضة للإصابة</span>':''}</div>
+                            <div class="psub">${inj.type}</div>
+                        </div>
+                        <div class="days-left" style="color:${sColor};">${inj.remaining} يوم متبقٍ</div>
+                    </div>
+                    <div class="progress-track"><div class="progress-fill" style="width:${pct}%; background:${sColor};"></div></div>
+                    <button onclick="accelerateRecovery('${inj.tmid}')" style="width:100%; margin-top:8px; background:transparent; border:1px solid var(--gold); color:var(--gold); padding:7px; border-radius:8px; font-size:10px; font-weight:700; cursor:pointer;"><i class="fas fa-bolt"></i> تسريع العلاج (بتكلفة إضافية + خطر انتكاس)</button>
+                </div>`;
+            }).join('');
+        }
+
+        function renderFitPlayers(injuries) {
+            const el = document.getElementById('fitPlayersContainer');
+            const squad = getSquad();
+            const injuredIds = new Set(injuries.map(i => String(i.tmid)));
+            const fit = squad.filter(p => !injuredIds.has(String(p.tmid)));
+            document.getElementById('sumFit').innerText = fit.length;
+            if (!fit.length) { el.innerHTML = `<div class="empty-state" style="padding:16px;"><i class="fas fa-users-slash"></i>لا يوجد لاعبون مسجّلون بعد.</div>`; return; }
+            el.innerHTML = fit.map(p => `<div class="fit-row"><i class="fas fa-circle-check"></i> ${p.player_name} <span style="color:var(--muted); margin-right:auto;">${p.main_position||'-'}</span></div>`).join('');
+        }
+
+        const DEPT_ROLE_LABELS = { doctor: 'طبيب فريق', physio: 'أخصائي علاج طبيعي' };
+        const STAFF_ROLE_ICON = { doctor: 'fa-user-doctor', physio: 'fa-hand-holding-medical' };
+        function renderMedicalStaff() {
+            const el = document.getElementById('medicalStaffContainer');
+            const staff = getMedicalStaff();
+            document.getElementById('sumStaff').innerText = staff.length;
+            renderStaffWarning(staff);
+            if (!staff.length) {
+                el.innerHTML = `<div class="empty-state"><i class="fas fa-user-doctor"></i>لا يوجد أي طبيب أو أخصائي علاج طبيعي في ناديك.<br><a href="transfers.html">التوجه لسوق الانتقالات</a></div>`;
+                return;
+            }
+            el.innerHTML = staff.map(s => {
+                const overall = Math.round(((s.medical_skill||50) + (s.recovery_speed||50) + (s.diagnosis_accuracy||50) + (s.surgery_skill||50)) / 4);
+                const stats = s.stats || {};
+                return `
+                <div class="staff-row">
+                    <div class="icon-box"><i class="fas ${STAFF_ROLE_ICON[s.role] || 'fa-user-md'}"></i></div>
+                    <div class="info">
+                        <div class="pname">${s.name} <span style="font-size:10px; color:var(--muted); font-weight:400;">(${DEPT_ROLE_LABELS[s.role] || s.role})</span></div>
+                        <div class="psub">تشخيص ${s.diagnosis_accuracy||'-'} · سرعة تعافٍ ${s.recovery_speed||'-'} · جراحة ${s.surgery_skill||'-'} · عالج ${stats.injuries_treated||0} إصابة</div>
+                    </div>
+                    <div class="rating">${overall}</div>
+                </div>`;
+            }).join('');
+        }
+
+        window.onload = function() {
+            processTrainingInjuryRisk();
+            resolveNewSigningMedicals();
+            const injuries = updateInjuries();
+            chargeTreatmentCosts();
+            renderInjuries(getClubInjuries());
+            renderFitPlayers(getClubInjuries());
+            renderMedicalStaff();
+            renderMedicalFacilities();
+            renderMedicalExams();
+        };
+    </script>
+</body>
+</html>

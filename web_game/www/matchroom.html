@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>غرفة المباراة | Football Manager World</title>
+    <script src="indexeddb.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444; --blue:#3b82f6; }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+            --blue: #2563eb;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:10px 12px; border-radius:12px; border:1px solid var(--border); }
+        .back-btn { background:var(--border); color:white; border:none; padding:8px 12px; font-size:12px; border-radius:8px; text-decoration:none; }
+        .page-title { font-size:14px; font-weight:800; color:var(--gold); }
+
+        .matchup-card { background:linear-gradient(135deg, #1a2338, #0d1220); border:1px solid var(--border); border-radius:16px; padding:18px 14px; text-align:center; }
+        .matchup-teams { display:flex; align-items:center; justify-content:center; gap:16px; }
+        .matchup-teams .side { display:flex; flex-direction:column; align-items:center; gap:6px; width:110px; }
+        .matchup-teams img { width:44px; height:44px; object-fit:contain; }
+        .matchup-teams .tname { font-size:11.5px; font-weight:700; }
+        .matchup-vs { font-size:13px; color:var(--muted); font-weight:800; }
+        .matchup-meta { margin-top:12px; font-size:11.5px; color:var(--muted); display:flex; justify-content:center; gap:14px; flex-wrap:wrap; }
+        .matchup-meta span { display:flex; align-items:center; gap:5px; }
+
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .card-title { font-size:12px; font-weight:800; color:var(--gold); padding:12px 14px 8px 14px; display:flex; align-items:center; gap:6px; justify-content:space-between; }
+        .empty-state { text-align:center; padding:30px 16px; color:var(--muted); font-size:13px; line-height:1.8; }
+        .empty-state i { display:block; font-size:24px; margin-bottom:8px; color:var(--border); }
+
+        .news-row { display:flex; align-items:center; gap:8px; padding:8px 14px; font-size:12px; border-bottom:1px solid var(--border); }
+        .news-row:last-child { border-bottom:none; }
+        .news-row i { width:16px; text-align:center; }
+        .news-row.out i { color:var(--red); }
+        .news-row.ok i { color:var(--green); }
+
+        .lineup-summary { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; }
+        .lineup-summary .count { font-size:20px; font-weight:800; color:var(--gold); }
+        .lineup-summary .lbl { font-size:10.5px; color:var(--muted); }
+        .formation-tag { font-size:10.5px; background:rgba(255,255,255,0.06); color:var(--muted); padding:4px 10px; border-radius:999px; }
+
+        .squad-grid { display:flex; flex-direction:column; padding:4px 0; max-height:340px; overflow-y:auto; }
+        .squad-row { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--border); }
+        .squad-row:last-child { border-bottom:none; }
+        .squad-row.unavailable { opacity:0.45; }
+        .squad-row .pname { font-size:12.5px; font-weight:700; flex:1; }
+        .squad-row .ppos { font-size:10px; color:var(--muted); }
+        .squad-row .status-pill { font-size:9.5px; padding:2px 8px; border-radius:999px; font-weight:700; }
+        .status-pill.injured { background:rgba(239,68,68,0.15); color:var(--red); }
+        .toggle-check { width:22px; height:22px; border-radius:6px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto; }
+        .toggle-check.selected { background:var(--gold); border-color:var(--gold); color:#06090f; }
+
+        .kickoff-btn { background:var(--gold); color:#06090f; border:none; padding:14px; border-radius:12px; font-size:14px; font-weight:800; cursor:pointer; margin-top:4px; }
+        .kickoff-btn:disabled { opacity:0.4; }
+        .warn-note { padding:8px 14px 14px 14px; font-size:11px; color:var(--red); text-align:center; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="fixtures.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title">🏟️ غرفة المباراة</div>
+        <div style="width:34px;"></div>
+    </div>
+
+    <div id="matchupCard"></div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-notes-medical"></i> أخبار الفريق</div>
+        <div id="teamNewsContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="lineup-summary">
+            <div><div class="count" id="selectedCount">0/11</div><div class="lbl">التشكيلة الأساسية</div></div>
+            <div class="formation-tag" id="formationTag">4-3-3</div>
+        </div>
+        <div class="squad-grid" id="squadContainer"></div>
+    </div>
+
+    <button class="kickoff-btn" id="kickoffBtn" onclick="confirmLineupAndProceed()" disabled>حفظ التشكيلة والذهاب للمباراة</button>
+    <div class="warn-note" id="warnNote"></div>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || '';
+        const realLogosPath = 'teams_logos/';
+        function getTeamLogoUrl(t) { return `${realLogosPath}${(t||'').trim()}.png`; }
+
+        function getGameDate() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+        function dateSortKey(d) { return d.year*10000+d.month*100+d.day; }
+        function dateLabel(d) { return `${String(d.day).padStart(2,'0')}/${String(d.month).padStart(2,'0')}/${d.year}`; }
+        function addDaysToDate(base, days) {
+            let d = { ...base };
+            for (let i=0;i<days;i++){
+                d.day++; let dim=30;
+                if ([1,3,5,7,8,10,12].includes(d.month)) dim=31;
+                else if (d.month===2) dim=(d.year%4===0)?29:28;
+                if (d.day>dim){ d.day=1; d.month++; }
+                if (d.month>12){ d.month=1; d.year++; }
+            }
+            return d;
+        }
+
+        function getSquad() { return JSON.parse(localStorage.getItem('signed_players_by_club')||'{}')[activeClub] || []; }
+        function getClubInjuries() { return JSON.parse(localStorage.getItem('club_injuries')) || []; }
+        function getStaffByClub() { return JSON.parse(localStorage.getItem('staff_by_club')||'{}')[activeClub] || []; }
+        function getHeadCoach() { return getStaffByClub().find(s => s.role === 'head_coach') || null; }
+
+        // ============================================================
+        // تحديد المباراة القادمة فعلياً: إما جولة الدوري القادمة أو أقرب مباراة ودية مجدولة، أيهما أقرب زمنياً
+        // ============================================================
+        function getCurrentLeagueTeams() {
+            try {
+                const stored = localStorage.getItem('current_league_teams');
+                if (stored) return JSON.parse(stored).filter(t => t !== 'إستراحة' && t.trim() !== '');
+            } catch(e) {}
+            return [];
+        }
+        function generateDoubleRoundRobinLocal(teams) {
+            let pool = [...teams];
+            if (pool.length % 2 !== 0) pool.push('إستراحة');
+            const total = pool.length, rounds = total-1, perRound = total/2;
+            let schedule = [];
+            for (let r=0;r<rounds;r++){
+                let matches=[];
+                for(let i=0;i<perRound;i++){
+                    let home=pool[i], away=pool[total-1-i];
+                    if (home==='إستراحة'||away==='إستراحة') continue;
+                    if (r%2===1){ const t=home; home=away; away=t; }
+                    matches.push({home,away});
+                }
+                schedule.push(matches);
+                pool.splice(1,0,pool.pop());
+            }
+            const half = schedule.length;
+            for (let r=0;r<half;r++) schedule.push(schedule[r].map(m=>({home:m.away,away:m.home})));
+            return schedule;
+        }
+
+        async function getNextMatch() {
+            const gd = getGameDate();
+            let candidates = [];
+
+            // 1) الجولة القادمة في الدوري المحلي (حقيقية من جدول الدوري الفعلي)
+            const teams = getCurrentLeagueTeams();
+            const currentRound = parseInt(localStorage.getItem('database_current_round')) || 0;
+            if (teams.length > 1 && teams.includes(activeClub)) {
+                const schedule = generateDoubleRoundRobinLocal(teams);
+                const seasonStartYear = (gd.month>=8) ? gd.year : gd.year-1;
+                const seasonStart = { day:15, month:8, year:seasonStartYear };
+                for (let i = currentRound; i < schedule.length; i++) {
+                    const match = schedule[i].find(m => m.home===activeClub || m.away===activeClub);
+                    if (match) {
+                        const rd = addDaysToDate(seasonStart, i*7);
+                        const opponent = match.home === activeClub ? match.away : match.home;
+                        const venue = match.home === activeClub ? 'home' : 'away';
+                        candidates.push({ type:'league', opponent, venue, date: rd, dateSort: dateSortKey(rd) });
+                        break;
+                    }
+                }
+            }
+
+            // 2) أقرب مباراة ودية مجدولة فعلياً (من نفس قاعدة بيانات friendly_matches.html)
+            try {
+                await clubDB.init();
+                const upcoming = await clubDB.getAllUpcomingMatches();
+                const friendlies = upcoming.filter(m => m.competition === 'ودية' && (m.ownerClub === undefined || m.ownerClub === activeClub));
+                friendlies.forEach(f => {
+                    const [dd,mm,yy] = (f.date||'').split('/').map(Number);
+                    if (dd) candidates.push({ type:'friendly', opponent: f.opponent, venue: f.venue, date: {day:dd,month:mm,year:yy}, dateSort: f.dateSort || (yy*10000+mm*100+dd) });
+                });
+            } catch(e) {}
+
+            if (!candidates.length) return null;
+            candidates.sort((a,b) => a.dateSort - b.dateSort);
+            return candidates[0];
+        }
+
+        const VENUE_LABELS = { home:'أرضك', away:'أرض الخصم', neutral:'أرض محايدة' };
+
+        function renderMatchup(match) {
+            const el = document.getElementById('matchupCard');
+            if (!match) {
+                el.innerHTML = `<div class="card"><div class="empty-state"><i class="fas fa-calendar-xmark"></i>لا توجد مباراة قادمة مجدولة حالياً.</div></div>`;
+                return;
+            }
+            const home = match.venue === 'away' ? match.opponent : activeClub;
+            const away = match.venue === 'away' ? activeClub : match.opponent;
+            el.innerHTML = `
+                <div class="matchup-card">
+                    <div class="matchup-teams">
+                        <div class="side"><img src="${getTeamLogoUrl(home)}" onerror="this.style.display='none';"><div class="tname">${home}</div></div>
+                        <div class="matchup-vs">VS</div>
+                        <div class="side"><img src="${getTeamLogoUrl(away)}" onerror="this.style.display='none';"><div class="tname">${away}</div></div>
+                    </div>
+                    <div class="matchup-meta">
+                        <span><i class="fas fa-calendar"></i> ${dateLabel(match.date)}</span>
+                        <span><i class="fas fa-map-marker-alt"></i> ${VENUE_LABELS[match.venue]||match.venue}</span>
+                        <span><i class="fas fa-trophy"></i> ${match.type==='league' ? 'الدوري المحلي' : 'مباراة ودية'}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTeamNews(injuries) {
+            const el = document.getElementById('teamNewsContainer');
+            const squad = getSquad();
+            if (!squad.length) { el.innerHTML = `<div class="empty-state" style="padding:16px;"><i class="fas fa-users-slash"></i>لا يوجد لاعبون مسجَّلون بعد.</div>`; return; }
+            if (!injuries.length) { el.innerHTML = `<div class="news-row ok"><i class="fas fa-circle-check"></i> كل الفريق سليم ومتاح للمشاركة.</div>`; return; }
+            el.innerHTML = injuries.map(inj => `<div class="news-row out"><i class="fas fa-user-injured"></i> ${inj.playerName} غائب (${inj.type} — ${inj.remaining ?? inj.totalDays} يوم متبقٍ)</div>`).join('');
+        }
+
+        let selectedLineup = new Set();
+        function requiredStarters() { return 11; }
+
+        function renderSquadSelector(injuries) {
+            const el = document.getElementById('squadContainer');
+            const squad = getSquad();
+            const injuredIds = new Set(injuries.map(i => String(i.tmid)));
+            const coach = getHeadCoach();
+            document.getElementById('formationTag').innerText = coach ? (coach.formation || '4-3-3') : '4-3-3 (بدون مدرب رئيسي)';
+
+            if (!squad.length) { el.innerHTML = `<div class="empty-state" style="padding:16px;"><i class="fas fa-users-slash"></i>وقّع لاعبين أولاً من سوق الانتقالات.</div>`; return; }
+
+            // اختيار افتراضي أولي: أفضل 11 لاعباً متاحاً (غير مصاب) حسب رقم الظهور كمؤشر ثابت غير عشوائي
+            if (selectedLineup.size === 0) {
+                squad.filter(p => !injuredIds.has(String(p.tmid))).slice(0, 11).forEach(p => selectedLineup.add(String(p.tmid)));
+            }
+
+            el.innerHTML = squad.map(p => {
+                const isInjured = injuredIds.has(String(p.tmid));
+                const isSelected = selectedLineup.has(String(p.tmid));
+                return `
+                <div class="squad-row ${isInjured?'unavailable':''}">
+                    <div class="toggle-check ${isSelected?'selected':''}" onclick="${isInjured?'':`toggleStarter('${p.tmid}')`}">${isSelected?'<i class=\"fas fa-check\"></i>':''}</div>
+                    <div>
+                        <div class="pname">${p.player_name} ${isInjured?'<span class="status-pill injured">مصاب</span>':''}</div>
+                        <div class="ppos">${p.main_position||'-'}</div>
+                    </div>
+                </div>`;
+            }).join('');
+            updateSelectedCount();
+        }
+
+        function toggleStarter(tmid) {
+            const key = String(tmid);
+            if (selectedLineup.has(key)) selectedLineup.delete(key);
+            else if (selectedLineup.size < 11) selectedLineup.add(key);
+            renderSquadSelector(getClubInjuries());
+        }
+
+        function updateSelectedCount() {
+            const n = selectedLineup.size;
+            document.getElementById('selectedCount').innerText = `${n}/11`;
+            const btn = document.getElementById('kickoffBtn');
+            btn.disabled = n !== 11;
+            document.getElementById('warnNote').innerText = n < 11 ? `اختر ${11-n} لاعباً إضافياً لإكمال التشكيلة الأساسية.` : (n > 11 ? 'التشكيلة تحتوي أكثر من 11 لاعباً!' : '');
+        }
+
+        function confirmLineupAndProceed() {
+            if (selectedLineup.size !== 11) return;
+            const squad = getSquad();
+            const lineup = squad.filter(p => selectedLineup.has(String(p.tmid)));
+            localStorage.setItem('matchday_lineup_' + activeClub, JSON.stringify(lineup.map(p => ({ tmid:p.tmid, name:p.player_name, position:p.main_position }))));
+            window.location.href = 'fixtures.html';
+        }
+
+        window.onload = async function() {
+            const injuries = getClubInjuries();
+            const match = await getNextMatch();
+            renderMatchup(match);
+            renderTeamNews(injuries);
+            renderSquadSelector(injuries);
+        };
+    </script>
+</body>
+</html>

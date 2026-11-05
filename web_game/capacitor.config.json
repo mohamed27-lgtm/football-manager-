@@ -1,0 +1,7 @@
+{
+  "appId": "com.fcpresident.game",
+  "appName": "Football Club President",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": true }
+}

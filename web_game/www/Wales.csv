@@ -1,0 +1,18 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+TNS,The New Saints,ذا نيو سينتس,ويلز,201,UEFA,18,CP,Cymru Premier,First Tier,16,"2000,2001,2002,2003,2004,2005,2006,2007,2010,2012,2013,2014,2015,2016,2017,2019"
+TNS,The New Saints,ذا نيو سينتس,ويلز,201,UEFA,18,UCL,UEFA Champions League,Continental,0,·
+CON,Connah's Quay Nomads,كوناهز كواي,ويلز,201,UEFA,18,CP,Cymru Premier,First Tier,1,2020
+CON,Connah's Quay Nomads,كوناهز كواي,ويلز,201,UEFA,18,WC,Welsh Cup,Domestic Cup,1,2018
+BAL,Bala Town,بالا تاون,ويلز,201,UEFA,18,WC,Welsh Cup,Domestic Cup,1,2017
+CMU,Cardiff Metropolitan University,كارديف ميتروبوليتان,ويلز,201,UEFA,18,·,·,·,0,·
+NEW,Newtown AFC,نيوتاون,ويلز,201,UEFA,18,WC,Welsh Cup,Domestic Cup,2,"1879,1895"
+CAE,Caernarfon Town,كارنارفون,ويلز,201,UEFA,18,WC,Welsh Cup,Domestic Cup,1,1906
+HAV,Haverfordwest County,هافرفوردويست,ويلز,201,UEFA,18,·,·,·,0,·
+PEN,Penybont,بينيبونت,ويلز,201,UEFA,18,·,·,·,0,·
+ABE,Aberystwyth Town,أبيريستويث,ويلز,201,UEFA,18,·,·,·,0,·
+BTU,Barry Town United,باري تاون,ويلز,201,UEFA,18,CP,Cymru Premier,First Tier,7,"1996,1997,1998,1999,2001,2002,2003"
+BTU,Barry Town United,باري تاون,ويلز,201,UEFA,18,WC,Welsh Cup,Domestic Cup,3,"1994,1996,2003"
+LLN,Llanelli Town,لانليلي,ويلز,201,UEFA,18,CP,Cymru Premier,First Tier,1,2008
+LLN,Llanelli Town,لانليلي,ويلز,201,UEFA,18,WC,Welsh Cup,Domestic Cup,3,"1992,1998,2011"
+RHY,Rhyl FC,ريل,ويلز,201,UEFA,18,CP,Cymru Premier,First Tier,2,"2009,2010"
+RHY,Rhyl FC,ريل,ويلز,201,UEFA,18,WC,Welsh Cup,Domestic Cup,4,"1952,1953,2004,2006"

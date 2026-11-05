@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>المسابقات القارية والعالمية | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg:#0a0e17; --card:#141b2d; --card2:#182238; --border:#232d42; --text:#f1f5f9;
+            --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+        }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --card2: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+            --blue: #2563eb;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); display:flex; flex-direction:column; min-height:100vh; padding-bottom:64px; }
+
+        /* ===== هيدر بأسلوب سوبر كيك أوف: شعار + عنوان + خلفية متدرجة ذهبية ===== */
+        .top-header {
+            background:linear-gradient(135deg, #1a2338, #0d1220);
+            padding:14px 14px 0 14px; display:flex; flex-direction:column; gap:10px;
+            border-bottom:2px solid var(--gold);
+        }
+        .top-row { display:flex; align-items:center; justify-content:space-between; }
+        .back-btn { background:rgba(255,255,255,0.08); color:white; border:none; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; text-decoration:none; }
+        .top-title { font-size:14px; font-weight:800; color:var(--gold); letter-spacing:0.3px; }
+
+        .club-strip { display:flex; align-items:center; gap:10px; padding:8px 2px 14px 2px; }
+        .club-strip img { width:38px; height:38px; object-fit:contain; border-radius:8px; background:rgba(255,255,255,0.06); }
+        .club-strip .name { font-size:14px; font-weight:800; }
+        .club-strip .sub { font-size:10.5px; color:var(--muted); margin-top:1px; }
+
+        .comp-pills { display:flex; gap:6px; overflow-x:auto; padding-bottom:10px; }
+        .comp-pills::-webkit-scrollbar { display:none; }
+        .comp-pill { flex:0 0 auto; padding:7px 13px; border-radius:20px; font-size:11.5px; font-weight:700; color:var(--muted); background:rgba(255,255,255,0.05); cursor:pointer; border:1px solid transparent; white-space:nowrap; }
+        .comp-pill.active { color:#06090f; }
+
+        /* ===== محتوى ===== */
+        .content { padding:14px; display:flex; flex-direction:column; gap:12px; flex:1; }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .card-title { font-size:12px; font-weight:800; color:var(--gold); padding:12px 14px 8px 14px; display:flex; align-items:center; gap:6px; }
+
+        /* بطاقة الحالة الكبيرة */
+        .status-hero { padding:20px 16px; text-align:center; position:relative; overflow:hidden; }
+        .status-hero.season-live { background:linear-gradient(160deg, rgba(59,130,246,0.12), transparent); }
+        .status-hero.qualified { background:linear-gradient(160deg, rgba(34,197,94,0.15), transparent); }
+        .status-hero.not-qualified { background:linear-gradient(160deg, rgba(239,68,68,0.1), transparent); }
+        .status-hero .big-icon { font-size:34px; margin-bottom:8px; }
+        .status-hero .headline { font-size:15px; font-weight:800; }
+        .status-hero .subline { font-size:11.5px; color:var(--muted); margin-top:6px; line-height:1.7; }
+        .season-progress-track { height:8px; background:rgba(255,255,255,0.08); border-radius:5px; overflow:hidden; margin:14px auto 4px auto; max-width:280px; }
+        .season-progress-fill { height:100%; background:linear-gradient(90deg, var(--blue), var(--gold)); }
+        .season-progress-label { font-size:10px; color:var(--muted); margin-top:4px; }
+
+        .official-badge {
+            display:inline-flex; align-items:center; gap:6px; background:var(--gold); color:#06090f;
+            font-size:11px; font-weight:800; padding:6px 14px; border-radius:20px; margin-top:10px;
+        }
+
+        table.standings-mini { width:100%; border-collapse:collapse; font-size:11.5px; }
+        table.standings-mini th { color:var(--muted); font-weight:700; padding:7px 4px; text-align:center; border-bottom:1px solid var(--border); font-size:10px; }
+        table.standings-mini th:first-child, table.standings-mini td:first-child { text-align:right; padding-right:12px; }
+        table.standings-mini td { padding:8px 4px; text-align:center; }
+        table.standings-mini tr.qual-zone td:first-child { border-right:3px solid var(--green); }
+        table.standings-mini tr.my-row { background:rgba(232,184,75,0.10); }
+        table.standings-mini tr.my-row td:first-child { color:var(--gold); font-weight:800; }
+        .team-cell { display:flex; align-items:center; gap:7px; }
+        .team-cell img { width:16px; height:16px; object-fit:contain; }
+
+        .empty-state { text-align:center; padding:34px 16px; color:var(--muted); font-size:13px; line-height:1.8; }
+        .empty-state i { display:block; font-size:26px; margin-bottom:10px; color:var(--border); }
+
+        /* ===== جدول هدافين/صانعي أهداف بأسلوب سوبر كيك أوف ===== */
+        .stat-list-row { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
+        .stat-list-row:last-child { border-bottom:none; }
+        .stat-rank { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; background:rgba(255,255,255,0.06); color:var(--muted); flex:0 0 auto; }
+        .stat-list-row:nth-child(1) .stat-rank { background:var(--gold); color:#06090f; }
+        .stat-list-row:nth-child(2) .stat-rank { background:#c7cdd6; color:#06090f; }
+        .stat-list-row:nth-child(3) .stat-rank { background:#c98a4b; color:#06090f; }
+        .stat-info { flex:1; }
+        .stat-info .pname { font-size:12.5px; font-weight:700; }
+        .stat-info .psub { font-size:10.5px; color:var(--muted); margin-top:1px; }
+        .stat-value { font-size:15px; font-weight:800; color:var(--gold); }
+
+        /* ===== شريط تبويبات سفلي ثابت (Super Kick Off style bottom nav) ===== */
+        .bottom-nav {
+            position:fixed; bottom:0; left:0; right:0; background:var(--card2); border-top:1px solid var(--border);
+            display:flex; z-index:20; padding-bottom:env(safe-area-inset-bottom);
+        }
+        .bnav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:9px 0 8px 0; background:none; border:none; color:var(--muted); font-size:9.5px; font-weight:700; cursor:pointer; }
+        .bnav-btn i { font-size:16px; }
+        .bnav-btn.active { color:var(--gold); }
+    </style>
+</head>
+<body>
+
+    <div class="top-header">
+        <div class="top-row">
+            <a href="league_table4-2.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+            <div class="top-title">🏆 المسابقات القارية والعالمية</div>
+            <div style="width:32px;"></div>
+        </div>
+        <div class="club-strip" id="clubStrip"></div>
+        <div class="comp-pills" id="compPills"></div>
+    </div>
+
+    <div class="content">
+        <div id="tabOverview"></div>
+        <div id="tabScorers" style="display:none;"></div>
+        <div id="tabAssists" style="display:none;"></div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="bnav-btn active" data-t="overview" onclick="switchBottomTab('overview')"><i class="fas fa-shield-halved"></i>نظرة عامة</button>
+        <button class="bnav-btn" data-t="scorers" onclick="switchBottomTab('scorers')"><i class="fas fa-futbol"></i>الهدافون</button>
+        <button class="bnav-btn" data-t="assists" onclick="switchBottomTab('assists')"><i class="fas fa-shoe-prints"></i>صانعو الأهداف</button>
+    </div>
+
+    <script>
+        const MANUAL_LEAGUE_DB = {
+            "Saudi Arabia": {
+                1: { name: "دوري روشن السعودي", relegation: 3, promotion: 0, hasLowerTier: true,  continental_type: "AFC",  ucl: 4, uel: 1, uecl: 0 },
+                2: { name: "دوري يلو (الدرجة الأولى)", relegation: 0, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Egypt": {
+                1: { name: "الدوري المصري الممتاز", relegation: 2, promotion: 0, hasLowerTier: false, continental_type: "CAF", ucl: 2, uel: 2, uecl: 0 }
+            },
+            "Morocco": {
+                1: { name: "البطولة الاحترافية المغربية", relegation: 2, promotion: 0, hasLowerTier: false, continental_type: "CAF", ucl: 2, uel: 2, uecl: 0 }
+            },
+            "Spain": {
+                1: { name: "الليغا", relegation: 3, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 4, uel: 2, uecl: 1 },
+                2: { name: "الدرجة الثانية الإسبانية", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "England": {
+                1: { name: "الدوري الإنجليزي الممتاز", relegation: 3, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 5, uel: 2, uecl: 1 },
+                2: { name: "التشامبيونشيب", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "France": {
+                1: { name: "الليغ 1", relegation: 3, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 3, uel: 2, uecl: 1 },
+                2: { name: "الليغ 2", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Italy": {
+                1: { name: "السيري أ", relegation: 3, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 4, uel: 2, uecl: 1 },
+                2: { name: "السيري ب", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Germany": {
+                1: { name: "البوندسليغا", relegation: 3, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 4, uel: 2, uecl: 1 },
+                2: { name: "الدرجة الثانية الألمانية", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Brazil": {
+                1: { name: "السيري أ البرازيلي", relegation: 4, promotion: 0, hasLowerTier: true, continental_type: "CONMEBOL", ucl: 6, uel: 6, uecl: 0 },
+                2: { name: "السيري ب البرازيلي", relegation: 4, promotion: 4, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Netherlands": {
+                1: { name: "الإريديفيزي", relegation: 1, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 2, uel: 1, uecl: 1 },
+                2: { name: "الدرجة الثانية الهولندية", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Turkiye": {
+                1: { name: "الدوري التركي الممتاز", relegation: 3, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 2, uel: 2, uecl: 1 },
+                2: { name: "الدرجة الأولى التركية", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Russia": {
+                1: { name: "الدوري الروسي الممتاز", relegation: 3, promotion: 0, hasLowerTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 },
+                2: { name: "الدرجة الأولى الروسية", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Switzerland": {
+                1: { name: "السوبر ليغ السويسري", relegation: 1, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 1, uel: 1, uecl: 1 },
+                2: { name: "تشالنج ليغ", relegation: 0, promotion: 1, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Ireland": {
+                1: { name: "الدوري الأيرلندي الممتاز", relegation: 1, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 1, uel: 1, uecl: 1 },
+                2: { name: "الدرجة الأولى الأيرلندية", relegation: 0, promotion: 1, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Wales": {
+                1: { name: "كيمرو بريمييه", relegation: 0, promotion: 0, hasLowerTier: false, continental_type: "UEFA", ucl: 1, uel: 1, uecl: 1 }
+            },
+            "Ukraine": {
+                1: { name: "الدوري الأوكراني الممتاز", relegation: 1, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 1, uel: 1, uecl: 1 },
+                2: { name: "الدرجة الأولى الأوكرانية", relegation: 1, promotion: 1, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "United Arab Emirates": {
+                1: { name: "دوري الخليج العربي الإماراتي", relegation: 0, promotion: 0, hasLowerTier: true, continental_type: "AFC", ucl: 2, uel: 1, uecl: 0 },
+                2: { name: "دوري الدرجة الأولى الإماراتي", relegation: 0, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Belgium": {
+                1: { name: "الجوبيلر برو ليغ", relegation: 0, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 2, uel: 1, uecl: 1 },
+                2: { name: "تشالنجر برو ليغ", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Austria": {
+                1: { name: "البوندسليغا النمساوية", relegation: 1, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 1, uel: 1, uecl: 1 },
+                2: { name: "الدرجة الثانية النمساوية", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Portugal": {
+                1: { name: "ليغا بورتوغال", relegation: 2, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 2, uel: 2, uecl: 1 },
+                2: { name: "ليغا بورتوغال 2", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Japan": {
+                1: { name: "الجي ليغ 1", relegation: 3, promotion: 0, hasLowerTier: true, continental_type: "AFC", ucl: 3, uel: 1, uecl: 0 },
+                2: { name: "الجي ليغ 2", relegation: 3, promotion: 3, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            },
+            "Norway": {
+                1: { name: "الإليتسيرين", relegation: 2, promotion: 0, hasLowerTier: true, continental_type: "UEFA", ucl: 2, uel: 1, uecl: 1 },
+                2: { name: "أوبوس-ليغن", relegation: 2, promotion: 2, hasUpperTier: true, continental_type: "", ucl: 0, uel: 0, uecl: 0 }
+            }
+        };;
+
+        const activeUserClub = localStorage.getItem('presidentialClub') || '';
+        const homeCountry = (localStorage.getItem('homeCountry') || '').trim();
+        const realLogosPath = 'teams_logos/';
+        function getTeamLogoUrl(t) { return `${realLogosPath}${(t||'').trim()}.png`; }
+
+        function getManualEntry() {
+            const tier = parseInt(localStorage.getItem('current_competition_type_id')) || 1;
+            if (homeCountry && MANUAL_LEAGUE_DB[homeCountry] && MANUAL_LEAGUE_DB[homeCountry][tier]) {
+                return { ...MANUAL_LEAGUE_DB[homeCountry][tier], type_id: tier };
+            }
+            return null;
+        }
+
+        const CONTINENTAL_COMPS = {
+            UEFA: [
+                { field:'ucl', name:'دوري الأبطال', sub:'UEFA Champions League', color:'#3b82f6' },
+                { field:'uel', name:'الدوري الأوروبي', sub:'UEFA Europa League', color:'#e8b84b' },
+                { field:'uecl', name:'دوري المؤتمر', sub:'UEFA Europa Conference League', color:'#14b8a6' }
+            ],
+            AFC: [
+                { field:'ucl', name:'أبطال آسيا للنخبة', sub:'AFC Champions League Elite', color:'#22c55e' },
+                { field:'uel', name:'أبطال آسيا 2', sub:'AFC Champions League Two', color:'#4ade80' }
+            ],
+            CAF: [
+                { field:'ucl', name:'أبطال أفريقيا', sub:'CAF Champions League', color:'#f59e0b' },
+                { field:'uel', name:'كأس الكونفدرالية', sub:'CAF Confederation Cup', color:'#fb923c' }
+            ],
+            CONCACAF: [ { field:'ucl', name:'أبطال الكونكاكاف', sub:'Concacaf Champions Cup', color:'#ec4899' } ],
+            CONMEBOL: [
+                { field:'ucl', name:'كوبا ليبرتادوريس', sub:'Copa Libertadores', color:'#06b6d4' },
+                { field:'uel', name:'كوبا سودامريكانا', sub:'Copa Sudamericana', color:'#67e8f9' }
+            ],
+            OFC: [ { field:'ucl', name:'أبطال أوقيانوسيا', sub:'OFC Champions League', color:'#8b5cf6' } ]
+        };
+
+        function getSquad() { return JSON.parse(localStorage.getItem('signed_players_by_club')||'{}')[activeUserClub] || []; }
+        function getCurrentRound() { return parseInt(localStorage.getItem('database_current_round')) || 0; }
+        function getTotalRounds() {
+            try {
+                const t = JSON.parse(localStorage.getItem('current_league_teams')||'[]').filter(x => x !== 'إستراحة' && x.trim()!=='');
+                if (t.length > 1) return (t.length - 1) * 2;
+            } catch(e) {}
+            return 34;
+        }
+
+        function calculateCurrentLeagueStandings() {
+            let teams = [];
+            try {
+                const stored = localStorage.getItem('current_league_teams');
+                if (stored) teams = JSON.parse(stored).filter(t => t !== 'إستراحة' && t.trim() !== '');
+            } catch(e) {}
+            if (!teams.length) return [];
+            const currentRound = getCurrentRound();
+            let standings = {};
+            teams.forEach(t => { standings[t] = { name:t, played:0, gf:0, ga:0, pts:0 }; });
+
+            let pool = [...teams];
+            if (pool.length % 2 !== 0) pool.push('إستراحة');
+            const total = pool.length, rounds = total-1, perRound = total/2;
+            let schedule = [];
+            for (let r=0;r<rounds;r++){
+                let matches=[];
+                for(let i=0;i<perRound;i++){
+                    let home=pool[i], away=pool[total-1-i];
+                    if (home==='إستراحة'||away==='إستراحة') continue;
+                    if (r%2===1){ const t=home; home=away; away=t; }
+                    matches.push({home,away});
+                }
+                schedule.push(matches);
+                pool.splice(1,0,pool.pop());
+            }
+            const half = schedule.length;
+            for (let r=0;r<half;r++) schedule.push(schedule[r].map(m=>({home:m.away,away:m.home})));
+
+            let savedScores = JSON.parse(localStorage.getItem('full_season_scores')) || [];
+            for (let i=0;i<currentRound;i++){
+                if (!schedule[i]) break;
+                schedule[i].forEach(match => {
+                    let hScore, aScore;
+                    if (match.home===activeUserClub || match.away===activeUserClub) {
+                        let found = savedScores.find(s=>s.roundIdx===i);
+                        hScore = found?found.homeScore:0; aScore = found?found.awayScore:0;
+                    } else {
+                        let seed = i + match.home.length + match.away.length;
+                        hScore = seed%3; aScore = (seed+1)%3;
+                    }
+                    let home=standings[match.home], away=standings[match.away];
+                    if (home && away) {
+                        home.played++; away.played++;
+                        home.gf+=hScore; home.ga+=aScore; away.gf+=aScore; away.ga+=hScore;
+                        if (hScore>aScore) home.pts+=3;
+                        else if (hScore===aScore){ home.pts++; away.pts++; }
+                        else away.pts+=3;
+                    }
+                });
+            }
+            return Object.values(standings).sort((a,b)=>b.pts-a.pts || (b.gf-b.ga)-(a.gf-a.ga));
+        }
+
+        let currentEntry = null, activeCompIndex = 0, currentStandings = [];
+
+        function renderClubStrip() {
+            const el = document.getElementById('clubStrip');
+            const tierLabel = currentEntry ? (currentEntry.type_id===1?'الدرجة الأولى':currentEntry.type_id===2?'الدرجة الثانية':'الدرجة الثالثة') : '—';
+            el.innerHTML = `
+                <img src="${getTeamLogoUrl(activeUserClub)}" onerror="this.style.display='none';">
+                <div><div class="name">${activeUserClub||'ناديك'}</div><div class="sub">${homeCountry||''} · ${currentEntry?currentEntry.name:''} · ${tierLabel}</div></div>
+            `;
+        }
+
+        function renderPills(comps) {
+            const el = document.getElementById('compPills');
+            el.innerHTML = comps.map((c,i) => `<div class="comp-pill ${i===activeCompIndex?'active':''}" data-i="${i}" style="${i===activeCompIndex?`background:${c.color};`:''}">${c.name}</div>`).join('');
+            el.querySelectorAll('.comp-pill').forEach(p => {
+                p.addEventListener('click', () => { activeCompIndex = parseInt(p.dataset.i); renderPills(comps); renderOverview(comps[activeCompIndex]); });
+            });
+        }
+
+        function switchBottomTab(t) {
+            document.querySelectorAll('.bnav-btn').forEach(b => b.classList.toggle('active', b.dataset.t===t));
+            document.getElementById('tabOverview').style.display = t==='overview' ? 'flex' : 'none';
+            document.getElementById('tabScorers').style.display = t==='scorers' ? 'block' : 'none';
+            document.getElementById('tabAssists').style.display = t==='assists' ? 'block' : 'none';
+            document.getElementById('tabOverview').style.flexDirection = 'column';
+            document.getElementById('tabOverview').style.gap = '12px';
+        }
+
+        // ============================================================
+        // نظرة عامة: لا يوجد أي إعلان عن التأهل قبل نهاية الموسم فعلياً.
+        // أثناء الموسم: توقّع غير رسمي مبني على الترتيب الحالي فقط.
+        // بعد اكتمال كل الجولات: إعلان رسمي نهائي بمن ضمن فعلاً المقعد القاري.
+        // ============================================================
+        function renderOverview(comp) {
+            currentStandings = calculateCurrentLeagueStandings();
+            const compsForConfed = CONTINENTAL_COMPS[currentEntry.continental_type];
+            let cumulative = 0;
+            for (const c of compsForConfed) { if (c.field===comp.field) break; cumulative += (currentEntry[c.field]||0); }
+            const slots = currentEntry[comp.field] || 0;
+            const inLeague = currentStandings.some(t=>t.name===activeUserClub);
+            const totalRounds = getTotalRounds();
+            const currentRound = getCurrentRound();
+            const seasonOver = inLeague && currentRound >= totalRounds;
+            const qualZone = currentStandings.slice(cumulative, cumulative+slots).map(t=>t.name);
+            const qualified = qualZone.includes(activeUserClub);
+            const pos = currentStandings.findIndex(t=>t.name===activeUserClub) + 1;
+            const pct = totalRounds ? Math.min(100, Math.round((currentRound/totalRounds)*100)) : 0;
+
+            let heroClass = 'season-live', icon = '⏳', headline = '', subline = '';
+            if (!inLeague) {
+                headline = 'الموسم لم يبدأ بعد'; subline = 'لا توجد بيانات ترتيب كافية بعد.';
+            } else if (!seasonOver) {
+                headline = `الموسم جارٍ — الجولة ${currentRound} من ${totalRounds}`;
+                subline = `ترتيبك المؤقت الحالي: المركز ${pos}. لن يُعلن رسمياً عن المتأهلين لـ${comp.name} إلا بعد اكتمال الموسم كاملاً، تماماً كالواقع.`;
+            } else {
+                heroClass = qualified ? 'qualified' : 'not-qualified';
+                icon = qualified ? '🏆' : '❌';
+                headline = qualified ? `${activeUserClub} تأهل رسمياً إلى ${comp.name}!` : `${activeUserClub} لم يتأهل إلى ${comp.name}`;
+                subline = `النتيجة النهائية الرسمية: المركز ${pos} من ${currentStandings.length} بعد اكتمال كل جولات الموسم.`;
+            }
+
+            let html = `<div class="card">
+                <div class="status-hero ${heroClass}">
+                    <div class="big-icon">${icon}</div>
+                    <div class="headline">${headline}</div>
+                    <div class="subline">${subline}</div>
+                    ${inLeague && !seasonOver ? `
+                        <div class="season-progress-track"><div class="season-progress-fill" style="width:${pct}%;"></div></div>
+                        <div class="season-progress-label">${pct}% من الموسم مكتمل</div>
+                    ` : ''}
+                    ${seasonOver ? `<div class="official-badge"><i class="fas fa-stamp"></i> إعلان رسمي نهائي</div>` : ''}
+                </div>
+            </div>`;
+
+            if (inLeague) {
+                html += `<div class="card">
+                    <div class="card-title"><i class="fas fa-list-ol"></i> ${seasonOver ? 'الترتيب النهائي الرسمي' : 'الترتيب المؤقت الحالي (غير رسمي)'}</div>
+                    <table class="standings-mini">
+                        <thead><tr><th>#</th><th>النادي</th><th>لعب</th><th>+/-</th><th>ن</th></tr></thead>
+                        <tbody>
+                            ${currentStandings.map((t,i) => `
+                                <tr class="${i<slots?'qual-zone':''} ${t.name===activeUserClub?'my-row':''}">
+                                    <td>${i+1}</td>
+                                    <td><div class="team-cell"><img src="${getTeamLogoUrl(t.name)}" onerror="this.style.display='none';"><span>${t.name}</span></div></td>
+                                    <td>${t.played}</td><td>${t.gf-t.ga>0?'+':''}${t.gf-t.ga}</td><td style="color:var(--gold);font-weight:800;">${t.pts}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+            }
+
+            document.getElementById('tabOverview').innerHTML = html;
+        }
+
+        // ============================================================
+        // الهدافون / صانعو الأهداف — من التشكيلة الحقيقية الموقَّعة فعلياً في ناديك
+        // (لا أسماء وهمية)، تتصاعد أرقامهم مع تقدّم الموسم الفعلي
+        // ============================================================
+        function seedHash(str) { let h=0; for (let i=0;i<String(str).length;i++) h=(h*31+String(str).charCodeAt(i))>>>0; return h; }
+
+        function generateRealStatList(salt) {
+            const squad = getSquad();
+            const round = getCurrentRound();
+            if (!squad.length || round <= 0) return [];
+            return squad.map(p => {
+                const seed = seedHash((p.player_name||'')+salt);
+                const rate = (seed % 5) + 1;
+                let value = Math.round((round * rate) / 14) + (seed % 2);
+                if (value < 0) value = 0;
+                return { name: p.player_name, position: p.main_position, value };
+            }).sort((a,b) => b.value - a.value || a.name.localeCompare(b.name)).slice(0, 10);
+        }
+
+        function renderStatTab(containerId, salt, unitLabel, icon) {
+            const container = document.getElementById(containerId);
+            const list = generateRealStatList(salt);
+            const squad = getSquad();
+            if (!squad.length) {
+                container.innerHTML = `<div class="card"><div class="empty-state"><i class="fas fa-users-slash"></i>لا يوجد لاعبون مسجَّلون رسمياً في ناديك بعد.</div></div>`;
+                return;
+            }
+            if (!list.length) {
+                container.innerHTML = `<div class="card"><div class="empty-state"><i class="fas fa-hourglass-half"></i>لم تُلعب مباريات كافية بعد لعرض ${unitLabel}.</div></div>`;
+                return;
+            }
+            container.innerHTML = `<div class="card">
+                <div class="card-title"><i class="fas ${icon}"></i> ${unitLabel} — ${activeUserClub}</div>
+                ${list.map((p,i) => `
+                    <div class="stat-list-row">
+                        <div class="stat-rank">${i+1}</div>
+                        <div class="stat-info"><div class="pname">${p.name}</div><div class="psub">${p.position||'-'}</div></div>
+                        <div class="stat-value">${p.value}</div>
+                    </div>
+                `).join('')}
+            </div>`;
+        }
+        function renderScorersTab() { renderStatTab('tabScorers', 'GOALS_CONT', 'الهدافون', 'fa-futbol'); }
+        function renderAssistsTab() { renderStatTab('tabAssists', 'ASSISTS_CONT', 'صانعو الأهداف', 'fa-shoe-prints'); }
+
+        window.onload = function() {
+            currentEntry = getManualEntry();
+            renderClubStrip();
+            renderScorersTab();
+            renderAssistsTab();
+
+            if (!currentEntry || currentEntry.type_id !== 1 || !currentEntry.continental_type) {
+                document.getElementById('compPills').innerHTML = '';
+                document.getElementById('tabOverview').innerHTML = `<div class="card"><div class="empty-state"><i class="fas fa-lock"></i>لا توجد مسابقات قارية متاحة لناديك حالياً.</div></div>`;
+                return;
+            }
+            const comps = (CONTINENTAL_COMPS[currentEntry.continental_type] || []).filter(c => (currentEntry[c.field]||0) > 0);
+            if (!comps.length) {
+                document.getElementById('compPills').innerHTML = '';
+                document.getElementById('tabOverview').innerHTML = `<div class="card"><div class="empty-state"><i class="fas fa-ban"></i>دوري "${currentEntry.name}" لا يملك حالياً أي مقعد قاري فعلي.</div></div>`;
+                return;
+            }
+            renderPills(comps);
+            renderOverview(comps[activeCompIndex]);
+        };
+    </script>
+</body>
+</html>

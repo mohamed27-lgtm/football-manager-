@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>المباريات الودية | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="indexeddb.js"></script>
+    <style>
+        :root {
+            --bg: #090f1d;
+            --card: #111a2e;
+            --border: #1e293b;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --gold: #c5a059;
+            --green: #10b981;
+            --blue: #3b82f6;
+            --red: #ef4444;
+            --purple: #8b5cf6;
+        }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #8a6b28;
+            --green: #16a34a;
+            --blue: #2563eb;
+            --red: #dc2626;
+            --purple: #7c3aed;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); color: var(--text); padding: 12px; padding-bottom: 90px; display: flex; flex-direction: column; min-height: 100vh; gap: 12px; }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+        .page-header-right { display: flex; align-items: center; gap: 8px; }
+        .page-header h2 { font-size: 14px; font-weight: 600; }
+        .back-btn { background: var(--border); color: white; border: none; padding: 6px 12px; font-size: 11px; border-radius: 4px; text-decoration: none; display: flex; align-items: center; justify-content: center; }
+        .header-link { font-size: 10.5px; color: var(--blue); text-decoration: none; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); padding: 5px 9px; border-radius: 6px; }
+
+        .club-banner { background: linear-gradient(145deg, #15203a, #0c1322); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .club-banner-left { display: flex; align-items: center; gap: 10px; }
+        .club-banner .name { font-size: 14px; font-weight: 800; color: var(--gold); }
+        .club-banner .sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+        .club-banner .budget-tag { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: var(--green); font-size: 12px; font-weight: 700; padding: 6px 10px; border-radius: 8px; text-align: center; }
+        .club-banner .budget-tag small { display: block; font-size: 9px; color: var(--muted); font-weight: 600; }
+
+        .crest { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 800; color: var(--gold); flex-shrink: 0; }
+        .crest.sm { width: 22px; height: 22px; font-size: 9px; }
+        .crest.mine { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(197,160,89,0.15); }
+
+        .stats-summary-bar { background: #fff; color: #334155; border-radius: 8px; padding: 8px; display: flex; justify-content: space-around; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .stat-box { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .stat-label { font-size: 10px; color: #64748b; font-weight: bold; }
+        .stat-value { font-size: 12.5px; font-weight: 800; color: #0f172a; }
+        .stat-box.highlight .stat-value { color: var(--blue); }
+
+        .tabs { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .tab-btn { flex: 1; padding: 10px; text-align: center; font-size: 12.5px; font-weight: 700; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--gold); border-bottom: 2px solid var(--gold); background: rgba(197,160,89,0.06); }
+
+        .tab-panel { display: none; flex-direction: column; gap: 10px; }
+        .tab-panel.active { display: flex; }
+
+        .schedule-trigger { display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, var(--gold), #a8814a); color: #1a1303; font-weight: 800; font-size: 13px; padding: 12px; border-radius: 10px; border: none; cursor: pointer; }
+        .schedule-trigger:disabled { opacity: 0.5; }
+        .limit-note { font-size: 10.5px; color: var(--muted); text-align: center; }
+
+        .match-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .match-card .card-top { padding: 10px 12px; background: rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--muted); border-bottom: 1px solid var(--border); }
+        .tier-badge { font-size: 9.5px; padding: 2px 6px; border-radius: 4px; font-weight: bold; background: rgba(139,92,246,0.15); color: var(--purple); }
+        .card-body { padding: 12px; }
+        .vs-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+        .vs-team { flex: 1; display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; }
+        .vs-team.right { justify-content: flex-end; text-align: left; flex-direction: row-reverse; }
+        .vs-sep { font-size: 11px; color: var(--muted); padding: 0 6px; white-space: nowrap; }
+        .meta-row { display: flex; justify-content: center; gap: 14px; margin-top: 10px; font-size: 10.5px; color: var(--muted); flex-wrap: wrap; }
+        .meta-row span i { margin-left: 4px; color: var(--gold); }
+        .income-pill { display: inline-block; margin-top: 8px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: var(--green); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
+        .card-actions { display: flex; gap: 8px; padding: 0 12px 12px; }
+        .btn-sim { flex: 1; background: var(--blue); color: #fff; border: none; padding: 9px; border-radius: 7px; font-weight: 700; font-size: 12px; cursor: pointer; }
+        .btn-sim:disabled { background: #1e293b; color: var(--muted); }
+        .btn-cancel { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.3); padding: 9px 14px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+        .history-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; gap: 8px; }
+        .history-left { display: flex; flex-direction: column; gap: 3px; }
+        .history-opp { font-size: 12.5px; font-weight: 700; display:flex; align-items:center; gap:6px; }
+        .history-date { font-size: 10px; color: var(--muted); }
+        .history-press { font-size: 9.5px; color: var(--muted); font-style: italic; max-width: 220px; }
+        .history-right { text-align: left; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink:0; }
+        .score-pill { font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 5px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
+        .score-pill.win { color: var(--green); background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.25); }
+        .score-pill.draw { color: var(--gold); background: rgba(197,160,89,0.1); border-color: rgba(197,160,89,0.25); }
+        .score-pill.loss { color: var(--red); background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); }
+        .history-sub { font-size: 9.5px; color: var(--muted); }
+
+        .empty-state { text-align: center; padding: 30px; color: var(--muted); font-size: 12px; background: var(--card); border: 1px dashed var(--border); border-radius: 10px; }
+        .empty-state i { display: block; font-size: 22px; margin-bottom: 8px; color: var(--border); }
+
+        .advisor-box { background: #161f33; border-right: 4px solid var(--blue); padding: 12px; border-radius: 8px; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+        .advisor-box strong { color: var(--text); }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 1000; display: none; align-items: flex-end; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal-sheet { width: 100%; max-width: 480px; max-height: 90vh; background: #0c1322; border-radius: 16px 16px 0 0; border: 1px solid var(--border); display: flex; flex-direction: column; animation: slideUp 0.25s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-head { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .modal-head h3 { font-size: 13.5px; color: var(--gold); }
+        .step-dots { display: flex; gap: 6px; }
+        .step-dots span { width: 18px; height: 4px; border-radius: 2px; background: var(--border); }
+        .step-dots span.done { background: var(--gold); }
+        .close-modal-btn { background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; }
+        .modal-body { padding: 14px 16px; overflow-y: auto; flex: 1; }
+
+        .search-input { width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 11px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
+        .opp-item { background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 7px; cursor: pointer; }
+        .opp-item:active { border-color: var(--gold); }
+        .opp-item .o-left { display: flex; align-items: center; gap: 9px; }
+        .opp-item .o-name { font-size: 12.5px; font-weight: 600; }
+        .opp-item .o-comp { font-size: 10px; color: var(--muted); margin-top: 2px; }
+        .opp-item .o-tier { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(139,92,246,0.15); color: var(--purple); font-weight: bold; white-space: nowrap; }
+        .hint-text { font-size: 11px; color: var(--muted); text-align: center; padding: 16px 0; }
+
+        .chosen-opp-banner { background: rgba(197,160,89,0.08); border: 1px solid rgba(197,160,89,0.25); border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .chosen-opp-banner .left { display: flex; align-items: center; gap: 9px; }
+        .chosen-opp-banner b { color: var(--gold); font-size: 13px; }
+        .chosen-opp-banner span { font-size: 10px; color: var(--muted); }
+        .change-link { font-size: 10.5px; color: var(--blue); cursor: pointer; white-space: nowrap; }
+
+        .accept-chance-bar { display: flex; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; margin-bottom: 12px; font-size: 11px; }
+        .accept-chance-bar b { color: var(--text); }
+        .accept-chance-bar .val.high { color: var(--green); }
+        .accept-chance-bar .val.mid { color: var(--gold); }
+        .accept-chance-bar .val.low { color: var(--red); }
+
+        .option-group-title { font-size: 11px; color: var(--muted); font-weight: 700; margin: 12px 0 8px; }
+        .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip { flex: 1; min-width: 90px; text-align: center; background: var(--card); border: 1px solid var(--border); padding: 10px 8px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+        .chip.selected { border-color: var(--gold); color: var(--gold); background: rgba(197,160,89,0.08); font-weight: 700; }
+        .chip i { display: block; margin-bottom: 4px; font-size: 14px; }
+
+        .offer-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-top: 14px; }
+        .offer-card-title { font-size: 11.5px; color: var(--gold); font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .offer-row { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); padding: 5px 0; border-bottom: 1px dashed var(--border); }
+        .offer-row.expense b { color: var(--red); }
+        .offer-row.gross { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 8px; }
+        .offer-row.gross b { color: var(--green); }
+        .offer-row b { color: var(--text); }
+        .offer-total { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+        .offer-total .lbl { font-size: 12px; color: var(--muted); }
+        .offer-total .val { font-size: 17px; font-weight: 900; color: var(--green); }
+        .offer-foot-note { font-size: 9.5px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+        .modal-foot { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+        .btn-secondary { flex: 1; background: var(--border); color: var(--text); border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+        .btn-primary { flex: 2; background: var(--gold); color: #1a1303; border: none; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 12.5px; cursor: pointer; }
+        .btn-primary:disabled { opacity: 0.45; }
+
+        .result-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); width: 90%; max-width: 380px; background: var(--card); border: 1px solid var(--gold); border-radius: 12px; padding: 14px; z-index: 1100; opacity: 0; pointer-events: none; transition: all 0.3s; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .result-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .result-toast .rt-title { font-size: 12px; color: var(--gold); font-weight: 700; margin-bottom: 6px; }
+        .result-toast .rt-score { font-size: 18px; font-weight: 900; margin-bottom: 6px; }
+        .result-toast .rt-detail { font-size: 10.5px; color: var(--muted); line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <div class="page-header-right">
+            <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+            <h2>المباريات الودية</h2>
+        </div>
+        <a href="fixtures.html" class="header-link"><i class="fas fa-list-alt"></i> الأجندة الرسمية</a>
+    </div>
+
+    <div class="club-banner">
+        <div class="club-banner-left">
+            <div class="crest mine" id="bannerCrest">—</div>
+            <div>
+                <div class="name" id="bannerClubName">—</div>
+                <div class="sub" id="bannerDateLabel">التاريخ الحالي: —</div>
+            </div>
+        </div>
+        <div class="budget-tag"><small>الميزانية</small><span id="bannerBudget">0.0M €</span></div>
+    </div>
+
+    <div id="fedTierBanner" style="font-size:10.5px; color:var(--muted); background:var(--card); border:1px solid var(--border); border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:6px;">
+        <i class="fas fa-shield-halved" style="color:var(--gold);"></i>
+        <span id="fedTierBannerText"></span>
+    </div>
+
+    <div id="fedBlockedBanner" style="display:none; font-size:11px; color:#fff; background:rgba(239,68,68,0.12); border:1px solid var(--red); border-radius:8px; padding:9px 10px;">
+        <i class="fas fa-ban" style="color:var(--red);"></i> النادي محظور مؤقتاً من ترتيب مباريات ودية جديدة بسبب مخالفة مالية (FFP) مسجّلة لدى الاتحاد.
+    </div>
+
+    <div class="stats-summary-bar">
+        <div class="stat-box"><span class="stat-label">لُعبت</span><span class="stat-value" id="stat-played">0</span></div>
+        <div class="stat-box"><span class="stat-label">فوز</span><span class="stat-value" id="stat-wins">0</span></div>
+        <div class="stat-box"><span class="stat-label">تعادل</span><span class="stat-value" id="stat-draws">0</span></div>
+        <div class="stat-box"><span class="stat-label">خسارة</span><span class="stat-value" id="stat-losses">0</span></div>
+        <div class="stat-box highlight"><span class="stat-label">صافي العائد</span><span class="stat-value" id="stat-income">0.0M</span></div>
+    </div>
+
+    <button class="schedule-trigger" id="scheduleTriggerBtn" onclick="openScheduleModal()">
+        <i class="fas fa-plus-circle"></i> ترتيب مباراة ودية جديدة
+    </button>
+    <div class="limit-note" id="limitNote"></div>
+
+    <div class="tabs">
+        <div class="tab-btn active" id="tabUpcomingBtn" onclick="switchTab('upcoming')">القادمة</div>
+        <div class="tab-btn" id="tabHistoryBtn" onclick="switchTab('history')">الأرشيف</div>
+    </div>
+
+    <div class="tab-panel active" id="panelUpcoming"></div>
+    <div class="tab-panel" id="panelHistory"></div>
+
+    <div class="advisor-box">
+        <i class="fas fa-user-tie" style="color:var(--blue)"></i>
+        <strong>نصيحة المستشار الرياضي:</strong>
+        <span id="advisorTip">المباريات الودية تدر دخلاً جيداً وتُحوَّل تلقائياً إلى المركز المالي، لكن الإكثار منها أو السفر المتكرر قبل مباريات الدوري الحاسمة يرفع نسبة الإجهاد وخطر الإصابات. وازن بين الجدولين بحكمة يا سيادة الرئيس.</span>
+    </div>
+
+    <div class="modal-overlay" id="scheduleModal">
+        <div class="modal-sheet">
+            <div class="modal-head">
+                <h3>ترتيب مباراة ودية</h3>
+                <div class="step-dots">
+                    <span id="dot1"></span><span id="dot2"></span><span id="dot3"></span>
+                </div>
+                <button class="close-modal-btn" onclick="closeScheduleModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="step1">
+                    <input type="text" class="search-input" id="oppSearchInput" placeholder="🔍 ابحث عن نادٍ لمواجهته ودياً (اسم النادي)..." oninput="handleOpponentSearch()">
+                    <div id="oppResultsContainer">
+                        <div class="hint-text">اكتب اسم نادٍ (حرفين على الأقل) للبحث ضمن قاعدة بيانات الأندية العالمية...</div>
+                    </div>
+                </div>
+                <div id="step2" style="display:none;">
+                    <div class="chosen-opp-banner">
+                        <div class="left">
+                            <div class="crest sm" id="chosenOppCrest"></div>
+                            <div><b id="chosenOppName"></b><br><span id="chosenOppComp"></span></div>
+                        </div>
+                        <span class="change-link" onclick="backToStep1()">تغيير ↺</span>
+                    </div>
+
+                    <div class="accept-chance-bar">
+                        <span><i class="fas fa-handshake"></i> نسبة قبول الدعوة المتوقعة</span>
+                        <b><span class="val" id="acceptChanceVal">--%</span></b>
+                    </div>
+
+                    <div class="option-group-title"><i class="fas fa-map-marker-alt"></i> مكان إقامة المباراة</div>
+                    <div class="chip-row" id="venueChips">
+                        <div class="chip" data-venue="home" onclick="selectVenue('home')"><i class="fas fa-home"></i>ملعبنا</div>
+                        <div class="chip" data-venue="away" onclick="selectVenue('away')"><i class="fas fa-plane"></i>ملعب الخصم</div>
+                        <div class="chip" data-venue="neutral" onclick="selectVenue('neutral')"><i class="fas fa-globe"></i>أرض محايدة</div>
+                    </div>
+
+                    <div class="option-group-title"><i class="fas fa-calendar-alt"></i> موعد المباراة</div>
+                    <div class="chip-row" id="dateChips"></div>
+                    <p style="font-size:10.5px; color:var(--muted); margin-top:8px;" id="selectedDateText"></p>
+
+                    <div class="offer-card" id="offerCard" style="display:none;">
+                        <div class="offer-card-title"><i class="fas fa-file-contract"></i> العرض التعاقدي المتوقع (يُحسب حسب سعة الملعب وسمعة الخصم)</div>
+                        <div id="offerCardBody"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="btn-secondary" onclick="closeScheduleModal()">إلغاء الأمر</button>
+                <button class="btn-primary" id="confirmScheduleBtn" disabled onclick="confirmSchedule()">إرسال الدعوة الرسمية</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-toast" id="resultToast">
+        <div class="rt-title" id="rtTitle">نتيجة المباراة الودية</div>
+        <div class="rt-score" id="rtScore">0 - 0</div>
+        <div class="rt-detail" id="rtDetail"></div>
+    </div>
+
+    <!-- ===================== عارض المباراة الحية ===================== -->
+    <div id="liveMatchOverlay" style="display:none; position:fixed; inset:0; background:#05070f; z-index:200; flex-direction:column; padding:14px; gap:12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="font-size:12px; color:#c5a059; font-weight:700;">🔴 مباشر</div>
+            <div id="liveMinute" style="font-size:16px; font-weight:800; color:#fff;">0'</div>
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-around; background:#111a2e; border:1px solid #1e293b; border-radius:14px; padding:18px 10px;">
+            <div style="text-align:center; flex:1;">
+                <img id="liveHomeCrest" src="" onerror="this.style.display='none';" style="width:44px; height:44px; object-fit:contain;">
+                <div style="font-size:12px; font-weight:700; color:#fff; margin-top:6px;" id="liveHomeName">--</div>
+            </div>
+            <div style="font-size:28px; font-weight:800; color:#c5a059; letter-spacing:2px;" id="liveScore">0 - 0</div>
+            <div style="text-align:center; flex:1;">
+                <img id="liveAwayCrest" src="" onerror="this.style.display='none';" style="width:44px; height:44px; object-fit:contain;">
+                <div style="font-size:12px; font-weight:700; color:#fff; margin-top:6px;" id="liveAwayName">--</div>
+            </div>
+        </div>
+
+        <div style="height:6px; background:#1e293b; border-radius:4px; overflow:hidden;">
+            <div id="liveProgress" style="height:100%; width:0%; background:#c5a059; transition:width 0.4s linear;"></div>
+        </div>
+
+        <div id="liveEventFeed" style="flex:1; overflow-y:auto; display:flex; flex-direction:column-reverse; gap:8px; padding-top:6px;"></div>
+
+        <div style="display:flex; gap:8px;">
+            <div style="display:flex; gap:4px; background:#111a2e; border:1px solid #1e293b; border-radius:10px; padding:4px; flex:1;">
+                <button class="live-speed-btn" data-speed="1" onclick="setLiveSpeed(1)" style="flex:1; border:none; background:transparent; color:#94a3b8; padding:8px; border-radius:8px; font-size:11px; font-weight:700;">×1</button>
+                <button class="live-speed-btn active" data-speed="2" onclick="setLiveSpeed(2)" style="flex:1; border:none; background:#c5a059; color:#090f1d; padding:8px; border-radius:8px; font-size:11px; font-weight:700;">×2</button>
+                <button class="live-speed-btn" data-speed="4" onclick="setLiveSpeed(4)" style="flex:1; border:none; background:transparent; color:#94a3b8; padding:8px; border-radius:8px; font-size:11px; font-weight:700;">×4</button>
+            </div>
+            <button onclick="skipLiveMatch()" style="background:#1e293b; color:#f1f5f9; border:none; padding:8px 16px; border-radius:10px; font-size:11.5px; font-weight:700;">⏭ تخطي</button>
+        </div>
+    </div>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || 'نادي المستقبل';
+
+        // ============================================================
+        // نظام الإصابات الحقيقي — يُنشئ سجل إصابة فعلياً يتابَع من المركز الطبي (medical.html)
+        // ============================================================
+        const INJURY_TYPES = [
+            { type: 'إجهاد عضلي', min: 3, max: 7 },
+            { type: 'التواء في الكاحل', min: 7, max: 14 },
+            { type: 'تمزق عضلي طفيف', min: 10, max: 21 },
+            { type: 'ارتجاج خفيف', min: 5, max: 10 },
+            { type: 'إصابة في الركبة', min: 14, max: 35 }
+        ];
+        function getClubInjuries() { return JSON.parse(localStorage.getItem('club_injuries')) || []; }
+        function setClubInjuries(list) { localStorage.setItem('club_injuries', JSON.stringify(list)); }
+        function getMySquadForInjury() { return JSON.parse(localStorage.getItem('signed_players_by_club')||'{}')[activeClub] || []; }
+        function getInjuryGameDate() {
+            return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||6, year: parseInt(localStorage.getItem('game_year'))||2026 };
+        }
+        function injuryDateSortKey(d) { return d.year*10000 + d.month*100 + d.day; }
+
+        function createRealInjury() {
+            const squad = getMySquadForInjury();
+            const injuries = getClubInjuries();
+            const alreadyInjuredIds = new Set(injuries.map(i => String(i.tmid)));
+            const healthySquad = squad.filter(p => !alreadyInjuredIds.has(String(p.tmid)));
+            if (!healthySquad.length) return null;
+
+            const player = healthySquad[Math.floor(Math.random() * healthySquad.length)];
+            const meta = INJURY_TYPES[Math.floor(Math.random() * INJURY_TYPES.length)];
+            const totalDays = meta.min + Math.floor(Math.random() * (meta.max - meta.min + 1));
+            const today = getInjuryGameDate();
+
+            const record = { id: Date.now(), tmid: player.tmid, playerName: player.player_name, type: meta.type,
+                totalDays, occurredDateSort: injuryDateSortKey(today) };
+            injuries.push(record);
+            setClubInjuries(injuries);
+            return record;
+        }
+
+        // ============================================================
+        // Session Guard (Save Slot) - يضمن أن المباريات الودية المُنشأة هنا
+        // ترتبط بالنادي الحالي والجلسة الحالية فقط، فلا تظهر بعد توقيع نادٍ جديد
+        // ============================================================
+        function getGameSessionId() {
+            let sid = localStorage.getItem('game_session_id');
+            if (!sid) {
+                sid = 'S' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+                localStorage.setItem('game_session_id', sid);
+            }
+            return sid;
+        }
+        const GAME_SESSION_ID = getGameSessionId();
+
+        // مباراة تخص النادي والجلسة الحاليين فقط (تحمي من تسرّب مباريات نادٍ سابق بعد توقيع جديد)
+        function belongsToCurrentSession(m) {
+            return (m.ownerClub === undefined || m.ownerClub === activeClub)
+                && (m.sessionId === undefined || m.sessionId === GAME_SESSION_ID);
+        }
+
+        // ============================================================
+        //  قراءة قوانين الاتحاد تلقائياً حسب درجة النادي (Tier) بدل رقم ثابت
+        // ============================================================
+        function fedGetRules() {
+            const stored = JSON.parse(localStorage.getItem('federationRules'));
+            return stored || { tier: 1, squadMax: 25, foreignMax: 8, homegrownMin: 0, wageCapPct: 70, minStadium: 12000, tierLabel: "الدرجة الأولى (الممتاز)", confederation: "AFC", confederationLabel: "الاتحاد الآسيوي لكرة القدم (AFC)" };
+        }
+        const fedRules = fedGetRules();
+        // عدد المباريات الودية المسموح جدولتها يعتمد على درجة النادي (الدرجة الأولى يمكنها استضافة جولات ودية أكثر)
+        const MAX_UPCOMING = fedRules.tier === 1 ? 5 : fedRules.tier === 2 ? 4 : fedRules.tier === 3 ? 3 : 2;
+
+        function initials(name) {
+            const parts = name.trim().split(/\s+/).filter(Boolean);
+            if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+        function crestHTML(name, mine) {
+            return `<div class="crest sm ${mine ? 'mine' : ''}">${initials(name)}</div>`;
+        }
+
+        function getBudget() { return parseFloat(localStorage.getItem('clubBudget')) || 150.0; }
+        function setBudget(v) { localStorage.setItem('clubBudget', v.toFixed(2)); }
+
+        function pushToFinanceLedger(incomeDelta, expenseDelta) {
+            const prevIncome = parseFloat(localStorage.getItem('friendlyIncome')) || 0;
+            const prevExpense = parseFloat(localStorage.getItem('friendlyExpenses')) || 0;
+            localStorage.setItem('friendlyIncome', (prevIncome + Math.max(0, incomeDelta)).toFixed(2));
+            localStorage.setItem('friendlyExpenses', (prevExpense + Math.max(0, expenseDelta)).toFixed(2));
+        }
+
+        function addMessageToSystem(sender, text) {
+            let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+            inbox.unshift({ sender, text, time: new Date().toLocaleTimeString('ar-EG'), read: false });
+            localStorage.setItem('gameInbox', JSON.stringify(inbox));
+            localStorage.setItem('hasNewMessage', 'true');
+        }
+
+        let gameDate = {
+            day: parseInt(localStorage.getItem('game_day') || '1'),
+            month: parseInt(localStorage.getItem('game_month') || '6'),
+            year: parseInt(localStorage.getItem('game_year') || '2026')
+        };
+        function pad(n) { return n < 10 ? '0' + n : n; }
+        function dateLabel(d) { return `${pad(d.day)}/${pad(d.month)}/${d.year}`; }
+        function dateSortKey(d) { return d.year * 10000 + d.month * 100 + d.day; }
+
+        function addDaysToDate(base, days) {
+            let d = { ...base };
+            for (let i = 0; i < days; i++) {
+                d.day++;
+                let daysInMonth = 30;
+                if ([1,3,5,7,8,10,12].includes(d.month)) daysInMonth = 31;
+                else if (d.month === 2) daysInMonth = (d.year % 4 === 0) ? 29 : 28;
+                if (d.day > daysInMonth) { d.day = 1; d.month++; }
+                if (d.month > 12) { d.month = 1; d.year++; }
+            }
+            return d;
+        }
+
+        function toJSDate(d) { return new Date(d.year, d.month - 1, d.day, 12, 0, 0, 0); }
+        const WEEKDAY_AR = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+        function weekdayName(d) { return WEEKDAY_AR[toJSDate(d).getDay()]; }
+
+        // ============================================================
+        // 🗓️ وعي حقيقي بجدول الدوري: نحدد الأيام التي يلعب فيها ناديك رسمياً
+        // حتى لا تُقترح مباراة ودية في نفس يوم مباراة رسمية أو قريباً جداً منها
+        // ============================================================
+        let currentLeagueTeamsForSchedule = [];
+        try {
+            const st = localStorage.getItem('current_league_teams');
+            if (st) currentLeagueTeamsForSchedule = JSON.parse(st).filter(t => t !== 'إستراحة' && t.trim() !== '');
+        } catch (e) {}
+        if (currentLeagueTeamsForSchedule.length < 2) currentLeagueTeamsForSchedule = [activeClub, 'فريق آخر'];
+
+        function generateDoubleRoundRobinLocal(teams) {
+            let pool = [...teams];
+            if (pool.length % 2 !== 0) pool.push('إستراحة');
+            const total = pool.length, rounds = total - 1, perRound = total / 2;
+            let schedule = [];
+            for (let r = 0; r < rounds; r++) {
+                let matches = [];
+                for (let i = 0; i < perRound; i++) {
+                    let home = pool[i], away = pool[total - 1 - i];
+                    if (home === 'إستراحة' || away === 'إستراحة') continue;
+                    if (r % 2 === 1) { const t = home; home = away; away = t; }
+                    matches.push({ home, away });
+                }
+                schedule.push(matches);
+                pool.splice(1, 0, pool.pop());
+            }
+            const half = schedule.length;
+            for (let r = 0; r < half; r++) {
+                schedule.push(schedule[r].map(m => ({ home: m.away, away: m.home })));
+            }
+            return schedule;
+        }
+
+        const seasonStartYearLocal = (gameDate.month >= 8) ? gameDate.year : gameDate.year - 1;
+        const SEASON_START_LOCAL = { day: 15, month: 8, year: seasonStartYearLocal };
+        function roundDateLocal(roundNum) { return addDaysToDate(SEASON_START_LOCAL, (roundNum - 1) * 7); }
+
+        const localLeagueSchedule = generateDoubleRoundRobinLocal(currentLeagueTeamsForSchedule);
+        const busyDateKeys = new Set();
+        localLeagueSchedule.forEach((roundMatches, idx) => {
+            const involvesMe = roundMatches.some(m => m.home === activeClub || m.away === activeClub);
+            if (!involvesMe) return;
+            const rd = roundDateLocal(idx + 1);
+            // نحجز يوم المباراة + يوم قبلها وبعدها حتى لا تتزاحم مباراة ودية مع مجهود مباراة رسمية قريبة
+            for (let off = -1; off <= 1; off++) {
+                const d = addDaysToDate(rd, off);
+                busyDateKeys.add(dateSortKey(d));
+            }
+        });
+
+        // يولّد أقرب عدد N من التواريخ الحقيقية الخالية من أي تعارض مع جدول الدوري
+        function generateFreeFriendlyDates(count) {
+            const results = [];
+            let cursor = addDaysToDate(gameDate, 2); // أقل مهلة منطقية لتنظيم مباراة ودية
+            let guard = 0;
+            while (results.length < count && guard < 200) {
+                guard++;
+                if (!busyDateKeys.has(dateSortKey(cursor))) {
+                    results.push({ ...cursor });
+                }
+                cursor = addDaysToDate(cursor, 1);
+            }
+            return results;
+        }
+
+        let allTeams = [];
+        const fallbackTeams = [
+            { team: "Real Madrid", competition: "LaLiga", competition_id: "ES1", stadium_capacity: "81044" },
+            { team: "FC Barcelona", competition: "LaLiga", competition_id: "ES1", stadium_capacity: "99354" },
+            { team: "Manchester City", competition: "Premier League", competition_id: "GB1", stadium_capacity: "53400" },
+            { team: "Liverpool FC", competition: "Premier League", competition_id: "GB1", stadium_capacity: "61276" },
+            { team: "Bayern Munich", competition: "Bundesliga", competition_id: "L1", stadium_capacity: "75024" },
+            { team: "Paris Saint-Germain", competition: "Ligue 1", competition_id: "FR1", stadium_capacity: "47929" },
+            { team: "Juventus FC", competition: "Serie A", competition_id: "IT1", stadium_capacity: "41507" },
+            { team: "Inter Milan", competition: "Serie A", competition_id: "IT1", stadium_capacity: "75923" },
+            { team: "Al Hilal", competition: "Saudi Pro League", competition_id: "SA1", stadium_capacity: "25000" },
+            { team: "Al Nassr", competition: "Saudi Pro League", competition_id: "SA1", stadium_capacity: "25000" },
+            { team: "Flamengo", competition: "Série A", competition_id: "BRA1", stadium_capacity: "78838" },
+            { team: "Boca Juniors", competition: "Primera División", competition_id: "AR1N", stadium_capacity: "54000" },
+            { team: "Ajax Amsterdam", competition: "Eredivisie", competition_id: "NL1", stadium_capacity: "55500" },
+            { team: "FC Porto", competition: "Liga Portugal", competition_id: "PO1", stadium_capacity: "50033" },
+            { team: "Galatasaray", competition: "Süper Lig", competition_id: "TR1", stadium_capacity: "52280" },
+            { team: "Sevilla FC", competition: "LaLiga2", competition_id: "ES2", stadium_capacity: "43883" },
+            { team: "Leeds United", competition: "Championship", competition_id: "GB2", stadium_capacity: "37890" },
+            { team: "AS Monaco", competition: "Ligue 2", competition_id: "FR2", stadium_capacity: "16360" },
+            { team: "Werder Bremen", competition: "2. Bundesliga", competition_id: "L2", stadium_capacity: "42100" },
+            { team: "Vitória SC", competition: "Liga Portugal 2", competition_id: "PO2", stadium_capacity: "30201" }
+        ];
+
+        function inferTier(competitionId) {
+            if (!competitionId) return 4;
+            const m = competitionId.toString().match(/(\d)(?!.*\d)/);
+            if (!m) return 4;
+            const n = parseInt(m[1]);
+            return (n >= 1 && n <= 3) ? n : 4;
+        }
+        function tierLabel(t) { return t === 1 ? 'دوري ممتاز' : t === 2 ? 'دوري ثانٍ' : t === 3 ? 'دوري ثالث' : 'محلي/هواة'; }
+
+        function dedupeTeams(list) {
+            const seen = new Set();
+            const result = [];
+            list.forEach(t => {
+                const key = (t.team || '').trim().toLowerCase();
+                if (key && !seen.has(key)) { seen.add(key); result.push(t); }
+            });
+            return result;
+        }
+
+        function loadTeamsDatabase() {
+            fetch('team.csv').then(r => {
+                if (!r.ok) throw new Error('no csv');
+                return r.text();
+            }).then(txt => {
+                Papa.parse(txt, { header: true, complete: (res) => {
+                    allTeams = res.data.filter(r => r.team && r.team.trim() !== ''
+                        && !/Youth|U23|U21|U19|U17/i.test(r.team)
+                        && r.team.trim() !== activeClub);
+                    allTeams = dedupeTeams(allTeams);
+                    if (allTeams.length === 0) allTeams = dedupeTeams(fallbackTeams);
+                } });
+            }).catch(() => { allTeams = dedupeTeams(fallbackTeams); });
+        }
+
+        function estimateGateRevenue(venue, tier, opponentCapacity) {
+            const avgTicketPrice = 25;
+            let capacity;
+            if (venue === 'home') {
+                capacity = parseFloat(localStorage.getItem('clubStadiumCapacity')) || 30000;
+            } else {
+                capacity = parseFloat(opponentCapacity) || (venue === 'neutral' ? 25000 : 28000);
+            }
+            const demandFactor = tier === 1 ? 0.9 : tier === 2 ? 0.7 : tier === 3 ? 0.5 : 0.35;
+            const attendance = capacity * demandFactor;
+            const venueShare = venue === 'home' ? 1.0 : venue === 'neutral' ? 0.6 : 0.35;
+            return (attendance * avgTicketPrice * venueShare) / 1000000;
+        }
+
+        // مولّد عشوائي بسيط لكنه ثابت (Deterministic) حسب نص معيّن — نفس الخصم + نفس أرضية اللقاء = نفس الرقم دائماً
+        function seededRandom(str) {
+            let h = 0;
+            for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) >>> 0; }
+            return (h % 10000) / 10000; // قيمة ثابتة بين 0 و1
+        }
+
+        function buildOffer(opponent, venue) {
+            const tier = inferTier(opponent.competition_id);
+            const ticketsAndGate = estimateGateRevenue(venue, tier, opponent.stadium_capacity);
+            const seedBase = `${opponent.team}|${venue}`;
+
+            const broadcastRanges = { 1: [0.40, 1.20], 2: [0.15, 0.50], 3: [0.05, 0.20], 4: [0.00, 0.05] };
+            const [bLo, bHi] = broadcastRanges[tier];
+            const broadcastRights = bLo + seededRandom(seedBase + '|bcast') * (bHi - bLo);
+
+            const sponsorBase = (parseFloat(localStorage.getItem('clubSponsorValue')) || 5) / 25;
+            const sponsorBonus = Math.max(0.02, sponsorBase * (0.6 + seededRandom(seedBase + '|sponsor') * 0.8));
+
+            const grossIncome = ticketsAndGate + broadcastRights + sponsorBonus;
+
+            let logisticsCost = 0;
+            if (venue !== 'home') logisticsCost = grossIncome * (0.10 + seededRandom(seedBase + '|logi') * 0.08);
+
+            let appearanceFee = 0;
+            if (tier === 1 && venue !== 'home') appearanceFee = grossIncome * (0.15 + seededRandom(seedBase + '|fee') * 0.20);
+
+            const netIncome = Math.max(0.02, grossIncome - logisticsCost - appearanceFee);
+            const fatigue = Math.floor(8 + seededRandom(seedBase + '|fatigue') * 8) + (venue !== 'home' ? 4 : 0);
+
+            return { tier, ticketsAndGate, broadcastRights, sponsorBonus, grossIncome, logisticsCost, appearanceFee, netIncome, fatigue };
+        }
+
+        function renderOfferCard(offer) {
+            let html = '';
+            html += `<div class="offer-row"><span><i class="fas fa-ticket-alt" style="margin-left:5px;color:var(--gold)"></i>تذاكر وإيرادات البوابة</span><b>${offer.ticketsAndGate.toFixed(2)}M €</b></div>`;
+            html += `<div class="offer-row"><span><i class="fas fa-tv" style="margin-left:5px;color:var(--gold)"></i>حقوق البث الإعلامي</span><b>${offer.broadcastRights.toFixed(2)}M €</b></div>`;
+            html += `<div class="offer-row"><span><i class="fas fa-handshake" style="margin-left:5px;color:var(--gold)"></i>مكافأة الرعاة التجارية</span><b>${offer.sponsorBonus.toFixed(2)}M €</b></div>`;
+            html += `<div class="offer-row gross"><span>إجمالي الإيرادات</span><b>${offer.grossIncome.toFixed(2)}M €</b></div>`;
+            if (offer.logisticsCost > 0) html += `<div class="offer-row expense"><span>تكاليف السفر واللوجستيات</span><b>- ${offer.logisticsCost.toFixed(2)}M €</b></div>`;
+            if (offer.appearanceFee > 0) html += `<div class="offer-row expense"><span>رسوم ظهور للنادي الضيف الكبير</span><b>- ${offer.appearanceFee.toFixed(2)}M €</b></div>`;
+            html += `<div class="offer-total"><span class="lbl">صافي العائد التقديري</span><span class="val">${offer.netIncome.toFixed(2)}M €</span></div>`;
+            html += `<div class="offer-foot-note"><i class="fas fa-running"></i> إجهاد متوقع على اللاعبين: +${offer.fatigue} وحدة. سيُضاف صافي العائد مباشرة إلى الميزانية وسجل المركز المالي عند لعب المباراة فعلياً.</div>`;
+            document.getElementById('offerCardBody').innerHTML = html;
+            document.getElementById('offerCard').style.display = 'block';
+        }
+
+        async function getAcceptanceChance(opponentName, opponentTeamRow) {
+            let relationScore = 50;
+            try {
+                const rel = await clubDB.getRelation(opponentName);
+                if (rel && typeof rel.relationScore === 'number') relationScore = rel.relationScore;
+            } catch (e) {}
+
+            // فجوة المستوى: كلما كان الخصم أعلى درجة من ناديك، صعُبت الموافقة (نوادي القمة لا توافق بسهولة على مباريات مع فرق أدنى)
+            const myTier = fedRules.tier || 1;
+            const oppTier = opponentTeamRow ? inferTier(opponentTeamRow.competition_id) : 4;
+            const tierGap = oppTier - myTier; // سالب = الخصم أقوى (درجة أعلى رقمياً تعني أضعف)
+            let tierFactor = 0;
+            if (tierGap < 0) tierFactor = tierGap * 8;      // خصم أقوى بكثير: يخفّض فرصة الموافقة
+            else if (tierGap > 0) tierFactor = Math.min(tierGap * 5, 15); // خصم أضعف: يرفع فرصة الموافقة قليلاً
+
+            // سمعة ناديك الحالية تزيد من جاذبية الدعوة
+            const myReputation = parseFloat(localStorage.getItem('clubReputation')) || 50;
+            const repFactor = (myReputation - 50) * 0.25;
+
+            const base = relationScore * 0.55 + 35 + tierFactor + repFactor;
+            // عنصر عشوائي بسيط يحاكي عدم القدرة على التنبؤ الكامل بقرارات الأندية الأخرى
+            const noise = (Math.random() * 10) - 5;
+
+            return Math.min(96, Math.max(15, Math.round(base + noise)));
+        }
+
+        let selectedOpponent = null;
+        let selectedVenue = null;
+        let selectedDate = null;
+        let currentOffer = null;
+        let currentAcceptChance = 60;
+
+        function openScheduleModal() {
+            if (localStorage.getItem('clubRegistrationBlocked') === 'true') {
+                alert('⛔ لا يمكن ترتيب مباريات ودية جديدة حالياً! النادي محظور مؤقتاً من قبل الاتحاد بسبب تجاوز سقف الرواتب (FFP). راجع صفحة "المالية" لتسوية الوضع.');
+                return;
+            }
+            document.getElementById('scheduleModal').classList.add('active');
+            goToStep(1);
+        }
+        function closeScheduleModal() {
+            document.getElementById('scheduleModal').classList.remove('active');
+            selectedOpponent = null; selectedVenue = null; selectedDate = null; currentOffer = null;
+            document.getElementById('oppSearchInput').value = '';
+            document.getElementById('oppResultsContainer').innerHTML = `<div class="hint-text">اكتب اسم نادٍ (حرفين على الأقل) للبحث ضمن قاعدة بيانات الأندية العالمية...</div>`;
+            document.getElementById('offerCard').style.display = 'none';
+            document.getElementById('selectedDateText').innerText = '';
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+        }
+        function goToStep(step) {
+            document.getElementById('step1').style.display = step === 1 ? 'block' : 'none';
+            document.getElementById('step2').style.display = step === 2 ? 'block' : 'none';
+            document.getElementById('dot1').classList.toggle('done', step >= 1);
+            document.getElementById('dot2').classList.toggle('done', step >= 2);
+            document.getElementById('dot3').classList.toggle('done', step >= 2 && selectedVenue && selectedDate);
+            document.getElementById('confirmScheduleBtn').disabled = !(selectedOpponent && selectedVenue && selectedDate);
+        }
+        function backToStep1() { goToStep(1); }
+
+        function handleOpponentSearch() {
+            const q = document.getElementById('oppSearchInput').value.trim().toLowerCase();
+            const container = document.getElementById('oppResultsContainer');
+            if (q.length < 2) {
+                container.innerHTML = `<div class="hint-text">اكتب اسم نادٍ (حرفين على الأقل) للبحث ضمن قاعدة بيانات الأندية العالمية...</div>`;
+                return;
+            }
+            const results = allTeams.filter(t => t.team.toLowerCase().includes(q)).slice(0, 25);
+            if (results.length === 0) {
+                container.innerHTML = `<div class="hint-text">🚫 لا توجد نتائج مطابقة لبحثك.</div>`;
+                return;
+            }
+            window.__searchCache = {};
+            container.innerHTML = results.map((t, idx) => {
+                const tier = inferTier(t.competition_id);
+                window.__searchCache[idx] = t;
+                return `
+                <div class="opp-item" onclick="pickOpponentByIndex(${idx})">
+                    <div class="o-left">
+                        ${crestHTML(t.team, false)}
+                        <div>
+                            <div class="o-name">${t.team}</div>
+                            <div class="o-comp">${t.competition || 'دوري غير مصنف'}</div>
+                        </div>
+                    </div>
+                    <span class="o-tier">${tierLabel(tier)}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function pickOpponentByIndex(idx) { pickOpponent(window.__searchCache[idx]); }
+
+        async function pickOpponent(team) {
+            selectedOpponent = team;
+            document.getElementById('chosenOppCrest').innerText = initials(team.team);
+            document.getElementById('chosenOppName').innerText = team.team;
+            document.getElementById('chosenOppComp').innerText = team.competition || 'دوري غير مصنف';
+            selectedVenue = null; selectedDate = null; currentOffer = null;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+            document.getElementById('offerCard').style.display = 'none';
+            document.getElementById('selectedDateText').innerText = '';
+            document.getElementById('acceptChanceVal').innerText = '...';
+            renderDateChips();
+            goToStep(2);
+
+            currentAcceptChance = await getAcceptanceChance(team.team, team);
+            const cls = currentAcceptChance >= 70 ? 'high' : currentAcceptChance >= 50 ? 'mid' : 'low';
+            const el = document.getElementById('acceptChanceVal');
+            el.innerText = currentAcceptChance + '%';
+            el.className = 'val ' + cls;
+        }
+
+        function selectVenue(v) {
+            selectedVenue = v;
+            document.querySelectorAll('#venueChips .chip').forEach(c => c.classList.toggle('selected', c.dataset.venue === v));
+            recalcOffer();
+        }
+        let currentDateOptions = [];
+        function renderDateChips() {
+            currentDateOptions = generateFreeFriendlyDates(4);
+            const container = document.getElementById('dateChips');
+            container.innerHTML = currentDateOptions.map((d, i) => `
+                <div class="chip" data-idx="${i}" onclick="selectDateChoice(${i})">${weekdayName(d)}<br><span style="font-size:9.5px;opacity:0.8;">${dateLabel(d)}</span></div>
+            `).join('');
+        }
+
+        function selectDateChoice(idx) {
+            selectedDate = currentDateOptions[idx];
+            document.querySelectorAll('#dateChips .chip').forEach((c, i) => c.classList.toggle('selected', i === idx));
+            document.getElementById('selectedDateText').innerText = `📅 الموعد المحدد: ${weekdayName(selectedDate)} ${dateLabel(selectedDate)} (لا يتعارض مع جدول الدوري الرسمي)`;
+            recalcOffer();
+        }
+
+        function recalcOffer() {
+            if (!selectedOpponent || !selectedVenue) { goToStep(2); return; }
+            currentOffer = buildOffer(selectedOpponent, selectedVenue);
+            renderOfferCard(currentOffer);
+            goToStep(2);
+        }
+
+        async function confirmSchedule() {
+            if (!selectedOpponent || !selectedVenue || !selectedDate || !currentOffer) return;
+            const upcoming = await clubDB.getAllUpcomingMatches();
+            const friendlies = upcoming.filter(m => m.competition === 'ودية' && belongsToCurrentSession(m));
+            if (friendlies.length >= MAX_UPCOMING) {
+                alert('⛔ الجدول ممتلئ! لا يمكن ترتيب أكثر من ' + MAX_UPCOMING + ' مباريات ودية قادمة في آن واحد.');
+                return;
+            }
+
+            const btn = document.getElementById('confirmScheduleBtn');
+            btn.disabled = true; btn.innerText = '⏳ جارٍ التفاوض...';
+
+            setTimeout(async () => {
+                const accepted = Math.random() * 100 < currentAcceptChance;
+                const venueLabel = selectedVenue === 'home' ? 'ملعبنا' : selectedVenue === 'away' ? 'ملعب الخصم' : 'أرض محايدة';
+
+                if (!accepted) {
+                    try {
+                        const rel = await clubDB.getRelation(selectedOpponent.team);
+                        await clubDB.updateRelation(selectedOpponent.team, (rel ? rel.relationScore : 50) + 1);
+                    } catch (e) {}
+                    addMessageToSystem('الإدارة الرياضية', `📭 اعتذر نادي ${selectedOpponent.team} عن دعوتكم لمباراة ودية هذا الموسم. يمكن إعادة المحاولة لاحقاً أو اختيار خصم آخر.`);
+                    alert(`📭 اعتذر ${selectedOpponent.team} عن الدعوة هذه المرة. حاول التفاوض مع ناد آخر.`);
+                    closeScheduleModal();
+                    return;
+                }
+
+                await clubDB.addUpcomingMatch({
+                    opponent: selectedOpponent.team,
+                    competition: 'ودية',
+                    venue: selectedVenue,
+                    date: dateLabel(selectedDate),
+                    dateSort: dateSortKey(selectedDate),
+                    time: venueLabel,
+                    expectedIncome: currentOffer.netIncome,
+                    ticketsAndGate: currentOffer.ticketsAndGate,
+                    broadcastRights: currentOffer.broadcastRights,
+                    sponsorBonus: currentOffer.sponsorBonus,
+                    grossIncome: currentOffer.grossIncome,
+                    logisticsCost: currentOffer.logisticsCost,
+                    appearanceFee: currentOffer.appearanceFee,
+                    fatigue: currentOffer.fatigue,
+                    tier: currentOffer.tier,
+                    ownerClub: activeClub,
+                    sessionId: GAME_SESSION_ID
+                });
+
+                try {
+                    const rel = await clubDB.getRelation(selectedOpponent.team);
+                    await clubDB.updateRelation(selectedOpponent.team, Math.min(100, (rel ? rel.relationScore : 50) + 2 + Math.round(Math.random() * 2)));
+                } catch (e) {}
+
+                addMessageToSystem('الإدارة الرياضية', `🤝 وافق نادي ${selectedOpponent.team} على إقامة مباراة ودية بتاريخ ${dateLabel(selectedDate)} (${venueLabel}). العائد الصافي المتوقع: ${currentOffer.netIncome.toFixed(2)}M €.`);
+                closeScheduleModal();
+                renderAll();
+            }, 900);
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tabUpcomingBtn').classList.toggle('active', tab === 'upcoming');
+            document.getElementById('tabHistoryBtn').classList.toggle('active', tab === 'history');
+            document.getElementById('panelUpcoming').classList.toggle('active', tab === 'upcoming');
+            document.getElementById('panelHistory').classList.toggle('active', tab === 'history');
+        }
+
+        async function renderUpcoming() {
+            const panel = document.getElementById('panelUpcoming');
+            let upcoming = (await clubDB.getAllUpcomingMatches()).filter(m => m.competition === 'ودية' && belongsToCurrentSession(m));
+            upcoming.sort((a, b) => (a.dateSort || 0) - (b.dateSort || 0));
+
+            const blocked = localStorage.getItem('clubRegistrationBlocked') === 'true';
+            document.getElementById('scheduleTriggerBtn').disabled = upcoming.length >= MAX_UPCOMING || blocked;
+            document.getElementById('limitNote').innerText = blocked
+                ? `⛔ محظور من الاتحاد بسبب مخالفة مالية`
+                : `${upcoming.length} / ${MAX_UPCOMING} مباريات ودية محجوزة في الأجندة (${fedRules.tierLabel})`;
+
+            if (upcoming.length === 0) {
+                panel.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-plus"></i>لا توجد مباريات ودية مجدولة حالياً. رتّب مواجهة جديدة لتعزيز إيرادات النادي.</div>`;
+                return;
+            }
+
+            panel.innerHTML = upcoming.map(m => {
+                const ready = dateSortKey(gameDate) >= (m.dateSort || 0);
+                const venueText = m.venue === 'home' ? 'ملعبنا (أرضنا)' : m.venue === 'away' ? 'ملعب الخصم' : 'أرض محايدة';
+                const venueIcon = m.venue === 'home' ? 'fa-home' : m.venue === 'away' ? 'fa-plane' : 'fa-globe';
+                return `
+                <div class="match-card">
+                    <div class="card-top">
+                        <span><i class="fas fa-handshake" style="color:var(--gold)"></i> مباراة ودية متفق عليها رسمياً</span>
+                        <span class="tier-badge">${tierLabel(m.tier)}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="vs-row">
+                            <div class="vs-team">${crestHTML(activeClub, true)}<span>${activeClub}</span></div>
+                            <div class="vs-sep">VS</div>
+                            <div class="vs-team right">${crestHTML(m.opponent, false)}<span>${m.opponent}</span></div>
+                        </div>
+                        <div class="meta-row">
+                            <span><i class="fas fa-calendar-day"></i>${m.date}</span>
+                            <span><i class="fas ${venueIcon}"></i>${venueText}</span>
+                            <span><i class="fas fa-running"></i>إجهاد +${m.fatigue}</span>
+                        </div>
+                        <div style="text-align:center;"><span class="income-pill">عائد صافٍ متفق عليه: ${m.expectedIncome.toFixed(2)}M €</span></div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-sim" ${ready ? '' : 'disabled'} onclick="simulateFriendly(${m.id})">
+                            ${ready ? '<i class="fas fa-futbol"></i> محاكاة المباراة' : '⏳ متبقٍ حتى الموعد'}
+                        </button>
+                        <button class="btn-cancel" onclick="cancelFriendly(${m.id}, '${m.opponent.replace(/'/g, "")}')"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function renderHistory() {
+            const panel = document.getElementById('panelHistory');
+            let history = (await clubDB.getAllFriendlyMatches()).filter(belongsToCurrentSession);
+            if (history.length === 0) {
+                panel.innerHTML = `<div class="empty-state"><i class="fas fa-archive"></i>لم يخض الفريق أي مباريات ودية بعد هذا الموسم.</div>`;
+                return;
+            }
+            history = history.slice().reverse();
+            panel.innerHTML = `<div class="match-card">` + history.map(h => {
+                const [my, their] = (h.result || '0-0').split('-').map(n => parseInt(n));
+                const outcome = my > their ? 'win' : my === their ? 'draw' : 'loss';
+                const profitTxt = (h.profit >= 0 ? '+' : '') + h.profit.toFixed(2) + 'M €';
+                return `
+                <div class="history-row" style="border-bottom:1px solid var(--border);">
+                    <div class="history-left">
+                        <span class="history-opp">${crestHTML(h.opponent, false)} ${activeClub} - ${h.opponent}</span>
+                        <span class="history-date"><i class="fas fa-calendar-day"></i> ${h.date} &nbsp;|&nbsp; إجهاد +${h.fatigueCost}</span>
+                        <span class="history-press">${h.pressReport || ''}</span>
+                    </div>
+                    <div class="history-right">
+                        <span class="score-pill ${outcome}">${h.result}</span>
+                        <span class="history-sub">${profitTxt} • سمعة ${h.repImpact >= 0 ? '+' : ''}${h.repImpact}</span>
+                    </div>
+                </div>`;
+            }).join('') + `</div>`;
+        }
+
+        async function renderStats() {
+            const history = (await clubDB.getAllFriendlyMatches()).filter(belongsToCurrentSession);
+            let wins = 0, draws = 0, losses = 0, income = 0;
+            history.forEach(h => {
+                const [my, their] = (h.result || '0-0').split('-').map(n => parseInt(n));
+                if (my > their) wins++; else if (my === their) draws++; else losses++;
+                income += (h.profit || 0);
+            });
+            document.getElementById('stat-played').innerText = history.length;
+            document.getElementById('stat-wins').innerText = wins;
+            document.getElementById('stat-draws').innerText = draws;
+            document.getElementById('stat-losses').innerText = losses;
+            document.getElementById('stat-income').innerText = (income >= 0 ? '+' : '') + income.toFixed(1) + 'M';
+        }
+
+        function renderBanner() {
+            document.getElementById('bannerCrest').innerText = initials(activeClub);
+            document.getElementById('bannerClubName').innerText = activeClub;
+            document.getElementById('bannerDateLabel').innerText = 'التاريخ الحالي: ' + dateLabel(gameDate);
+            document.getElementById('bannerBudget').innerText = getBudget().toFixed(1) + 'M €';
+
+            const stadiumCap = parseInt(localStorage.getItem('clubStadiumCapacity')) || 0;
+            document.getElementById('fedTierBannerText').innerText =
+                `${fedRules.confederationLabel || fedRules.tierLabel} • ${fedRules.tierLabel} • الحد الأقصى للودّيات المجدولة: ${MAX_UPCOMING}` +
+                (stadiumCap ? ` • سعة الملعب المسجّلة تلقائياً: ${stadiumCap.toLocaleString()} مقعد` : '');
+
+            document.getElementById('fedBlockedBanner').style.display =
+                localStorage.getItem('clubRegistrationBlocked') === 'true' ? 'block' : 'none';
+        }
+
+        async function renderAll() {
+            renderBanner();
+            await renderUpcoming();
+            await renderHistory();
+            await renderStats();
+        }
+
+        function generateMatchReport(opponent, myScore, oppScore) {
+            const diff = myScore - oppScore;
+            let templates;
+            if (diff >= 3) templates = [
+                `عرض هجومي كاسح أمام ${opponent}، وجاهزية بدنية لافتة قبل استحقاقات الموسم.`,
+                `سيطرة كاملة على مجريات اللقاء الودي وفارق واضح في المستوى أمام ${opponent}.`
+            ];
+            else if (diff > 0) templates = [
+                `أداء متماسك حسم اللقاء الودي لصالح الفريق أمام ${opponent}.`,
+                `فوز مستحق يعكس جاهزية جيدة قبل المحطات الرسمية القادمة.`
+            ];
+            else if (diff === 0) templates = [
+                `لقاء متكافئ انتهى بالتعادل أمام ${opponent} دون أن يحسم أي طرف النتيجة.`,
+                `مباراة ودية متوازنة، فرصة جيدة لتجربة بدائل تكتيكية جديدة.`
+            ];
+            else if (diff > -3) templates = [
+                `خسارة ضيقة أمام ${opponent}، لن تؤثر على معنويات الفريق قبل المباريات الرسمية.`,
+                `أداء متذبذب أسفر عن خسارة ودية أمام ${opponent} تستدعي مراجعات بسيطة.`
+            ];
+            else templates = [
+                `نتيجة سلبية ومقلقة أمام ${opponent} تستدعي مراجعة الجهاز الفني للأخطاء الدفاعية.`,
+                `هزيمة واضحة تكشف عن نقص في الجاهزية قبل استحقاقات الموسم.`
+            ];
+            return templates[Math.floor(Math.random() * templates.length)];
+        }
+
+        function showResultToast(title, score, detail) {
+            document.getElementById('rtTitle').innerText = title;
+            document.getElementById('rtScore').innerText = score;
+            document.getElementById('rtDetail').innerHTML = detail;
+            const toast = document.getElementById('resultToast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4800);
+        }
+
+        // ============================================================
+        // محرك المباراة الحية — نفس النتيجة النهائية المحسوبة مسبقاً (لضمان اتساق
+        // الأثر المالي)، لكنها تُعرض حيّة دقيقة بدقيقة بدل الكشف الفوري
+        // ============================================================
+        const LIVE_NAME_POOL_FIRST = ["كارلوس","دييغو","لوكاس","ماتيو","برونو","رافائيل","أندريا","ماركو","لوكا","كيفن","إريك","يان","بيتر","سفين","ثياغو"];
+        const LIVE_NAME_POOL_LAST = ["سيلفا","فرنانديز","رودريغيز","مارتينز","روسي","بيانكي","نوفاك","كوالسكي","إيفانوف","مولر","يانسن","أندرسون","كوستا","توريس"];
+        function randomOpponentName() {
+            return LIVE_NAME_POOL_FIRST[Math.floor(Math.random()*LIVE_NAME_POOL_FIRST.length)] + ' ' + LIVE_NAME_POOL_LAST[Math.floor(Math.random()*LIVE_NAME_POOL_LAST.length)];
+        }
+        function randomMyScorer() {
+            const squad = getMySquadForInjury();
+            if (squad.length) return squad[Math.floor(Math.random()*squad.length)].player_name;
+            return randomOpponentName();
+        }
+
+        let liveTimer = null;
+        let liveSpeed = 2;
+        let liveState = null;
+
+        function buildMatchTimeline(myScore, oppScore, match) {
+            const events = [];
+            const usedMinutes = new Set();
+            function pickMinute() {
+                let m;
+                do { m = 1 + Math.floor(Math.random() * 90); } while (usedMinutes.has(m));
+                usedMinutes.add(m);
+                return m;
+            }
+            for (let i = 0; i < myScore; i++) events.push({ minute: pickMinute(), type: 'goal', side: 'home', scorer: randomMyScorer() });
+            for (let i = 0; i < oppScore; i++) events.push({ minute: pickMinute(), type: 'goal', side: 'away', scorer: randomOpponentName() });
+            // أحداث تعليقية إضافية للأجواء (فرص ضائعة، إنذارات) لا تؤثر على النتيجة
+            const flavorCount = 3 + Math.floor(Math.random() * 3);
+            for (let i = 0; i < flavorCount; i++) {
+                const pool = [
+                    { type:'chance', side:'home', text:'فرصة خطيرة تمر بجوار القائم!' },
+                    { type:'chance', side:'away', text:'تسديدة قوية يتصدى لها الحارس ببراعة.' },
+                    { type:'card', side: Math.random()<0.5?'home':'away', text:'بطاقة صفراء بعد تدخل قوي في الوسط.' },
+                    { type:'info', side:'', text:'الفريقان يتبادلان الاستحواذ في منتصف الملعب.' }
+                ];
+                const ev = pool[Math.floor(Math.random()*pool.length)];
+                events.push({ minute: pickMinute(), ...ev });
+            }
+            return events.sort((a,b) => a.minute - b.minute);
+        }
+
+        function simulateFriendly(matchId) {
+            clubDB.getAllUpcomingMatches().then(upcoming => {
+                const match = upcoming.find(m => m.id === matchId);
+                if (!match) return;
+
+                const tier = match.tier || 4;
+                const myScore = Math.floor(Math.random() * (tier >= 3 ? 4 : 3));
+                const oppScore = Math.floor(Math.random() * (tier <= 2 ? 4 : 3));
+                const timeline = buildMatchTimeline(myScore, oppScore, match);
+
+                liveState = { match, matchId, myScore, oppScore, timeline, minute: 0, homeGoals: 0, awayGoals: 0, eventIdx: 0 };
+
+                document.getElementById('liveHomeCrest').src = getTeamLogoUrl(activeClub);
+                document.getElementById('liveAwayCrest').src = getTeamLogoUrl(match.opponent);
+                document.getElementById('liveHomeName').innerText = activeClub;
+                document.getElementById('liveAwayName').innerText = match.opponent;
+                document.getElementById('liveScore').innerText = '0 - 0';
+                document.getElementById('liveMinute').innerText = "0'";
+                document.getElementById('liveProgress').style.width = '0%';
+                document.getElementById('liveEventFeed').innerHTML = `<div style="text-align:center; color:#94a3b8; font-size:12px;">⚽ بداية المباراة أمام ${match.opponent}</div>`;
+
+                document.getElementById('liveMatchOverlay').style.display = 'flex';
+                setLiveSpeed(2);
+                startLiveTicker();
+            });
+        }
+
+        function setLiveSpeed(s) {
+            liveSpeed = s;
+            document.querySelectorAll('.live-speed-btn').forEach(b => {
+                const active = parseInt(b.dataset.speed) === s;
+                b.style.background = active ? '#c5a059' : 'transparent';
+                b.style.color = active ? '#090f1d' : '#94a3b8';
+            });
+        }
+
+        function startLiveTicker() {
+            if (liveTimer) clearInterval(liveTimer);
+            liveTimer = setInterval(() => {
+                if (!liveState) return;
+                liveState.minute += liveSpeed;
+                if (liveState.minute > 90) liveState.minute = 90;
+
+                document.getElementById('liveMinute').innerText = liveState.minute + "'";
+                document.getElementById('liveProgress').style.width = Math.round((liveState.minute/90)*100) + '%';
+
+                while (liveState.eventIdx < liveState.timeline.length && liveState.timeline[liveState.eventIdx].minute <= liveState.minute) {
+                    appendLiveEvent(liveState.timeline[liveState.eventIdx]);
+                    liveState.eventIdx++;
+                }
+
+                if (liveState.minute >= 90) {
+                    clearInterval(liveTimer); liveTimer = null;
+                    setTimeout(() => finalizeFriendlyResult(), 500);
+                }
+            }, 350);
+        }
+
+        function appendLiveEvent(ev) {
+            const feed = document.getElementById('liveEventFeed');
+            let icon = 'ℹ️', text = ev.text || '';
+            if (ev.type === 'goal') {
+                icon = '⚽';
+                if (ev.side === 'home') { liveState.homeGoals++; text = `هــدف! ${ev.scorer} يسجل لـ${activeClub}`; }
+                else { liveState.awayGoals++; text = `هــدف! ${ev.scorer} يسجل لـ${liveState.match.opponent}`; }
+                document.getElementById('liveScore').innerText = `${liveState.homeGoals} - ${liveState.awayGoals}`;
+            } else if (ev.type === 'card') icon = '🟨';
+            else if (ev.type === 'chance') icon = '🔻';
+
+            const row = document.createElement('div');
+            row.style.cssText = 'background:#111a2e; border:1px solid #1e293b; border-radius:10px; padding:8px 10px; font-size:11.5px; color:#f1f5f9; display:flex; gap:8px; align-items:center;';
+            row.innerHTML = `<span style="color:#c5a059; font-weight:700; min-width:28px;">${ev.minute}'</span><span>${icon}</span><span>${text}</span>`;
+            feed.appendChild(row);
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        function skipLiveMatch() {
+            if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+            if (!liveState) return;
+            while (liveState.eventIdx < liveState.timeline.length) {
+                appendLiveEvent(liveState.timeline[liveState.eventIdx]);
+                liveState.eventIdx++;
+            }
+            liveState.minute = 90;
+            document.getElementById('liveMinute').innerText = "90'";
+            document.getElementById('liveProgress').style.width = '100%';
+            finalizeFriendlyResult();
+        }
+
+        async function finalizeFriendlyResult() {
+            const { match, matchId, myScore, oppScore } = liveState;
+            document.getElementById('liveMatchOverlay').style.display = 'none';
+
+            const result = `${myScore}-${oppScore}`;
+            const outcome = myScore > oppScore ? 'win' : myScore === oppScore ? 'draw' : 'loss';
+
+            const perfFactor = outcome === 'win' ? (1.0 + Math.random() * 0.15) : outcome === 'draw' ? (0.92 + Math.random() * 0.1) : (0.85 + Math.random() * 0.1);
+            const actualGross = Math.round(match.grossIncome * perfFactor * 100) / 100;
+            const actualExpenses = Math.round((match.logisticsCost + match.appearanceFee) * 100) / 100;
+            const actualProfit = Math.round((actualGross - actualExpenses) * 100) / 100;
+
+            let repImpact = outcome === 'win' ? +(1 + Math.random() * 2).toFixed(1)
+                          : outcome === 'draw' ? +(0.2 + Math.random() * 0.4).toFixed(1)
+                          : -(0.5 + Math.random() * 1.4).toFixed(1);
+
+            const injuryHit = Math.random() < 0.08;
+            let injuryNote = '';
+            if (injuryHit) {
+                const created = createRealInjury();
+                injuryNote = created ? ` ⚠️ تعرّض ${created.playerName} لإصابة (${created.type}) خلال اللقاء — يحتاج ${created.totalDays} يوماً للتعافي. راجع المركز الطبي.` : ' ⚠️ تعرض أحد اللاعبين لإصابة طفيفة خلال اللقاء وقد يحتاج لأيام راحة.';
+            }
+            const pressReport = generateMatchReport(match.opponent, myScore, oppScore);
+
+            await clubDB.addFriendlyMatch({
+                opponent: match.opponent,
+                date: match.date,
+                result,
+                profit: actualProfit,
+                repImpact: parseFloat(repImpact),
+                fatigueCost: match.fatigue,
+                pressReport,
+                ownerClub: activeClub,
+                sessionId: GAME_SESSION_ID
+            });
+            await clubDB.delete('upcomingMatches', matchId);
+
+            setBudget(getBudget() + actualProfit);
+            pushToFinanceLedger(actualGross, actualExpenses);
+
+            const repNow = (parseFloat(localStorage.getItem('clubReputation')) || 50) + parseFloat(repImpact);
+            localStorage.setItem('clubReputation', repNow.toFixed(1));
+
+            const outcomeAr = outcome === 'win' ? 'فوز 🎉' : outcome === 'draw' ? 'تعادل 🤝' : 'خسارة 😕';
+            addMessageToSystem('الإدارة الرياضية', `⚽ انتهت المباراة الودية أمام ${match.opponent} بنتيجة ${result} (${outcomeAr}). ${pressReport} صافي العائد: ${actualProfit.toFixed(2)}M € (تم تحويله للمركز المالي)، تأثير السمعة: ${repImpact >= 0 ? '+' : ''}${repImpact}.${injuryNote}`);
+
+            showResultToast(
+                `نتيجة الودية أمام ${match.opponent}`,
+                `${result}`,
+                `${outcomeAr} • عائد ${actualProfit.toFixed(2)}M € • سمعة ${repImpact >= 0 ? '+' : ''}${repImpact}${injuryNote}<br><i>${pressReport}</i>`
+            );
+
+            liveState = null;
+            renderAll();
+        }
+
+        async function cancelFriendly(matchId, opponentName) {
+            if (!confirm(`هل أنت متأكد من إلغاء المباراة الودية أمام ${opponentName}؟ قد يؤثر ذلك سلباً على العلاقة مع النادي الآخر.`)) return;
+            await clubDB.delete('upcomingMatches', matchId);
+            try {
+                const rel = await clubDB.getRelation(opponentName);
+                const newScore = (rel ? rel.relationScore : 50) - 5;
+                await clubDB.updateRelation(opponentName, newScore);
+            } catch (e) {}
+            addMessageToSystem('الإدارة الرياضية', `🚫 تم إلغاء المباراة الودية المقررة أمام ${opponentName}. تأثر ذلك قليلاً بالعلاقة مع إدارة النادي الآخر.`);
+            renderAll();
+        }
+
+        window.onload = async function () {
+            await initDB();
+            loadTeamsDatabase();
+            renderAll();
+        };
+    </script>
+</body>
+</html>

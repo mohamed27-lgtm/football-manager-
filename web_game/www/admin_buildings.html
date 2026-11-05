@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>المباني الإدارية - مركز القيادة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #020617;
+            --card: #0f172a;
+            --card-hover: #1e293b;
+            --gold: #c5a059;
+            --gold-dim: rgba(197, 160, 89, 0.15);
+            --border: #1e293b;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --green: #10b981;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --orange: #f59e0b;
+            --purple: #8b5cf6;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --warning-bg: rgba(245, 158, 11, 0.1);
+            --info-bg: rgba(59, 130, 246, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, system-ui, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: radial-gradient(circle at 20% 30%, #0c0f15, #030407);
+            color: var(--text);
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        /* ===== الهيدر العلوي ===== */
+        .header {
+            background: linear-gradient(135deg, rgba(22, 27, 34, 0.98), rgba(8, 9, 14, 0.98));
+            backdrop-filter: blur(10px);
+            padding: 18px 16px;
+            border-bottom: 2px solid var(--gold);
+            border-radius: 16px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header-left h1 {
+            font-size: 18px;
+            color: var(--gold);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .header-left .sub {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 6px 14px;
+            text-align: center;
+            min-width: 80px;
+        }
+        .stat-badge .num {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gold);
+            display: block;
+        }
+        .stat-badge .lbl {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+        .stat-badge .num.green { color: var(--green); }
+        .stat-badge .num.blue { color: var(--blue); }
+
+        .back-btn {
+            background: var(--border);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .back-btn:hover { background: #334155; }
+
+        /* ===== شريط الملخص السريع ===== */
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .summary-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .summary-card .icon {
+            font-size: 22px;
+            color: var(--gold);
+            width: 40px;
+            text-align: center;
+        }
+        .summary-card .info .value {
+            font-size: 16px;
+            font-weight: 700;
+            display: block;
+        }
+        .summary-card .info .label {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        /* ===== شبكة المباني ===== */
+        .buildings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .building-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .building-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            background: var(--card-hover);
+        }
+
+        .building-card .status-ribbon {
+            position: absolute;
+            top: 12px;
+            left: -28px;
+            padding: 4px 30px;
+            font-size: 9px;
+            font-weight: 700;
+            transform: rotate(-45deg);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+        .status-ribbon.excellent { background: var(--green); color: #000; }
+        .status-ribbon.good { background: var(--blue); color: #fff; }
+        .status-ribbon.maintenance { background: var(--orange); color: #000; }
+        .status-ribbon.poor { background: var(--red); color: #fff; }
+        .status-ribbon.under-construction { background: var(--purple); color: #fff; }
+
+        .building-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .building-header .name-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .building-header .name-area .icon {
+            font-size: 22px;
+            color: var(--gold);
+            width: 36px;
+            text-align: center;
+        }
+        .building-header .name-area h3 {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .building-header .level-badge {
+            background: var(--gold-dim);
+            color: var(--gold);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid var(--gold);
+        }
+
+        .building-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 12px 0 14px;
+        }
+        .building-stats .stat-item {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 6px 10px;
+        }
+        .building-stats .stat-item .val {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gold);
+            display: block;
+        }
+        .building-stats .stat-item .lbl {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+        .building-stats .stat-item .val.green { color: var(--green); }
+        .building-stats .stat-item .val.blue { color: var(--blue); }
+        .building-stats .stat-item .val.red { color: var(--red); }
+        .building-stats .stat-item .val.orange { color: var(--orange); }
+
+        /* شريط التقدم للحالة */
+        .condition-bar {
+            width: 100%;
+            height: 6px;
+            background: #1e293b;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0 12px;
+        }
+        .condition-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+        .condition-bar .fill.excellent { background: var(--green); }
+        .condition-bar .fill.good { background: var(--blue); }
+        .condition-bar .fill.maintenance { background: var(--orange); }
+        .condition-bar .fill.poor { background: var(--red); }
+
+        .building-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .building-actions .btn {
+            flex: 1;
+            min-width: 70px;
+            padding: 8px 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+        }
+        .btn-upgrade { background: var(--gold); color: #000; }
+        .btn-upgrade:hover { background: #d4af37; }
+        .btn-maintain { background: var(--blue); color: #fff; }
+        .btn-maintain:hover { background: #2563eb; }
+        .btn-rent { background: var(--green); color: #000; }
+        .btn-rent:hover { background: #059669; }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ===== قائمة الأحداث الإدارية ===== */
+        .events-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 10px;
+        }
+        .events-section h4 {
+            color: var(--gold);
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .event-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+        }
+        .event-item:last-child { border-bottom: none; }
+        .event-item .time {
+            color: var(--muted);
+            font-size: 10px;
+        }
+        .event-item .event-text { flex: 1; margin: 0 10px; }
+        .event-item .event-text .highlight { color: var(--gold); font-weight: 600; }
+        .event-item .event-type {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .event-type.upgrade { background: var(--gold-dim); color: var(--gold); }
+        .event-type.maintenance { background: var(--info-bg); color: var(--blue); }
+        .event-type.rent { background: var(--success-bg); color: var(--green); }
+        .event-type.alert { background: var(--danger-bg); color: var(--red); }
+
+        /* ===== توست إشعارات ===== */
+        .toast-msg {
+            position: fixed;
+            bottom: 25px;
+            left: 20px;
+            right: 20px;
+            background: #1e293b;
+            color: var(--text);
+            padding: 14px 18px;
+            border-radius: 14px;
+            text-align: center;
+            z-index: 1300;
+            backdrop-filter: blur(10px);
+            animation: fadeUp 3s forwards;
+            font-weight: 600;
+            font-size: 13px;
+            border-right: 4px solid var(--gold);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .toast-msg.success { border-right-color: var(--green); }
+        .toast-msg.error { border-right-color: var(--red); }
+        .toast-msg.info { border-right-color: var(--blue); }
+
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+            15% { opacity: 1; transform: translateY(0) scale(1); }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-20px) scale(0.95); visibility: hidden; }
+        }
+
+        @media (max-width: 600px) {
+            .header { flex-direction: column; align-items: stretch; text-align: center; }
+            .header-right { justify-content: center; }
+            .buildings-grid { grid-template-columns: 1fr; }
+            .summary-row { grid-template-columns: 1fr 1fr; }
+            .building-actions .btn { min-width: 60px; font-size: 10px; padding: 6px 8px; }
+            .building-stats { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== الهيدر ===== -->
+    <div class="header">
+        <div class="header-left">
+            <h1>🏢 المباني الإدارية</h1>
+            <div class="sub" id="clubNameDisplay">تحميل النادي...</div>
+        </div>
+        <div class="header-right">
+            <div class="stat-badge">
+                <span class="num green" id="totalEmployees">0</span>
+                <span class="lbl">موظف</span>
+            </div>
+            <div class="stat-badge">
+                <span class="num blue" id="totalBuildings">0</span>
+                <span class="lbl">مبنى</span>
+            </div>
+            <div class="stat-badge">
+                <span class="num" id="totalRentIncome">0</span>
+                <span class="lbl">إيجار شهري (M€)</span>
+            </div>
+            <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i> المقر</a>
+        </div>
+    </div>
+
+    <!-- ===== شريط الملخص السريع ===== -->
+    <div class="summary-row" id="summaryRow">
+        <div class="summary-card">
+            <div class="icon"><i class="fas fa-handshake"></i></div>
+            <div class="info">
+                <span class="value" id="repSummary">--</span>
+                <span class="label">سمعة النادي</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="icon"><i class="fas fa-coins"></i></div>
+            <div class="info">
+                <span class="value" id="budgetSummary">--</span>
+                <span class="label">الميزانية (M€)</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="icon"><i class="fas fa-trophy"></i></div>
+            <div class="info">
+                <span class="value" id="leagueRankSummary">--</span>
+                <span class="label">ترتيب الدوري</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="icon"><i class="fas fa-building"></i></div>
+            <div class="info">
+                <span class="value" id="avgCondition">--</span>
+                <span class="label">متوسط الحالة</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== شبكة المباني ===== -->
+    <div class="buildings-grid" id="buildingsContainer"></div>
+
+    <!-- ===== سجل الأحداث الإدارية ===== -->
+    <div class="events-section">
+        <h4><i class="fas fa-clock"></i> آخر الأنشطة الإدارية</h4>
+        <div id="eventsList">
+            <div class="event-item">
+                <span class="event-text">لا توجد أحداث مسجلة حتى الآن. قم بترقية أو صيانة المباني لتسجيل النشاطات.</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  محرك المباني الإدارية - متكامل مع باقي الصفحات
+        // ============================================================
+
+        // ===== جلب البيانات من localStorage =====
+        function getClubName() {
+            return localStorage.getItem('presidentialClub') || 'نادي المستقبل';
+        }
+
+        function getBudget() {
+            return parseFloat(localStorage.getItem('clubBudget')) || 150.0;
+        }
+
+        function getReputation() {
+            return parseFloat(localStorage.getItem('clubReputation')) || 50;
+        }
+
+        function getLeagueRank() {
+            return localStorage.getItem('league_rank') || '--';
+        }
+
+        // ===== هيكل المباني الإدارية =====
+        // يتم تخزين حالة المباني في localStorage تحت مفتاح 'admin_buildings'
+        function getDefaultBuildings() {
+            return [
+                {
+                    id: 'president_office',
+                    name: 'مكتب الرئيس التنفيذي',
+                    icon: 'fa-crown',
+                    level: 3,
+                    maxLevel: 5,
+                    condition: 85, // 0-100
+                    status: 'excellent',
+                    stats: {
+                        'كفاءة القرار': 78,
+                        'سمعة الإدارة': 82,
+                        'رضا الموظفين': 75
+                    },
+                    rentIncome: 0.12,
+                    isRented: false,
+                    upgradeCost: 3.2,
+                    maintainCost: 0.6,
+                    underConstruction: false,
+                    constructionTimer: 0
+                },
+                {
+                    id: 'contract_management',
+                    name: 'إدارة العقود والانتقالات',
+                    icon: 'fa-file-signature',
+                    level: 2,
+                    maxLevel: 5,
+                    condition: 70,
+                    status: 'good',
+                    stats: {
+                        'سرعة التفاوض': 65,
+                        'جاذبية اللاعبين': 72,
+                        'دقة العقود': 68
+                    },
+                    rentIncome: 0.08,
+                    isRented: false,
+                    upgradeCost: 2.5,
+                    maintainCost: 0.5,
+                    underConstruction: false,
+                    constructionTimer: 0
+                },
+                {
+                    id: 'marketing_hub',
+                    name: 'مركز التسويق والعلامة التجارية',
+                    icon: 'fa-bullhorn',
+                    level: 2,
+                    maxLevel: 5,
+                    condition: 65,
+                    status: 'maintenance',
+                    stats: {
+                        'جاذبية الرعاة': 60,
+                        'إنتاجية المتجر': 55,
+                        'التواجد الرقمي': 70
+                    },
+                    rentIncome: 0.15,
+                    isRented: false,
+                    upgradeCost: 2.8,
+                    maintainCost: 0.7,
+                    underConstruction: false,
+                    constructionTimer: 0
+                },
+                {
+                    id: 'scouting_center',
+                    name: 'مركز كشف المواهب',
+                    icon: 'fa-binoculars',
+                    level: 1,
+                    maxLevel: 5,
+                    condition: 90,
+                    status: 'excellent',
+                    stats: {
+                        'اكتشاف المواهب': 55,
+                        'شبكة الكشافين': 48,
+                        'تقارير المباريات': 62
+                    },
+                    rentIncome: 0.05,
+                    isRented: false,
+                    upgradeCost: 1.8,
+                    maintainCost: 0.4,
+                    underConstruction: false,
+                    constructionTimer: 0
+                },
+                {
+                    id: 'media_studio',
+                    name: 'استوديو البث والإعلام',
+                    icon: 'fa-tv',
+                    level: 3,
+                    maxLevel: 5,
+                    condition: 88,
+                    status: 'excellent',
+                    stats: {
+                        'جودة البث': 85,
+                        'متابعة الجماهير': 80,
+                        'الدخل الإعلامي': 72
+                    },
+                    rentIncome: 0.25,
+                    isRented: false,
+                    upgradeCost: 4.0,
+                    maintainCost: 0.8,
+                    underConstruction: false,
+                    constructionTimer: 0
+                },
+                {
+                    id: 'financial_center',
+                    name: 'المركز المالي والمحاسبة',
+                    icon: 'fa-calculator',
+                    level: 2,
+                    maxLevel: 5,
+                    condition: 60,
+                    status: 'poor',
+                    stats: {
+                        'كفاءة الصرف': 45,
+                        'الشفافية المالية': 50,
+                              'التخطيط المالي': 55
+                    },
+                    rentIncome: 0.06,
+                    isRented: false,
+                    upgradeCost: 2.2,
+                    maintainCost: 0.5,
+                    underConstruction: false,
+                    constructionTimer: 0
+                }
+            ];
+        }
+
+        function loadBuildings() {
+            const stored = localStorage.getItem('admin_buildings');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch (e) {
+                    return getDefaultBuildings();
+                }
+            }
+            return getDefaultBuildings();
+        }
+
+        function saveBuildings(buildings) {
+            localStorage.setItem('admin_buildings', JSON.stringify(buildings));
+        }
+
+        // ===== سجل الأحداث =====
+        function addEvent(text, type = 'info') {
+            let events = JSON.parse(localStorage.getItem('admin_events')) || [];
+            events.unshift({
+                text: text,
+                type: type,
+                time: new Date().toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+            });
+            if (events.length > 20) events.pop();
+            localStorage.setItem('admin_events', JSON.stringify(events));
+            renderEvents();
+        }
+
+        function loadEvents() {
+            return JSON.parse(localStorage.getItem('admin_events')) || [];
+        }
+
+        // ===== عرض الإشعارات =====
+        function showToast(msg, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast-msg ${type}`;
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ===== تحديث الواجهة =====
+        function render() {
+            const buildings = loadBuildings();
+            const clubName = getClubName();
+            const budget = getBudget();
+            const rep = getReputation();
+            const rank = getLeagueRank();
+
+            // تحديث الهيدر
+            document.getElementById('clubNameDisplay').innerText = clubName;
+            document.getElementById('totalBuildings').innerText = buildings.length;
+            document.getElementById('repSummary').innerText = rep.toFixed(0);
+            document.getElementById('budgetSummary').innerText = budget.toFixed(1);
+            document.getElementById('leagueRankSummary').innerText = rank;
+
+            // حساب عدد الموظفين (محاكاة)
+            let totalEmployees = buildings.reduce((sum, b) => sum + (b.level * 3 + 2), 0);
+            document.getElementById('totalEmployees').innerText = totalEmployees;
+
+            // حساب الإيجار الشهري
+            let totalRent = buildings.reduce((sum, b) => sum + (b.isRented ? b.rentIncome : 0), 0);
+            document.getElementById('totalRentIncome').innerText = totalRent.toFixed(2);
+
+            // متوسط الحالة
+            let avgCond = buildings.reduce((sum, b) => sum + b.condition, 0) / buildings.length;
+            document.getElementById('avgCondition').innerText = avgCond.toFixed(0) + '%';
+
+            // عرض المباني
+            renderBuildings(buildings);
+            renderEvents();
+        }
+
+        function renderBuildings(buildings) {
+            const container = document.getElementById('buildingsContainer');
+            container.innerHTML = '';
+
+            buildings.forEach((b, index) => {
+                // تحديد شريط الحالة
+                let statusLabel = '';
+                let statusClass = '';
+                let conditionClass = '';
+                if (b.underConstruction) {
+                    statusLabel = 'تحت الإنشاء';
+                    statusClass = 'under-construction';
+                    conditionClass = 'poor';
+                } else if (b.condition >= 80) {
+                    statusLabel = 'ممتاز';
+                    statusClass = 'excellent';
+                    conditionClass = 'excellent';
+                } else if (b.condition >= 60) {
+                    statusLabel = 'جيد';
+                    statusClass = 'good';
+                    conditionClass = 'good';
+                } else if (b.condition >= 40) {
+                    statusLabel = 'يحتاج صيانة';
+                    statusClass = 'maintenance';
+                    conditionClass = 'maintenance';
+                } else {
+                    statusLabel = 'سيء';
+                    statusClass = 'poor';
+                    conditionClass = 'poor';
+                }
+
+                // بناء البطاقة
+                const card = document.createElement('div');
+                card.className = 'building-card';
+
+                // شريط الحالة
+                const ribbon = document.createElement('div');
+                ribbon.className = `status-ribbon ${statusClass}`;
+                ribbon.innerText = statusLabel;
+                card.appendChild(ribbon);
+
+                // الهيدر
+                const header = document.createElement('div');
+                header.className = 'building-header';
+                header.innerHTML = `
+                    <div class="name-area">
+                        <span class="icon"><i class="fas ${b.icon}"></i></span>
+                        <h3>${b.name}</h3>
+                    </div>
+                    <span class="level-badge">مستوى ${b.level} / ${b.maxLevel}</span>
+                `;
+                card.appendChild(header);
+
+                // الإحصائيات
+                const statsDiv = document.createElement('div');
+                statsDiv.className = 'building-stats';
+                let statsHtml = '';
+                for (let key in b.stats) {
+                    const val = b.stats[key];
+                    let colorClass = 'blue';
+                    if (val >= 70) colorClass = 'green';
+                    else if (val >= 50) colorClass = 'orange';
+                    else colorClass = 'red';
+                    statsHtml += `
+                        <div class="stat-item">
+                            <span class="val ${colorClass}">${val}%</span>
+                            <span class="lbl">${key}</span>
+                        </div>
+                    `;
+                }
+                statsDiv.innerHTML = statsHtml;
+                card.appendChild(statsDiv);
+
+                // شريط الحالة
+                const bar = document.createElement('div');
+                bar.className = 'condition-bar';
+                bar.innerHTML = `<div class="fill ${conditionClass}" style="width:${b.condition}%"></div>`;
+                card.appendChild(bar);
+
+                // أزرار الإجراءات
+                const actions = document.createElement('div');
+                actions.className = 'building-actions';
+
+                // زر الترقية
+                const upgradeBtn = document.createElement('button');
+                upgradeBtn.className = 'btn btn-upgrade';
+                const isMaxLevel = b.level >= b.maxLevel;
+                const canAfford = budget >= b.upgradeCost;
+                upgradeBtn.disabled = isMaxLevel || b.underConstruction || !canAfford;
+                upgradeBtn.innerText = isMaxLevel ? '✔️ مكتمل' : `⬆️ ترقية (${b.upgradeCost.toFixed(1)}M€)`;
+                upgradeBtn.onclick = () => upgradeBuilding(index);
+                actions.appendChild(upgradeBtn);
+
+                // زر الصيانة
+                const maintainBtn = document.createElement('button');
+                maintainBtn.className = 'btn btn-maintain';
+                maintainBtn.disabled = b.underConstruction || budget < b.maintainCost;
+                maintainBtn.innerText = `🔧 صيانة (${b.maintainCost.toFixed(1)}M€)`;
+                maintainBtn.onclick = () => maintainBuilding(index);
+                actions.appendChild(maintainBtn);
+
+                // زر التأجير
+                const rentBtn = document.createElement('button');
+                rentBtn.className = 'btn btn-rent';
+                rentBtn.disabled = b.underConstruction;
+                rentBtn.innerText = b.isRented ? '✅ مؤجر' : `🏢 تأجير (+${b.rentIncome.toFixed(2)}M€)`;
+                rentBtn.onclick = () => toggleRent(index);
+                actions.appendChild(rentBtn);
+
+                card.appendChild(actions);
+                container.appendChild(card);
+            });
+        }
+
+        // ===== الإجراءات الإدارية =====
+
+        function upgradeBuilding(index) {
+            const buildings = loadBuildings();
+            const b = buildings[index];
+            const budget = getBudget();
+
+            if (b.level >= b.maxLevel) {
+                showToast('هذا المبنى في أعلى مستوى له!', 'error');
+                return;
+            }
+            if (b.underConstruction) {
+                showToast('المبنى قيد الإنشاء حالياً، انتظر حتى الانتهاء.', 'error');
+                return;
+            }
+            if (budget < b.upgradeCost) {
+                showToast(`الميزانية لا تكفي! تحتاج ${b.upgradeCost.toFixed(1)}M€`, 'error');
+                return;
+            }
+
+            // خصم التكلفة
+            localStorage.setItem('clubBudget', (budget - b.upgradeCost).toFixed(2));
+
+            // بدء البناء
+            b.underConstruction = true;
+            b.constructionTimer = 3; // 3 أيام (محاكاة)
+            b.condition = 100;
+
+            // تحسين الإحصائيات
+            for (let key in b.stats) {
+                b.stats[key] = Math.min(99, b.stats[key] + 8 + Math.floor(Math.random() * 5));
+            }
+
+            saveBuildings(buildings);
+            addEvent(`🚀 بدء ترقية "${b.name}" إلى المستوى ${b.level + 1} (تكلفة: ${b.upgradeCost.toFixed(1)}M€)`, 'upgrade');
+            showToast(`✅ بدء ترقية ${b.name}! ستكتمل بعد 3 أيام.`, 'success');
+
+            // محاكاة الانتهاء بعد 3 ثوانٍ (بدلاً من 3 أيام للاختبار)
+            setTimeout(() => {
+                const updated = loadBuildings();
+                const target = updated[index];
+                if (target && target.underConstruction) {
+                    target.level += 1;
+                    target.underConstruction = false;
+                    target.constructionTimer = 0;
+                    target.condition = 95;
+                    saveBuildings(updated);
+                    addEvent(`🎉 اكتملت ترقية "${target.name}" إلى المستوى ${target.level}!`, 'upgrade');
+                    render();
+                    showToast(`🎉 اكتملت ترقية ${target.name}!`, 'success');
+                }
+            }, 3000);
+
+            render();
+        }
+
+        function maintainBuilding(index) {
+            const buildings = loadBuildings();
+            const b = buildings[index];
+            const budget = getBudget();
+
+            if (b.underConstruction) {
+                showToast('المبنى قيد الإنشاء، لا يمكن الصيانة الآن.', 'error');
+                return;
+            }
+            if (budget < b.maintainCost) {
+                showToast(`الميزانية لا تكفي! تحتاج ${b.maintainCost.toFixed(1)}M€`, 'error');
+                return;
+            }
+
+            localStorage.setItem('clubBudget', (budget - b.maintainCost).toFixed(2));
+            b.condition = Math.min(100, b.condition + 25);
+
+            // تحسين طفيف للإحصائيات
+            for (let key in b.stats) {
+                b.stats[key] = Math.min(99, b.stats[key] + 3);
+            }
+
+            saveBuildings(buildings);
+            addEvent(`🔧 إجراء صيانة دورية لـ "${b.name}" (تكلفة: ${b.maintainCost.toFixed(1)}M€)`, 'maintenance');
+            showToast(`✅ تمت صيانة ${b.name} بنجاح!`, 'success');
+            render();
+        }
+
+        function toggleRent(index) {
+            const buildings = loadBuildings();
+            const b = buildings[index];
+
+            if (b.underConstruction) {
+                showToast('المبنى قيد الإنشاء، لا يمكن التأجير الآن.', 'error');
+                return;
+            }
+
+            b.isRented = !b.isRented;
+            if (b.isRented) {
+                // إضافة دخل الإيجار للميزانية
+                const budget = getBudget();
+                localStorage.setItem('clubBudget', (budget + b.rentIncome).toFixed(2));
+                addEvent(`🏢 تأجير "${b.name}" بمبلغ ${b.rentIncome.toFixed(2)}M€ شهرياً`, 'rent');
+                showToast(`✅ تم تأجير ${b.name} بنجاح!`, 'success');
+            } else {
+                addEvent(`🔚 إنهاء عقد إيجار "${b.name}"`, 'info');
+                showToast(`ℹ️ تم إنهاء عقد إيجار ${b.name}.`, 'info');
+            }
+
+            saveBuildings(buildings);
+            render();
+        }
+
+        // ===== عرض الأحداث =====
+        function renderEvents() {
+            const events = loadEvents();
+            const container = document.getElementById('eventsList');
+            if (events.length === 0) {
+                container.innerHTML = `
+                    <div class="event-item">
+                        <span class="event-text">لا توجد أحداث مسجلة. قم بترقية أو صيانة المباني لتسجيل النشاطات.</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = events.slice(0, 8).map(e => `
+                <div class="event-item">
+                    <span class="time">${e.time || 'الآن'}</span>
+                    <span class="event-text">${e.text}</span>
+                    <span class="event-type ${e.type}">${e.type === 'upgrade' ? 'ترقية' : e.type === 'maintenance' ? 'صيانة' : e.type === 'rent' ? 'تأجير' : 'تنبيه'}</span>
+                </div>
+            `).join('');
+        }
+
+        // ===== تهيئة الصفحة =====
+        function init() {
+            // التأكد من وجود بيانات المباني
+            if (!localStorage.getItem('admin_buildings')) {
+                saveBuildings(getDefaultBuildings());
+                addEvent('🏛️ تأسيس المركز الإداري للنادي', 'info');
+            }
+            render();
+
+            // تحديث دوري كل 10 ثوانٍ لمزامنة الميزانية
+            setInterval(() => {
+                render();
+            }, 10000);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+</body>
+</html>

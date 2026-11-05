@@ -1,0 +1,41 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+GAL,Galatasaray,غلطة سراي,تركيا,199,UEFA,16,SL,Super Lig,First Tier,24,"1962,1963,1969,1971,1972,1973,1987,1988,1993,1994,1997,1998,1999,2000,2002,2006,2008,2012,2013,2015,2018,2019,2023,2024"
+GAL,Galatasaray,غلطة سراي,تركيا,199,UEFA,16,TK,Turkish Cup,Domestic Cup,18,"1963,1964,1965,1966,1973,1976,1982,1985,1991,1993,1996,1999,2000,2005,2014,2015,2016,2019"
+GAL,Galatasaray,غلطة سراي,تركيا,199,UEFA,16,TSC,Turkish Super Cup,Domestic Super Cup,17,"1966,1969,1972,1982,1987,1988,1991,1993,1996,1997,2008,2012,2013,2015,2016,2019,2023"
+GAL,Galatasaray,غلطة سراي,تركيا,199,UEFA,16,UEL,UEFA Europa League,Continental,1,2000
+GAL,Galatasaray,غلطة سراي,تركيا,199,UEFA,16,USC,UEFA Super Cup,Continental,1,2000
+FEN,Fenerbahce,فنربخشة,تركيا,199,UEFA,16,SL,Super Lig,First Tier,19,"1959,1961,1964,1965,1968,1970,1974,1975,1978,1983,1985,1989,1996,2001,2004,2005,2007,2011,2014"
+FEN,Fenerbahce,فنربخشة,تركيا,199,UEFA,16,TK,Turkish Cup,Domestic Cup,7,"1968,1974,1979,1983,2012,2013,2023"
+FEN,Fenerbahce,فنربخشة,تركيا,199,UEFA,16,TSC,Turkish Super Cup,Domestic Super Cup,9,"1968,1973,1975,1984,1985,1990,2007,2009,2014"
+BJK,Beşiktaş,بشكتاش,تركيا,199,UEFA,16,SL,Super Lig,First Tier,16,"1957,1958,1960,1966,1967,1982,1986,1990,1991,1992,1995,2003,2009,2016,2017,2021"
+BJK,Beşiktaş,بشكتاش,تركيا,199,UEFA,16,TK,Turkish Cup,Domestic Cup,11,"1975,1989,1990,1994,1998,2006,2007,2009,2011,2021,2024"
+BJK,Beşiktaş,بشكتاش,تركيا,199,UEFA,16,TSC,Turkish Super Cup,Domestic Super Cup,10,"1967,1974,1986,1989,1992,1994,1998,2006,2021,2024"
+BJK,Beşiktaş,بشكتاش,تركيا,199,UEFA,16,UCL,UEFA Champions League,Continental,0,·
+BJK,Beşiktaş,بشكتاش,تركيا,199,UEFA,16,UEL,UEFA Europa League,Continental,0,·
+TRA,Trabzonspor,طرابزون سبور,تركيا,199,UEFA,16,SL,Super Lig,First Tier,7,"1976,1977,1979,1980,1981,1984,2022"
+TRA,Trabzonspor,طرابزون سبور,تركيا,199,UEFA,16,TK,Turkish Cup,Domestic Cup,9,"1977,1978,1984,1992,1995,2003,2004,2010,2020"
+TRA,Trabzonspor,طرابزون سبور,تركيا,199,UEFA,16,TSC,Turkish Super Cup,Domestic Super Cup,10,"1976,1977,1978,1979,1980,1981,1983,1995,2010,2020"
+BAS,Başakşehir,باشاك شهير,تركيا,199,UEFA,16,SL,Super Lig,First Tier,1,2020
+BAS,Başakşehir,باشاك شهير,تركيا,199,UEFA,16,TK,Turkish Cup,Domestic Cup,0,·
+KON,Konyaspor,قونية سبور,تركيا,199,UEFA,16,TK,Turkish Cup,Domestic Cup,1,2017
+SIV,Sivasspor,سيواس سبور,تركيا,199,UEFA,16,TK,Turkish Cup,Domestic Cup,1,2022
+KAY,Kayserispor,قيصري سبور,تركيا,199,UEFA,16,·,·,·,0,·
+GAZ,Gaziantep FK,غازي عنتاب,تركيا,199,UEFA,16,·,·,·,0,·
+ALA,Alanyaspor,ألانيا سبور,تركيا,199,UEFA,16,·,·,·,0,·
+RIZ,Çaykur Rizespor,ريزي سبور,تركيا,199,UEFA,16,·,·,·,0,·
+ANT,Antalyaspor,أنطاليا سبور,تركيا,199,UEFA,16,·,·,·,0,·
+KAS,Kasımpaşa,قاسم باشا,تركيا,199,UEFA,16,·,·,·,0,·
+FAT,Fatih Karagümrük,فاتح كاراغومروك,تركيا,199,UEFA,16,·,·,·,0,·
+IST,İstanbulspor,إسطنبول سبور,تركيا,199,UEFA,16,·,·,·,0,·
+PEND,Pendikspor,بنديك سبور,تركيا,199,UEFA,16,·,·,·,0,·
+ANK,Ankaragücü,أنقرة غوجو,تركيا,199,UEFA,16,TK,Turkish Cup,Domestic Cup,2,"1972,1981"
+ESK,Eskişehirspor,إسكي شهير سبور,تركيا,199,UEFA,16,·,·,·,0,·
+GEN,Gençlerbirliği,غينتشلربيرليغي,تركيا,199,UEFA,16,·,·,·,0,·
+BUR,Bursaspor,بورصة سبور,تركيا,199,UEFA,16,SL,Super Lig,First Tier,1,2010
+BUR,Bursaspor,بورصة سبور,تركيا,199,UEFA,16,TK,Turkish Cup,Domestic Cup,1,1986
+GÖZ,Göztepe,غوزتيبي,تركيا,199,UEFA,16,TK,Turkish Cup,Domestic Cup,2,"1969,1970"
+ALT,Altay,ألتاي,تركيا,199,UEFA,16,TK,Turkish Cup,Domestic Cup,2,"1967,1980"
+DEN,Denizlispor,دنيزلي سبور,تركيا,199,UEFA,16,·,·,·,0,·
+SAM,Samsunspor,سامسون سبور,تركيا,199,UEFA,16,·,·,·,0,·
+BOD,Bodrum FK,بودروم,تركيا,199,UEFA,16,·,·,·,0,·
+EYR,Eyüpspor,أيوب سبور,تركيا,199,UEFA,16,·,·,·,0,·

@@ -1,0 +1,96 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+HIL,Al-Hilal,الهلال,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,19,"1977,1979,1985,1986,1988,1990,1996,1998,2002,2005,2008,2010,2011,2017,2018,2020,2021,2022,2024"
+HIL,Al-Hilal,الهلال,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,11,"1961,1964,1980,1982,1984,1989,2015,2017,2020,2023,2024"
+HIL,Al-Hilal,الهلال,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,13,"1964,1995,2000,2003,2005,2006,2008,2009,2010,2011,2012,2013,2016"
+HIL,Al-Hilal,الهلال,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,4,"2015,2018,2021,2023"
+HIL,Al-Hilal,الهلال,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,4,"1991,2000,2019,2021"
+HIL,Al-Hilal,الهلال,السعودية,206,AFC,23,CWC,FIFA Club World Cup,Global,0,·
+ITT,Al-Ittihad,الاتحاد,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,9,"1982,1997,1999,2000,2001,2003,2007,2009,2023"
+ITT,Al-Ittihad,الاتحاد,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,9,"1958,1959,1960,1963,1967,1988,2010,2013,2018"
+ITT,Al-Ittihad,الاتحاد,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,8,"1958,1959,1963,1991,1997,2001,2004,2017"
+ITT,Al-Ittihad,الاتحاد,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,2,"2022,2024"
+ITT,Al-Ittihad,الاتحاد,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,2,"2004,2005"
+ITT,Al-Ittihad,الاتحاد,السعودية,206,AFC,23,CWC,FIFA Club World Cup,Global,0,·
+NAS,Al-Nassr,النصر,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,9,"1975,1980,1981,1989,1994,1995,2014,2015,2019"
+NAS,Al-Nassr,النصر,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,6,"1974,1976,1981,1986,1987,1990"
+NAS,Al-Nassr,النصر,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,3,"1973,1974,2014"
+NAS,Al-Nassr,النصر,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,2,"2019,2020"
+NAS,Al-Nassr,النصر,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+NAS,Al-Nassr,النصر,السعودية,206,AFC,23,CWC,FIFA Club World Cup,Global,0,·
+AHL,Al-Ahli,الأهلي,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,3,"1969,1978,1984"
+AHL,Al-Ahli,الأهلي,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,6,"1962,1965,1969,1970,1971,1973"
+AHL,Al-Ahli,الأهلي,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,6,"1957,1970,1998,2002,2007,2015"
+AHL,Al-Ahli,الأهلي,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,1,2016
+AHL,Al-Ahli,الأهلي,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+AHL,Al-Ahli,الأهلي,السعودية,206,AFC,23,CWC,FIFA Club World Cup,Global,0,·
+SHA,Al-Shabab,الشباب,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,6,"1991,1992,1993,2004,2006,2012"
+SHA,Al-Shabab,الشباب,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,3,"2008,2009,2014"
+SHA,Al-Shabab,الشباب,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,2,"1996,1999"
+SHA,Al-Shabab,الشباب,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+SHA,Al-Shabab,الشباب,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+SHA,Al-Shabab,الشباب,السعودية,206,AFC,23,CWC,FIFA Club World Cup,Global,0,·
+ETT,Al-Ettifaq,الاتفاق,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,2,"1983,1987"
+ETT,Al-Ettifaq,الاتفاق,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,2,"1968,1985"
+ETT,Al-Ettifaq,الاتفاق,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+ETT,Al-Ettifaq,الاتفاق,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+ETT,Al-Ettifaq,الاتفاق,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+FAT,Al-Fateh,الفتح,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,1,2013
+FAT,Al-Fateh,الفتح,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,0,·
+FAT,Al-Fateh,الفتح,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+FAT,Al-Fateh,الفتح,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,1,2013
+FAT,Al-Fateh,الفتح,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+TAA,Al-Taawoun,التعاون,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,0,·
+TAA,Al-Taawoun,التعاون,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,1,2019
+TAA,Al-Taawoun,التعاون,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+TAA,Al-Taawoun,التعاون,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+TAA,Al-Taawoun,التعاون,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+FAY,Al-Fayha,الفيحاء,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,0,·
+FAY,Al-Fayha,الفيحاء,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,1,2022
+FAY,Al-Fayha,الفيحاء,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+FAY,Al-Fayha,الفيحاء,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+FAY,Al-Fayha,الفيحاء,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+WAH,Al-Wehda,الوحدة,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,0,·
+WAH,Al-Wehda,الوحدة,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,2,"1957,1966"
+WAH,Al-Wehda,الوحدة,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+WAH,Al-Wehda,الوحدة,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+WAH,Al-Wehda,الوحدة,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+QAD,Al-Qadsiah,القادسية,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,0,·
+QAD,Al-Qadsiah,القادسية,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,1,1992
+QAD,Al-Qadsiah,القادسية,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+QAD,Al-Qadsiah,القادسية,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+QAD,Al-Qadsiah,القادسية,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+RAI,Al-Raed,الرائد,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,0,·
+RAI,Al-Raed,الرائد,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,0,·
+RAI,Al-Raed,الرائد,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+RAI,Al-Raed,الرائد,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+RAI,Al-Raed,الرائد,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+RYH,Al-Riyadh,الرياض,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,0,·
+RYH,Al-Riyadh,الرياض,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,0,·
+RYH,Al-Riyadh,الرياض,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+RYH,Al-Riyadh,الرياض,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+RYH,Al-Riyadh,الرياض,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+DAM,Damac FC,ضمك,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,0,·
+DAM,Damac FC,ضمك,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,0,·
+DAM,Damac FC,ضمك,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+DAM,Damac FC,ضمك,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+DAM,Damac FC,ضمك,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+AKD,Al-Okhdood,الأخدود,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,0,·
+AKD,Al-Okhdood,الأخدود,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,0,·
+AKD,Al-Okhdood,الأخدود,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+AKD,Al-Okhdood,الأخدود,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+AKD,Al-Okhdood,الأخدود,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+KHA,Al-Khaleej,الخليج,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,0,·
+KHA,Al-Khaleej,الخليج,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,0,·
+KHA,Al-Khaleej,الخليج,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+KHA,Al-Khaleej,الخليج,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+KHA,Al-Khaleej,الخليج,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+HZL,Al-Hazem,الحزم,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,0,·
+HZL,Al-Hazem,الحزم,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,0,·
+HZL,Al-Hazem,الحزم,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+HZL,Al-Hazem,الحزم,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+HZL,Al-Hazem,الحزم,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·
+ABH,Abha FC,أبها,السعودية,206,AFC,23,SPL,Saudi Pro League,First Tier,0,·
+ABH,Abha FC,أبها,السعودية,206,AFC,23,KC,King's Cup,Domestic Cup,0,·
+ABH,Abha FC,أبها,السعودية,206,AFC,23,CPC,Crown Prince Cup,Domestic Cup,0,·
+ABH,Abha FC,أبها,السعودية,206,AFC,23,SSC,Saudi Super Cup,Domestic Super Cup,0,·
+ABH,Abha FC,أبها,السعودية,206,AFC,23,ACL,AFC Champions League,Continental,0,·

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الاتحاد | نظام الإدارة المتكامل</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg:#020617; --card:#0f172a; --accent:#3b82f6; --header:#1e293b; --border:#334155;
+                --success:#10b981; --danger:#ef4444; --warning:#f59e0b; --gold:#c5a059; --dim:#94a3b8; }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #f4f5f9;
+            --accent: #2563eb;
+            --header: #e2e5ec;
+            --border: #e2e5ec;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #a16207;
+            --gold: #8a6b28;
+            --dim: #6b7385;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; }
+        body { background:var(--bg); color:#f1f5f9; padding-bottom:40px; }
+
+        .fed-header {
+            background: linear-gradient(145deg, #1e293b, #020617);
+            padding: 22px 18px; border-bottom: 3px solid var(--accent);
+            text-align:center; position:relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .fed-header .crest-img {
+            height: 45px;
+            width: auto;
+            filter: drop-shadow(0 0 6px rgba(59,130,246,0.4));
+            border-radius: 8px;
+        }
+        .fed-header .header-text {
+            text-align: center;
+        }
+        .fed-header .header-text h1 { font-size:1.2rem; color:#f1f5f9; margin:0; }
+        .fed-header .header-text p { font-size:0.75rem; color:var(--dim); margin-top:4px; }
+        .back-btn { position:absolute; top:18px; right:16px; color:var(--accent); font-size:1.2rem; cursor:pointer; }
+
+        .tabs { display:flex; overflow-x:auto; gap:6px; padding:12px 14px 0; }
+        .tab-btn {
+            flex:0 0 auto; background:var(--card); border:1px solid var(--border); color:var(--dim);
+            padding:9px 14px; border-radius:20px; font-size:0.78rem; white-space:nowrap; cursor:pointer;
+        }
+        .tab-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:bold; }
+
+        .section-content { padding:16px; display:none; }
+        .section-content.active { display:block; }
+
+        .president-note {
+            background: rgba(59,130,246,0.08); border-right:4px solid var(--accent);
+            padding:14px; border-radius:10px; margin-bottom:16px; font-size:0.82rem; line-height:1.7;
+        }
+        .president-note .sig { margin-top:10px; color:var(--gold); font-weight:bold; font-size:0.8rem; text-align:left; }
+
+        .rule-card {
+            background:var(--card); border:1px solid var(--border); border-radius:12px;
+            padding:14px; margin-bottom:12px;
+        }
+        .rule-card .rt { display:flex; align-items:center; gap:10px; font-weight:bold; font-size:0.9rem; margin-bottom:8px; color:#e2e8f0; }
+        .rule-card .rt i { color:var(--accent); width:20px; text-align:center; }
+        .rule-card ul { padding-right:18px; font-size:0.8rem; color:var(--dim); line-height:1.9; }
+        .rule-card ul li b { color:#e2e8f0; }
+
+        table { width:100%; border-collapse:collapse; font-size:0.78rem; }
+        .pen-table, .prize-table { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:14px; }
+        .pen-table th, .prize-table th {
+            background: rgba(59,130,246,0.15); color:var(--accent); padding:10px 8px; text-align:right; font-size:0.72rem;
+        }
+        .pen-table td, .prize-table td { padding:10px 8px; border-top:1px solid var(--border); color:#e2e8f0; }
+        .pen-table td.amt { color:var(--danger); font-weight:bold; white-space:nowrap; }
+        .prize-table td.amt { color:var(--success); font-weight:bold; white-space:nowrap; }
+        .sev-tag { font-size:0.6rem; padding:3px 7px; border-radius:5px; font-weight:bold; }
+        .sev-low { background:rgba(245,158,11,0.15); color:var(--warning); }
+        .sev-high { background:rgba(239,68,68,0.15); color:var(--danger); }
+
+        .restrict-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+        .restrict-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center; }
+        .restrict-card i { font-size:1.3rem; color:var(--accent); margin-bottom:6px; }
+        .restrict-card .rv { font-size:1.1rem; font-weight:900; color:#fff; }
+        .restrict-card .rl { font-size:0.65rem; color:var(--dim); margin-top:2px; }
+
+        .status-box {
+            background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:14px;
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .status-box .sb-left { font-size:0.85rem; }
+        .status-box .sb-badge { padding:6px 14px; border-radius:20px; font-size:0.75rem; font-weight:bold; }
+
+        /* تحسين عرض شعار الاتحاد القاري */
+        .confed-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(59,130,246,0.08);
+            padding: 4px 12px 4px 8px;
+            border-radius: 40px;
+            border: 1px solid var(--border);
+        }
+        .confed-badge img {
+            height: 28px;
+            width: auto;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="fed-header">
+        <i class="fas fa-arrow-right back-btn" onclick="history.back()"></i>
+        <!-- شعار الاتحاد القاري يظهر ديناميكياً -->
+        <img id="confedLogo" class="crest-img" src="" alt="شعار الاتحاد" style="display:none;">
+        <div class="header-text">
+            <h1 id="fedHeaderTitle">الاتحاد</h1>
+            <p id="fedHeaderSub">اللائحة الرسمية للقوانين، العقوبات، الجوائز والقيود التنظيمية</p>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab-btn active" onclick="showTab('rules', this)">القوانين</div>
+        <div class="tab-btn" onclick="showTab('license', this)">الترخيص</div>
+        <div class="tab-btn" onclick="showTab('penalties', this)">العقوبات</div>
+        <div class="tab-btn" onclick="showTab('cases', this)">القضايا</div>
+        <div class="tab-btn" onclick="showTab('prizes', this)">الجوائز</div>
+        <div class="tab-btn" onclick="showTab('restrictions', this)">القيود</div>
+    </div>
+
+    <!-- ==================== القوانين ==================== -->
+    <div class="section-content active" id="tab-rules">
+        <div class="president-note" id="fedLiveTierCard" style="border-right-color: var(--gold);">
+            <i class="fas fa-satellite-dish" style="color:var(--gold);"></i>
+            <span id="fedLiveTierText">جاري قراءة بيانات ناديك واتحادك تلقائياً من ملفات المسابقات...</span>
+        </div>
+
+        <div class="president-note">
+            <i class="fas fa-quote-right" style="color:var(--gold);"></i>
+            إلى جميع رؤساء وإدارات الأندية، تمثل هذه اللائحة الإطار الرسمي الذي يحكم مسيرة موسمكم الرياضي.
+            الالتزام بها شرط أساسي لاستمرار النادي في المنافسة بشكل نظامي، ونتمنى لكم موسماً حافلاً بالإنجازات.
+            <div class="sig">— منصور، رئيس الاتحاد</div>
+        </div>
+
+        <div class="rule-card">
+            <div class="rt"><i class="fas fa-users"></i> تسجيل اللاعبين والقوائم</div>
+            <ul>
+                <li>الحد الأقصى لقائمة الفريق الأول: <b id="ruleSquadMax">25 لاعباً</b> مسجلين رسمياً لدى الاتحاد.</li>
+                <li id="ruleHomegrownLi">يُشترط إدراج <b id="ruleHomegrown">8 لاعبين محليين</b> على الأقل ضمن القائمة (لاعبون منتَجون محلياً).</li>
+                <li>الحد الأقصى للاعبين الأجانب المسجلين للمشاركة: <b id="ruleForeignMax">7 لاعبين</b> في قائمة المباراة.</li>
+                <li>لا يجوز تسجيل أي لاعب جديد بعد إغلاق نافذة الانتقالات إلا بإذن استثنائي من لجنة التسجيل.</li>
+            </ul>
+        </div>
+
+        <div class="rule-card" id="fedConfedNoteCard">
+            <div class="rt"><i class="fas fa-globe-americas"></i> ملاحظة الاتحاد القاري</div>
+            <ul>
+                <li id="ruleConfedNote">جاري القراءة التلقائية لفلسفة الاتحاد القاري المسؤول عن دوريك...</li>
+                <li id="ruleCountryNoteLi" style="display:none;"><b id="ruleCountryNote"></b></li>
+            </ul>
+        </div>
+
+        <div class="rule-card">
+            <div class="rt"><i class="fas fa-file-signature"></i> العقود والانتقالات</div>
+            <ul>
+                <li>لا يجوز لأي نادٍ التفاوض مع لاعب مرتبط بعقد ساري دون إذن كتابي من ناديه الحالي.</li>
+                <li>مدة العقد المسموحة لنادِك: <b id="ruleContractYearsText">--</b> (حسب لائحة اتحادك الوطني تحديداً).</li>
+                <li>يُمنع الإعارة المتكررة لنفس اللاعب بين ناديين مرتبطين خلال موسم واحد ("إعارة صورية").</li>
+                <li>كل صفقة انتقال يجب أن تُسجَّل إلكترونياً خلال <b id="ruleRegistrationHours">--</b> من توقيعها.</li>
+            </ul>
+        </div>
+
+        <div class="rule-card">
+            <div class="rt"><i class="fas fa-balance-scale"></i> اللعب المالي النظيف (FFP)</div>
+            <ul>
+                <li>يُحظر أن تتجاوز كتلة الرواتب السنوية <b id="ruleWageCap">70%</b> من إجمالي إيرادات النادي.</li>
+                <li>يجب على الأندية تقديم تقرير مالي ربع سنوي معتمد للاتحاد.</li>
+                <li>الأندية التي تتجاوز سقف الرواتب تُمنع من تسجيل صفقات جديدة حتى تسوية وضعها.</li>
+            </ul>
+        </div>
+
+        <div class="rule-card">
+            <div class="rt"><i class="fas fa-gavel"></i> السلوك والانضباط</div>
+            <ul>
+                <li>يخضع اللاعبون والطاقم الفني للائحة الانضباط الخاصة بالبطاقات والإيقافات.</li>
+                <li>يُمنع أي تصريح إعلامي يسيء للاتحاد أو الحكام أو الأندية المنافسة.</li>
+                <li>الإدارة مسؤولة عن سلوك جماهيرها داخل الملعب.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ==================== الترخيص ==================== -->
+    <div class="section-content" id="tab-license">
+        <div class="president-note" style="border-right-color: var(--accent);">
+            <i class="fas fa-file-shield" style="color:var(--accent);"></i>
+            رخصة النادي هي الملف الرسمي الذي يحدد أهليتك للمشاركة في المسابقة — تُحسب من بيانات ناديك الحقيقية الفعلية، لا نص عام.
+        </div>
+        <div class="status-box">
+            <div class="sb-left"><i class="fas fa-id-card" style="color:var(--accent);"></i> رخصة النادي — <span id="licenseSeasonLabel">الموسم</span></div>
+            <div class="sb-badge" id="licenseOverallStatus">--</div>
+        </div>
+        <div id="licenseChecklist"></div>
+    </div>
+
+    <!-- ==================== العقوبات ==================== -->
+    <div class="section-content" id="tab-penalties">
+        <div class="status-box">
+            <div class="sb-left"><i class="fas fa-triangle-exclamation" style="color:var(--warning);"></i> سجل النادي التأديبي</div>
+            <div class="sb-badge" style="background:rgba(16,185,129,0.15); color:var(--success);" id="clubDiscStatus">نظيف ✅</div>
+        </div>
+
+        <div class="restrict-grid">
+            <div class="restrict-card"><i class="fas fa-coins"></i><div class="rv" id="fedTotalFinesVal">0.0M €</div><div class="rl">إجمالي الغرامات المفروضة</div></div>
+            <div class="restrict-card"><i class="fas fa-arrow-trend-down"></i><div class="rv" id="fedPointsVal">0</div><div class="rl">نقاط مخصومة من الرصيد</div></div>
+        </div>
+
+        <div class="rule-card">
+            <div class="rt"><i class="fas fa-clipboard-list"></i> آخر المخالفات المسجلة على النادي</div>
+            <div id="fedLiveLog" style="font-size:0.78rem; color:var(--dim);">لا توجد مخالفات مسجلة بعد.</div>
+        </div>
+
+        <table class="pen-table">
+            <tr><th>المخالفة</th><th>العقوبة</th><th>الدرجة</th></tr>
+            <tr><td>تسجيل لاعب غير مؤهل (مخالفة تسجيل)</td><td class="amt">خصم 3 نقاط + غرامة 250K €</td><td><span class="sev-tag sev-high">جسيمة</span></td></tr>
+            <tr><td>تجاوز سقف الرواتب (FFP)</td><td class="amt">غرامة 1M–5M € + منع تسجيل</td><td><span class="sev-tag sev-high">جسيمة</span></td></tr>
+            <tr><td>تأخر سداد رواتب اللاعبين</td><td class="amt">غرامة 100K € + إنذار رسمي</td><td><span class="sev-tag sev-low">متوسطة</span></td></tr>
+            <tr><td>انسحاب الفريق من مباراة رسمية</td><td class="amt">خسارة 0-3 + غرامة 500K €</td><td><span class="sev-tag sev-high">جسيمة</span></td></tr>
+            <tr><td>شغب جماهيري داخل الملعب</td><td class="amt">لعب مباراتين بدون جمهور + غرامة 150K €</td><td><span class="sev-tag sev-high">جسيمة</span></td></tr>
+            <tr><td>إساءة إعلامية لحكم أو للاتحاد</td><td class="amt">غرامة 50K € + إيقاف المتحدث مباراتين</td><td><span class="sev-tag sev-low">متوسطة</span></td></tr>
+            <tr><td>تراكم 5 بطاقات صفراء (لاعب)</td><td class="amt">إيقاف مباراة واحدة</td><td><span class="sev-tag sev-low">فردية</span></td></tr>
+            <tr><td>بطاقة حمراء مباشرة</td><td class="amt">إيقاف 1-3 مباريات حسب المخالفة</td><td><span class="sev-tag sev-low">فردية</span></td></tr>
+            <tr><td>إيجابية فحص المنشطات</td><td class="amt">إيقاف اللاعب 6-24 شهراً</td><td><span class="sev-tag sev-high">جسيمة</span></td></tr>
+            <tr><td>عدم استكمال متطلبات ترخيص النادي</td><td class="amt">سحب الرخصة / الاستبعاد من المسابقة</td><td><span class="sev-tag sev-high">جسيمة</span></td></tr>
+        </table>
+        <p style="font-size:0.68rem; color:var(--dim); text-align:center; margin-top:6px;">
+            <i class="fas fa-info-circle"></i> تُخصم الغرامات المالية تلقائياً من ميزانية النادي عبر قسم "المالية".
+        </p>
+    </div>
+
+    <!-- ==================== القضايا ==================== -->
+    <div class="section-content" id="tab-cases">
+        <div class="president-note" style="border-right-color: var(--warning);">
+            <i class="fas fa-scale-balanced" style="color:var(--warning);"></i>
+            كل قضية تأديبية حقيقية تمرّ بمراحل فعلية: مخالفة ← تحقيق ← قرار ← عقوبة ← استئناف (إن رغبت) ← قرار نهائي — لا عقوبة فورية بلا إجراء.
+        </div>
+        <div id="casesContainer"></div>
+    </div>
+
+    <!-- ==================== الجوائز ==================== -->
+    <div class="section-content" id="tab-prizes">
+        <div class="president-note" id="fedPrizeIntroCard" style="border-right-color: var(--gold);">
+            <i class="fas fa-satellite-dish" style="color:var(--gold);"></i>
+            <span id="fedPrizeIntroText">جاري احتساب جدول الجوائز الفعلي حسب اتحادك ودرجة دوريك...</span>
+        </div>
+        <table class="prize-table" id="fedPrizeTable">
+            <tr><th>الإنجاز</th><th>الجائزة المالية</th></tr>
+        </table>
+        <div class="president-note" style="margin-top:4px;">
+            <i class="fas fa-award" style="color:var(--gold);"></i>
+            تُصرف جوائز الترتيب النهائي للدوري آلياً إلى ميزانية النادي في نهاية كل موسم (عند تغيّر عام اللعبة)، وتظهر في المركز المالي ضمن بند "جوائز المسابقات".
+            هذا الجدول <b>خاص بناديك الحالي فقط</b>: بطل دوري من الدرجة الأولى في اتحاد أوروبا (UEFA) يحصل على جائزة مختلفة جذرياً عن بطل نفس الدرجة الاسمية في اتحاد أوقيانوسيا (OFC) أو غيره، لأن قيمة كل اتحاد قاري مختلفة واقعياً.
+        </div>
+    </div>
+
+    <!-- ==================== القيود ==================== -->
+    <div class="section-content" id="tab-restrictions">
+        <div class="restrict-grid">
+            <div class="restrict-card"><i class="fas fa-users"></i><div class="rv" id="fedSquadVal">-- / 25</div><div class="rl">حجم قائمة نادِك الحالية</div></div>
+            <div class="restrict-card"><i class="fas fa-globe"></i><div class="rv" id="fedForeignVal">-- / 7</div><div class="rl">اللاعبون الأجانب بنادِك</div></div>
+        </div>
+        <div class="restrict-grid">
+            <div class="restrict-card"><i class="fas fa-users"></i><div class="rv" id="ruleSquadMax2">25</div><div class="rl">الحد الأقصى لقائمة اللاعبين</div></div>
+            <div class="restrict-card"><i class="fas fa-globe"></i><div class="rv" id="ruleForeignMax2">7</div><div class="rl">حد اللاعبين الأجانب بالمباراة</div></div>
+            <div class="restrict-card" id="ruleHomegrownCard2"><i class="fas fa-house-user"></i><div class="rv" id="ruleHomegrown2">8</div><div class="rl">حد أدنى للاعبين المحليين</div></div>
+            <div class="restrict-card"><i class="fas fa-percent"></i><div class="rv" id="ruleWageCap2">70%</div><div class="rl">سقف الرواتب من الإيرادات (FFP)</div></div>
+            <div class="restrict-card"><i class="fas fa-calendar-times"></i><div class="rv">2</div><div class="rl">نافذتا انتقالات بالموسم (صيفية / شتوية)</div></div>
+            <div class="restrict-card"><i class="fas fa-hand-paper"></i><div class="rv">1</div><div class="rl">إعارة واحدة لكل لاعب بالموسم</div></div>
+        </div>
+
+        <div class="rule-card">
+            <div class="rt"><i class="fas fa-hourglass-half"></i> مواعيد نوافذ الانتقالات</div>
+            <ul>
+                <li><b>النافذة الصيفية:</b> <span id="ruleSummerWindow">--</span>.</li>
+                <li><b>النافذة الشتوية:</b> <span id="ruleWinterWindow">--</span>.</li>
+                <li>أي صفقة تُسجَّل خارج هاتين الفترتين تُعتبر لاغية تلقائياً.</li>
+                <li id="ruleWindowNoteLi" style="display:none;"><b id="ruleWindowNote"></b></li>
+            </ul>
+        </div>
+
+        <div class="rule-card">
+            <div class="rt"><i class="fas fa-building-shield"></i> شروط ترخيص الملاعب والمنشآت</div>
+            <ul>
+                <li>سعة الملعب لا تقل عن <b id="ruleMinStadium">15,000 مقعد</b> للمشاركة في هذه الدرجة.</li>
+                <li>إلزامية وجود مركز طبي معتمد داخل مقر النادي.</li>
+                <li>وجود أكاديمية ناشئين مسجلة رسمياً كشرط لمنح رخصة الاحتراف.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+// استبدل قسم CONFED_LOGOS الحالي بهذا الكود
+const CONFED_LOGOS = {
+    'UEFA': 'confed_logos/uefa.png',
+    'AFC': 'confed_logos/afc.png',
+    'CAF': 'confed_logos/caf.png',
+    'CONCACAF': 'confed_logos/concacaf.png',
+    'CONMEBOL': 'confed_logos/conmebol.png',
+    'OFC': 'confed_logos/ofc.png'
+};
+
+        // ============================================================
+        //  جدول جوائز البطولة حسب الاتحاد القاري ودرجة الدوري
+        // ============================================================
+        const CHAMPION_PRIZE_TABLE = {
+            'UEFA':     { 1: 45,  2: 14,  3: 4,    4: 1.2  },
+            'CONMEBOL': { 1: 16,  2: 5,   3: 1.8,  4: 0.5  },
+            'AFC':      { 1: 9,   2: 3,   3: 1,    4: 0.35 },
+            'CONCACAF': { 1: 7,   2: 2.5, 3: 0.9,  4: 0.3  },
+            'CAF':      { 1: 4.5, 2: 1.6, 3: 0.55, 4: 0.18 },
+            'OFC':      { 1: 1.2, 2: 0.4, 3: 0.15, 4: 0.06 }
+        };
+
+        // ============================================================
+        // مواعيد نوافذ انتقالات حقيقية موثَّقة لكل دولة — وليست تاريخاً عاماً واحداً لكل الدول
+        // (بعض الدول، كالبرازيل، موسمها بالتقويم الميلادي الكامل يناير-ديسمبر، فنافذتها مختلفة جذرياً عن أوروبا)
+        // ============================================================
+        const TRANSFER_WINDOWS = {
+            'England':             { summer: 'من 15 يونيو حتى 1 سبتمبر', winter: 'من 1 يناير حتى 2 فبراير' },
+            'France':              { summer: 'من 1 يوليو حتى 31 أغسطس', winter: 'من 1 حتى 31 يناير' },
+            'Italy':               { summer: 'من 1 يوليو حتى 1 سبتمبر', winter: 'من 2 حتى 31 يناير' },
+            'Spain':               { summer: 'من 1 يوليو حتى 1 سبتمبر', winter: 'من 2 حتى 31 يناير' },
+            'Germany':             { summer: 'من 1 يوليو حتى 1 سبتمبر', winter: 'من 2 حتى 31 يناير' },
+            'Netherlands':         { summer: 'من 22 يونيو حتى 2 سبتمبر', winter: 'من 1 حتى 31 يناير' },
+            'Portugal':            { summer: 'من 1 يوليو حتى 15 سبتمبر', winter: 'من 1 حتى 31 يناير' },
+            'Belgium':             { summer: 'من 1 يوليو حتى 1 سبتمبر', winter: 'من 3 يناير حتى 3 فبراير' },
+            'Austria':             { summer: 'من 1 يوليو حتى 1 سبتمبر', winter: 'من 1 حتى 31 يناير' },
+            'Switzerland':         { summer: 'من 15 يونيو حتى 1 سبتمبر', winter: 'من 4 يناير حتى 5 فبراير' },
+            'Ireland':             { summer: 'من 15 يونيو حتى 1 سبتمبر', winter: 'من 1 حتى 31 يناير' },
+            'Wales':               { summer: 'من 15 يونيو حتى 1 سبتمبر', winter: 'من 1 يناير حتى 2 فبراير' },
+            'Ukraine':             { summer: 'من 22 يونيو حتى 8 سبتمبر', winter: 'من 4 يناير حتى 20 فبراير' },
+            'Russia':              { summer: 'من 12 يونيو حتى 12 سبتمبر', winter: 'من 3 يناير حتى 21 فبراير' },
+            'Turkiye':             { summer: 'من 22 يونيو حتى 4 سبتمبر', winter: 'من 5 حتى 31 يناير' },
+            'Saudi Arabia':        { summer: 'من 22 يوليو حتى 12 أكتوبر', winter: 'من 4 حتى 31 يناير' },
+            'United Arab Emirates':{ summer: 'من 1 يوليو حتى 30 سبتمبر', winter: 'من 1 حتى 31 يناير' },
+            'Egypt':               { summer: 'من 1 يوليو حتى 15 سبتمبر', winter: 'من 1 حتى 31 يناير' },
+            'Morocco':             { summer: 'من 1 يوليو حتى 15 سبتمبر', winter: 'من 1 حتى 31 يناير' },
+            'Japan':               { summer: 'من 20 يوليو حتى 21 أغسطس', winter: 'من 1 يناير حتى 27 فبراير' },
+            'Norway':              { summer: 'من 1 يناير حتى 1 أبريل', winter: 'من 16 يوليو حتى 8 أغسطس' },
+            'Brazil':              { summer: 'من 16 ديسمبر حتى 2 أبريل (فتح الموسم)', winter: 'من 16 يونيو حتى 21 يوليو (منتصف الموسم)' },
+        };
+        function getTransferWindowNote(country) {
+            if (country === 'Brazil') return 'موسم الدوري البرازيلي يسير بالتقويم الميلادي الكامل (يناير–ديسمبر)، لذا نافذتاه مختلفتان جذرياً عن الدوريات الأوروبية.';
+            if (country === 'Norway') return 'الدوري النرويجي يُقام في فصل الصيف (مارس–ديسمبر) بسبب المناخ، فتُقلَب نافذتاه الرئيسية والثانوية مقارنة بأوروبا القارية.';
+            return null;
+        }
+        function renderTransferWindows(country) {
+            const w = TRANSFER_WINDOWS[country] || TRANSFER_WINDOWS['England'];
+            document.getElementById('ruleSummerWindow').innerText = w.summer;
+            document.getElementById('ruleWinterWindow').innerText = w.winter;
+            const note = getTransferWindowNote(country);
+            if (note) {
+                document.getElementById('ruleWindowNote').innerText = note;
+                document.getElementById('ruleWindowNoteLi').style.display = 'block';
+            }
+        }
+
+        // نفس قاعدة بيانات الدول/الاتحادات القارية المستخدمة بالضبط في transfers.html و player.html — اتساق كامل عبر الصفحات الثلاث
+        const COUNTRY_DB = {"england":["gb-eng","UEFA"],"scotland":["gb-sct","UEFA"],"wales":["gb-wls","UEFA"],"northern ireland":["gb-nir","UEFA"],"republic of ireland":["ie","UEFA"],"ireland":["ie","UEFA"],"spain":["es","UEFA"],"france":["fr","UEFA"],"germany":["de","UEFA"],"italy":["it","UEFA"],"portugal":["pt","UEFA"],"netherlands":["nl","UEFA"],"belgium":["be","UEFA"],"croatia":["hr","UEFA"],"serbia":["rs","UEFA"],"switzerland":["ch","UEFA"],"austria":["at","UEFA"],"poland":["pl","UEFA"],"sweden":["se","UEFA"],"norway":["no","UEFA"],"denmark":["dk","UEFA"],"greece":["gr","UEFA"],"turkey":["tr","UEFA"],"ukraine":["ua","UEFA"],"russia":["ru","UEFA"],"czech republic":["cz","UEFA"],"czechia":["cz","UEFA"],"slovakia":["sk","UEFA"],"slovenia":["si","UEFA"],"hungary":["hu","UEFA"],"romania":["ro","UEFA"],"bulgaria":["bg","UEFA"],"bosnia and herzegovina":["ba","UEFA"],"bosnia":["ba","UEFA"],"north macedonia":["mk","UEFA"],"macedonia":["mk","UEFA"],"albania":["al","UEFA"],"montenegro":["me","UEFA"],"kosovo":["xk","UEFA"],"finland":["fi","UEFA"],"iceland":["is","UEFA"],"estonia":["ee","UEFA"],"latvia":["lv","UEFA"],"lithuania":["lt","UEFA"],"luxembourg":["lu","UEFA"],"malta":["mt","UEFA"],"cyprus":["cy","UEFA"],"belarus":["by","UEFA"],"moldova":["md","UEFA"],"georgia":["ge","UEFA"],"armenia":["am","UEFA"],"azerbaijan":["az","UEFA"],"andorra":["ad","UEFA"],"san marino":["sm","UEFA"],"liechtenstein":["li","UEFA"],"gibraltar":["gi","UEFA"],"kazakhstan":["kz","UEFA"],"faroe islands":["fo","UEFA"],"brazil":["br","CONMEBOL"],"argentina":["ar","CONMEBOL"],"uruguay":["uy","CONMEBOL"],"colombia":["co","CONMEBOL"],"chile":["cl","CONMEBOL"],"peru":["pe","CONMEBOL"],"ecuador":["ec","CONMEBOL"],"paraguay":["py","CONMEBOL"],"bolivia":["bo","CONMEBOL"],"venezuela":["ve","CONMEBOL"],"united states":["us","CONCACAF"],"usa":["us","CONCACAF"],"mexico":["mx","CONCACAF"],"canada":["ca","CONCACAF"],"costa rica":["cr","CONCACAF"],"jamaica":["jm","CONCACAF"],"honduras":["hn","CONCACAF"],"panama":["pa","CONCACAF"],"el salvador":["sv","CONCACAF"],"guatemala":["gt","CONCACAF"],"trinidad and tobago":["tt","CONCACAF"],"haiti":["ht","CONCACAF"],"curacao":["cw","CONCACAF"],"cuba":["cu","CONCACAF"],"nicaragua":["ni","CONCACAF"],"dominican republic":["do","CONCACAF"],"suriname":["sr","CONCACAF"],"guyana":["gy","CONCACAF"],"belize":["bz","CONCACAF"],"bermuda":["bm","CONCACAF"],"barbados":["bb","CONCACAF"],"egypt":["eg","CAF"],"morocco":["ma","CAF"],"algeria":["dz","CAF"],"tunisia":["tn","CAF"],"nigeria":["ng","CAF"],"ghana":["gh","CAF"],"senegal":["sn","CAF"],"cameroon":["cm","CAF"],"ivory coast":["ci","CAF"],"cote d'ivoire":["ci","CAF"],"côte d'ivoire":["ci","CAF"],"south africa":["za","CAF"],"mali":["ml","CAF"],"dr congo":["cd","CAF"],"democratic republic of the congo":["cd","CAF"],"congo":["cg","CAF"],"kenya":["ke","CAF"],"zambia":["zm","CAF"],"zimbabwe":["zw","CAF"],"angola":["ao","CAF"],"guinea":["gn","CAF"],"mozambique":["mz","CAF"],"uganda":["ug","CAF"],"tanzania":["tz","CAF"],"ethiopia":["et","CAF"],"burkina faso":["bf","CAF"],"gabon":["ga","CAF"],"benin":["bj","CAF"],"togo":["tg","CAF"],"libya":["ly","CAF"],"sudan":["sd","CAF"],"namibia":["na","CAF"],"botswana":["bw","CAF"],"rwanda":["rw","CAF"],"madagascar":["mg","CAF"],"equatorial guinea":["gq","CAF"],"guinea-bissau":["gw","CAF"],"sierra leone":["sl","CAF"],"comoros":["km","CAF"],"mauritania":["mr","CAF"],"niger":["ne","CAF"],"chad":["td","CAF"],"cape verde":["cv","CAF"],"gambia":["gm","CAF"],"liberia":["lr","CAF"],"eswatini":["sz","CAF"],"lesotho":["ls","CAF"],"malawi":["mw","CAF"],"burundi":["bi","CAF"],"central african republic":["cf","CAF"],"djibouti":["dj","CAF"],"eritrea":["er","CAF"],"somalia":["so","CAF"],"seychelles":["sc","CAF"],"mauritius":["mu","CAF"],"south sudan":["ss","CAF"],"saudi arabia":["sa","AFC"],"qatar":["qa","AFC"],"united arab emirates":["ae","AFC"],"uae":["ae","AFC"],"iraq":["iq","AFC"],"iran":["ir","AFC"],"jordan":["jo","AFC"],"kuwait":["kw","AFC"],"bahrain":["bh","AFC"],"oman":["om","AFC"],"lebanon":["lb","AFC"],"syria":["sy","AFC"],"palestine":["ps","AFC"],"yemen":["ye","AFC"],"japan":["jp","AFC"],"south korea":["kr","AFC"],"korea republic":["kr","AFC"],"north korea":["kp","AFC"],"china":["cn","AFC"],"china pr":["cn","AFC"],"australia":["au","AFC"],"uzbekistan":["uz","AFC"],"india":["in","AFC"],"indonesia":["id","AFC"],"thailand":["th","AFC"],"vietnam":["vn","AFC"],"malaysia":["my","AFC"],"singapore":["sg","AFC"],"philippines":["ph","AFC"],"myanmar":["mm","AFC"],"cambodia":["kh","AFC"],"laos":["la","AFC"],"kyrgyzstan":["kg","AFC"],"tajikistan":["tj","AFC"],"turkmenistan":["tm","AFC"],"afghanistan":["af","AFC"],"pakistan":["pk","AFC"],"bangladesh":["bd","AFC"],"nepal":["np","AFC"],"sri lanka":["lk","AFC"],"bhutan":["bt","AFC"],"maldives":["mv","AFC"],"hong kong":["hk","AFC"],"chinese taipei":["tw","AFC"],"taiwan":["tw","AFC"],"timor-leste":["tl","AFC"],"brunei":["bn","AFC"],"macau":["mo","AFC"],"new zealand":["nz","OFC"],"fiji":["fj","OFC"],"papua new guinea":["pg","OFC"],"solomon islands":["sb","OFC"],"vanuatu":["vu","OFC"],"new caledonia":["nc","OFC"],"tahiti":["pf","OFC"],"samoa":["ws","OFC"],"tonga":["to","OFC"],"tuvalu":["tv","OFC"],"cookinseln":["ck","OFC"],"cook islands":["ck","OFC"],"american virgin islands":["vi","CONCACAF"],"antigua and barbuda":["ag","CONCACAF"],"aruba":["aw","CONCACAF"],"bonaire":["bq","CONCACAF"],"bosnia-herzegovina":["ba","UEFA"],"british virgin islands":["vg","CONCACAF"],"brunei darussalam":["bn","AFC"],"cayman islands":["ky","CONCACAF"],"french guiana":["gf","CONMEBOL"],"grenada":["gd","CONCACAF"],"guadeloupe":["gp","CONCACAF"],"guernsey":["gg","UEFA"],"hongkong":["hk","AFC"],"israel":["il","UEFA"],"jersey":["je","UEFA"],"korea, north":["kp","AFC"],"korea, south":["kr","AFC"],"macao":["mo","AFC"],"martinique":["mq","CONCACAF"],"mongolia":["mn","AFC"],"montserrat":["ms","CONCACAF"],"puerto rico":["pr","CONCACAF"],"saint-martin":["mf","CONCACAF"],"sao tome and principe":["st","CAF"],"sint maarten":["sx","CONCACAF"],"southern sudan":["ss","CAF"],"st. kitts & nevis":["kn","CONCACAF"],"st. lucia":["lc","CONCACAF"],"st. vincent & grenadinen":["vc","CONCACAF"],"the gambia":["gm","CAF"],"türkiye":["tr","UEFA"]};
+        const NATIONALITY_ALIASES = { 'türkiye': 'turkiye' };
+        function normalizeNationality(nat) {
+            const key = String(nat||'').trim().toLowerCase();
+            return NATIONALITY_ALIASES[key] || key;
+        }
+        function confederationOf(nat) {
+            const info = COUNTRY_DB[String(nat||'').trim().toLowerCase()];
+            return info ? info[1] : null;
+        }
+        function fedIsForeign(nat, home, rules) {
+            if (!nat) return false;
+            if (normalizeNationality(nat) === normalizeNationality(home)) return false;
+            const natConf = confederationOf(nat);
+            if (natConf && rules.confederation && natConf === rules.confederation) return false; // إقليمي (نفس الاتحاد القاري) — لا يُحسَب أجنبياً صارماً
+            return true;
+        }
+
+        function fedGetConfederation(rules){
+            if (rules.confederation) return rules.confederation;
+            const stored = localStorage.getItem('clubConfederation');
+            if (stored) return stored;
+            const label = (rules.confederationLabel || '').toUpperCase();
+            if (label.includes('UEFA') || label.includes('أوروب')) return 'UEFA';
+            if (label.includes('CAF') || label.includes('أفريقي') || label.includes('افريقي')) return 'CAF';
+            if (label.includes('CONMEBOL') || label.includes('أمريكا الجنوبية')) return 'CONMEBOL';
+            if (label.includes('CONCACAF') || label.includes('أمريكا الشمالية')) return 'CONCACAF';
+            if (label.includes('OFC') || label.includes('أوقيانوسيا')) return 'OFC';
+            return 'AFC';
+        }
+
+        function getChampionPrize(tier, confederation){
+            return (CHAMPION_PRIZE_TABLE[confederation] && CHAMPION_PRIZE_TABLE[confederation][tier])
+                || CHAMPION_PRIZE_TABLE['AFC'][tier] || 3;
+        }
+
+        function fmtPrize(v){
+            return v >= 1 ? v.toLocaleString('en-US', {maximumFractionDigits:2}) + 'M €' : Math.round(v*1000).toLocaleString('en-US') + 'K €';
+        }
+
+        // ============================================================
+        // نفس دالة الرسائل الحقيقية المستخدمة بالضبط عبر كل صفحات اللعبة — لضمان وصول كل مراسلة رسمية إلى inbox.html فعلياً
+        // ============================================================
+        function addMessageToSystem(sender, text, category) {
+            let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+            inbox.unshift({ id: Date.now(), sender, text, time: new Date().toLocaleTimeString('en-US', { hour12:false }), read:false, category: category || 'federation' });
+            localStorage.setItem('gameInbox', JSON.stringify(inbox));
+            localStorage.setItem('hasNewMessage', 'true');
+        }
+        function getGameDate() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+        function toAbsDay(d) { return Math.floor(new Date(d.year, d.month-1, d.day).getTime()/86400000); }
+        function seedHash(str) { let h=0; const s=String(str); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+
+        // ============================================================
+        // قواعد أساسية حقيقية مرتبطة بالدولة + الاتحاد + الدرجة — بدل رقم عالمي واحد للجميع
+        // ============================================================
+        const COUNTRY_CORE_RULES = {
+            'England':      { minContractYears:1, maxContractYears:5, registrationHours:24, wageCapAdj:0 },
+            'Spain':        { minContractYears:1, maxContractYears:5, registrationHours:48, wageCapAdj:-5 },
+            'Germany':      { minContractYears:1, maxContractYears:5, registrationHours:24, wageCapAdj:5 },
+            'Saudi Arabia': { minContractYears:1, maxContractYears:4, registrationHours:72, wageCapAdj:0 },
+            'Morocco':      { minContractYears:1, maxContractYears:4, registrationHours:96, wageCapAdj:-10 },
+            'Brazil':       { minContractYears:1, maxContractYears:5, registrationHours:48, wageCapAdj:-8 },
+            'Japan':        { minContractYears:1, maxContractYears:3, registrationHours:24, wageCapAdj:0 },
+        };
+        function getCountryCoreRules(country) {
+            return COUNTRY_CORE_RULES[country] || { minContractYears:1, maxContractYears:5, registrationHours:72, wageCapAdj:0 };
+        }
+        function renderCountryCoreRules(country, baseWageCap) {
+            const cr = getCountryCoreRules(country);
+            const el = document.getElementById('ruleContractYearsText');
+            if (el) el.innerText = `${cr.minContractYears} إلى ${cr.maxContractYears} مواسم`;
+            const regEl = document.getElementById('ruleRegistrationHours');
+            if (regEl) regEl.innerText = `${cr.registrationHours} ساعة`;
+            return cr;
+        }
+
+        // ============================================================
+        // ملف رخصة النادي — 5 محاور حقيقية محسوبة من بيانات ناديك الفعلية عبر كل صفحات اللعبة
+        // ============================================================
+        function computeLicenseFile(club, rules) {
+            const budget = parseFloat(localStorage.getItem('clubBudget')) || 0;
+            const loans = (() => { try { return JSON.parse(localStorage.getItem('clubLoans_v1'))||[]; } catch(e){ return []; } })();
+            const debt = loans.filter(l=>l.status==='active').reduce((s,l)=>s+(l.remainingBalance??l.principal??0),0);
+            const financialOk = budget >= 0 && debt < Math.max(30, budget*1.5);
+
+            const facilityKeys = ['grass','stands','lighting','lockerRooms','security'];
+            let stadiumScore = null;
+            const hasStadiumData = facilityKeys.some(k => localStorage.getItem(`facilityCond_${club}_${k}`) !== null);
+            if (hasStadiumData) {
+                stadiumScore = Math.round(facilityKeys.reduce((s,k)=>s+(parseFloat(localStorage.getItem(`facilityCond_${club}_${k}`))||78),0)/facilityKeys.length);
+            }
+            const stadiumOk = stadiumScore === null ? true : stadiumScore >= 25; // نفس عتبة الحظر الحقيقية في stadium.html
+
+            const staff = (JSON.parse(localStorage.getItem('staff_by_club'))||{})[club] || [];
+            const hasSportingDirector = staff.some(s => s.role === 'sporting_director' || s.role === 'head_coach');
+            const adminOk = staff.length >= 3 && hasSportingDirector;
+
+            const academyPool = parseFloat(localStorage.getItem(`pool_academy_${club}`)) || 0;
+            const youthOk = academyPool >= 3;
+
+            const legalOk = true; // لا نزاعات تعاقدية حقيقية مسجَّلة بعد في اللعبة (نظام مستقبلي)
+
+            return {
+                financial: financialOk, stadium: stadiumOk, admin: adminOk, youth: youthOk, legal: legalOk,
+                stadiumScore, academyPool, budget, debt
+            };
+        }
+        function renderLicenseFile() {
+            const club = localStorage.getItem('presidentialClub') || 'نادي المستقبل';
+            const rules = JSON.parse(localStorage.getItem('federationRules')) || {};
+            const gd = getGameDate();
+            const seasonLabel = `${gd.month>=7?gd.year:gd.year-1}/${(gd.month>=7?gd.year+1:gd.year).toString().slice(-2)}`;
+            document.getElementById('licenseSeasonLabel').innerText = `موسم ${seasonLabel}`;
+
+            const L = computeLicenseFile(club, rules);
+            const items = [
+                { key:'financial', label:'المالية', ok:L.financial, detail: L.financial ? `الرصيد ${L.budget.toFixed(1)}M €، ديون ${L.debt.toFixed(1)}M €` : `عجز مالي أو ديون مرتفعة (رصيد ${L.budget.toFixed(1)}M €، ديون ${L.debt.toFixed(1)}M €)` },
+                { key:'stadium', label:'الملعب', ok:L.stadium, detail: L.stadiumScore===null ? 'لا بيانات سلامة مسجَّلة بعد' : `درجة السلامة العامة ${L.stadiumScore}%` },
+                { key:'admin', label:'الإدارة', ok:L.admin, detail: L.admin ? 'طاقم إداري وفني مكتمل الحد الأدنى' : 'نقص في الطاقم الإداري أو غياب مدير رياضي/مدرب' },
+                { key:'youth', label:'الشباب', ok:L.youth, detail: L.youth ? `استثمار أكاديمية ${L.academyPool.toFixed(1)}M €` : `استثمار أكاديمية ضعيف (${L.academyPool.toFixed(1)}M €) — الحد الأدنى المطلوب 3M €` },
+                { key:'legal', label:'القانوني', ok:L.legal, detail:'لا نزاعات تعاقدية مسجَّلة' },
+            ];
+            const allOk = items.every(i=>i.ok);
+            const anyFail = items.some(i=>!i.ok);
+            const overallEl = document.getElementById('licenseOverallStatus');
+            if (allOk) { overallEl.innerText = 'معتمدة ✅'; overallEl.style.background='rgba(16,185,129,0.15)'; overallEl.style.color='var(--success)'; }
+            else { overallEl.innerText = 'قيد المراجعة ⚠️'; overallEl.style.background='rgba(245,158,11,0.15)'; overallEl.style.color='var(--warning)'; }
+
+            document.getElementById('licenseChecklist').innerHTML = items.map(i => `
+                <div class="rule-card">
+                    <div class="rt">
+                        <i class="fas ${i.ok?'fa-circle-check':'fa-circle-exclamation'}" style="color:${i.ok?'var(--success)':'var(--warning)'};"></i>
+                        ${i.label}
+                        <span style="margin-right:auto; font-size:0.65rem; color:${i.ok?'var(--success)':'var(--warning)'};">${i.ok?'مطابق':'يحتاج مراجعة'}</span>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--dim);">${i.detail}</div>
+                </div>
+            `).join('');
+
+            // مراسلة رسمية حقيقية واحدة فقط عند أول اكتشاف لبند غير مطابق هذا الموسم — وليست متكررة كل تحميل
+            const flagKey = `licenseWarningNotified_${club}_${seasonLabel}`;
+            if (anyFail && !localStorage.getItem(flagKey)) {
+                const failedLabels = items.filter(i=>!i.ok).map(i=>i.label).join('، ');
+                addMessageToSystem('لجنة التراخيص بالاتحاد', `📋 رخصة ناديكم لموسم ${seasonLabel} قيد المراجعة — بنود تحتاج معالجة: ${failedLabels}. يُرجى تسوية الوضع قبل الموعد النهائي لتفادي قيود على المشاركة.`, 'federation');
+                localStorage.setItem(flagKey, '1');
+            }
+        }
+
+        // ============================================================
+        // القضايا التأديبية — نظام مراحل حقيقي فعلي: مخالفة ← تحقيق ← قرار ← عقوبة ← استئناف ← قرار نهائي
+        // يُفتَح تلقائياً عند اكتشاف مخالفة حقيقية فعلية (تجاوز سقف الرواتب أو حصة الأجانب)، وليس افتراضياً
+        // ============================================================
+        function getDisciplinaryCases() { try { return JSON.parse(localStorage.getItem('fedDisciplinaryCases')) || []; } catch(e){ return []; } }
+        function saveDisciplinaryCases(cases) { localStorage.setItem('fedDisciplinaryCases', JSON.stringify(cases)); }
+        const CASE_STAGES = ['investigation','decision','penalty','appeal_window','final'];
+        const CASE_STAGE_LABELS = { investigation:'قيد التحقيق', decision:'بانتظار القرار', penalty:'صدرت العقوبة', appeal_window:'نافذة الاستئناف مفتوحة', final:'قرار نهائي' };
+
+        function detectAndOpenCases() {
+            const club = localStorage.getItem('presidentialClub') || 'نادي المستقبل';
+            const rules = JSON.parse(localStorage.getItem('federationRules')) || { wageCapPct:70, foreignMax:8 };
+            const signed = (JSON.parse(localStorage.getItem('signed_players_by_club'))||{})[club] || [];
+            const home = localStorage.getItem('homeCountry') || 'Saudi Arabia';
+            const foreignCount = signed.filter(p => fedIsForeign(p.nationality, home, rules)).length;
+
+            const cases = getDisciplinaryCases();
+            const today = getGameDate();
+            const todayAbs = toAbsDay(today);
+            const hasOpenCase = (type) => cases.some(c => c.type===type && c.stage!=='final');
+
+            if (foreignCount > rules.foreignMax && !hasOpenCase('foreign_quota')) {
+                openCase('foreign_quota', `تجاوز حصة اللاعبين الأجانب (${foreignCount}/${rules.foreignMax})`, todayAbs);
+            }
+            const weeklyWage = signed.reduce((s,p)=>s+(parseFloat(p.weekly_wage)||0),0);
+            const annualWage = weeklyWage*52/1000000;
+            const income = (parseFloat(localStorage.getItem('shopRevenue'))||0) + (parseFloat(localStorage.getItem('broadcastIncomeTotal'))||0) + (parseFloat(localStorage.getItem(`ticketRevenueTotal_${club}`))||0) + 30; // تقدير دخل أساسي إن لم تتوفر كل المصادر
+            const wagePct = income>0 ? (annualWage/income)*100 : 0;
+            if (wagePct > rules.wageCapPct && !hasOpenCase('ffp_breach')) {
+                openCase('ffp_breach', `تجاوز سقف الرواتب FFP (${wagePct.toFixed(0)}% من الإيرادات مقابل حد ${rules.wageCapPct}%)`, todayAbs);
+            }
+            progressCases();
+        }
+        function openCase(type, description, todayAbs) {
+            const cases = getDisciplinaryCases();
+            const caseId = `CASE-${Date.now()}`;
+            cases.push({ id:caseId, type, description, stage:'investigation', openedAbs:todayAbs, stageChangedAbs:todayAbs, appealed:false });
+            saveDisciplinaryCases(cases);
+            addMessageToSystem('لجنة الانضباط بالاتحاد', `⚖️ تم فتح تحقيق رسمي بحق ناديكم: ${description}. سيصدر قرار اللجنة خلال أيام.`, 'federation');
+        }
+        function progressCases() {
+            const cases = getDisciplinaryCases();
+            const todayAbs = toAbsDay(getGameDate());
+            let changed = false;
+            cases.forEach(c => {
+                if (c.stage === 'final') return;
+                const daysInStage = todayAbs - c.stageChangedAbs;
+                if (c.stage === 'investigation' && daysInStage >= 5) {
+                    c.stage = 'decision'; c.stageChangedAbs = todayAbs; changed = true;
+                    addMessageToSystem('لجنة الانضباط بالاتحاد', `📝 انتهى التحقيق في القضية "${c.description}" — القرار قيد الصياغة الرسمية.`, 'federation');
+                } else if (c.stage === 'decision' && daysInStage >= 3) {
+                    c.stage = 'penalty'; c.stageChangedAbs = todayAbs; changed = true;
+                    const penalty = applyCasePenalty(c);
+                    c.penaltyText = penalty;
+                    addMessageToSystem('لجنة الانضباط بالاتحاد', `🔨 صدر القرار في القضية "${c.description}": ${penalty}. لناديكم حق الاستئناف خلال 7 أيام.`, 'federation');
+                } else if (c.stage === 'penalty' && daysInStage >= 1) {
+                    c.stage = 'appeal_window'; c.stageChangedAbs = todayAbs; changed = true;
+                } else if (c.stage === 'appeal_window' && daysInStage >= 7) {
+                    c.stage = 'final'; c.stageChangedAbs = todayAbs; changed = true;
+                    const finalMsg = c.appealed ? `تم النظر في استئنافكم على قضية "${c.description}" — العقوبة الأصلية سارية نهائياً بعد المراجعة.` : `أصبح القرار في قضية "${c.description}" نهائياً دون استئناف.`;
+                    addMessageToSystem('لجنة الاستئناف بالاتحاد', `✅ ${finalMsg}`, 'federation');
+                }
+            });
+            if (changed) saveDisciplinaryCases(cases);
+        }
+        function applyCasePenalty(c) {
+            const club = localStorage.getItem('presidentialClub') || 'نادي المستقبل';
+            if (c.type === 'ffp_breach') {
+                const fine = 1 + (seedHash(c.id)%400)/100; // غرامة حقيقية 1-5 مليون € مطابقة لجدول العقوبات المعروض
+                const budget = parseFloat(localStorage.getItem('clubBudget'))||0;
+                localStorage.setItem('clubBudget', (budget-fine).toFixed(2));
+                return `غرامة مالية ${fine.toFixed(2)}M € + منع تسجيل صفقات جديدة حتى تسوية الوضع`;
+            }
+            if (c.type === 'foreign_quota') {
+                return `منع تسجيل لاعبين أجانب جدد حتى تصحيح القائمة إلى الحد المسموح`;
+            }
+            return 'إنذار رسمي';
+        }
+        function appealCase(caseId) {
+            const cases = getDisciplinaryCases();
+            const c = cases.find(x=>x.id===caseId);
+            if (!c || c.stage !== 'appeal_window' || c.appealed) return;
+            c.appealed = true;
+            saveDisciplinaryCases(cases);
+            addMessageToSystem('النادي', `📨 تم تقديم استئناف رسمي على القضية "${c.description}" إلى لجنة الاستئناف.`, 'federation');
+            showToast('تم إرسال الاستئناف');
+            renderCases();
+        }
+        function showToast(msg) {
+            let t = document.getElementById('fedToast');
+            if (!t) { t = document.createElement('div'); t.id='fedToast'; t.style.cssText='position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);color:#fff;padding:10px 16px;border-radius:10px;font-size:12px;z-index:99;'; document.body.appendChild(t); }
+            t.innerText = msg; t.style.display='block';
+            setTimeout(()=>t.style.display='none', 2500);
+        }
+        function renderCases() {
+            const cases = getDisciplinaryCases();
+            const el = document.getElementById('casesContainer');
+            if (!cases.length) { el.innerHTML = `<div class="rule-card" style="text-align:center; color:var(--success);"><i class="fas fa-shield-check"></i> لا توجد قضايا تأديبية مفتوحة بحق ناديكم حالياً.</div>`; return; }
+            el.innerHTML = cases.slice().reverse().map(c => {
+                const stageIdx = CASE_STAGES.indexOf(c.stage);
+                const pct = Math.round(((stageIdx+1)/CASE_STAGES.length)*100);
+                return `
+                <div class="rule-card">
+                    <div class="rt"><i class="fas fa-folder-open" style="color:var(--warning);"></i> ${c.description}
+                        <span style="margin-right:auto; font-size:0.65rem; color:var(--accent);">${CASE_STAGE_LABELS[c.stage]}</span>
+                    </div>
+                    <div style="height:6px; background:var(--border); border-radius:4px; overflow:hidden; margin:6px 0;"><div style="height:100%; width:${pct}%; background:var(--accent);"></div></div>
+                    <div style="font-size:0.72rem; color:var(--dim);">
+                        مخالفة ← تحقيق ← قرار ← عقوبة ← استئناف ← قرار نهائي
+                    </div>
+                    ${c.penaltyText ? `<div style="font-size:0.75rem; color:var(--danger); margin-top:6px;"><b>العقوبة:</b> ${c.penaltyText}</div>` : ''}
+                    ${c.stage==='appeal_window' && !c.appealed ? `<button onclick="appealCase('${c.id}')" style="margin-top:8px; width:100%; background:var(--accent); border:none; color:#fff; padding:8px; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">تقديم استئناف رسمي</button>` : ''}
+                    ${c.stage==='appeal_window' && c.appealed ? `<div style="margin-top:6px; font-size:0.7rem; color:var(--accent);"><i class="fas fa-paper-plane"></i> تم تقديم الاستئناف — بانتظار القرار النهائي.</div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function renderPrizeTable(rules, confederation){
+            const champion = getChampionPrize(rules.tier, confederation);
+            const runnerUp = champion * (1 - 0.88 * (1/24));
+            const third    = champion * (1 - 0.88 * (2/24));
+            const rows = [
+                { icon: 'fa-trophy', color:'var(--gold)', label: 'بطل الدوري', amt: champion },
+                { label: 'وصيف الدوري', amt: runnerUp },
+                { label: 'المركز الثالث (تأهل قاري عادة)', amt: third },
+                { label: 'كأس الاتحاد المحلي (بطل)', amt: champion * 0.35 },
+                { label: 'نهائي كأس الاتحاد المحلي', amt: champion * 0.12 },
+                { label: 'هداف الدوري (مكافأة فردية للنادي)', amt: champion * 0.015 },
+                { label: 'جائزة اللعب النظيف (Fair Play)', amt: champion * 0.008 },
+                { label: 'أفضل أكاديمية ناشئين للموسم', amt: champion * 0.03 },
+            ];
+            const table = document.getElementById('fedPrizeTable');
+            table.innerHTML = '<tr><th>الإنجاز</th><th>الجائزة المالية</th></tr>' + rows.map(r => `
+                <tr>
+                    <td>${r.icon ? `<i class="fas ${r.icon}" style="color:${r.color};"></i> ` : ''}${r.label}</td>
+                    <td class="amt">+ ${fmtPrize(r.amt)}</td>
+                </tr>
+            `).join('') + `
+                <tr>
+                    <td>حصة نهاية الموسم لبقية الترتيب (تنازلياً حتى آخر مركز)</td>
+                    <td class="amt">+ ${fmtPrize(champion*0.12)} — ${fmtPrize(champion)} حسب المركز</td>
+                </tr>
+            `;
+            document.getElementById('fedPrizeIntroText').innerHTML =
+                `جدول جوائز <b>${rules.confederationLabel}</b> — <b>${rules.tierLabel}</b>: بطل هذه الدرجة في اتحادك يحصل على <b>${fmtPrize(champion)}</b>، ` +
+                `وتنخفض الجائزة تدريجياً مع كل مركز أدنى في جدول الترتيب حتى نهاية الموسم.`;
+        }
+
+        function showTab(name, el) {
+            document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            el.classList.add('active');
+        }
+
+        // ============================================================
+        //  التحميل الرئيسي
+        // ============================================================
+        window.onload = function () {
+            const club = localStorage.getItem('presidentialClub') || "نادي المستقبل";
+            renderTransferWindows(localStorage.getItem('homeCountry') || 'Saudi Arabia');
+            const rules = JSON.parse(localStorage.getItem('federationRules')) || {
+                tier: 1, squadMax: 25, foreignMax: 8, homegrownMin: 0, wageCapPct: 70, minStadium: 12000,
+                tierLabel: "الدرجة الأولى (الممتاز)", confederation: "AFC",
+                confederationLabel: "الاتحاد الآسيوي لكرة القدم (AFC)",
+                confederationNote: "يُطبَّق غالباً نظام «3+1» في الدرجات العليا.", country: "Saudi Arabia", countryNote: null
+            };
+            const stadiumCap = parseInt(localStorage.getItem('clubStadiumCapacity')) || 0;
+            const stadiumName = localStorage.getItem('clubStadiumName') || '--';
+
+            // تحديد الاتحاد القاري الفعلي
+            const confedKey = fedGetConfederation(rules);
+            const confedLogoUrl = CONFED_LOGOS[confedKey] || '';
+
+            // عرض شعار الاتحاد في الهيدر
+            const logoImg = document.getElementById('confedLogo');
+            if (confedLogoUrl) {
+                logoImg.src = confedLogoUrl;
+                logoImg.style.display = 'inline-block';
+            } else {
+                logoImg.style.display = 'none';
+            }
+
+            // تحديث عنوان الصفحة ليعكس اسم الاتحاد مع الشعار
+            document.getElementById('fedHeaderTitle').innerHTML = `
+                ${rules.confederationLabel || 'الاتحاد'}
+                ${confedLogoUrl ? `<span class="confed-badge"><img src="${confedLogoUrl}" alt="شعار الاتحاد"> ${confedKey}</span>` : ''}
+            `;
+            document.getElementById('fedHeaderSub').innerText = `${rules.tierLabel} — اللائحة الرسمية للقوانين والعقوبات والجوائز والقيود التنظيمية`;
+
+            // تعبئة الجوائز
+            renderPrizeTable(rules, confedKey);
+
+            // تعبئة باقي العناصر
+            document.getElementById('fedLiveTierText').innerHTML =
+                `تمت قراءة بيانات <b>${club}</b> تلقائياً من سجلات الاتحاد: يلعب النادي تحت مظلة <b>${rules.confederationLabel}</b>، في <b>${rules.tierLabel}</b>، ` +
+                `ما يعني تطبيق حد أقصى لقائمة اللاعبين <b>${rules.squadMax}</b>، وحد أجانب <b>${rules.foreignMax}</b> لاعبين` +
+                (rules.homegrownMin > 0 ? `، وحد أدنى <b>${rules.homegrownMin}</b> لاعبين محليّي النشأة` : '') +
+                `، وسقف رواتب FFP بنسبة <b>${rules.wageCapPct}%</b> من الميزانية. ملعب النادي المسجّل: <b>${stadiumName}</b>` +
+                (stadiumCap ? ` (سعة ${stadiumCap.toLocaleString('en-US')} مقعد).` : '.');
+
+            const homeCountryVal = localStorage.getItem('homeCountry') || 'Saudi Arabia';
+            const countryCore = renderCountryCoreRules(homeCountryVal, rules.wageCapPct);
+            const adjustedWageCap = Math.max(35, rules.wageCapPct + countryCore.wageCapAdj);
+
+            document.getElementById('ruleSquadMax').innerText = `${rules.squadMax} لاعباً`;
+            document.getElementById('ruleForeignMax').innerText = `${rules.foreignMax} لاعبين`;
+            document.getElementById('ruleWageCap').innerText = `${adjustedWageCap}%`;
+            document.getElementById('ruleSquadMax2').innerText = rules.squadMax;
+            document.getElementById('ruleForeignMax2').innerText = rules.foreignMax;
+            document.getElementById('ruleWageCap2').innerText = adjustedWageCap + '%';
+            document.getElementById('ruleMinStadium').innerText = `${rules.minStadium.toLocaleString('en-US')} مقعد`;
+
+            if (rules.homegrownMin > 0) {
+                document.getElementById('ruleHomegrown').innerText = `${rules.homegrownMin} لاعبين محليين`;
+                document.getElementById('ruleHomegrown2').innerText = rules.homegrownMin;
+            } else {
+                document.getElementById('ruleHomegrownLi').style.display = 'none';
+                document.getElementById('ruleHomegrownCard2').style.display = 'none';
+            }
+
+            document.getElementById('ruleConfedNote').innerHTML = `<b>${rules.confederationLabel}:</b> ${rules.confederationNote || ''}`;
+            if (rules.countryNote) {
+                document.getElementById('ruleCountryNoteLi').style.display = 'block';
+                document.getElementById('ruleCountryNote').innerText = rules.countryNote;
+            }
+
+            // الغرامات ونقاط الخصم
+            const fines = parseFloat(localStorage.getItem('penaltiesCost')) || 0;
+            const ptsDeducted = parseInt(localStorage.getItem('clubPointsDeduction')) || 0;
+            document.getElementById('fedTotalFinesVal').innerText = fines.toFixed(2) + 'M €';
+            document.getElementById('fedPointsVal').innerText = ptsDeducted;
+
+            const badge = document.getElementById('clubDiscStatus');
+            if (fines > 0 || ptsDeducted > 0) {
+                badge.innerText = 'يوجد مخالفات مسجلة ⚠️';
+                badge.style.background = 'rgba(239,68,68,0.15)';
+                badge.style.color = 'var(--danger)';
+            }
+
+            const log = JSON.parse(localStorage.getItem('clubDisciplinaryLog')) || [];
+            const logBox = document.getElementById('fedLiveLog');
+            if (log.length > 0) {
+                logBox.innerHTML = log.slice(0, 8).map(l => `
+                    <div style="display:flex; justify-content:space-between; padding:7px 0; border-top:1px solid var(--border);">
+                        <span>${l.reason}</span>
+                        <span style="color:var(--danger); white-space:nowrap;">${l.amount ? (l.amount/1000000).toFixed(2)+'M €' : ''} ${l.points ? '−'+l.points+' نقطة' : ''}</span>
+                    </div>
+                `).join('');
+            }
+
+            const allSigned = JSON.parse(localStorage.getItem('signed_players_by_club')) || {};
+            const signed = allSigned[club] || [];
+            const home = localStorage.getItem('homeCountry') || 'Saudi Arabia';
+            const foreign = signed.filter(p => fedIsForeign(p.nationality, home, rules)).length;
+            const squadEl = document.getElementById('fedSquadVal');
+            const foreignEl = document.getElementById('fedForeignVal');
+            squadEl.innerText = `${signed.length} / ${rules.squadMax}`;
+            squadEl.style.color = signed.length > rules.squadMax ? 'var(--danger)' : '#fff';
+            foreignEl.innerText = `${foreign} / ${rules.foreignMax}`;
+            foreignEl.style.color = foreign > rules.foreignMax ? 'var(--danger)' : '#fff';
+
+            renderLicenseFile();
+            detectAndOpenCases();
+            renderCases();
+        };
+    </script>
+</body>
+</html>

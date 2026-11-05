@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الإدارة الطبية الاحترافي</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { 
+            --bg: #020617; --card: #0f172a; --header: #1e293b;
+            --accent: #22d3ee; --danger: #f43f5e; --success: #10b981; --gold: #fbbf24;
+            --medical-red: #ef4444;
+        }
+
+        body { background: var(--bg); color: #f1f5f9; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 150px; }
+
+        /* Header مع شعار الفريق الطبي */
+        .medical-banner {
+            background: linear-gradient(rgba(2, 6, 23, 0.8), rgba(2, 6, 23, 0.8)), url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=500');
+            background-size: cover; padding: 30px 20px; text-align: center; border-bottom: 2px solid var(--accent);
+        }
+
+        .container { padding: 15px; }
+
+        /* قسم الطاقم الطبي */
+        .staff-scroll { display: flex; gap: 15px; overflow-x: auto; padding: 10px 5px; scrollbar-width: none; }
+        .staff-card {
+            min-width: 130px; background: var(--card); padding: 15px; border-radius: 15px;
+            border: 1px solid #334155; text-align: center; flex-shrink: 0;
+        }
+        .staff-card i { font-size: 1.5rem; color: var(--accent); margin-bottom: 10px; display: block; }
+        .staff-card b { display: block; font-size: 0.75rem; margin-bottom: 4px; }
+        .staff-card span { font-size: 0.6rem; color: #94a3b8; }
+
+        /* الفحوصات والبروتوكولات */
+        .protocol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .protocol-btn {
+            background: #1e293b; border: 1px solid #334155; padding: 12px;
+            border-radius: 12px; color: white; cursor: pointer; text-align: center;
+        }
+        .protocol-btn i { color: var(--gold); margin-bottom: 5px; display: block; }
+        .protocol-btn span { font-size: 0.7rem; display: block; }
+        .protocol-btn.active { border-color: var(--success); background: rgba(16, 185, 129, 0.1); }
+
+        /* بطاقة اللاعب المصاب بتفاصيل "نايف أكرد" */
+        .rehab-card {
+            background: var(--card); border-radius: 20px; border-left: 4px solid var(--accent);
+            padding: 15px; margin-bottom: 15px; position: relative;
+        }
+        .rehab-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .p-meta b { font-size: 1rem; color: #fff; }
+        .p-meta p { font-size: 0.7rem; color: var(--danger); margin: 3px 0; }
+        
+        .specialist-tag { 
+            position: absolute; top: 15px; left: 15px; background: rgba(34, 211, 238, 0.1);
+            color: var(--accent); font-size: 0.6rem; padding: 4px 8px; border-radius: 5px; border: 1px solid var(--accent);
+        }
+
+        .rehab-plan { 
+            background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; margin-top: 10px;
+            font-size: 0.65rem; color: #94a3b8; line-height: 1.4;
+        }
+        .rehab-plan b { color: var(--gold); }
+
+        /* footer الإجراءات */
+        .medical-footer {
+            position: fixed; bottom: 0; width: 100%; background: #0f172a;
+            padding: 20px; border-top: 1px solid #334155; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            box-sizing: border-box;
+        }
+        .btn-footer { padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.8rem; cursor: pointer; }
+        .btn-report { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+        .btn-emergency { background: var(--medical-red); color: white; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+
+    </style>
+</head>
+<body>
+
+    <div class="medical-banner">
+        <div style="font-weight: 900; font-size: 1.5rem;">CENTRE MÉDICAL</div>
+        <div style="font-size: 0.7rem; opacity: 0.8;">وحدة الأداء العالي • نادي الفتح</div>
+    </div>
+
+    <div class="container">
+        <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">الطاقم الطبي المعتمد</div>
+        <div class="staff-scroll">
+            <div class="staff-card">
+                <i class="fas fa-user-md"></i>
+                <b>د. سمير</b>
+                <span>طبيب الفريق</span>
+            </div>
+            <div class="staff-card">
+                <i class="fas fa-hands-helping"></i>
+                <b>أ. لوران</b>
+                <span>علاج طبيعي</span>
+            </div>
+            <div class="staff-card">
+                <i class="fas fa-dumbbell"></i>
+                <b>ك. ماركو</b>
+                <span>معد بدني</span>
+            </div>
+            <div class="staff-card">
+                <i class="fas fa-apple-alt"></i>
+                <b>د. سارة</b>
+                <span>تغذية</span>
+            </div>
+        </div>
+
+        <div class="protocol-grid">
+            <div class="protocol-btn" onclick="this.classList.toggle('active')">
+                <i class="fas fa-heartbeat"></i>
+                <span>فحص ECG دوري</span>
+            </div>
+            <div class="protocol-btn active">
+                <i class="fas fa-ambulance"></i>
+                <span>بروتوكول FIFA</span>
+            </div>
+        </div>
+
+        <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">برامج التأهيل الفردي</div>
+        
+        <div class="rehab-card">
+            <span class="specialist-tag">بإشراف أخصائي العلاج الطبيعي</span>
+            <div class="rehab-header">
+                <div class="p-meta">
+                    <b>نايف أكرد</b>
+                    <p><i class="fas fa-crutch"></i> إصابة في الكاحل (Arthrodesis)</p>
+                </div>
+            </div>
+            
+            <div class="rehab-plan">
+                <b>خطة التأهيل:</b> المرحلة الثانية - تقوية الأربطة عبر تمارين التوازن المائي + نظام غذائي غني بالكولاجين (بإشراف أخصائي التغذية).
+            </div>
+
+            <div style="margin-top: 15px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.6rem; margin-bottom: 5px;">
+                    <span>جاهزية العودة للملعب</span>
+                    <span>75%</span>
+                </div>
+                <div style="width: 100%; height: 6px; background: #020617; border-radius: 5px; overflow: hidden;">
+                    <div style="width: 75%; height: 100%; background: var(--accent);"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="medical-footer">
+        <button class="btn-footer btn-report" onclick="alert('تقرير: الفريق يحتاج راحة بدنية بنسبة 20%')">طلب تقرير فني</button>
+        <button class="btn-footer btn-emergency" onclick="confirm('تفعيل حالة الطوارئ للمباراة القادمة؟')">إدارة الطوارئ</button>
+    </div>
+
+</body>
+</html>

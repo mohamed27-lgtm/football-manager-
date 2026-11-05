@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>مركز البث الحي للمباريات | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #020617;
+            --card: #0f172a;
+            --gold: #c5a059;
+            --border: #1e293b;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --red: #ef4444;
+            --green: #10b981;
+            --blue: #3b82f6;
+            --orange: #f97316;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
+        body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: var(--card); padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+        .page-header h2 { font-size: 13px; color: var(--gold); }
+        .back-btn { background: var(--border); color: white; border: none; padding: 6px 12px; font-size: 11px; border-radius: 4px; text-decoration: none; }
+
+        /* شاشة التلفزيون والبث */
+        .live-match-screen { background: linear-gradient(180deg, #010103, #0a0824); border: 2px solid var(--blue); border-radius: 12px; padding: 15px; position: relative; box-shadow: 0 8px 25px rgba(0,0,0,0.8); margin-bottom: 15px; }
+        .match-score-board { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; }
+        .team-name { font-size: 13px; font-weight: bold; color: #fff; }
+        .live-score { font-size: 20px; font-weight: 800; color: var(--gold); background: #000; padding: 2px 12px; border-radius: 4px; }
+        .match-timer { font-size: 11px; background: var(--red); color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold; }
+        .live-indicator { font-size: 9px; background: var(--green); color: black; font-weight: bold; padding: 2px 6px; border-radius: 3px; animation: blink 1.5s infinite; }
+
+        /* صندوق مجريات اللقاء */
+        .live-feed-box { background: rgba(0,0,0,0.7); border-radius: 8px; padding: 12px; min-height: 150px; max-height: 150px; overflow-y: auto; border-right: 4px solid var(--blue); display: flex; flex-direction: column; gap: 8px; font-size: 12px; }
+        .feed-item { animation: fadeIn 0.3s ease-out; }
+        .feed-min { color: var(--gold); font-weight: bold; margin-left: 6px; }
+
+        /* أستوديو الذكاء الاصطناعي بعد المباراة */
+        .ai-studio-panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 15px; display: none; }
+        .ai-studio-panel h3 { font-size: 13px; color: var(--orange); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .speaker-chat { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .speaker { font-size: 12px; padding: 8px; border-radius: 6px; line-height: 1.5; }
+        .speaker.critic { background: rgba(239, 68, 68, 0.08); border-right: 3px solid var(--red); color: #fca5a5; }
+        .speaker.supporter { background: rgba(16, 185, 129, 0.08); border-right: 3px solid var(--green); color: #a7f3d0; }
+
+        .control-btn { background: linear-gradient(135deg, var(--blue), #1e3a8a); color: white; border: none; padding: 12px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 15px; }
+        .control-btn:disabled { background: #334155; color: var(--muted); cursor: not-allowed; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <h2>🏟️ غرفة التحكم بالمباريات الحية والبث المباشر</h2>
+        <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i> المقر الرئيسي</a>
+    </div>
+
+    <button class="control-btn" id="matchActionBtn" onclick="triggerNewMatch()">
+        <i class="fas fa-gavel"></i> إعطاء إشارة انطلاق المباراة القادمة (120 ثانية)
+    </button>
+
+    <div class="live-match-screen">
+        <div class="match-score-board">
+            <span class="team-name">نادينا (الرئيس)</span>
+            <span class="live-score" id="boardScore">0 - 0</span>
+            <span class="team-name" id="oppName">في انتظار القرعة...</span>
+            <span class="match-timer" id="boardTimer">00'</span>
+        </div>
+        <div id="liveStatusTag" style="text-align: center; margin-bottom: 10px;"></div>
+
+        <div class="live-feed-box" id="feedContainer">
+            <div style="color:var(--muted); text-align:center;">المباراة لم تبدأ بعد، أو انتهت. اضغط على الزر لبدء البث الحقيقي الحُر.</div>
+        </div>
+    </div>
+
+    <div class="ai-studio-panel" id="aiStudioPanel">
+        <h3><i class="fas fa-robot"></i> 🎙️ استوديو الحصاد الرياضي الذكي (AI Analysis)</h3>
+        <p id="aiSummaryText" style="font-size: 12px; color: var(--gold); line-height: 1.5;"></p>
+        <div class="speaker-chat" id="aiDebateSpace"></div>
+    </div>
+
+    <script>
+        const MatchDurationRealTime = 120 * 1000; // 120 ثانية بالملي ثانية
+        let syncInterval = null;
+
+        // مصفوفة توليد سيناريوهات تكتيكية مسجلة مسبقاً لعرضها بناءً على دقيقة المباراة الحالية
+        const MatchEventsTimeline = [
+            { min: 10, txt: "بداية هادئة وتمريرات حذرة في وسط الملعب بين الفريقين تحت أنظار الإدارة الفنية.", type: "tactic" },
+            { min: 25, txt: "⚽ <b>جـوووووول أول لصالح فريقنا!</b> هجمة منظمة رائعة من الأطراف ينهيها المهاجم في الشباك!", type: "goal_us" },
+            { min: 42, txt: "بطاقة صفراء لمدافعنا بعد تدخل قوي لتعطيل هجمة مرتدة خطيرة للمنافس.", type: "tactic" },
+            { min: 55, txt: "🚨 <b>حالة تحكيمية جدلية!</b> سقوط مهاجم الخصم داخل المنطقة والحكم يرفض احتساب ركلة جزاء وسط احتجاجات عارمة!", type: "ref" },
+            { min: 70, txt: "⚽ <b>هدف التعادل للمنافس!</b> تسديدة مخادعة وقوية من خارج منطقة الجزاء تسكن شباك حارسنا.", type: "goal_them" },
+            { min: 85, txt: "ضغط هجومي كاسح من لاعبينا في الدقائق الأخيرة لمحاولة خطف النقاط الثلاث قبل صافرة النهاية." }
+        ];
+
+        // 🚀 دالة إطلاق مباراة جديدة وحفظ وقت البداية في الخلفية
+        function triggerNewMatch() {
+            const opponents = ["مانشستر سيتي U23", "أياكس أمستردام B", "النادي الأهلي", "الترجي التونسي", "بايرن ميونخ B"];
+            let randomOpp = opponents[Math.floor(Math.random() * opponents.length)];
+            
+            localStorage.setItem('match_active', 'true');
+            localStorage.setItem('match_start_time', Date.now().toString());
+            localStorage.setItem('match_opponent', randomOpp);
+            localStorage.setItem('match_goals_us', '0');
+            localStorage.setItem('match_goals_them', '0');
+
+            document.getElementById('aiStudioPanel').style.display = "none";
+            checkAndSyncMatchEngine();
+        }
+
+        // 🔗 دالة المزامنة الذكية (تعمل أوتوماتيكياً عند دخول أو خروج رئيس النادي)
+        function checkAndSyncMatchEngine() {
+            let isActive = localStorage.getItem('match_active') === 'true';
+            if (!isActive) {
+                showPostMatchAIStudio(); // إذا انتهت المباراة، اعرض الاستوديو فوراً
+                return;
+            }
+
+            let startTime = parseInt(localStorage.getItem('match_start_time')) || 0;
+            let elapsed = Date.now() - startTime;
+
+            if (elapsed >= MatchDurationRealTime) {
+                // إذا مرّت الـ 120 ثانية أثناء خروج الرئيس، قم بإنهاء المباراة فوراً وحساب النتيجة
+                finalizeMatchData();
+                return;
+            }
+
+            // إعداد الواجهة أثناء سير البث المباشر
+            document.getElementById('matchActionBtn').disabled = true;
+            document.getElementById('matchActionBtn').innerText = "⏳ المباراة جارية حالياً في الخلفية...";
+            document.getElementById('oppName').innerText = localStorage.getItem('match_opponent');
+            document.getElementById('liveStatusTag').innerHTML = `<span class="live-indicator">🔴 بث مباشر حي</span>`;
+
+            // تشغيل محرك المزامنة اللحظية ثانية بثانية
+            if(syncInterval) clearInterval(syncInterval);
+            syncInterval = setInterval(() => {
+                let currentElapsed = Date.now() - startTime;
+                
+                if (currentElapsed >= MatchDurationRealTime) {
+                    clearInterval(syncInterval);
+                    finalizeMatchData();
+                    return;
+                }
+
+                // تحويل الملي ثواني الحقيقية إلى دقائق افتراضية داخل اللعبة (من 1 إلى 90 دقيقة)
+                let calculatedMinute = Math.floor((currentElapsed / MatchDurationRealTime) * 90);
+                document.getElementById('boardTimer').innerText = `د ${calculatedMinute}'`;
+
+                // بناء شريط الأحداث ديناميكياً بناءً على الدقيقة الحالية لكي يراها الرئيس أينما دخل
+                renderLiveFeedByMinute(calculatedMinute);
+            }, 1000);
+        }
+
+        // دالة حقن النصوص التكتيكية بناءً على الدقيقة الحالية لمنع التكرار وضمان المزامنة الحية
+        function renderLiveFeedByMinute(currentMin) {
+            const feedBox = document.getElementById('feedContainer');
+            feedBox.innerHTML = "";
+            let currentUs = 0;
+            let currentThem = 0;
+
+            MatchEventsTimeline.forEach(ev => {
+                if (currentMin >= ev.min) {
+                    feedBox.innerHTML += `<div class="feed-item"><span class="feed-min">${ev.min}'</span> ${ev.txt}</div>`;
+                    if(ev.type === "goal_us") currentUs = 1;
+                    if(ev.type === "goal_them") currentThem = 1;
+                }
+            });
+
+            // تحديث النتيجة على اللوحة حياً
+            localStorage.setItem('match_goals_us', currentUs.toString());
+            localStorage.setItem('match_goals_them', currentThem.toString());
+            document.getElementById('boardScore').innerText = `${currentUs} - ${currentThem}`;
+            feedBox.scrollTop = feedBox.scrollHeight;
+        }
+
+        // 🏁 دالة إنهاء المباراة وحفظ الأرقام رسمياً في قاعدة بيانات اللعبة الشاملة
+        function finalizeMatchData() {
+            localStorage.setItem('match_active', 'false');
+            document.getElementById('matchActionBtn').disabled = false;
+            document.getElementById('matchActionBtn').innerHTML = `<i class="fas fa-play"></i> إطلاق مباراة جديدة في الخلفية`;
+            document.getElementById('liveStatusTag').innerHTML = `<span style="color:var(--muted)">انتهت المباراة رسمياً</span>`;
+            document.getElementById('boardTimer').innerText = "90'";
+
+            let finalUs = localStorage.getItem('match_goals_us') || "1";
+            let finalThem = localStorage.getItem('match_goals_them') || "1";
+            let opp = localStorage.getItem('match_opponent') || "المنافس";
+            
+            // تخزين النتيجة النهائية ليقرأها نظام صدى الملاعب في الأقسام الأخرى
+            localStorage.setItem('last_match_result', `تعادل إيجابي ${finalUs}-${finalThem} ضد ${opp}`);
+            localStorage.setItem('league_rank', '5'); // محاكاة الترتيب بعد اللقاء
+
+            showPostMatchAIStudio();
+        }
+
+        // 🧠 محرك الاستوديو التحليلي الذكي (يشتغل فوراً بالذكاء الاصطناعي التناقضي بعد الصافرة)
+        function showPostMatchAIStudio() {
+            let lastResult = localStorage.getItem('last_match_result');
+            if(!lastResult) return;
+
+            document.getElementById('aiStudioPanel').style.display = "block";
+            document.getElementById('aiSummaryText').innerText = `📊 تقرير الذكاء الاصطناعي الشامل لآخر مواجهة مسجلة: [ ${lastResult} ].`;
+
+            // صياغة السجال البشري المتناقض والممتع لرئيس النادي لمنع الملل والتكرار اللفظي
+            const debateSpace = document.getElementById('aiDebateSpace');
+            
+            let randomLogic = Math.random() > 0.5;
+            if(randomLogic) {
+                debateSpace.innerHTML = `
+                    <div class="speaker critic"><b>🤬 المحلل الهجومي:</b> تعادل مخيب جداً! الإدارة تركت فجوة تكتيكية مرعبة في الشوط الثاني والمدرب عاجز تماماً عن إجراء تبديلات شجاعة تحمي النادي!</div>
+                    <div class="speaker supporter"><b>😎 المحلل المدافع:</b> بل نقطة ثمينة خارج الديار! دفاعنا قدم مباراة بطولية والخبير التحكيمي أكد أن لقطة الدقيقة 55 كانت ضربة جزاء واضحة وظُلمنا فيها!</div>
+                `;
+            } else {
+                debateSpace.innerHTML = `
+                    <div class="speaker host"><b>🎙️ المذيع:</b> النتيجة تعكس تكافؤ الفرص، ولكن الجماهير بالمنصة تتساءل عن سبب غياب الصفقات الجديدة لتعزيز عمق تشكيلة رئيس النادي؟</div>
+                    <div class="speaker critic"><b>🤬 المحلل الهجومي:</b> نعم! غياب الدعم المالي جرد دكة البدلاء من أي أوراق رابحة، الرئيس يتحمل العبء الفني بسبب سياسة ضغط النفقات الحالية!</div>
+                `;
+            }
+        }
+
+        window.onload = function() {
+            checkAndSyncMatchEngine();
+        };
+    </script>
+</body>
+</html>

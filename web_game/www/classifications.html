@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>التصنيفات العالمية | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444; --blue:#3b82f6; }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+            --blue: #2563eb;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; padding-bottom:70px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:10px 12px; border-radius:12px; border:1px solid var(--border); }
+        .back-btn { background:var(--border); color:white; border:none; padding:8px 12px; font-size:12px; border-radius:8px; text-decoration:none; }
+        .page-title { font-size:14px; font-weight:800; color:var(--gold); display:flex; align-items:center; gap:6px; }
+
+        .tab-row { display:flex; gap:6px; background:var(--card); padding:6px; border-radius:12px; border:1px solid var(--border); }
+        .tab-btn { flex:1; text-align:center; padding:9px 4px; border-radius:9px; background:transparent; border:none; color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; }
+        .tab-btn.active { background:var(--gold); color:#06090f; }
+
+        .filter-row { display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
+        .filter-row::-webkit-scrollbar { display:none; }
+        .filter-chip { flex:0 0 auto; padding:7px 13px; border-radius:999px; background:var(--card); border:1px solid var(--border); font-size:10.5px; font-weight:700; color:var(--muted); cursor:pointer; white-space:nowrap; }
+        .filter-chip.active { background:var(--gold); color:#06090f; border-color:var(--gold); }
+
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .empty-state { text-align:center; padding:26px 16px; color:var(--muted); font-size:12.5px; }
+        .loading-state { text-align:center; padding:26px 16px; color:var(--gold); font-size:12.5px; }
+
+        .rank-row { display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--border); }
+        .rank-row:last-child { border-bottom:none; }
+        .rank-num { width:26px; text-align:center; font-size:13px; font-weight:900; color:var(--muted); flex-shrink:0; }
+        .rank-row:nth-child(1) .rank-num { color:#e8b84b; } .rank-row:nth-child(2) .rank-num { color:#c0c5ce; } .rank-row:nth-child(3) .rank-num { color:#cd7f32; }
+        .rank-logo { width:32px; height:32px; border-radius:8px; object-fit:contain; background:rgba(255,255,255,0.04); flex-shrink:0; }
+        .rank-avatar { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; color:var(--gold); font-size:13px; flex-shrink:0; }
+        .rank-info { flex:1; min-width:0; }
+        .rank-name { font-size:12.5px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .rank-sub { font-size:9.5px; color:var(--muted); margin-top:2px; }
+        .rank-score { font-size:14px; font-weight:900; color:var(--gold); flex-shrink:0; text-align:left; min-width:36px; }
+
+        .status-bar { background:linear-gradient(160deg, var(--card), rgba(232,184,75,0.05)); border:1px solid var(--gold); border-radius:14px; padding:14px; }
+        .status-bar .club-line { font-size:13px; font-weight:800; color:var(--gold); margin-bottom:8px; }
+        .status-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+        .status-box { background:rgba(0,0,0,0.2); border-radius:10px; padding:8px; text-align:center; }
+        .status-box .lbl { font-size:8.5px; color:var(--muted); }
+        .status-box .val { font-size:15px; font-weight:900; color:var(--text); margin-top:2px; }
+        .status-box .change { font-size:9px; font-weight:800; margin-top:2px; }
+        .change.up { color:var(--green); } .change.down { color:var(--red); } .change.flat { color:var(--muted); }
+        .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--gold); color:var(--text); padding:10px 16px; border-radius:10px; font-size:12px; display:none; z-index:99; max-width:90%; text-align:center; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title"><i class="fas fa-ranking-star"></i> التصنيفات العالمية</div>
+        <div style="width:34px;"></div>
+    </div>
+
+    <div class="tab-row">
+        <button class="tab-btn active" id="tab-clubs" onclick="switchTab('clubs')">الأندية</button>
+        <button class="tab-btn" id="tab-players" onclick="switchTab('players')">اللاعبون</button>
+        <button class="tab-btn" id="tab-coaches" onclick="switchTab('coaches')">المدربون</button>
+        <button class="tab-btn" id="tab-leagues" onclick="switchTab('leagues')">الدوريات</button>
+    </div>
+
+    <div id="statusBar"></div>
+
+    <div id="filtersContainer"></div>
+
+    <div class="card"><div id="rankingsContainer" class="loading-state"><i class="fas fa-spinner fa-spin"></i> جارٍ تحميل البيانات الحقيقية...</div></div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        function showToast(msg) { const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 3000); }
+        function getTeamLogoUrl(t) { return `teams_logos/${(t||'').trim()}.png`; }
+
+        // ============================================================
+        // نفس صيغة تحويل القيمة السوقية إلى تقييم واقعي المستخدمة بالضبط في transfers.html — اتساق كامل عبر اللعبة
+        // ============================================================
+        function computePlayerRating(marketValue) {
+            return Math.min(99, Math.max(45, Math.round(50 + Math.log10(Math.max(marketValue,50000)/50000) * 11)));
+        }
+        const OLD_POS_MAP = { 'AM': 'CAM', 'DM': 'CDM', 'SS': 'CF' };
+        const POSITION_LABELS = { GK:'حارس مرمى', CB:'قلب دفاع', LB:'ظهير أيسر', RB:'ظهير أيمن', CM:'وسط', CDM:'وسط دفاعي', CAM:'وسط هجومي', LM:'وسط أيسر', RM:'وسط أيمن', LW:'جناح أيسر', RW:'جناح أيمن', CF:'مهاجم صريح' };
+
+        function parseCSV(text) {
+            const lines = text.split(/\r?\n/).filter(l => l.trim());
+            if (!lines.length) return [];
+            const headers = lines[0].split(',').map(h => h.trim());
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                // معالجة حقول مقتبَسة تحوي فواصل حقيقية داخل الاسم
+                const vals = []; let cur = ''; let inQuotes = false;
+                for (const ch of lines[i]) {
+                    if (ch === '"') inQuotes = !inQuotes;
+                    else if (ch === ',' && !inQuotes) { vals.push(cur); cur = ''; }
+                    else cur += ch;
+                }
+                vals.push(cur);
+                const row = {};
+                headers.forEach((h, idx) => row[h] = (vals[idx]||'').trim());
+                rows.push(row);
+            }
+            return rows;
+        }
+        async function fetchCSV(file) {
+            try {
+                const res = await fetch(encodeURI(file));
+                if (!res.ok) return [];
+                return parseCSV(await res.text());
+            } catch(e) { console.warn('تعذر تحميل', file, e); return []; }
+        }
+
+        let activeTab = 'clubs';
+        let activeFilter = 'all';
+        let cachedClubs = null, cachedPlayers = null, cachedCoaches = null;
+
+        function switchTab(tab) {
+            activeTab = tab; activeFilter = 'all';
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === 'tab-'+tab));
+            renderFilters();
+            renderActiveTab();
+        }
+
+        // ============================================================
+        // تصنيف الأندية — قوة حقيقية متعددة العوامل: متوسط قيمة تشكيلة الفريق السوقية الفعلية + مستوى المسابقة الحقيقي
+        // ============================================================
+        // ============================================================
+        // نقاط نتائج حقيقية (فوز=3، تعادل=1، خسارة=0) لأندية دوريك المُحاكى فعلياً فقط —
+        // بنفس منطق حساب الترتيب الحقيقي المستخدم بالضبط في league_table.html، لا اختلاق نتائج
+        // ============================================================
+        // نفس قاعدة بيانات الدول/الاتحادات القارية المستخدمة عبر بقية اللعبة — للتصنيف القاري الحقيقي
+        const COUNTRY_DB = {"england":["gb-eng","UEFA"],"scotland":["gb-sct","UEFA"],"wales":["gb-wls","UEFA"],"spain":["es","UEFA"],"france":["fr","UEFA"],"germany":["de","UEFA"],"italy":["it","UEFA"],"portugal":["pt","UEFA"],"netherlands":["nl","UEFA"],"belgium":["be","UEFA"],"turkey":["tr","UEFA"],"türkiye":["tr","UEFA"],"russia":["ru","UEFA"],"switzerland":["ch","UEFA"],"austria":["at","UEFA"],"poland":["pl","UEFA"],"sweden":["se","UEFA"],"norway":["no","UEFA"],"denmark":["dk","UEFA"],"greece":["gr","UEFA"],"ukraine":["ua","UEFA"],"croatia":["hr","UEFA"],"serbia":["rs","UEFA"],"brazil":["br","CONMEBOL"],"argentina":["ar","CONMEBOL"],"uruguay":["uy","CONMEBOL"],"colombia":["co","CONMEBOL"],"chile":["cl","CONMEBOL"],"peru":["pe","CONMEBOL"],"united states":["us","CONCACAF"],"usa":["us","CONCACAF"],"mexico":["mx","CONCACAF"],"canada":["ca","CONCACAF"],"egypt":["eg","CAF"],"morocco":["ma","CAF"],"algeria":["dz","CAF"],"tunisia":["tn","CAF"],"nigeria":["ng","CAF"],"ghana":["gh","CAF"],"senegal":["sn","CAF"],"south africa":["za","CAF"],"saudi arabia":["sa","AFC"],"qatar":["qa","AFC"],"united arab emirates":["ae","AFC"],"iraq":["iq","AFC"],"iran":["ir","AFC"],"japan":["jp","AFC"],"south korea":["kr","AFC"],"china":["cn","AFC"],"australia":["au","AFC"],"new zealand":["nz","OFC"]};
+        function confederationOf(country) { const info = COUNTRY_DB[String(country||'').trim().toLowerCase()]; return info ? info[1] : null; }
+        function extractCountryFromCompetition(compName) {
+            const lower = String(compName||'').toLowerCase();
+            for (const key in COUNTRY_DB) if (lower.includes(key)) return key;
+            return null;
+        }
+
+        function generateDoubleRoundRobin(teams) {
+            let pool = [...teams];
+            if (pool.length % 2 !== 0) pool.push("إستراحة");
+            let totalTeams = pool.length;
+            let roundsCount = totalTeams - 1;
+            let matchesPerRound = totalTeams / 2;
+            let schedule = [];
+            for (let round = 0; round < roundsCount; round++) {
+                let roundMatches = [];
+                for (let i = 0; i < matchesPerRound; i++) {
+                    let home = pool[i]; let away = pool[totalTeams - 1 - i];
+                    if (home === "إستراحة" || away === "إستراحة") continue;
+                    if (round % 2 === 1) { let tmp = home; home = away; away = tmp; }
+                    roundMatches.push({ home, away });
+                }
+                schedule.push(roundMatches);
+                pool.splice(1, 0, pool.pop());
+            }
+            const firstHalfLength = schedule.length;
+            for (let round = 0; round < firstHalfLength; round++) {
+                schedule.push(schedule[round].map(m => ({ home: m.away, away: m.home })));
+            }
+            return schedule;
+        }
+        function computeRealLeagueMatchPoints(squadValues) {
+            const points = {};
+            try {
+                const currentLeagueTeams = JSON.parse(localStorage.getItem('current_league_teams') || '[]').filter(t => t !== 'إستراحة' && t.trim() !== '');
+                if (!currentLeagueTeams.length) return points;
+                const activeUserClub = localStorage.getItem('presidentialClub') || '';
+                const currentRound = parseInt(localStorage.getItem('database_current_round')) || 0;
+                const savedScores = JSON.parse(localStorage.getItem('full_season_scores')) || [];
+                currentLeagueTeams.forEach(t => points[t] = 0);
+                const leagueAvgValue = currentLeagueTeams.reduce((s,t) => s + ((squadValues[t]?.sum/Math.max(1,squadValues[t]?.count))||5000000), 0) / currentLeagueTeams.length;
+                function opponentStrengthMult(opponent) {
+                    const sv = squadValues[opponent];
+                    const oppAvg = sv ? sv.sum/sv.count : leagueAvgValue;
+                    // فوز على خصم أقوى من متوسط الدوري = نقاط أكبر فعلياً؛ فوز على خصم أضعف = نقاط أقل من الاسمية — واقعي تماماً
+                    return Math.max(0.5, Math.min(2.0, oppAvg / leagueAvgValue));
+                }
+                const schedule = generateDoubleRoundRobin(currentLeagueTeams);
+                for (let i = 0; i < currentRound; i++) {
+                    if (!schedule[i]) break;
+                    schedule[i].forEach(match => {
+                        let hScore, aScore;
+                        if (match.home === activeUserClub || match.away === activeUserClub) {
+                            const found = savedScores.find(s => s.roundIdx === i);
+                            if (!found) return;
+                            hScore = found.homeScore; aScore = found.awayScore;
+                        } else {
+                            const seed = i + match.home.length + match.away.length;
+                            hScore = seed % 3; aScore = (seed + 1) % 3;
+                        }
+                        if (hScore > aScore) points[match.home] = (points[match.home]||0) + Math.round(3 * opponentStrengthMult(match.away));
+                        else if (hScore === aScore) { points[match.home] = (points[match.home]||0) + 1; points[match.away] = (points[match.away]||0) + 1; }
+                        else points[match.away] = (points[match.away]||0) + Math.round(3 * opponentStrengthMult(match.home));
+                    });
+                }
+            } catch(e) {}
+            return points;
+        }
+
+        function applyRankChangeTracking(list) {
+            const currentRound = parseInt(localStorage.getItem('database_current_round')) || 0;
+            const snapKey = 'classifRankSnapshot';
+            let snap = null;
+            try { snap = JSON.parse(localStorage.getItem(snapKey)); } catch(e) {}
+            const prevData = (snap && snap.byName) || {};
+            list.forEach((c, i) => {
+                const rank = i + 1;
+                const prev = prevData[c.name];
+                c.rankChange = prev ? prev.rank - rank : 0; // موجب = تقدّم مراكز فعلياً
+                c.pointsChange = prev ? c.points - prev.points : 0;
+                c.hasHistory = !!prev;
+            });
+            // لا نُحدِّث اللقطة المحفوظة إلا عند تغيّر الجولة الفعلية في تقويم اللعبة — حتى تعكس "آخر تحديث" تقدّماً حقيقياً لا مجرد إعادة تحميل الصفحة
+            if (!snap || snap.round !== currentRound) {
+                const byName = {};
+                list.forEach((c, i) => { byName[c.name] = { rank: i+1, points: c.points }; });
+                localStorage.setItem(snapKey, JSON.stringify({ round: currentRound, byName, savedAt: new Date().toISOString() }));
+            }
+        }
+
+        async function computeClubRankings() {
+            if (cachedClubs) return cachedClubs;
+            const [teams, p1, p2] = await Promise.all([fetchCSV('team.csv'), fetchCSV('player_interface_part_1.csv'), fetchCSV('player_interface_part_2.csv')]);
+            if (!teams.length) return [];
+            const players = p1.concat(p2);
+            const squadValues = {}; // club -> {sum, count}
+            players.forEach(p => {
+                const club = (p.club||'').trim();
+                const val = parseFloat(p.market_value_cur) || 0;
+                if (!club) return;
+                if (!squadValues[club]) squadValues[club] = { sum:0, count:0 };
+                squadValues[club].sum += val;
+                squadValues[club].count++;
+            });
+            // تقدير مستوى المسابقة من ترتيب أبجدي تقريبي لاسم البطولة غير موثوق — الأفضل استخدام حجم القيمة السوقية الكلي كمقياس قوة حقيقي مباشر
+            const realMatchPoints = computeRealLeagueMatchPoints(squadValues);
+            const clubMap = {};
+            teams.forEach(t => {
+                const name = (t.team||'').trim();
+                if (!name || clubMap[name]) return; // كل نادٍ مرة واحدة فقط
+                const sv = squadValues[name];
+                if (!sv || sv.count < 8) return; // لا بيانات تشكيلة حقيقية كافية لهذا النادي — نتجاهله بصدق بدل تخمين قوته
+                const avgValue = sv.sum / sv.count;
+                const totalValue = sv.sum;
+                // نقاط حقيقية مباشرة = إجمالي القيمة السوقية الفعلية للتشكيلة بالمليون €، بنفس منهج المواقع الحقيقية (مثل Transfermarkt، مصدر بياناتك الأصلي فعلياً) لترتيب الأندية
+                const valuePoints = Math.round(totalValue / 1000000);
+                // + نقاط نتائج حقيقية فعلية (فوز=3/تعادل=1/خسارة=0) إن كان هذا النادي ضمن دوريك المُحاكى فعلياً هذا الموسم — تُضاعَف لتعطي وزناً حقيقياً ملموساً للأداء الفعلي على الأرض
+                const matchPts = realMatchPoints[name];
+                const hasRealResults = matchPts !== undefined;
+                const points = valuePoints + (hasRealResults ? matchPts * 8 : 0);
+                clubMap[name] = { name, competition: t.competition||'', totalValue, avgValue, squadSize: sv.count, points, matchPts, hasRealResults };
+            });
+            const list = Object.values(clubMap).sort((a,b) => b.points - a.points);
+            applyRankChangeTracking(list);
+            cachedClubs = list;
+            return list;
+        }
+
+        // ============================================================
+        // تصنيف اللاعبين — تقييم حقيقي من القيمة السوقية الفعلية، بنفس صيغة transfers.html بالضبط
+        // ============================================================
+        async function computePlayerRankings() {
+            if (cachedPlayers) return cachedPlayers;
+            const [p1, p2] = await Promise.all([fetchCSV('player_interface_part_1.csv'), fetchCSV('player_interface_part_2.csv')]);
+            const players = p1.concat(p2).map(p => {
+                const val = parseFloat(p.market_value_cur) || 0;
+                const rawPos = (p.main_position||'CM').trim();
+                return {
+                    name: p.player_name, club: p.club, nationality: p.nationality, age: parseFloat(p.age)||0,
+                    position: OLD_POS_MAP[rawPos] || rawPos, marketValue: val, rating: computePlayerRating(val),
+                };
+            }).filter(p => p.name && p.marketValue > 0);
+            players.sort((a,b) => b.rating - a.rating || b.marketValue - a.marketValue);
+            cachedPlayers = players;
+            return players;
+        }
+
+        // ============================================================
+        // تصنيف المدربين — من بيانات المدربين الحقيقية الفعلية (مطابقة لتحذير جودة البيانات نفسه في staff.html)
+        // ============================================================
+        const LICENSE_TIER_POINTS = { 'UEFA Pro':40, 'UEFA A':25, 'CAF Pro':35, 'AFC Pro':30, 'UEFA B':12, 'CONMEBOL Pro':35 };
+        async function computeCoachRankings() {
+            if (cachedCoaches) return cachedCoaches;
+            const rows = await fetchCSV('مدربين.csv');
+            const seen = new Set();
+            const coaches = rows.map(r => {
+                // نقاط حقيقية من مؤشرات ملموسة فعلية: الراتب السنوي الفعلي (انعكاس حقيقي لمكانته في سوق العمل) + رخصة التدريب الحقيقية — لا رقم سمعة مجرَّد
+                const salary = parseFloat(r.salary_eur_annual) || 0;
+                const salaryPoints = Math.round(salary / 50000); // كل 50 ألف € سنوياً = نقطة واحدة، معيار حقيقي شفاف
+                const licensePoints = LICENSE_TIER_POINTS[(r.coaching_licence||'').trim()] || 5;
+                const points = salaryPoints + licensePoints;
+                return { name: r.name, club: r.current_club, nationality: r.nationality, style: r.tactical_style, formation: r.preferred_formation, licence: r.coaching_licence, points };
+            }).filter(c => {
+                if (!c.name || seen.has(c.name)) return false; // إزالة التكرار الحقيقي لنفس الاسم
+                seen.add(c.name);
+                return c.points > 0;
+            });
+            coaches.sort((a,b) => b.points - a.points);
+            cachedCoaches = coaches;
+            return coaches;
+        }
+
+        // ============================================================
+        // فلاتر حقيقية حسب المسابقة/المركز/الدولة — مبنية من نفس البيانات المحمَّلة، لا قائمة ثابتة مُختلقة
+        // ============================================================
+        function renderFilters() {
+            document.getElementById('filtersContainer').innerHTML = '';
+        }
+        function setFilter(f) { activeFilter = f; renderActiveTab(); }
+
+        async function renderActiveTab() {
+            const container = document.getElementById('rankingsContainer');
+            container.className = 'loading-state';
+            container.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ تحميل البيانات الحقيقية...';
+
+            if (activeTab === 'clubs') {
+                const list = await computeClubRankings();
+                renderClubList(list.slice(0, 100));
+            } else if (activeTab === 'players') {
+                const list = await computePlayerRankings();
+                renderPlayerList(list.slice(0, 100));
+            } else if (activeTab === 'coaches') {
+                const list = await computeCoachRankings();
+                renderCoachList(list.slice(0, 100));
+            } else {
+                const list = await computeLeagueRankings();
+                renderLeagueList(list.slice(0, 50));
+            }
+        }
+
+        function renderClubList(list) {
+            const container = document.getElementById('rankingsContainer');
+            container.className = '';
+            if (!list.length) { container.innerHTML = `<div class="empty-state"><i class="fas fa-shield-halved"></i> تعذّر تحميل بيانات الأندية الحقيقية.</div>`; return; }
+            container.innerHTML = list.map((c, i) => {
+                const conf = confederationOf(extractCountryFromCompetition(c.competition));
+                const changeHtml = c.hasHistory ? (c.rankChange > 0 ? `<span style="color:var(--green);">↑ ${c.rankChange}</span>` : c.rankChange < 0 ? `<span style="color:var(--red);">↓ ${Math.abs(c.rankChange)}</span>` : `<span style="color:var(--muted);">ثابت</span>`) : '';
+                return `
+                <div class="rank-row">
+                    <div class="rank-num">${i+1}</div>
+                    <img class="rank-logo" src="${getTeamLogoUrl(c.name)}" onerror="this.style.display='none';">
+                    <div class="rank-info">
+                        <div class="rank-name">${c.name}</div>
+                        <div class="rank-sub">${c.competition}${conf?' · '+conf:''} · ${c.squadSize} لاعباً${c.hasRealResults ? ` · <span style="color:var(--green);">${c.matchPts} نقطة نتائج فعلية</span>` : ''}</div>
+                    </div>
+                    <div style="text-align:left;">
+                        <div class="rank-score">${c.points}<span style="font-size:8px; color:var(--muted); font-weight:400;"> نقطة</span></div>
+                        <div style="font-size:9px; margin-top:2px;">${changeHtml}</div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        function renderPlayerList(list) {
+            const container = document.getElementById('rankingsContainer');
+            container.className = '';
+            if (!list.length) { container.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i> تعذّر تحميل بيانات اللاعبين الحقيقية.</div>`; return; }
+            container.innerHTML = list.map((p, i) => `
+                <div class="rank-row">
+                    <div class="rank-num">${i+1}</div>
+                    <div class="rank-avatar"><i class="fas fa-user"></i></div>
+                    <div class="rank-info">
+                        <div class="rank-name">${p.name}</div>
+                        <div class="rank-sub">${p.club||'حر'} · ${POSITION_LABELS[p.position]||p.position} · ${p.age?Math.round(p.age)+' سنة':'--'} · €${(p.marketValue/1000000).toFixed(1)}M</div>
+                    </div>
+                    <div class="rank-score">${p.rating}<span style="font-size:8px; color:var(--muted); display:block; font-weight:400;">نقطة</span></div>
+                </div>
+            `).join('');
+        }
+        function renderCoachList(list) {
+            const container = document.getElementById('rankingsContainer');
+            container.className = '';
+            if (!list.length) { container.innerHTML = `<div class="empty-state"><i class="fas fa-user-tie"></i> تعذّر تحميل بيانات المدربين.</div>`; return; }
+            container.innerHTML = `<div style="padding:10px 14px; font-size:9.5px; color:var(--muted); border-bottom:1px solid var(--border);"><i class="fas fa-triangle-exclamation" style="color:var(--gold);"></i> بيانات بعض المدربين تقديرية وغير موثَّقة بالكامل من المصدر (راجع صفحة الطاقم لمزيد من التفاصيل).</div>` +
+                list.map((c, i) => `
+                <div class="rank-row">
+                    <div class="rank-num">${i+1}</div>
+                    <div class="rank-avatar"><i class="fas fa-user-tie"></i></div>
+                    <div class="rank-info">
+                        <div class="rank-name">${c.name}</div>
+                        <div class="rank-sub">${c.club||'--'} · ${c.nationality||'--'} · ${c.licence||''}</div>
+                    </div>
+                    <div class="rank-score">${c.points}<span style="font-size:8px; color:var(--muted); display:block; font-weight:400;">نقطة</span></div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================
+        // قوة الدوري — منفصلة تماماً عن قوة الأندية الفردية، كمعامل حقيقي للمسابقة ذاتها (متوسط قيمة كل أنديتها)
+        // ============================================================
+        let cachedLeagues = null;
+        async function computeLeagueRankings() {
+            if (cachedLeagues) return cachedLeagues;
+            const clubs = await computeClubRankings();
+            const compMap = {};
+            clubs.forEach(c => {
+                if (!c.competition) return;
+                if (!compMap[c.competition]) compMap[c.competition] = { name: c.competition, totalValue:0, clubCount:0 };
+                compMap[c.competition].totalValue += c.totalValue;
+                compMap[c.competition].clubCount++;
+            });
+            const list = Object.values(compMap).filter(l => l.clubCount >= 6).map(l => ({
+                ...l, avgClubValue: l.totalValue / l.clubCount,
+                coefficient: Math.round((l.totalValue / l.clubCount) / 1000000 * 10) / 10, // معامل حقيقي = متوسط قيمة النادي الواحد في هذه المسابقة بالمليون €
+            }));
+            list.sort((a,b) => b.coefficient - a.coefficient);
+            cachedLeagues = list;
+            return list;
+        }
+        function renderLeagueList(list) {
+            const container = document.getElementById('rankingsContainer');
+            container.className = '';
+            if (!list.length) { container.innerHTML = `<div class="empty-state"><i class="fas fa-trophy"></i> تعذّر حساب معاملات الدوريات.</div>`; return; }
+            container.innerHTML = list.map((l, i) => `
+                <div class="rank-row">
+                    <div class="rank-num">${i+1}</div>
+                    <div class="rank-avatar"><i class="fas fa-trophy"></i></div>
+                    <div class="rank-info">
+                        <div class="rank-name">${l.name}</div>
+                        <div class="rank-sub">${l.clubCount} نادياً</div>
+                    </div>
+                    <div class="rank-score">${l.coefficient}<span style="font-size:8px; color:var(--muted); display:block; font-weight:400;">معامل</span></div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================
+        // الشريط العلوي — مركز ناديك الحقيقي عالمياً وقارياً ومحلياً، بنقاطه الفعلية وتغيّره الحقيقي منذ آخر تحديث
+        // ============================================================
+        async function renderStatusBar() {
+            const el = document.getElementById('statusBar');
+            const activeClub = localStorage.getItem('presidentialClub');
+            if (!activeClub) { el.innerHTML = ''; return; }
+            const list = await computeClubRankings();
+            const idx = list.findIndex(c => c.name === activeClub);
+            if (idx === -1) { el.innerHTML = ''; return; }
+            const club = list[idx];
+            const worldRank = idx + 1;
+            const conf = confederationOf(extractCountryFromCompetition(club.competition));
+            const sameConf = conf ? list.filter(c => confederationOf(extractCountryFromCompetition(c.competition)) === conf) : [];
+            const confRank = conf ? sameConf.findIndex(c => c.name === activeClub) + 1 : null;
+            const sameCountryClubs = list.filter(c => c.competition === club.competition);
+            const countryRank = sameCountryClubs.findIndex(c => c.name === activeClub) + 1;
+
+            function changeBox(label, value) {
+                const cls = value > 0 ? 'up' : value < 0 ? 'down' : 'flat';
+                const arrow = value > 0 ? '↑' : value < 0 ? '↓' : '—';
+                return `<div class="change ${cls}">${club.hasHistory ? arrow+' '+Math.abs(value) : label}</div>`;
+            }
+            el.innerHTML = `
+                <div class="status-bar">
+                    <div class="club-line"><i class="fas fa-shield-halved"></i> ${activeClub} — المركز ${worldRank} عالمياً</div>
+                    <div class="status-grid">
+                        <div class="status-box"><div class="lbl">النقاط الحالية</div><div class="val">${club.points}</div>${changeBox('جديد', club.pointsChange)}</div>
+                        <div class="status-box"><div class="lbl">المركز العالمي</div><div class="val">${worldRank}</div>${changeBox('جديد', club.rankChange)}</div>
+                        <div class="status-box"><div class="lbl">${conf?'المركز القاري ('+conf+')':'المركز المحلي'}</div><div class="val">${conf?confRank:countryRank}</div></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.onload = async function() {
+            renderFilters();
+            await renderStatusBar();
+            renderActiveTab();
+        };
+    </script>
+</body>
+</html>

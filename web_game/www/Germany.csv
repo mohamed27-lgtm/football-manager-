@@ -1,0 +1,62 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+FCB,Bayern Munich,بايرن ميونخ,ألمانيا,192,UEFA,9,BL,Bundesliga,First Tier,33,"1932,1969,1972,1973,1974,1980,1981,1985,1986,1987,1989,1990,1994,1997,1999,2000,2001,2003,2005,2006,2008,2010,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023"
+FCB,Bayern Munich,بايرن ميونخ,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,20,"1957,1966,1967,1969,1971,1982,1984,1986,1998,2000,2003,2005,2006,2008,2010,2013,2014,2016,2019,2020"
+FCB,Bayern Munich,بايرن ميونخ,ألمانيا,192,UEFA,9,DFL,DFL-Supercup,Domestic Super Cup,10,"1987,1990,2010,2012,2016,2017,2018,2020,2021,2022"
+FCB,Bayern Munich,بايرن ميونخ,ألمانيا,192,UEFA,9,UCL,UEFA Champions League,Continental,6,"1974,1975,1976,2001,2013,2020"
+FCB,Bayern Munich,بايرن ميونخ,ألمانيا,192,UEFA,9,UEL,UEFA Europa League,Continental,1,1996
+FCB,Bayern Munich,بايرن ميونخ,ألمانيا,192,UEFA,9,UCWC,UEFA Cup Winners' Cup,Continental,1,1967
+FCB,Bayern Munich,بايرن ميونخ,ألمانيا,192,UEFA,9,USC,UEFA Super Cup,Continental,2,"2013,2020"
+FCB,Bayern Munich,بايرن ميونخ,ألمانيا,192,UEFA,9,IC,Intercontinental Cup,Global,2,"1976,2001"
+FCB,Bayern Munich,بايرن ميونخ,ألمانيا,192,UEFA,9,FIFA-CWC,FIFA Club World Cup,Global,2,"2013,2020"
+DOR,Borussia Dortmund,بوروسيا دورتموند,ألمانيا,192,UEFA,9,BL,Bundesliga,First Tier,8,"1956,1957,1963,1995,1996,2002,2011,2012"
+DOR,Borussia Dortmund,بوروسيا دورتموند,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,5,"1965,1989,2012,2017,2021"
+DOR,Borussia Dortmund,بوروسيا دورتموند,ألمانيا,192,UEFA,9,DFL,DFL-Supercup,Domestic Super Cup,6,"1989,1995,1996,2013,2014,2019"
+DOR,Borussia Dortmund,بوروسيا دورتموند,ألمانيا,192,UEFA,9,UCL,UEFA Champions League,Continental,1,1997
+DOR,Borussia Dortmund,بوروسيا دورتموند,ألمانيا,192,UEFA,9,UCWC,UEFA Cup Winners' Cup,Continental,1,1966
+DOR,Borussia Dortmund,بوروسيا دورتموند,ألمانيا,192,UEFA,9,USC,UEFA Super Cup,Continental,1,1997
+DOR,Borussia Dortmund,بوروسيا دورتموند,ألمانيا,192,UEFA,9,IC,Intercontinental Cup,Global,1,1997
+RBL,RB Leipzig,آر بي لايبزيغ,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,2,"2022,2023"
+RBL,RB Leipzig,آر بي لايبزيغ,ألمانيا,192,UEFA,9,DFL,DFL-Supercup,Domestic Super Cup,1,2023
+B04,Bayer Leverkusen,باير ليفركوزن,ألمانيا,192,UEFA,9,BL,Bundesliga,First Tier,1,2024
+B04,Bayer Leverkusen,باير ليفركوزن,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,2,"1993,2024"
+B04,Bayer Leverkusen,باير ليفركوزن,ألمانيا,192,UEFA,9,UEL,UEFA Europa League,Continental,1,1988
+B04,Bayer Leverkusen,باير ليفركوزن,ألمانيا,192,UEFA,9,USC,UEFA Super Cup,Continental,0,·
+STU,VfB Stuttgart,شتوتغارت,ألمانيا,192,UEFA,9,BL,Bundesliga,First Tier,5,"1950,1952,1984,1992,2007"
+STU,VfB Stuttgart,شتوتغارت,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,3,"1954,1958,1997"
+STU,VfB Stuttgart,شتوتغارت,ألمانيا,192,UEFA,9,DFL,DFL-Supercup,Domestic Super Cup,1,1992
+STU,VfB Stuttgart,شتوتغارت,ألمانيا,192,UEFA,9,IC,Intercontinental Cup,Global,0,·
+S04,Schalke 04,شالكه,ألمانيا,192,UEFA,9,BL,Bundesliga,First Tier,7,"1934,1935,1937,1939,1940,1942,1958"
+S04,Schalke 04,شالكه,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,5,"1937,1972,2001,2002,2011"
+S04,Schalke 04,شالكه,ألمانيا,192,UEFA,9,DFL,DFL-Supercup,Domestic Super Cup,1,2011
+S04,Schalke 04,شالكه,ألمانيا,192,UEFA,9,UEL,UEFA Europa League,Continental,1,1997
+S04,Schalke 04,شالكه,ألمانيا,192,UEFA,9,USC,UEFA Super Cup,Continental,0,·
+BSC,Hertha BSC,هرتا برلين,ألمانيا,192,UEFA,9,BL,Bundesliga,First Tier,2,"1930,1931"
+BSC,Hertha BSC,هرتا برلين,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,0,·
+WOB,VfL Wolfsburg,فولفسبورغ,ألمانيا,192,UEFA,9,BL,Bundesliga,First Tier,1,2009
+WOB,VfL Wolfsburg,فولفسبورغ,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,1,2015
+WOB,VfL Wolfsburg,فولفسبورغ,ألمانيا,192,UEFA,9,DFL,DFL-Supercup,Domestic Super Cup,1,2015
+BMG,Borussia Mönchengladbach,بوروسيا مونشنغلادباخ,ألمانيا,192,UEFA,9,BL,Bundesliga,First Tier,5,"1970,1971,1975,1976,1977"
+BMG,Borussia Mönchengladbach,بوروسيا مونشنغلادباخ,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,3,"1960,1973,1995"
+BMG,Borussia Mönchengladbach,بوروسيا مونشنغلادباخ,ألمانيا,192,UEFA,9,DFL,DFL-Supercup,Domestic Super Cup,0,·
+BMG,Borussia Mönchengladbach,بوروسيا مونشنغلادباخ,ألمانيا,192,UEFA,9,UEL,UEFA Europa League,Continental,2,"1975,1979"
+BMG,Borussia Mönchengladbach,بوروسيا مونشنغلادباخ,ألمانيا,192,UEFA,9,USC,UEFA Super Cup,Continental,0,·
+BRE,Werder Bremen,فيردر بريمن,ألمانيا,192,UEFA,9,BL,Bundesliga,First Tier,4,"1965,1988,1993,2004"
+BRE,Werder Bremen,فيردر بريمن,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,6,"1961,1991,1994,1999,2004,2009"
+BRE,Werder Bremen,فيردر بريمن,ألمانيا,192,UEFA,9,DFL,DFL-Supercup,Domestic Super Cup,3,"1988,1993,1994"
+BRE,Werder Bremen,فيردر بريمن,ألمانيا,192,UEFA,9,UCWC,UEFA Cup Winners' Cup,Continental,1,1992
+BRE,Werder Bremen,فيردر بريمن,ألمانيا,192,UEFA,9,USC,UEFA Super Cup,Continental,0,·
+EIN,Eintracht Frankfurt,آينتراخت فرانكفورت,ألمانيا,192,UEFA,9,BL,Bundesliga,First Tier,1,1959
+EIN,Eintracht Frankfurt,آينتراخت فرانكفورت,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,5,"1974,1975,1981,1988,2018"
+EIN,Eintracht Frankfurt,آينتراخت فرانكفورت,ألمانيا,192,UEFA,9,UCL,UEFA Champions League,Continental,0,·
+EIN,Eintracht Frankfurt,آينتراخت فرانكفورت,ألمانيا,192,UEFA,9,UEL,UEFA Europa League,Continental,2,"1980,2022"
+EIN,Eintracht Frankfurt,آينتراخت فرانكفورت,ألمانيا,192,UEFA,9,USC,UEFA Super Cup,Continental,0,·
+HOF,TSG Hoffenheim,هوفنهايم,ألمانيا,192,UEFA,9,·,·,·,0,·
+MAI,Mainz 05,ماينز,ألمانيا,192,UEFA,9,·,·,·,0,·
+AUG,FC Augsburg,أوغسبورغ,ألمانيا,192,UEFA,9,·,·,·,0,·
+KÖL,1. FC Köln,كولن,ألمانيا,192,UEFA,9,BL,Bundesliga,First Tier,3,"1962,1964,1978"
+KÖL,1. FC Köln,كولن,ألمانيا,192,UEFA,9,DFB,DFB-Pokal,Domestic Cup,4,"1968,1977,1978,1983"
+KÖL,1. FC Köln,كولن,ألمانيا,192,UEFA,9,UEL,UEFA Europa League,Continental,0,·
+FRE,SC Freiburg,فرايبورغ,ألمانيا,192,UEFA,9,·,·,·,0,·
+BOC,VfL Bochum,بوخوم,ألمانيا,192,UEFA,9,·,·,·,0,·
+D97,SV Darmstadt 98,دارمشتات,ألمانيا,192,UEFA,9,·,·,·,0,·
+HEI,1. FC Heidenheim,هايدنهايم,ألمانيا,192,UEFA,9,·,·,·,0,·

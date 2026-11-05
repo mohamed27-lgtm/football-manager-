@@ -14,3 +14,6 @@ android/local.properties
 # ملفات مؤقتة للاستيراد (تُرفع كأصول إصدار ولا تُحفظ في git)
 packs/
 __pycache__/
+web_game/node_modules/
+web_game/android/
+web_game/www/vendor/

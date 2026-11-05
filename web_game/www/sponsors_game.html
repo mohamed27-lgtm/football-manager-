@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Football Sponsors System</title>
+
+<style>
+
+:root{
+    --bg:#020617;
+    --card:#0f172a;
+    --gold:#d4af37;
+    --blue:#38bdf8;
+    --green:#22c55e;
+    --red:#ef4444;
+    --border:#1e293b;
+    --text:#f8fafc;
+    --muted:#94a3b8;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI,Tahoma,sans-serif;
+}
+
+body{
+    background:
+    linear-gradient(rgba(2,6,23,.92),
+    rgba(2,6,23,.96)),
+    url('stadium.jpg');
+
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+
+    color:white;
+    padding:14px;
+}
+
+.header{
+    background:rgba(15,23,42,.88);
+    border:1px solid var(--border);
+    border-bottom:3px solid var(--gold);
+    backdrop-filter:blur(10px);
+
+    border-radius:20px;
+    padding:20px;
+    margin-bottom:20px;
+}
+
+.club-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.club-name{
+    font-size:1.6rem;
+    color:var(--gold);
+    font-weight:900;
+}
+
+.club-details{
+    color:var(--muted);
+    margin-top:5px;
+    font-size:.85rem;
+}
+
+.finance-box{
+    background:#111827;
+    padding:12px;
+    border-radius:14px;
+    text-align:center;
+    min-width:110px;
+}
+
+.finance-box b{
+    color:var(--green);
+    display:block;
+    font-size:1.1rem;
+}
+
+.finance-box span{
+    font-size:.7rem;
+    color:var(--muted);
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-top:18px;
+}
+
+.stat{
+    background:#111827;
+    padding:14px;
+    border-radius:14px;
+    text-align:center;
+}
+
+.stat b{
+    color:var(--gold);
+    display:block;
+    font-size:1.1rem;
+}
+
+.stat span{
+    font-size:.7rem;
+    color:var(--muted);
+}
+
+.filters{
+    background:rgba(15,23,42,.9);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:15px;
+    margin-bottom:18px;
+}
+
+.filters input,
+.filters select{
+    width:100%;
+    padding:13px;
+    background:#020617;
+    border:1px solid #334155;
+    color:white;
+    border-radius:12px;
+    margin-bottom:10px;
+}
+
+.section-title{
+    margin:20px 0 12px;
+    color:var(--gold);
+    font-size:1rem;
+    font-weight:bold;
+}
+
+.grid{
+    display:grid;
+    gap:14px;
+}
+
+.card{
+    background:rgba(15,23,42,.92);
+    border:1px solid #1e293b;
+    border-radius:18px;
+    padding:16px;
+
+    backdrop-filter:blur(8px);
+}
+
+.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.company{
+    font-size:1.1rem;
+    color:var(--gold);
+    font-weight:800;
+}
+
+.country{
+    font-size:.75rem;
+    color:var(--muted);
+}
+
+.tier{
+    padding:6px 11px;
+    border-radius:30px;
+    font-size:.7rem;
+    font-weight:bold;
+}
+
+.elite{
+    background:#f59e0b;
+    color:black;
+}
+
+.premium{
+    background:#2563eb;
+}
+
+.standard{
+    background:#475569;
+}
+
+.info-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:14px;
+}
+
+.box{
+    background:#111827;
+    padding:10px;
+    border-radius:12px;
+}
+
+.box small{
+    color:var(--muted);
+    display:block;
+    margin-bottom:4px;
+    font-size:.65rem;
+}
+
+.box b{
+    font-size:.85rem;
+}
+
+.types{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:12px;
+}
+
+.tag{
+    background:#1e293b;
+    border-radius:30px;
+    padding:6px 10px;
+    font-size:.65rem;
+}
+
+.btn{
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:14px;
+    margin-top:15px;
+
+    background:var(--gold);
+    color:black;
+
+    font-weight:900;
+    cursor:pointer;
+}
+
+.btn:hover{
+    opacity:.9;
+}
+
+.toast{
+    position:fixed;
+    bottom:20px;
+    left:20px;
+    right:20px;
+
+    background:#14532d;
+    border-right:4px solid var(--green);
+
+    padding:15px;
+    border-radius:15px;
+
+    display:none;
+    z-index:999;
+}
+
+@media(max-width:700px){
+
+    .stats,
+    .info-grid{
+        grid-template-columns:1fr;
+    }
+
+    .club-top{
+        flex-direction:column;
+        gap:15px;
+        align-items:flex-start;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+
+    <div class="club-top">
+
+        <div>
+
+            <div class="club-name" id="clubName">
+                Manchester City
+            </div>
+
+            <div class="club-details" id="clubInfo">
+                Loading...
+            </div>
+
+        </div>
+
+        <div class="finance-box">
+            <b id="budgetUI">250M €</b>
+            <span>الميزانية الحالية</span>
+        </div>
+
+    </div>
+
+    <div class="stats">
+
+        <div class="stat">
+            <b id="sponsorsCount">86</b>
+            <span>الشركات المتاحة</span>
+        </div>
+
+        <div class="stat">
+            <b id="eliteCount">22</b>
+            <span>رعاة النخبة</span>
+        </div>
+
+        <div class="stat">
+            <b id="incomeCount">410M €</b>
+            <span>الدخل التجاري</span>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="filters">
+
+    <input
+    type="text"
+    id="search"
+    placeholder="🔍 ابحث عن شركة">
+
+    <select id="tier">
+
+        <option value="all">
+            كل المستويات
+        </option>
+
+        <option value="Elite">
+            Elite
+        </option>
+
+        <option value="Premium">
+            Premium
+        </option>
+
+        <option value="Standard">
+            Standard
+        </option>
+
+    </select>
+
+</div>
+
+<div class="section-title">
+💼 عروض الرعاة الحالية
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+// ===============================
+// استيراد بيانات اللعبة الحقيقية
+// ===============================
+
+// النادي الحالي
+const clubName =
+localStorage.getItem("presidentialClub")
+|| "Unknown Club";
+
+// الميزانية
+let clubBudget =
+parseFloat(
+localStorage.getItem("clubBudget")
+|| 120
+);
+
+// البطولات
+let trophies =
+parseInt(
+localStorage.getItem("clubTrophies")
+|| 0
+);
+
+// ترتيب الدوري
+let leaguePosition =
+parseInt(
+localStorage.getItem("leaguePosition")
+|| 15
+);
+
+// نتائج الفريق
+let wins =
+parseInt(
+localStorage.getItem("seasonWins")
+|| 0
+);
+
+let draws =
+parseInt(
+localStorage.getItem("seasonDraws")
+|| 0
+);
+
+let losses =
+parseInt(
+localStorage.getItem("seasonLosses")
+|| 0
+);
+
+// ====================================
+// قراءة ملف التدريب الحقيقي
+// ====================================
+
+const trainingPlan =
+JSON.parse(
+localStorage.getItem("active_training_plan")
+|| "{}"
+);
+
+// تأثير التدريب
+let trainingBoost = 0;
+
+if(trainingPlan.morning === "tech")
+trainingBoost += 6;
+
+if(trainingPlan.evening === "tech")
+trainingBoost += 6;
+
+if(trainingPlan.morning === "tact")
+trainingBoost += 4;
+
+if(trainingPlan.evening === "tact")
+trainingBoost += 4;
+
+if(trainingPlan.morning === "phys")
+trainingBoost += 8;
+
+if(trainingPlan.evening === "phys")
+trainingBoost += 8;
+
+// ====================================
+// حساب سمعة النادي الواقعية
+// ====================================
+
+function calculateClubReputation(){
+
+let rep = 50;
+
+// الانتصارات
+rep += wins * 2;
+
+// التعادلات
+rep += draws;
+
+// الهزائم
+rep -= losses * 1.5;
+
+// البطولات
+rep += trophies * 8;
+
+// ترتيب الدوري
+rep += (20 - leaguePosition) * 2;
+
+// التدريب
+rep += trainingBoost;
+
+// حدود
+if(rep < 1) rep = 1;
+if(rep > 99) rep = 99;
+
+return Math.floor(rep);
+
+}
+
+const clubReputation =
+calculateClubReputation();
+
+// ====================================
+// الشركات الواقعية
+// ====================================
+
+const sponsors = [
+
+{
+company:"Emirates",
+tier:"Elite",
+minRep:90,
+offer:120
+},
+
+{
+company:"Qatar Airways",
+tier:"Elite",
+minRep:88,
+offer:110
+},
+
+{
+company:"Nike",
+tier:"Elite",
+minRep:85,
+offer:95
+},
+
+{
+company:"Adidas",
+tier:"Elite",
+minRep:82,
+offer:90
+},
+
+{
+company:"Spotify",
+tier:"Premium",
+minRep:70,
+offer:45
+},
+
+{
+company:"Puma",
+tier:"Premium",
+minRep:65,
+offer:35
+},
+
+{
+company:"Konami",
+tier:"Standard",
+minRep:50,
+offer:20
+}
+
+];
+
+// ====================================
+// توليد عروض الرعاة
+// ====================================
+
+function generateOffers(){
+
+const available = [];
+
+sponsors.forEach(s=>{
+
+// النادي ضعيف
+if(clubReputation < s.minRep)
+return;
+
+// فرصة العرض
+let chance =
+clubReputation - s.minRep;
+
+// الرعاة الكبار أصعب
+if(s.tier === "Elite")
+chance *= 0.45;
+
+const random =
+Math.random() * 100;
+
+// نجاح
+if(random < chance){
+
+available.push({
+
+company:s.company,
+
+tier:s.tier,
+
+offer:
+(
+s.offer +
+Math.random()*15
+).toFixed(1),
+
+years:
+Math.floor(Math.random()*5)+2
+
+});
+
+}
+
+});
+
+return available;
+
+}
+
+// ====================================
+// عرض العروض
+// ====================================
+
+function renderSponsors(){
+
+const grid =
+document.getElementById("grid");
+
+grid.innerHTML = "";
+
+// واجهة النادي
+document.getElementById("clubName")
+.innerHTML = clubName;
+
+document.getElementById("budgetUI")
+.innerHTML =
+clubBudget.toFixed(1)
++ "M €";
+
+document.getElementById("clubInfo")
+.innerHTML =
+
+"⭐ السمعة التجارية: "
++ clubReputation +
+
+"/99 • 🏆 البطولات: "
++ trophies;
+
+// إنشاء العروض
+const offers =
+generateOffers();
+
+// لا عروض
+if(offers.length === 0){
+
+grid.innerHTML = `
+
+<div class="card">
+
+<h2 style="color:#ef4444">
+❌ لا توجد عروض رعاية
+</h2>
+
+<p style="margin-top:10px;color:#94a3b8">
+
+الشركات تراقب نتائج الفريق حالياً.
+حقق انتصارات أكثر وارفع سمعة النادي.
+
+</p>
+
+</div>
+
+`;
+
+return;
+
+}
+
+// عرض الشركات
+offers.forEach(s=>{
+
+const card =
+document.createElement("div");
+
+card.className = "card";
+
+card.innerHTML = `
+
+<div class="top">
+
+<div>
+
+<div class="company">
+${s.company}
+</div>
+
+<div class="country">
+عرض رسمي لنادي ${clubName}
+</div>
+
+</div>
+
+<div class="tier ${s.tier.toLowerCase()}">
+${s.tier}
+</div>
+
+</div>
+
+<div class="info-grid">
+
+<div class="box">
+<small>💰 قيمة العرض</small>
+<b>${s.offer}M €</b>
+</div>
+
+<div class="box">
+<small>📅 مدة العقد</small>
+<b>${s.years} سنوات</b>
+</div>
+
+<div class="box">
+<small>⭐ سمعة النادي</small>
+<b>${clubReputation}/99</b>
+</div>
+
+<div class="box">
+<small>🏆 البطولات</small>
+<b>${trophies}</b>
+</div>
+
+</div>
+
+<button
+class="btn"
+onclick="
+negotiate(
+'${s.company}',
+${s.offer}
+)">
+
+💼 التفاوض
+
+</button>
+
+`;
+
+grid.appendChild(card);
+
+});
+
+}
+
+// ====================================
+// التفاوض الواقعي
+// ====================================
+
+function negotiate(company,offer){
+
+let requested =
+prompt(
+
+company +
+' قدمت عرضاً بقيمة '
++ offer +
+'M €\n\n'
++
+'أدخل المبلغ المطلوب:'
+
+);
+
+if(!requested)
+return;
+
+requested =
+parseFloat(requested);
+
+// مبالغة كبيرة
+if(requested > offer * 1.5){
+
+alert(
+'❌ الشركة انسحبت من التفاوض.'
+);
+
+return;
+
+}
+
+// فرصة النجاح
+let chance = 75;
+
+// كل زيادة تقلل النجاح
+chance -=
+(requested - offer) * 2;
+
+// السمعة تساعد
+chance +=
+clubReputation * 0.15;
+
+// القرار النهائي
+if(Math.random()*100 < chance){
+
+signDeal(company,requested);
+
+alert(
+'✅ تمت الموافقة على العقد.'
+);
+
+}else{
+
+alert(
+'❌ فشلت المفاوضات.'
+);
+
+}
+
+}
+
+// ====================================
+// توقيع العقد
+// ====================================
+
+function signDeal(company,value){
+
+clubBudget += value;
+
+localStorage.setItem(
+"clubBudget",
+clubBudget.toFixed(1)
+);
+
+localStorage.setItem(
+"clubSponsor",
+company
+);
+
+localStorage.setItem(
+"clubSponsorValue",
+value
+);
+
+document.getElementById("budgetUI")
+.innerHTML =
+clubBudget.toFixed(1)
++ "M €";
+
+const toast =
+document.getElementById("toast");
+
+toast.style.display = "block";
+
+toast.innerHTML =
+
+"✅ تم توقيع عقد مع "
++ company +
+
+" بقيمة "
+
++ value +
+
+"M €";
+
+setTimeout(()=>{
+
+toast.style.display = "none";
+
+},3000);
+
+}
+
+// تشغيل
+window.onload = ()=>{
+
+renderSponsors();
+
+};
+
+</script>
+
+</body>
+</html>

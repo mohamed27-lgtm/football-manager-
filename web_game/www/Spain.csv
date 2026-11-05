@@ -1,0 +1,50 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+RMA,Real Madrid,ريال مدريد,إسبانيا,190,UEFA,7,LAL,LaLiga,First Tier,36,"1932,1933,1954,1955,1957,1958,1961,1962,1963,1964,1965,1967,1968,1969,1970,1971,1972,1975,1976,1978,1979,1980,1986,1987,1988,1989,1990,1995,1997,2001,2003,2007,2008,2012,2017,2020,2022,2024"
+RMA,Real Madrid,ريال مدريد,إسبانيا,190,UEFA,7,CDR,Copa del Rey,Domestic Cup,20,"1905,1906,1907,1908,1917,1934,1936,1946,1947,1962,1970,1974,1975,1980,1982,1989,1993,2011,2014,2023"
+RMA,Real Madrid,ريال مدريد,إسبانيا,190,UEFA,7,SUE,Supercopa de España,Domestic Super Cup,13,"1988,1989,1990,1993,1997,2001,2003,2008,2012,2017,2020,2022,2024"
+RMA,Real Madrid,ريال مدريد,إسبانيا,190,UEFA,7,UCL,UEFA Champions League,Continental,15,"1956,1957,1958,1959,1960,1966,1998,2000,2002,2014,2016,2017,2018,2022,2024"
+RMA,Real Madrid,ريال مدريد,إسبانيا,190,UEFA,7,UEL,UEFA Europa League,Continental,2,"1985,1986"
+RMA,Real Madrid,ريال مدريد,إسبانيا,190,UEFA,7,USC,UEFA Super Cup,Continental,6,"2002,2014,2016,2017,2022,2024"
+RMA,Real Madrid,ريال مدريد,إسبانيا,190,UEFA,7,IC,Intercontinental Cup,Global,3,"1960,1998,2002"
+RMA,Real Madrid,ريال مدريد,إسبانيا,190,UEFA,7,FIFA-CWC,FIFA Club World Cup,Global,5,"2014,2016,2017,2018,2022"
+BAR,Barcelona,برشلونة,إسبانيا,190,UEFA,7,LAL,LaLiga,First Tier,27,"1929,1945,1948,1949,1952,1953,1959,1960,1974,1985,1991,1992,1993,1994,1998,1999,2005,2006,2009,2010,2011,2013,2015,2016,2018,2019,2023"
+BAR,Barcelona,برشلونة,إسبانيا,190,UEFA,7,CDR,Copa del Rey,Domestic Cup,31,"1910,1912,1913,1920,1922,1925,1926,1928,1942,1951,1952,1953,1957,1959,1963,1968,1971,1978,1981,1983,1988,1990,1997,1998,2009,2012,2015,2016,2017,2018,2021"
+BAR,Barcelona,برشلونة,إسبانيا,190,UEFA,7,SUE,Supercopa de España,Domestic Super Cup,15,"1983,1991,1992,1994,1996,2005,2006,2009,2010,2011,2013,2016,2018,2023,2025"
+BAR,Barcelona,برشلونة,إسبانيا,190,UEFA,7,UCL,UEFA Champions League,Continental,5,"1992,2006,2009,2011,2015"
+BAR,Barcelona,برشلونة,إسبانيا,190,UEFA,7,UCWC,UEFA Cup Winners' Cup,Continental,4,"1979,1982,1989,1997"
+BAR,Barcelona,برشلونة,إسبانيا,190,UEFA,7,USC,UEFA Super Cup,Continental,5,"1992,1997,2009,2011,2015"
+BAR,Barcelona,برشلونة,إسبانيا,190,UEFA,7,ICFC,Inter-Cities Fairs Cup,Continental,3,"1958,1960,1966"
+BAR,Barcelona,برشلونة,إسبانيا,190,UEFA,7,FIFA-CWC,FIFA Club World Cup,Global,3,"2009,2011,2015"
+AT,Atlético de Madrid,أتلتيكو مدريد,إسبانيا,190,UEFA,7,LAL,LaLiga,First Tier,11,"1940,1941,1950,1951,1966,1970,1973,1977,1996,2014,2021"
+AT,Atlético de Madrid,أتلتيكو مدريد,إسبانيا,190,UEFA,7,CDR,Copa del Rey,Domestic Cup,10,"1960,1961,1965,1972,1976,1985,1991,1992,1996,2013"
+AT,Atlético de Madrid,أتلتيكو مدريد,إسبانيا,190,UEFA,7,SUE,Supercopa de España,Domestic Super Cup,2,"1985,2014"
+AT,Atlético de Madrid,أتلتيكو مدريد,إسبانيا,190,UEFA,7,UEL,UEFA Europa League,Continental,3,"2010,2012,2018"
+AT,Atlético de Madrid,أتلتيكو مدريد,إسبانيا,190,UEFA,7,UCWC,UEFA Cup Winners' Cup,Continental,1,1962
+AT,Atlético de Madrid,أتلتيكو مدريد,إسبانيا,190,UEFA,7,USC,UEFA Super Cup,Continental,3,"2010,2012,2018"
+AT,Atlético de Madrid,أتلتيكو مدريد,إسبانيا,190,UEFA,7,IC,Intercontinental Cup,Global,1,1974
+ATH,Athletic Bilbao,أتلتيك بيلباو,إسبانيا,190,UEFA,7,LAL,La Liga,First Tier,8,"1930,1931,1934,1936,1943,1956,1983,1984"
+ATH,Athletic Bilbao,أتلتيك بيلباو,إسبانيا,190,UEFA,7,CDR,Copa del Rey,Domestic Cup,24,"1903,1904,1910,1911,1914,1915,1916,1921,1923,1930,1931,1932,1933,1943,1944,1945,1950,1955,1956,1958,1969,1973,1984,2024"
+ATH,Athletic Bilbao,أتلتيك بيلباو,إسبانيا,190,UEFA,7,SUE,Supercopa de España,Domestic Super Cup,3,"1984,2015,2021"
+VAL,Valencia CF,فالنسيا,إسبانيا,190,UEFA,7,LAL,LaLiga,First Tier,6,"1942,1944,1947,1971,2002,2004"
+VAL,Valencia CF,فالنسيا,إسبانيا,190,UEFA,7,CDR,Copa del Rey,Domestic Cup,8,"1941,1949,1954,1967,1979,1999,2008,2019"
+VAL,Valencia CF,فالنسيا,إسبانيا,190,UEFA,7,SUE,Supercopa de España,Domestic Super Cup,2,"1999,2002"
+VAL,Valencia CF,فالنسيا,إسبانيا,190,UEFA,7,UCL,UEFA Champions League,Continental,0,·
+VAL,Valencia CF,فالنسيا,إسبانيا,190,UEFA,7,UEL,UEFA Europa League,Continental,1,2004
+VAL,Valencia CF,فالنسيا,إسبانيا,190,UEFA,7,UCWC,UEFA Cup Winners' Cup,Continental,1,1980
+VAL,Valencia CF,فالنسيا,إسبانيا,190,UEFA,7,USC,UEFA Super Cup,Continental,2,"1980,2004"
+VAL,Valencia CF,فالنسيا,إسبانيا,190,UEFA,7,ICFC,Inter-Cities Fairs Cup,Continental,2,"1962,1963"
+RSO,Real Sociedad,ريال سوسيداد,إسبانيا,190,UEFA,7,LAL,LaLiga,First Tier,2,"1981,1982"
+RSO,Real Sociedad,ريال سوسيداد,إسبانيا,190,UEFA,7,CDR,Copa del Rey,Domestic Cup,3,"1909,1987,2020"
+RSO,Real Sociedad,ريال سوسيداد,إسبانيا,190,UEFA,7,SUE,Supercopa de España,Domestic Super Cup,1,1982
+BET,Real Betis,ريال بيتيس,إسبانيا,190,UEFA,7,LAL,LaLiga,First Tier,1,1935
+BET,Real Betis,ريال بيتيس,إسبانيا,190,UEFA,7,CDR,Copa del Rey,Domestic Cup,3,"1977,2005,2022"
+SEV,Sevilla FC,إشبيلية,إسبانيا,190,UEFA,7,LAL,LaLiga,First Tier,1,1946
+SEV,Sevilla FC,إشبيلية,إسبانيا,190,UEFA,7,CDR,Copa del Rey,Domestic Cup,5,"1935,1939,1948,2007,2010"
+SEV,Sevilla FC,إشبيلية,إسبانيا,190,UEFA,7,SUE,Supercopa de España,Domestic Super Cup,1,2007
+SEV,Sevilla FC,إشبيلية,إسبانيا,190,UEFA,7,UEL,UEFA Europa League,Continental,7,"2006,2007,2014,2015,2016,2020,2023"
+SEV,Sevilla FC,إشبيلية,إسبانيا,190,UEFA,7,USC,UEFA Super Cup,Continental,1,2006
+DEP,Deportivo La Coruña,ديبورتيفو لاكورونيا,إسبانيا,190,UEFA,7,LAL,LaLiga,First Tier,1,2000
+DEP,Deportivo La Coruña,ديبورتيفو لاكورونيا,إسبانيا,190,UEFA,7,CDR,Copa del Rey,Domestic Cup,2,"1995,2002"
+DEP,Deportivo La Coruña,ديبورتيفو لاكورونيا,إسبانيا,190,UEFA,7,SUE,Supercopa de España,Domestic Super Cup,3,"1995,2000,2002"
+RAC,Racing Santander,راسينغ سانتاندير,إسبانيا,190,UEFA,7,LAL,LaLiga,First Tier,0,·
+RAC,Racing Santander,راسينغ سانتاندير,إسبانيا,190,UEFA,7,CDR,Copa del Rey,Domestic Cup,0,·

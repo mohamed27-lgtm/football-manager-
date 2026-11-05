@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+<!-- skill:chrome -->
+<style>
+/* Credit line — bottom-right */
+.design-ui-credit {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  font: 11px/1 system-ui, sans-serif;
+  color: rgba(128,128,128,0.5);
+  pointer-events: none;
+  z-index: 2147483647;
+  transition: opacity 0.4s ease;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* Hide chrome on touch devices */
+@media (hover: none) {
+  .design-ui-credit { display: none; }
+}
+
+/* Print fixes */
+@media print {
+  * {
+    transition: none !important;
+    animation: none !important;
+    box-shadow: none !important;
+  }
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .design-ui-credit { display: none !important; }
+}
+
+</style>
+<script>
+(function () {
+    // Design-ui pages are single compositions, so the whole body is editable.
+    function markEditable() {
+        document.body.classList.add('artifact-editable');
+    }
+
+    // Credit badge with idle-fade. Hover devices only.
+    function initChromeUI() {
+        if (!matchMedia('(hover: hover)').matches) return;
+
+        var credit = document.createElement('div');
+        credit.className = 'design-ui-credit';
+        credit.setAttribute('aria-hidden', 'true');
+        credit.innerHTML = '\u{1F49C} by ClickUp Brain';
+        document.body.appendChild(credit);
+
+        var timer = null;
+        var fade = function (out) { credit.style.opacity = out ? '0' : ''; };
+        fade(true);
+        var show = function () {
+            fade(false);
+            clearTimeout(timer);
+            timer = setTimeout(function () { fade(true); }, 3000);
+        };
+        document.addEventListener('mousemove', show);
+        show();
+    }
+
+    function init() {
+        markEditable();
+        initChromeUI();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+
+</script>
+<!-- /skill:chrome -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المركز المالي | نظام الإدارة المتكامل</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #05070a; --card: #0d1117; --accent: #00f2ff;
+            --success: #00ff88; --danger: #ff3366; --warning: #ffcc00;
+            --text: #ffffff; --dim: #8b949e; --gold: #c5a059;
+        }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #f4f5f9;
+            --accent: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #a16207;
+            --text: #151a24;
+            --dim: #6b7385;
+            --gold: #8a6b28;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 15px; padding-bottom: 50px; }
+
+        .new-era { display:none; background: linear-gradient(150deg,#1a1408,#0a1220); border:1px solid rgba(197,160,89,.4); border-radius:12px; padding:12px 14px; margin-bottom:15px; font-size:0.8rem; line-height:1.6; color:#fde9c8; }
+        .new-era.show { display:block; } .new-era b { color: var(--gold); }
+
+        .finance-header { background: linear-gradient(145deg, #0f172a, #020617); padding: 20px; border-radius: 15px; border: 1px solid #1e293b; text-align: center; margin-bottom: 15px; }
+        .balance-val { font-size: 1.8rem; font-weight: 900; color: var(--success); display: block; font-variant-numeric: tabular-nums; }
+        .balance-lbl { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; letter-spacing:.05em; }
+
+        .ffp-container { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #1e293b; margin-bottom: 15px; }
+        .ffp-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.8rem; }
+        .ffp-bar-bg { width: 100%; height: 10px; background: #1e293b; border-radius: 5px; overflow: hidden; }
+        .ffp-bar-fill { height: 100%; width: 0%; background: var(--warning); transition: width 1s ease-in-out; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: #161b22; padding: 12px; border-radius: 10px; border: 1px solid #30363d; }
+        .stat-title { font-size: 0.65rem; color: var(--dim); display: block; margin-bottom: 5px; }
+        .stat-num { font-size: 0.9rem; font-weight: bold; font-variant-numeric: tabular-nums; }
+        .income-text { color: var(--success); }
+        .expense-text { color: var(--danger); }
+
+        .advisor-box { background: #1c2128; border-right: 4px solid var(--accent); padding: 12px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem; line-height: 1.5; }
+
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+        .detail-item { background: #0d1117; padding: 8px 10px; border-radius: 8px; display: flex; justify-content: space-between; font-size: 0.7rem; border: 1px solid #1e293b; }
+        .detail-item .label { color: var(--dim); }
+        .detail-item .value { font-weight: bold; font-variant-numeric: tabular-nums; }
+        .income { color: var(--success); }
+        .expense { color: var(--danger); }
+
+        .reg-link-card {
+            background: linear-gradient(150deg, #0f1b2e, #0a1220);
+            border: 1px solid #1e293b; border-radius: 12px; padding: 16px;
+            margin-top: 5px; display: flex; align-items: center; gap: 14px;
+            text-decoration: none; color: var(--text); transition: border-color .2s ease, transform .2s ease;
+        }
+        .reg-link-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+        .reg-link-card .rl-icon { width: 46px; height: 46px; flex-shrink:0; border-radius: 12px; background: rgba(197,160,89,.12); border:1px solid rgba(197,160,89,.3); display:flex; align-items:center; justify-content:center; color: var(--gold); font-size: 1.2rem; }
+        .reg-link-card .rl-body { flex:1; min-width:0; }
+        .reg-link-card .rl-title { font-size: 0.95rem; font-weight: 800; display:flex; align-items:center; gap:8px; }
+        .reg-link-card .rl-sub { font-size: 0.72rem; color: var(--dim); margin-top: 3px; line-height:1.5; }
+        .reg-link-card .rl-count { background: var(--gold); color:#1a1303; font-size:0.7rem; font-weight:800; padding:2px 9px; border-radius:20px; }
+        .reg-link-card .rl-arrow { color: var(--dim); font-size:1rem; }
+
+        .fed-panel { background: rgba(197,160,89,0.05); border: 1px solid rgba(197,160,89,.4); border-radius: 12px; padding: 15px; margin-top: 15px; }
+        .fed-panel .reg-header { color: var(--gold); font-weight: bold; font-size: 0.9rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+        @media (max-width: 600px) { .detail-grid { grid-template-columns: 1fr; } }
+
+        /* ===== السمعة الحقيقية (من الصفحة الرئيسية) ===== */
+        .rep-quick { background:#111827; padding:10px 16px; border-radius:12px; font-size:.8rem; color:inherit; text-decoration:none; display:flex; align-items:center; gap:6px; }
+        .rep-quick .lvl-badge { font-size:0.9rem; }
+
+        /* ===== القروض البنكية ===== */
+        .loan-panel { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #1e293b; margin-top: 15px; }
+        .loan-panel .reg-header { color: var(--gold); font-weight: bold; font-size: 0.9rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .credit-score-row { display:flex; justify-content:space-between; align-items:center; background:#0d1117; border:1px solid #1e293b; border-radius:10px; padding:10px 12px; margin-bottom:10px; }
+        .credit-score-row .cs-label { font-size:0.68rem; color:var(--dim); }
+        .credit-score-row .cs-val { font-size:0.95rem; font-weight:900; }
+        .loan-card { background:#0d1117; border:1px solid #1e293b; border-radius:10px; padding:10px 12px; margin-bottom:8px; font-size:0.75rem; }
+        .loan-card .lc-top { display:flex; justify-content:space-between; font-weight:bold; margin-bottom:6px; }
+        .loan-card .lc-bar-bg { height:6px; background:#1e293b; border-radius:4px; overflow:hidden; margin:6px 0; }
+        .loan-card .lc-bar-fill { height:100%; background:var(--warning); }
+        .loan-card .lc-meta { display:flex; justify-content:space-between; color:var(--dim); font-size:0.68rem; }
+        .btn-take-loan { width:100%; background:var(--gold); color:#1a1303; border:none; padding:11px; border-radius:20px; font-weight:900; font-size:0.8rem; cursor:pointer; margin-top:4px; }
+        .btn-repay-early { background:transparent; border:1px solid var(--success); color:var(--success); padding:6px 12px; border-radius:14px; font-size:0.65rem; cursor:pointer; margin-top:6px; }
+        .no-loans-note { text-align:center; color:var(--dim); font-size:0.75rem; padding:14px 0; }
+
+        /* ===== مودال طلب القرض ===== */
+        .fin-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(3px); z-index:200; display:none; align-items:flex-end; justify-content:center; }
+        .fin-modal-overlay.show { display:flex; }
+        .fin-modal-sheet { background:var(--bg); width:100%; max-width:640px; max-height:90vh; overflow-y:auto; border-radius:22px 22px 0 0; border:1px solid #1e293b; border-bottom:none; padding:18px; }
+        .fin-modal-handle { width:40px; height:4px; background:#1e293b; border-radius:3px; margin:0 auto 14px; }
+        .fin-modal-head { display:flex; align-items:center; margin-bottom:14px; }
+        .fin-modal-head h2 { font-size:1rem; }
+        .fin-modal-close { margin-inline-start:auto; color:var(--dim); font-size:1.3rem; cursor:pointer; }
+        .fin-field { margin-bottom:14px; }
+        .fin-field label { font-size:0.72rem; color:var(--dim); display:flex; justify-content:space-between; margin-bottom:6px; }
+        .fin-field input[type=range] { width:100%; accent-color: var(--gold); }
+        .fin-field select { width:100%; background:#161b22; border:1px solid #30363d; color:var(--text); border-radius:8px; padding:9px; font-size:0.78rem; }
+        .loan-preview { background:#0d1117; border:1px solid #1e293b; border-radius:10px; padding:10px 12px; font-size:0.72rem; margin-bottom:12px; }
+        .loan-preview .lp-row { display:flex; justify-content:space-between; padding:5px 0; border-top:1px solid #1e293b; }
+        .loan-preview .lp-row:first-child{ border-top:none; }
+        .fin-toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--success); color:#04120b; padding:10px 20px; border-radius:30px; font-size:0.8rem; font-weight:bold; opacity:0; transition:.3s; pointer-events:none; z-index:999; max-width:90%; text-align:center; }
+        .fin-toast.show { opacity:1; bottom:30px; }
+        .fin-toast.err { background:var(--danger); color:#fff; }
+    </style>
+</head>
+<body>
+
+    <div class="new-era" id="newEra"></div>
+
+    <div class="finance-header">
+        <span class="balance-lbl">إجمالي ميزانية النادي</span>
+        <span class="balance-val" id="totalBalance">0.0M €</span>
+        <div style="margin-top:15px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+            <a href="sponsors.html" class="rep-quick">💼 الراعي: <b id="sponsorName">لا يوجد</b></a>
+            <a href="sponsors.html" class="rep-quick">🤝 السمعة التجارية: <b id="commercialRep">50</b></a>
+            <a href="game_main.html" class="rep-quick"><span class="lvl-badge" id="realRepIcon">⭐</span> سمعة النادي: <b id="realRepValue">50</b>/100 <span id="realRepLabel" style="color:var(--dim);">(متوسط)</span></a>
+        </div>
+    </div>
+
+    <div class="ffp-container">
+        <div class="ffp-info">
+            <span><i class="fas fa-balance-scale"></i> اللعب المالي النظيف (FFP)</span>
+            <span id="ffpStatus" style="color: var(--warning);">تحت الرقابة ⏳</span>
+        </div>
+        <div class="ffp-bar-bg"><div class="ffp-bar-fill" id="ffpBar"></div></div>
+        <p style="font-size: 0.65rem; color: var(--dim); margin-top: 8px;">
+            ميزانية الرواتب المستخدمة: <span id="ffpPercentageText" style="color: var(--text);">0%</span> (الحد الأقصى: <span id="ffpCapText">70</span>%)
+        </p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card"><span class="stat-title">إجمالي المداخيل (هذا الموسم)</span><span class="stat-num income-text" id="incomeDisplay">+ 0.0M €</span></div>
+        <div class="stat-card"><span class="stat-title">إجمالي المصاريف (هذا الموسم)</span><span class="stat-num expense-text" id="expenseDisplay">- 0.0M €</span></div>
+        <div class="stat-card"><span class="stat-title">مبيعات اللاعبين</span><span class="stat-num income-text" id="salesDisplay">+ 0.0M €</span></div>
+        <div class="stat-card"><span class="stat-title">كتلة الرواتب الأسبوعية</span><span class="stat-num expense-text" id="wageTotalDisplay">- 0K €</span></div>
+    </div>
+
+    <div style="background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid #1e293b; margin-bottom: 15px;">
+        <div style="font-size:0.75rem; font-weight:bold; color:var(--gold); margin-bottom:8px;">📊 تفاصيل الإيرادات والمصروفات</div>
+        <div class="detail-grid">
+            <div class="detail-item"><span class="label">رعاة (8 فئات)</span><span class="value income" id="sponsorIncome">0.0M</span></div>
+            <div class="detail-item"><span class="label">حقوق البث التلفزيوني</span><span class="value income" id="broadcastIncome">0.0M</span></div>
+            <div class="detail-item"><span class="label">مبيعات الانتقالات</span><span class="value income" id="transferIncome">0.0M</span></div>
+            <div class="detail-item"><span class="label">مبيعات المتجر</span><span class="value income" id="shopIncome">0.0M</span></div>
+            <div class="detail-item"><span class="label">جوائز المسابقات</span><span class="value income" id="prizeIncome">0.0M</span></div>
+            <div class="detail-item"><span class="label">🤝 المباريات الودية</span><span class="value income" id="friendlyIncomeDisplay">0.0M</span></div>
+            <div class="detail-item"><span class="label">رواتب اللاعبين (سنوي)</span><span class="value expense" id="wageExpense">0.0M</span></div>
+            <div class="detail-item"><span class="label">رسوم الانتقالات المشتراة</span><span class="value expense" id="transferExpense">0.0M</span></div>
+            <div class="detail-item"><span class="label">تطوير المنشآت</span><span class="value expense" id="facilityExpense">0.0M</span></div>
+            <div class="detail-item"><span class="label">ضرائب وعقوبات</span><span class="value expense" id="penaltyExpense">0.0M</span></div>
+            <div class="detail-item"><span class="label">🤝 سفر ورسوم الودية</span><span class="value expense" id="friendlyExpenseDisplay">0.0M</span></div>
+            <div class="detail-item"><span class="label">🏦 أقساط القروض (سنوي)</span><span class="value expense" id="loanExpenseDisplay">0.0M</span></div>
+        </div>
+    </div>
+
+    <a href="registration.html" class="reg-link-card">
+        <div class="rl-icon"><i class="fas fa-file-signature"></i></div>
+        <div class="rl-body">
+            <div class="rl-title">غرفة تسجيل اللاعبين <span class="rl-count" id="pendCount" style="display:none;">0</span></div>
+            <div class="rl-sub" id="regSub">إدارة تسجيل اللاعبين المتعاقد معهم وتطبيق قوانين الاتحاد (القائمة، الأجانب، FFP، نافذة الانتقالات).</div>
+        </div>
+        <i class="fas fa-chevron-left rl-arrow"></i>
+    </a>
+
+    <a href="sponsors.html" class="reg-link-card">
+        <div class="rl-icon"><i class="fas fa-handshake"></i></div>
+        <div class="rl-body">
+            <div class="rl-title">غرفة الرعاية التجارية <span class="rl-count" id="sponsorActiveCount" style="display:none;">0</span></div>
+            <div class="rl-sub">التفاوض على عقود الرعاة الثمانية (القميص، الكسوة، تسمية الملعب، السفر، الإعلام، المتجر، الأكاديمية، المركز الطبي) ومتابعة السمعة التجارية.</div>
+        </div>
+        <i class="fas fa-chevron-left rl-arrow"></i>
+    </a>
+
+    <div class="loan-panel">
+        <div class="reg-header"><i class="fas fa-building-columns"></i> القروض البنكية</div>
+        <div class="credit-score-row">
+            <div><div class="cs-label">التصنيف الائتماني (حسب سمعة النادي الحقيقية)</div><div class="cs-val" id="creditScoreLabel">—</div></div>
+            <div style="text-align:left;"><div class="cs-label">أقصى مبلغ متاح</div><div class="cs-val" id="maxLoanAmount">0M €</div></div>
+        </div>
+        <div id="loansList"></div>
+        <button class="btn-take-loan" id="openLoanBtn" onclick="openLoanModal()">طلب قرض جديد</button>
+    </div>
+
+    <div class="advisor-box">
+        <i class="fas fa-user-tie" style="color:var(--accent)"></i>
+        <strong>نصيحة المستشار:</strong> <span id="advisorMessage">"سيدي الرئيس، الوضع المالي مستقر."</span>
+    </div>
+
+    <div class="fed-panel">
+        <div class="reg-header"><i class="fas fa-gavel"></i> سجل الاتحاد التأديبي والقيود</div>
+        <div style="font-size:0.68rem; color:var(--dim); margin-bottom:8px;" id="fedConfedLabel"></div>
+        <div class="detail-grid" style="margin-bottom:10px;">
+            <div class="detail-item"><span class="label">حجم القائمة</span><span class="value" id="fedSquadSize">0 / 25</span></div>
+            <div class="detail-item"><span class="label">اللاعبون الأجانب</span><span class="value" id="fedForeignCount">0 / 7</span></div>
+            <div class="detail-item" id="fedHomegrownRow" style="display:none;"><span class="label">لاعبون محليّو النشأة</span><span class="value" id="fedHomegrownCount">0 / 0</span></div>
+            <div class="detail-item"><span class="label">إجمالي الغرامات</span><span class="value expense" id="fedTotalFines">0.0M €</span></div>
+            <div class="detail-item"><span class="label">خصم النقاط</span><span class="value expense" id="fedPointsDeducted">0 نقطة</span></div>
+        </div>
+        <div id="fedLogContainer" style="font-size:0.75rem; color:var(--dim);">لا توجد مخالفات مسجلة.</div>
+        <a href="federation.html" style="display:block; text-align:center; margin-top:10px; font-size:0.75rem; color:var(--accent); text-decoration:none;">
+            <i class="fas fa-book"></i> عرض لائحة الاتحاد الكاملة
+        </a>
+    </div>
+
+<!-- ===================== مودال: طلب قرض بنكي ===================== -->
+<div class="fin-modal-overlay" id="loanModal">
+    <div class="fin-modal-sheet">
+        <div class="fin-modal-handle"></div>
+        <div class="fin-modal-head">
+            <h2><i class="fas fa-building-columns" style="color:var(--gold);"></i> طلب قرض بنكي</h2>
+            <i class="fas fa-xmark fin-modal-close" onclick="closeLoanModal()"></i>
+        </div>
+        <div class="fin-field">
+            <label><span>مبلغ القرض</span><b id="loan-amount-label" style="color:var(--success);">0M €</b></label>
+            <input type="range" id="loan-amount" min="2" max="10" step="0.5" oninput="updateLoanPreview()">
+        </div>
+        <div class="fin-field">
+            <label><span>مدة السداد</span></label>
+            <select id="loan-term" onchange="updateLoanPreview()">
+                <option value="1">سنة واحدة</option>
+                <option value="2" selected>سنتان</option>
+                <option value="3">3 سنوات</option>
+                <option value="5">5 سنوات</option>
+            </select>
+        </div>
+        <div class="loan-preview" id="loan-preview-lines"></div>
+        <button class="btn-take-loan" onclick="confirmLoanRequest()">تأكيد طلب القرض</button>
+    </div>
+</div>
+
+<div class="fin-toast" id="finToast"></div>
+
+<script>
+    /* ============================================================
+       أدوات مشتركة
+       ============================================================ */
+    function getClubName(){ return localStorage.getItem('presidentialClub') || 'نادي المستقبل'; }
+    function getClubBudget(){ return parseFloat(localStorage.getItem('clubBudget')) || 150.0; }
+    function setClubBudget(v){ localStorage.setItem('clubBudget', v.toFixed(2)); }
+
+    /* ============================================================
+       أدوات التاريخ (نفس تقويم اللعبة day/month/year المشترك)
+       ============================================================ */
+    function getGameDate(){
+        return { day: parseInt(localStorage.getItem('game_day')||'1'),
+                 month: parseInt(localStorage.getItem('game_month')||'6'),
+                 year: parseInt(localStorage.getItem('game_year')||'2026') };
+    }
+    function toAbsDay(d){ return Math.floor(new Date(d.year, d.month-1, d.day).getTime()/86400000); }
+    function fmtGameDate(d){ return `${d.day}/${d.month}/${d.year}`; }
+
+    /* ============================================================
+       ★ السمعة الحقيقية — نفس "محرك السمعة الديناميكي" في الصفحة الرئيسية (game_main.html) ★
+       نقرأ فقط من نفس المفاتيح (club_reputation_dynamic_<club>) حتى تكون كل الصفحات متوافقة
+       ولا تُنشئ صفحة المالية رقماً منفصلاً خاصاً بها.
+       ============================================================ */
+    const REP_KEY = 'club_reputation_dynamic';
+    const REP_LOG_KEY = 'reputation_change_log';
+    const REP_LEVELS = [
+        { min: 0, max: 20, label: 'مبتدئ', icon: '🌱' },
+        { min: 21, max: 40, label: 'ناشئ', icon: '🌿' },
+        { min: 41, max: 60, label: 'متوسط', icon: '⭐' },
+        { min: 61, max: 80, label: 'مرموق', icon: '🌟' },
+        { min: 81, max: 95, label: 'أسطوري', icon: '👑' },
+        { min: 96, max: 100, label: 'خرافي', icon: '🔥' }
+    ];
+    function getRepLevel(v){ return REP_LEVELS.find(l=>v>=l.min && v<=l.max) || REP_LEVELS[0]; }
+    function getRealReputation(){
+        const club = getClubName();
+        const v = parseFloat(localStorage.getItem(REP_KEY+'_'+club));
+        if (!isNaN(v)) return v;
+        return parseFloat(localStorage.getItem('clubReputation')) || 50; // احتياطي قبل أول زيارة للصفحة الرئيسية
+    }
+    // نكتب بنفس تنسيق سجل التغييرات في الصفحة الرئيسية حتى يظهر التأثير المالي هناك أيضاً
+    function applyRealReputationImpact(delta, reason, category){
+        const club = getClubName();
+        const key = REP_KEY+'_'+club;
+        const current = parseFloat(localStorage.getItem(key)) || 50;
+        const next = Math.max(0, Math.min(100, Math.round(current+delta)));
+        localStorage.setItem(key, String(next));
+        localStorage.setItem(REP_KEY+'_last_update_'+club, String(Date.now()));
+        try {
+            const log = JSON.parse(localStorage.getItem(REP_LOG_KEY+'_'+club)) || [];
+            log.unshift({date:Date.now(), oldValue:current, newValue:next, change:next-current, reason, category: category||'المالية'});
+            if (log.length>100) log.pop();
+            localStorage.setItem(REP_LOG_KEY+'_'+club, JSON.stringify(log));
+        } catch(e){}
+        return next;
+    }
+
+    function fedGetRules(){
+        return JSON.parse(localStorage.getItem('federationRules')) || {tier:1,squadMax:25,foreignMax:7,homegrownMin:0,wageCapPct:70,minStadium:12000,tierLabel:'الدرجة الأولى (الممتاز)',confederationLabel:'الاتحاد الآسيوي (AFC)'};
+    }
+    // الاتحاد القاري الفعلي: federationRules قد لا يحمل كوداً صريحاً، فنعتمد أولاً على الحقل الصريح
+    // إن وُجد، ثم على المفتاح الذي تضبطه صفحة تسجيل اللاعبين، ثم نستنتجه من نص التسمية كحل أخير.
+    function fedGetConfederation(){
+        const rules = fedGetRules();
+        if (rules.confederation) return rules.confederation;
+        const stored = localStorage.getItem('clubConfederation');
+        if (stored) return stored;
+        const label = (rules.confederationLabel || '').toUpperCase();
+        if (label.includes('UEFA') || label.includes('أوروب')) return 'UEFA';
+        if (label.includes('CAF') || label.includes('أفريقي') || label.includes('افريقي')) return 'CAF';
+        if (label.includes('CONMEBOL') || label.includes('أمريكا الجنوبية')) return 'CONMEBOL';
+        if (label.includes('CONCACAF') || label.includes('أمريكا الشمالية')) return 'CONCACAF';
+        if (label.includes('OFC') || label.includes('أوقيانوسيا')) return 'OFC';
+        return 'AFC';
+    }
+
+    // رأسمال ابتدائي واقعي حسب الاتحاد القاري *ودرجة الدوري معاً* — دوري أوروبي من الدرجة الأولى
+    // ليس كدوري أفريقي أو آسيوي من نفس الدرجة الاسمية (بالمليون €).
+    const STARTING_BUDGET_TABLE = {
+        'UEFA':     { 1: 180, 2: 65,  3: 22,  4: 8   },
+        'CONMEBOL': { 1: 60,  2: 24,  3: 9,   4: 3   },
+        'AFC':      { 1: 35,  2: 15,  3: 6,   4: 2   },
+        'CONCACAF': { 1: 28,  2: 12,  3: 4.5, 4: 1.5 },
+        'CAF':      { 1: 18,  2: 7,   3: 2.5, 4: 1   },
+        'OFC':      { 1: 6,   2: 2.5, 3: 1,   4: 0.4 }
+    };
+    function getStartingBudget(tier, confederation){
+        return (STARTING_BUDGET_TABLE[confederation] && STARTING_BUDGET_TABLE[confederation][tier])
+            || STARTING_BUDGET_TABLE['AFC'][tier] || 35;
+    }
+
+    // ============================================================
+    //  جوائز المسابقات: مبنية على نفس مبدأ الميزانية — أساس بطل الدوري يختلف
+    //  جذرياً بين الاتحادات (بطل دوري أوروبي درجة أولى ≠ بطل دوري أوقياني درجة أولى)
+    //  ثم يُوزَّع تنازلياً حسب المركز الفعلي في جدول الترتيب.
+    // ============================================================
+    const CHAMPION_PRIZE_TABLE = {
+        'UEFA':     { 1: 45,  2: 14,  3: 4,    4: 1.2  },
+        'CONMEBOL': { 1: 16,  2: 5,   3: 1.8,  4: 0.5  },
+        'AFC':      { 1: 9,   2: 3,   3: 1,    4: 0.35 },
+        'CONCACAF': { 1: 7,   2: 2.5, 3: 0.9,  4: 0.3  },
+        'CAF':      { 1: 4.5, 2: 1.6, 3: 0.55, 4: 0.18 },
+        'OFC':      { 1: 1.2, 2: 0.4, 3: 0.15, 4: 0.06 }
+    };
+    function getChampionPrize(tier, confederation){
+        return (CHAMPION_PRIZE_TABLE[confederation] && CHAMPION_PRIZE_TABLE[confederation][tier])
+            || CHAMPION_PRIZE_TABLE['AFC'][tier] || 3;
+    }
+    // نسبة الجائزة حسب المركز: 100% للبطل، تنخفض تدريجياً حتى ~12% لآخر ترتيب (لا يزال يحصل على
+    // حصة تلفزيونية/مشاركة رمزية)، مع علاوة 15% لمن يتأهل قارياً (أول 4 مراكز عادة).
+    function prizeRatioForPosition(position, total){
+        if (!total || total <= 1) return 1;
+        let ratio = 1 - 0.88 * ((position - 1) / (total - 1));
+        if (position <= 4) ratio *= 1.15;
+        return ratio;
+    }
+
+    // ============================================================
+    //  إعادة بناء ترتيب الدوري الحالي من نفس مفاتيح جدول الترتيب
+    //  (نفس منطق league_table4-2.html بالضبط) لتحديد جائزة نهاية الموسم الفعلية
+    // ============================================================
+    function generateDoubleRoundRobin(teams) {
+        let pool = [...teams];
+        if (pool.length % 2 !== 0) pool.push("إستراحة");
+        let totalTeams = pool.length, roundsCount = totalTeams - 1, matchesPerRound = totalTeams / 2;
+        let schedule = [];
+        for (let round = 0; round < roundsCount; round++) {
+            let roundMatches = [];
+            for (let i = 0; i < matchesPerRound; i++) {
+                let home = pool[i], away = pool[totalTeams - 1 - i];
+                if (home === "إستراحة" || away === "إستراحة") continue;
+                if (round % 2 === 1) { const tmp = home; home = away; away = tmp; }
+                roundMatches.push({ home, away });
+            }
+            schedule.push(roundMatches);
+            pool.splice(1, 0, pool.pop());
+        }
+        const firstHalfLength = schedule.length;
+        for (let round = 0; round < firstHalfLength; round++) {
+            schedule.push(schedule[round].map(m => ({ home: m.away, away: m.home })));
+        }
+        return schedule;
+    }
+    function estimateLeaguePosition(){
+        try {
+            const teams = JSON.parse(localStorage.getItem('current_league_teams')) || [];
+            const club = getClubName();
+            if (teams.length === 0 || !teams.includes(club)) return null;
+            const round = parseInt(localStorage.getItem('database_current_round')) || 0;
+            const scores = JSON.parse(localStorage.getItem('full_season_scores')) || [];
+            const schedule = generateDoubleRoundRobin(teams);
+            let standings = {};
+            teams.forEach(t => standings[t] = { pts: 0, gf: 0, ga: 0 });
+            for (let i = 0; i < round; i++) {
+                if (!schedule[i]) break;
+                schedule[i].forEach(match => {
+                    let hScore = 0, aScore = 0;
+                    if (match.home === club || match.away === club) {
+                        const found = scores.find(s => s.roundIdx === i);
+                        if (found) { hScore = found.homeScore; aScore = found.awayScore; }
+                    } else {
+                        const seed = i + match.home.length + match.away.length;
+                        hScore = seed % 3; aScore = (seed + 1) % 3;
+                    }
+                    const home = standings[match.home], away = standings[match.away];
+                    if (home && away) {
+                        home.gf += hScore; home.ga += aScore; away.gf += aScore; away.ga += hScore;
+                        if (hScore > aScore) home.pts += 3;
+                        else if (hScore === aScore) { home.pts += 1; away.pts += 1; }
+                        else away.pts += 3;
+                    }
+                });
+            }
+            const table = Object.entries(standings)
+                .map(([name, s]) => ({ name, ...s }))
+                .sort((a,b) => b.pts - a.pts || (b.gf-b.ga) - (a.gf-a.ga));
+            const idx = table.findIndex(t => t.name === club);
+            return idx === -1 ? null : { position: idx + 1, total: table.length };
+        } catch(e) { return null; }
+    }
+
+    // تُدفع مرة واحدة فقط لكل عام لعبة جديد (نهاية الموسم)، بحسب المركز الفعلي وقت الدفع
+    function processSeasonEndPrizeMoney(){
+        const club = getClubName();
+        const date = { year: parseInt(localStorage.getItem('game_year')) || 2026 };
+        const lastKey = 'prizeMoneyLastYear_' + club;
+        const lastYear = parseInt(localStorage.getItem(lastKey));
+        if (lastYear === date.year) return; // دُفعت جائزة هذا العام بالفعل
+        localStorage.setItem(lastKey, String(date.year));
+        if (isNaN(lastYear)) { localStorage.setItem('prizeMoney','0'); return; } // أول تحميل لهذا النادي: لا جائزة بأثر رجعي
+
+        const pos = estimateLeaguePosition();
+        if (!pos) { localStorage.setItem('prizeMoney','0'); return; }
+
+        const rules = fedGetRules();
+        const confederation = fedGetConfederation();
+        const champion = getChampionPrize(rules.tier, confederation);
+        const ratio = prizeRatioForPosition(pos.position, pos.total);
+        const prize = Math.round(champion * ratio * 100) / 100;
+
+        localStorage.setItem('prizeMoney', prize.toFixed(2));
+        localStorage.setItem('clubBudget', (getClubBudget() + prize).toFixed(2));
+        const qualNote = pos.position <= 4 ? ' مع علاوة التأهل القاري' : '';
+        addMessageToSystem('لجنة المسابقات بالاتحاد', `🏆 جائزة نهاية الموسم: المركز ${pos.position} من ${pos.total} في ${rules.tierLabel} (${rules.confederationLabel || confederation})${qualNote} — تم إيداع ${prize.toFixed(2)}M € في ميزانية النادي.`);
+    }
+    function fedIsForeign(nat){
+        if(!nat) return false;
+        const home=localStorage.getItem('homeCountry')||'Saudi Arabia';
+        const aliases={ 'Türkiye':'Turkiye', 'United Arab Emirates':'UAE' };
+        return (aliases[nat]||nat) !== home;
+    }
+    function getSigned(){ const a=JSON.parse(localStorage.getItem('signed_players_by_club'))||{}; return a[getClubName()]||[]; }
+    function getPending(){ const a=JSON.parse(localStorage.getItem('pending_registration_by_club'))||{}; return a[getClubName()]||[]; }
+    function getSignedCoach(){
+        const all = JSON.parse(localStorage.getItem('staff_by_club')) || {};
+        const staff = all[getClubName()] || [];
+        return staff.find(s => s.role === 'head_coach') || null;
+    }
+    function estimateCoachWeeklyWage(coach) {
+        if (!coach) return 0;
+        const overall = (coach.tactical + coach.man_management + coach.motivation + coach.judgement_ability + coach.youth_development) / 5;
+        return Math.round(1000 * Math.pow(1.06, overall));
+    }
+    function getTotalWeeklyWage(){
+        const playersWage = getSigned().reduce((s,p)=>s+(parseFloat(p.weekly_wage)||0),0);
+        const coach = getSignedCoach();
+        return playersWage + estimateCoachWeeklyWage(coach);
+    }
+    function addMessageToSystem(sender,text){
+        let inbox=JSON.parse(localStorage.getItem('gameInbox'))||[];
+        inbox.unshift({sender,text,time:new Date().toLocaleTimeString('en-US', { hour12:false }),read:false});
+        localStorage.setItem('gameInbox',JSON.stringify(inbox));
+        localStorage.setItem('hasNewMessage','true');
+    }
+
+    /* ============================================================
+       ★ إعادة الضبط عند التوقيع مع نادٍ جديد ★
+       عند تغيّر النادي عن آخر نادٍ مُدار: تُعاد الميزانية من الصفر
+       (رأسمال ابتدائي حسب درجة النادي) وتُمسح قائمة اللاعبين
+       واللاعبون المعلّقون وكل عدادات الموسم المالية والتأديبية.
+       ============================================================ */
+    function resetIfNewClub(){
+        const club = getClubName();
+        const owner = localStorage.getItem('fin_owner_club') || '';
+        if(owner === club) return false; // نفس النادي: لا إعادة ضبط
+
+        const rules = fedGetRules();
+        const confederation = fedGetConfederation();
+        // رأسمال ابتدائي واقعي حسب الاتحاد القاري *ودرجة الدوري معاً*
+        const startingBudget = getStartingBudget(rules.tier, confederation);
+
+        // 1) الميزانية من الصفر (رأس المال الابتدائي)
+        localStorage.setItem('clubBudget', startingBudget.toFixed(2));
+
+        // 2) مسح قائمة اللاعبين واللاعبين المعلّقين لهذا النادي
+        const signedAll = JSON.parse(localStorage.getItem('signed_players_by_club')) || {};
+        signedAll[club] = [];
+        localStorage.setItem('signed_players_by_club', JSON.stringify(signedAll));
+        const pendAll = JSON.parse(localStorage.getItem('pending_registration_by_club')) || {};
+        pendAll[club] = [];
+        localStorage.setItem('pending_registration_by_club', JSON.stringify(pendAll));
+
+        // 2ب) مسح المدرب المتعاقَد معه وعروض البيع الواردة وقائمة العرض للبيع (خاصة بالنادي السابق)
+        const staffAll = JSON.parse(localStorage.getItem('staff_by_club')) || {};
+        staffAll[club] = [];
+        localStorage.setItem('staff_by_club', JSON.stringify(staffAll));
+        localStorage.setItem('club_incoming_offers', '[]');
+        localStorage.setItem('club_transfer_list', '[]');
+        localStorage.setItem('club_personal_terms_queue', '[]');
+        localStorage.setItem('club_pending_negotiations', '[]');
+
+        // 3) تصفير كل عدادات الموسم المالية
+        ['transferPurchases','transferSales','shopRevenue','prizeMoney','friendlyIncome','friendlyExpenses',
+         'facilityUpgradeCost','penaltiesCost','clubSponsorValue','tvRevenue']
+            .forEach(k=>localStorage.setItem(k,'0'));
+
+        // 3ب) الرعاة والسمعة التجارية تعود لبداية جديدة مع كل رئاسة جديدة (عقود النادي السابق لا تنتقل معك)
+        localStorage.setItem('clubSponsorName','لا يوجد');
+        localStorage.removeItem('clubSponsor');
+        localStorage.setItem('commercialRep','50');
+        localStorage.setItem('clubReputation','50');
+        localStorage.removeItem('clubStadiumOriginalName');
+
+        // 3ج) ★ توافق مع صفحة الرعاة: تصفير كل عقود/مفاوضات/قائمة الرعاة السوداء
+        // (نفس المفاتيح التي تديرها sponsors.html بالضبط، حتى لا تبقى عقود عالقة من رئاسة سابقة)
+        ['sponsorContracts_v1','sponsorNegotiations_v1','sponsorBlacklist_v1','sponsorRevenueTotal',
+         'clubKitSponsorName','clubKitSponsorValue','clubStadiumSponsorValue',
+         'clubTravelSponsorName','clubTravelSponsorValue','travelCostReductionPct',
+         'clubMediaSponsorName','clubMediaSponsorValue','clubStoreSponsorName','clubStoreSponsorValue',
+         'clubAcademySponsorName','clubAcademySponsorValue','clubMedicalSponsorName','injuryRecoveryBonusPct']
+            .forEach(k=>localStorage.removeItem(k));
+
+        // 3د) ★ توافق مع القروض البنكية: لا تنتقل ديون رئاسة سابقة إلى الرئاسة الجديدة
+        localStorage.removeItem('clubLoans_v1');
+
+        // 3هـ) ★ توافق مع محرك السمعة الديناميكي في الصفحة الرئيسية: تصفير سجل/تاريخ هذا النادي
+        // بالتحديد (وليس فقط الرقم) حتى لا تُستأنف رئاسة جديدة برصيد سمعة قديم من عهد سابق لنفس الاسم
+        [REP_KEY+'_'+club, REP_KEY+'_last_update_'+club, 'reputation_history_dynamic_'+club, REP_LOG_KEY+'_'+club]
+            .forEach(k=>localStorage.removeItem(k));
+
+        // 4) تصفير السجل التأديبي والقيود
+        localStorage.setItem('clubDisciplinaryLog','[]');
+        localStorage.setItem('clubPointsDeduction','0');
+        localStorage.setItem('clubRegistrationBlocked','false');
+        localStorage.setItem('clubSuspendedPlayers','[]');
+        localStorage.setItem('clubYellowCards','{}');
+
+        // 5) تصفير حالة السوق والمراقبة والتسوية الموسمية (لتُبنى من جديد للنادي الجديد)
+        localStorage.removeItem('market_source');
+        localStorage.removeItem('transfer_market_pool');
+        localStorage.removeItem('watchlist_ids');
+        localStorage.removeItem('last_settled_season');
+        localStorage.removeItem('prizeMoneyLastYear_' + club);
+
+        // 6) تسجيل النادي الحالي كصاحب البيانات
+        localStorage.setItem('fin_owner_club', club);
+
+        addMessageToSystem('الإدارة المالية', `بداية عهد رئاسي جديد مع ${club}. أُعيد ضبط الميزانية إلى ${startingBudget}M € وأُفرغت قائمة اللاعبين من الصفر.`);
+        return { startingBudget, club };
+    }
+
+    /* ============================================================
+       ★ توافق مع صفحة الرعاة: مجموع القيمة السنوية لكل عقود الرعاية الثمانية
+       النشطة فعلياً (وليس فقط راعي القميص القديم) — sponsorContracts_v1
+       ============================================================ */
+    function getSponsorContracts(){ return JSON.parse(localStorage.getItem('sponsorContracts_v1')) || {}; }
+    function getActiveSponsorContracts(){
+        return Object.values(getSponsorContracts()).filter(c => c && c.status!=='expired');
+    }
+    function getSponsorIncomeTotal(){
+        return getActiveSponsorContracts().reduce((s,c)=>s+(c.annualValue||0), 0);
+    }
+
+    /* ============================================================
+       الحسابات المالية التفصيلية
+       ============================================================ */
+    function calculateDetailedFinance(){
+        const weeklyWage=getTotalWeeklyWage();
+        const annualWage=weeklyWage*52/1000000;
+        const sponsorValue=getSponsorIncomeTotal();
+        const broadcastValue=parseFloat(localStorage.getItem('broadcastIncomeTotal'))||0;
+        const ticketRevenue=parseFloat(localStorage.getItem('ticketRevenueTotal_'+getClubName()))||0;
+        const transferSales=parseFloat(localStorage.getItem('transferSales'))||0;
+        const shopRevenue=parseFloat(localStorage.getItem('shopRevenue'))||0;
+        const prizeMoney=parseFloat(localStorage.getItem('prizeMoney'))||0;
+        const friendlyIncome=parseFloat(localStorage.getItem('friendlyIncome'))||0;
+        const friendlyExpenses=parseFloat(localStorage.getItem('friendlyExpenses'))||0;
+        const transferPurchases=parseFloat(localStorage.getItem('transferPurchases'))||0;
+        const facilityUpgrade=parseFloat(localStorage.getItem('facilityUpgradeCost'))||0;
+        const penalties=parseFloat(localStorage.getItem('penaltiesCost'))||0;
+        const loanExpense=getActiveLoans().reduce((s,l)=>s+(l.monthlyPayment||0)*12,0);
+        const totalIncome=sponsorValue+broadcastValue+ticketRevenue+transferSales+shopRevenue+prizeMoney+friendlyIncome;
+        const totalExpense=annualWage+transferPurchases+facilityUpgrade+penalties+friendlyExpenses+loanExpense;
+        return {weeklyWage,annualWage,sponsorValue,broadcastValue,ticketRevenue,transferSales,shopRevenue,prizeMoney,friendlyIncome,friendlyExpenses,transferPurchases,facilityUpgrade,penalties,loanExpense,totalIncome,totalExpense};
+    }
+
+    /* ============================================================
+       لوحة الاتحاد التأديبية
+       ============================================================ */
+    function fedCheckSquad(){
+        const rules=fedGetRules(); const signed=getSigned();
+        const foreign=signed.filter(p=>fedIsForeign(p.nationality)).length;
+        const homegrown=signed.length-foreign;
+        return {size:signed.length,foreign,homegrown,rules,over:signed.length>rules.squadMax,overForeign:foreign>rules.foreignMax,underHomegrown:rules.homegrownMin>0&&signed.length>0&&homegrown<rules.homegrownMin};
+    }
+    function fedEnforceFFP(ffp){
+        const rules=fedGetRules();
+        const today=`${localStorage.getItem('game_day')}-${localStorage.getItem('game_month')}-${localStorage.getItem('game_year')}`;
+        const lastFineDay=localStorage.getItem('ffpLastFineDay');
+        if(ffp>rules.wageCapPct){
+            localStorage.setItem('clubRegistrationBlocked','true');
+            if(lastFineDay!==today){
+                let totalM=parseFloat(localStorage.getItem('penaltiesCost'))||0;
+                // غرامة حقيقية محسوبة وليست عشوائية: تعتمد على شدة التجاوز (بالنقاط المئوية فوق السقف)
+                // وعلى حجم ميزانية ناديك — نفس النادي بنفس درجة التجاوز يدفع نفس الغرامة دائماً
+                const excessPct = ffp - rules.wageCapPct; // كم نقطة مئوية تجاوزتَ السقف
+                const budget = getClubBudget();
+                const fineM = Math.max(0.5, Math.min(15, excessPct * budget * 0.015));
+                const amountEUR = fineM * 1000000;
+                totalM+=fineM;
+                localStorage.setItem('penaltiesCost',totalM.toFixed(3));
+                localStorage.setItem('clubBudget',(getClubBudget()-fineM).toFixed(2));
+                let log=JSON.parse(localStorage.getItem('clubDisciplinaryLog'))||[];
+                log.unshift({reason:`تجاوز سقف الرواتب (FFP ${ffp}% من ${rules.wageCapPct}% — تجاوز ${excessPct} نقطة)`,amount:amountEUR,points:0,date:new Date().toLocaleDateString('en-GB')});
+                localStorage.setItem('clubDisciplinaryLog',JSON.stringify(log.slice(0,50)));
+                localStorage.setItem('ffpLastFineDay',today);
+                addMessageToSystem('لجنة الانضباط بالاتحاد',`⚠️ غرامة مالية: تجاوز سقف الرواتب بـ${excessPct} نقطة مئوية — تم خصم ${fineM.toFixed(2)}M € من ميزانية النادي.`);
+            }
+        } else { localStorage.setItem('clubRegistrationBlocked','false'); }
+    }
+    function renderFederationPanel(){
+        const squad=fedCheckSquad();
+        document.getElementById('fedConfedLabel').innerText=`${squad.rules.confederationLabel||''} — ${squad.rules.tierLabel}`;
+        const ss=document.getElementById('fedSquadSize'); ss.innerText=`${squad.size} / ${squad.rules.squadMax}`; ss.style.color=squad.over?'var(--danger)':'var(--text)';
+        const fc=document.getElementById('fedForeignCount'); fc.innerText=`${squad.foreign} / ${squad.rules.foreignMax}`; fc.style.color=squad.overForeign?'var(--danger)':'var(--text)';
+        const hgRow=document.getElementById('fedHomegrownRow');
+        if(squad.rules.homegrownMin>0){ hgRow.style.display='flex'; const h=document.getElementById('fedHomegrownCount'); h.innerText=`${squad.homegrown} / ${squad.rules.homegrownMin}`; h.style.color=squad.underHomegrown?'var(--danger)':'var(--text)'; }
+        else hgRow.style.display='none';
+        document.getElementById('fedTotalFines').innerText=(parseFloat(localStorage.getItem('penaltiesCost'))||0).toFixed(2)+'M €';
+        document.getElementById('fedPointsDeducted').innerText=(parseInt(localStorage.getItem('clubPointsDeduction'))||0)+' نقطة';
+        const log=JSON.parse(localStorage.getItem('clubDisciplinaryLog'))||[];
+        const c=document.getElementById('fedLogContainer');
+        if(!log.length) c.innerHTML='✅ لا توجد مخالفات مسجلة على النادي هذا الموسم.';
+        else c.innerHTML=log.slice(0,6).map(l=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #1e293b;"><span>${l.reason}</span><span style="color:var(--danger);white-space:nowrap;">${l.amount?(l.amount/1000000).toFixed(2)+'M €':''} ${l.points?'−'+l.points+' نقطة':''}</span></div>`).join('');
+    }
+
+    /* ============================================================
+       ★ القروض البنكية ★
+       أهلية الاقتراض ومعدل الفائدة مبنيان على السمعة الحقيقية للنادي (نفس محرك
+       الصفحة الرئيسية) ودرجة الدوري والديون القائمة — وليسا رقمين ثابتين.
+       ============================================================ */
+    const LOAN_KEY = 'clubLoans_v1';
+    const BANK_NAMES = ['البنك الأهلي التجاري','بنك الاستثمار الرياضي','مصرف النخبة المالي','بنك المستقبل للتمويل'];
+    function getLoans(){ return JSON.parse(localStorage.getItem(LOAN_KEY)) || []; }
+    function saveLoans(l){ localStorage.setItem(LOAN_KEY, JSON.stringify(l)); }
+    function getActiveLoans(){ return getLoans().filter(l=>l.status==='active'); }
+    function pickBankName(rate){
+        // كلما ارتفعت الفائدة (مخاطرة أعلى) كان البنك المموّل أقل شهرة
+        if (rate<=8) return BANK_NAMES[0];
+        if (rate<=14) return BANK_NAMES[1];
+        if (rate<=20) return BANK_NAMES[2];
+        return BANK_NAMES[3];
+    }
+
+    function loanEligibility(){
+        const rep = getRealReputation();
+        const budget = getClubBudget();
+        const active = getActiveLoans();
+        const currentDebt = active.reduce((s,l)=>s+l.remainingBalance,0);
+        const rules = fedGetRules();
+        const tierFactor = {1:1, 2:0.5, 3:0.22, 4:0.1}[rules.tier] || 1;
+        // سقف الاقتراض: نادٍ بسمعة 100 بالدرجة الأولى يقدر يقترض حتى ~220M €، ينخفض تدريجياً مع تراجع السمعة والدرجة
+        const baseCeiling = (rep*2.2) * tierFactor;
+        const maxLoan = Math.max(0, Math.round((baseCeiling - currentDebt)*10)/10);
+        // معدل الفائدة: من ~5% لسمعة 100 إلى ~14% لسمعة صفر، ترتفع مع الديون القائمة وعدد القروض النشطة (مخاطرة تراكمية)
+        const debtRatio = (budget+currentDebt)>0 ? currentDebt/(budget+currentDebt) : 1;
+        const baseRate = 14 - (rep/100)*9;
+        const interestRate = Math.max(3, Math.min(28, baseRate + debtRatio*10 + active.length*1.5));
+        const blocked = localStorage.getItem('clubRegistrationBlocked')==='true';
+        const eligible = maxLoan>=2 && !blocked && active.length<4;
+        return {rep, maxLoan, interestRate, currentDebt, eligible, blocked, activeCount:active.length};
+    }
+
+    function computeLoanTerms(amount, termYears, interestRate){
+        const termMonths = termYears*12;
+        const monthlyRate = interestRate/100/12;
+        const monthlyPayment = monthlyRate===0
+            ? amount/termMonths
+            : amount*monthlyRate*Math.pow(1+monthlyRate,termMonths)/(Math.pow(1+monthlyRate,termMonths)-1);
+        const totalRepay = monthlyPayment*termMonths;
+        return { termMonths, monthlyPayment: Math.round(monthlyPayment*1000)/1000, totalRepay: Math.round(totalRepay*100)/100 };
+    }
+
+    function openLoanModal(){
+        const elig = loanEligibility();
+        if (!elig.eligible){
+            if (elig.blocked) showFinToast('لا يمكن الاقتراض أثناء تجميد الاتحاد لتسجيلاتكم (تجاوز سقف الرواتب).', true);
+            else if (elig.activeCount>=4) showFinToast('لا يمكن فتح أكثر من 4 قروض نشطة في آن واحد.', true);
+            else showFinToast('سمعة النادي الحالية لا تؤهلكم لأي قرض إضافي حالياً.', true);
+            return;
+        }
+        const amountInput = document.getElementById('loan-amount');
+        amountInput.min = 2; amountInput.max = Math.max(2, elig.maxLoan); amountInput.step = Math.max(0.5, Math.round(elig.maxLoan/30*10)/10);
+        amountInput.value = Math.min(elig.maxLoan, Math.max(2, Math.round(elig.maxLoan*0.3*10)/10));
+        document.getElementById('loan-term').value = '2';
+        updateLoanPreview();
+        document.getElementById('loanModal').classList.add('show');
+    }
+    function closeLoanModal(){ document.getElementById('loanModal').classList.remove('show'); }
+    function updateLoanPreview(){
+        const elig = loanEligibility();
+        const amount = parseFloat(document.getElementById('loan-amount').value);
+        const termYears = parseInt(document.getElementById('loan-term').value);
+        document.getElementById('loan-amount-label').textContent = amount.toFixed(1)+'M €';
+        const terms = computeLoanTerms(amount, termYears, elig.interestRate);
+        const bank = pickBankName(elig.interestRate);
+        const lines = [
+            ['البنك المموّل', bank],
+            ['معدل الفائدة السنوي', elig.interestRate.toFixed(1)+'%'],
+            ['القسط الشهري', terms.monthlyPayment.toFixed(3)+'M €'],
+            ['إجمالي السداد (أصل + فوائد)', terms.totalRepay.toFixed(2)+'M €'],
+            ['تكلفة الفائدة الإجمالية', (terms.totalRepay-amount).toFixed(2)+'M €'],
+        ];
+        document.getElementById('loan-preview-lines').innerHTML = lines.map(([k,v])=>`<div class="lp-row"><span>${k}</span><b>${v}</b></div>`).join('');
+    }
+    function confirmLoanRequest(){
+        const elig = loanEligibility();
+        const amount = parseFloat(document.getElementById('loan-amount').value);
+        const termYears = parseInt(document.getElementById('loan-term').value);
+        if (amount<2 || amount>elig.maxLoan){ showFinToast('المبلغ خارج الحد المسموح لسمعتكم الحالية.', true); return; }
+        const terms = computeLoanTerms(amount, termYears, elig.interestRate);
+        const bank = pickBankName(elig.interestRate);
+        const today = getGameDate(); const startAbs = toAbsDay(today);
+        const loan = {
+            loanId: `LN-${Date.now()}`, bank,
+            principal: amount, interestRatePct: Math.round(elig.interestRate*10)/10,
+            termMonths: terms.termMonths, monthlyPayment: terms.monthlyPayment,
+            totalRepay: terms.totalRepay, remainingBalance: terms.totalRepay,
+            startAbsDay: startAbs, nextPaymentAbsDay: startAbs+30,
+            missedPayments: 0, status:'active'
+        };
+        const loans = getLoans(); loans.push(loan); saveLoans(loans);
+        setClubBudget(getClubBudget()+amount);
+        addMessageToSystem(bank, `✅ تمت الموافقة على قرض بقيمة ${amount.toFixed(1)}M € بفائدة ${loan.interestRatePct}% سنوياً لمدة ${termYears} ${termYears===1?'سنة':'سنوات'}. القسط الشهري ${loan.monthlyPayment.toFixed(3)}M €.`);
+        closeLoanModal();
+        showFinToast(`تم إيداع ${amount.toFixed(1)}M € في ميزانية النادي.`);
+        initFinance();
+    }
+
+    function repayLoanEarly(loanId){
+        const loans = getLoans();
+        const loan = loans.find(l=>l.loanId===loanId); if (!loan) return;
+        const discount = 0.97; // خصم 3% لتشجيع الانضباط المالي بالسداد المبكر
+        const payoff = Math.round(loan.remainingBalance*discount*100)/100;
+        if (!confirm(`سداد مبكر لكامل القرض المتبقي (${payoff.toFixed(2)}M € بعد خصم 3%). متابعة؟`)) return;
+        if (getClubBudget() < payoff){ showFinToast('الميزانية غير كافية للسداد المبكر الكامل حالياً.', true); return; }
+        setClubBudget(getClubBudget()-payoff);
+        loan.remainingBalance = 0; loan.status='paid';
+        saveLoans(loans);
+        addMessageToSystem(loan.bank, `تم السداد المبكر لكامل القرض (${payoff.toFixed(2)}M €). سجلكم الائتماني تحسّن.`);
+        applyRealReputationImpact(1, 'سداد مبكر لقرض بنكي', 'المالية');
+        showFinToast('تم السداد المبكر بنجاح.');
+        initFinance();
+    }
+
+    // تُطبَّق الأقساط الشهرية المستحقة تلقائياً كلما تقدّم تقويم اللعبة، بنفس أسلوب بقية الأنظمة
+    function processLoans(){
+        const loans = getLoans();
+        const todayAbs = toAbsDay(getGameDate());
+        let changed=false;
+        loans.forEach(loan=>{
+            if (loan.status!=='active') return;
+            let guard=0;
+            while (todayAbs>=loan.nextPaymentAbsDay && loan.remainingBalance>0.001 && guard<240){
+                guard++;
+                const pay = Math.min(loan.monthlyPayment, loan.remainingBalance);
+                setClubBudget(getClubBudget()-pay);
+                loan.remainingBalance = Math.round((loan.remainingBalance-pay)*1000)/1000;
+                loan.nextPaymentAbsDay += 30;
+                changed=true;
+                if (getClubBudget()<0){
+                    loan.missedPayments++;
+                    if (loan.missedPayments===3){
+                        applyRealReputationImpact(-6, 'تعثر متكرر في سداد قسط قرض بنكي', 'المالية');
+                        addMessageToSystem(loan.bank, `⚠️ تعثرتم في السداد عدة مرات. هذا يضر بتصنيفكم الائتماني وسمعة النادي أمام الجهات الممولة.`);
+                    }
+                }
+                if (loan.remainingBalance<=0.001){
+                    loan.status='paid';
+                    applyRealReputationImpact(1, 'سداد كامل لقرض بنكي في موعده', 'المالية');
+                    addMessageToSystem(loan.bank, `✅ تم سداد القرض بالكامل حسب الجدول المتفق عليه. تصنيفكم الائتماني تحسّن.`);
+                }
+            }
+        });
+        if (changed) saveLoans(loans);
+    }
+
+    function renderLoans(){
+        const elig = loanEligibility();
+        const lvl = getRepLevel(elig.rep);
+        document.getElementById('creditScoreLabel').innerText = `${lvl.icon} ${lvl.label} (${elig.rep.toFixed(0)}/100) — فائدة ~${elig.interestRate.toFixed(1)}%`;
+        document.getElementById('maxLoanAmount').innerText = elig.maxLoan.toFixed(1)+'M €';
+        document.getElementById('openLoanBtn').disabled = !elig.eligible;
+        document.getElementById('openLoanBtn').style.opacity = elig.eligible?'1':'.5';
+
+        const active = getActiveLoans();
+        if (!active.length){
+            document.getElementById('loansList').innerHTML = `<div class="no-loans-note">لا توجد قروض نشطة حالياً.</div>`;
+            return;
+        }
+        const today = getGameDate();
+        document.getElementById('loansList').innerHTML = active.map(l=>{
+            const paidRatio = Math.max(0, Math.min(1, 1-(l.remainingBalance/l.totalRepay)));
+            const nextDate = (function(abs){ const dt=new Date(abs*86400000); return `${dt.getUTCDate()}/${dt.getUTCMonth()+1}/${dt.getUTCFullYear()}`; })(l.nextPaymentAbsDay);
+            return `
+            <div class="loan-card">
+                <div class="lc-top"><span>${l.bank}</span><span>${l.remainingBalance.toFixed(2)}M € متبقٍ</span></div>
+                <div class="lc-bar-bg"><div class="lc-bar-fill" style="width:${Math.round(paidRatio*100)}%;"></div></div>
+                <div class="lc-meta">
+                    <span>قسط شهري: ${l.monthlyPayment.toFixed(3)}M €</span>
+                    <span>فائدة: ${l.interestRatePct}%</span>
+                    <span>الدفعة القادمة: ${nextDate}</span>
+                </div>
+                <button class="btn-repay-early" onclick="repayLoanEarly('${l.loanId}')">سداد مبكر (خصم 3%)</button>
+            </div>`;
+        }).join('');
+    }
+
+    function showFinToast(msg, isErr){
+        const t = document.getElementById('finToast');
+        t.textContent = msg; t.classList.toggle('err', !!isErr); t.classList.add('show');
+        setTimeout(()=>t.classList.remove('show'), 2600);
+    }
+
+    /* ============================================================
+       التهيئة والعرض
+       ============================================================ */
+    function fmtM(v){ return (v||0).toFixed(1)+'M €'; }
+    function initFinance(){
+        // ★ إعادة الضبط أولاً إن تغيّر النادي
+        const reset = resetIfNewClub();
+        if(reset){
+            const n=document.getElementById('newEra'); n.classList.add('show');
+            n.innerHTML=`🏛️ <b>عهد رئاسي جديد مع ${reset.club}.</b> أُعيد ضبط الميزانية إلى <b>${reset.startingBudget}M €</b> وأُفرغت قائمة اللاعبين. ابدأ ببناء فريقك من سوق الانتقالات.`;
+        }
+
+        // ★ جوائز نهاية الموسم (مرة واحدة فقط لكل عام لعبة جديد)
+        processSeasonEndPrizeMoney();
+        // ★ معالجة أقساط القروض المستحقة حسب تقويم اللعبة
+        processLoans();
+
+        const f=calculateDetailedFinance();
+        const budget=getClubBudget();
+        const rules=fedGetRules();
+
+        document.getElementById('totalBalance').innerText=fmtM(budget);
+        document.getElementById('sponsorName').innerText=localStorage.getItem('clubSponsorName')||'لا يوجد';
+        document.getElementById('commercialRep').innerText=localStorage.getItem('commercialRep')||'50';
+
+        // ★ السمعة الحقيقية من محرك الصفحة الرئيسية
+        const realRep = getRealReputation();
+        const lvl = getRepLevel(realRep);
+        document.getElementById('realRepIcon').textContent = lvl.icon;
+        document.getElementById('realRepValue').innerText = realRep.toFixed(0);
+        document.getElementById('realRepLabel').innerText = `(${lvl.label})`;
+
+        // ★ عدد عقود الرعاية النشطة (توافق مع sponsors.html)
+        const activeSponsors = getActiveSponsorContracts();
+        const spCnt = document.getElementById('sponsorActiveCount');
+        if (activeSponsors.length){ spCnt.style.display='inline-block'; spCnt.innerText = activeSponsors.length+'/8'; }
+        else spCnt.style.display='none';
+
+        const ffp=budget>0?Math.round(f.annualWage/budget*100):0;
+        const cap=rules.wageCapPct;
+        document.getElementById('ffpCapText').innerText=cap;
+        document.getElementById('ffpPercentageText').innerText=ffp+'%';
+        const bar=document.getElementById('ffpBar'); bar.style.width=Math.min(100,ffp)+'%';
+        const status=document.getElementById('ffpStatus');
+        if(ffp>cap){ bar.style.background='var(--danger)'; status.innerText='تجاوز الحد ⛔'; status.style.color='var(--danger)'; }
+        else if(ffp>cap-15){ bar.style.background='var(--warning)'; status.innerText='تحت الرقابة ⏳'; status.style.color='var(--warning)'; }
+        else { bar.style.background='var(--success)'; status.innerText='ضمن الحدود ✅'; status.style.color='var(--success)'; }
+        fedEnforceFFP(ffp);
+
+        document.getElementById('incomeDisplay').innerText='+ '+fmtM(f.totalIncome);
+        document.getElementById('expenseDisplay').innerText='- '+fmtM(f.totalExpense);
+        document.getElementById('salesDisplay').innerText='+ '+fmtM(f.transferSales);
+        document.getElementById('wageTotalDisplay').innerText='- '+Math.round(f.weeklyWage/1000)+'K €';
+
+        document.getElementById('sponsorIncome').innerText=fmtM(f.sponsorValue);
+        document.getElementById('broadcastIncome').innerText=fmtM(f.broadcastValue);
+        document.getElementById('transferIncome').innerText=fmtM(f.transferSales);
+        document.getElementById('shopIncome').innerText=fmtM(f.shopRevenue);
+        document.getElementById('prizeIncome').innerText=fmtM(f.prizeMoney);
+        document.getElementById('friendlyIncomeDisplay').innerText=fmtM(f.friendlyIncome);
+        document.getElementById('wageExpense').innerText=fmtM(f.annualWage);
+        document.getElementById('transferExpense').innerText=fmtM(f.transferPurchases);
+        document.getElementById('facilityExpense').innerText=fmtM(f.facilityUpgrade);
+        document.getElementById('penaltyExpense').innerText=fmtM(f.penalties);
+        document.getElementById('friendlyExpenseDisplay').innerText=fmtM(f.friendlyExpenses);
+        document.getElementById('loanExpenseDisplay').innerText=fmtM(f.loanExpense);
+
+        const pend=getPending();
+        const cnt=document.getElementById('pendCount');
+        if(pend.length){ cnt.style.display='inline-block'; cnt.innerText=pend.length; document.getElementById('regSub').innerText=`لديك ${pend.length} لاعب${pend.length>1?'ين':''} بانتظار التسجيل واعتماد الاتحاد.`; }
+
+        // ★ نصيحة المستشار — تراعي الآن الديون البنكية والسمعة الحقيقية أيضاً
+        const loanDebt = getActiveLoans().reduce((s,l)=>s+l.remainingBalance,0);
+        const adv=document.getElementById('advisorMessage');
+        if(localStorage.getItem('clubRegistrationBlocked')==='true') adv.innerText='"سيدي الرئيس، تجاوزنا سقف الرواتب والاتحاد جمّد تسجيلاتنا. علينا خفض الكتلة أو رفع الإيرادات فوراً."';
+        else if(budget<0) adv.innerText='"سيدي الرئيس، ميزانيتنا بالسالب! هذا يهدد استقرارنا المالي، يجب تسوية الوضع عاجلاً — عبر الرعاة أو قرض بنكي مدروس."';
+        else if(loanDebt>0 && loanDebt>budget) adv.innerText='"ديوننا البنكية الحالية تفوق ما نملكه من سيولة. أنصح بعدم الاقتراض أكثر حتى نخفّض هذا العبء."';
+        else if(budget<20) adv.innerText='"الميزانية منخفضة يا سيادة الرئيس، ننصح بتقليص الإنفاق في نافذة الانتقالات القادمة."';
+        else if(realRep<30) adv.innerText='"سمعة النادي متواضعة حالياً، وهذا يرفع فائدة أي قرض ويقلّل اهتمام كبار الرعاة بنا. النتائج والاستقرار المالي كفيلان بتحسينها."';
+        else if(f.totalIncome>f.totalExpense) adv.innerText='"وضعنا المالي ممتاز، الإيرادات تفوق المصروفات. يمكننا التفكير في تدعيم القائمة."';
+        else adv.innerText='"الوضع المالي مستقر، لكن راقب كتلة الرواتب مع كل صفقة جديدة."';
+
+        renderFederationPanel();
+        renderLoans();
+    }
+    initFinance();
+</script>
+</body>
+</html>
+
+<!-- نظام التهيئة المركزي -->
+<script src="init.js"></script>

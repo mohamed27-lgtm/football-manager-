@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() {
+            const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light');
+            const ALLOWED_LANGS = ['ar','en','es'];
+            let lang = localStorage.getItem('gameLanguage') || 'ar';
+            if (!ALLOWED_LANGS.includes(lang)) { lang = 'ar'; localStorage.setItem('gameLanguage', 'ar'); }
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>البريد الوارد | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444; --blue:#3b82f6; }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+            --blue: #2563eb;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:10px 12px; border-radius:12px; border:1px solid var(--border); }
+        .back-btn { background:var(--border); color:white; border:none; padding:8px 12px; font-size:12px; border-radius:8px; text-decoration:none; }
+        .page-title { font-size:14px; font-weight:800; color:var(--gold); display:flex; align-items:center; gap:6px; }
+        .header-actions { display:flex; gap:6px; }
+        .icon-btn { background:var(--border); color:var(--text); border:none; width:34px; height:34px; border-radius:8px; font-size:12px; cursor:pointer; }
+
+        .filter-tabs { display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
+        .filter-tabs::-webkit-scrollbar { display:none; }
+        .filter-chip { flex:0 0 auto; padding:8px 14px; border-radius:999px; background:var(--card); border:1px solid var(--border); font-size:11.5px; font-weight:700; color:var(--muted); cursor:pointer; display:flex; align-items:center; gap:5px; white-space:nowrap; }
+        .filter-chip.active { background:var(--gold); color:#06090f; border-color:var(--gold); }
+        .filter-chip .count { background:rgba(255,255,255,0.15); font-size:9px; padding:1px 6px; border-radius:999px; }
+        .filter-chip.active .count { background:rgba(0,0,0,0.2); }
+
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .empty-state { text-align:center; padding:40px 20px; color:var(--muted); font-size:12.5px; line-height:1.9; }
+        .empty-state i { font-size:32px; margin-bottom:10px; display:block; color:var(--border); }
+
+        .msg-row { display:flex; align-items:flex-start; gap:10px; padding:13px 14px; border-bottom:1px solid var(--border); cursor:pointer; position:relative; transition:background 0.15s; }
+        .msg-row:last-child { border-bottom:none; }
+        .msg-row.unread { background:rgba(232,184,75,0.05); }
+        .msg-row.unread::before { content:''; position:absolute; right:0; top:0; bottom:0; width:3px; background:var(--gold); }
+        .msg-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; flex:0 0 auto; }
+        .msg-body { flex:1; min-width:0; }
+        .msg-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+        .msg-sender { font-size:12.5px; font-weight:800; }
+        .msg-time { font-size:10px; color:var(--muted); flex:0 0 auto; }
+        .msg-text { font-size:11.5px; color:var(--muted); margin-top:4px; line-height:1.7; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .msg-cat-badge { font-size:9px; font-weight:800; padding:2px 7px; border-radius:999px; margin-top:6px; display:inline-block; }
+
+        .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--gold); color:var(--text); padding:10px 16px; border-radius:10px; font-size:12px; display:none; z-index:99; max-width:90%; text-align:center; }
+
+        /* ===== نافذة القراءة الرسمية — بتنسيق خطاب رسمي حقيقي ===== */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:60; align-items:flex-end; justify-content:center; }
+        .modal-overlay.active { display:flex; }
+        .letter-sheet {
+            background:#f7f4ec; color:#1a1a1a; width:100%; max-width:480px; max-height:88vh; overflow-y:auto;
+            border-radius:16px 16px 0 0; padding:26px 22px 30px 22px; position:relative;
+            font-family:'Segoe UI', Tahoma, sans-serif;
+            box-shadow:0 -10px 40px rgba(0,0,0,0.5);
+        }
+        .close-letter { position:absolute; top:14px; left:14px; background:rgba(0,0,0,0.06); border:none; width:30px; height:30px; border-radius:50%; color:#333; font-size:13px; cursor:pointer; }
+        .letter-letterhead { text-align:center; padding-bottom:14px; border-bottom:2px solid #1a1a1a; margin-bottom:14px; }
+        .letter-org-icon { width:46px; height:46px; border-radius:50%; background:#1a1a1a; color:#f7f4ec; display:flex; align-items:center; justify-content:center; font-size:19px; margin:0 auto 8px auto; }
+        .letter-org-name { font-size:15px; font-weight:800; }
+        .letter-org-sub { font-size:10px; color:#666; margin-top:2px; letter-spacing:0.5px; }
+        .letter-meta-row { display:flex; justify-content:space-between; font-size:10.5px; color:#555; margin-bottom:14px; direction:ltr; }
+        .letter-divider { height:1px; background:repeating-linear-gradient(90deg, #999 0 4px, transparent 4px 8px); margin-bottom:16px; }
+        .letter-to { font-size:12.5px; font-weight:700; margin-bottom:10px; }
+        .letter-salutation { font-size:12px; color:#444; margin-bottom:14px; }
+        .letter-body { font-size:13px; line-height:2.1; color:#222; white-space:pre-wrap; }
+        .letter-closing { margin-top:26px; padding-top:14px; border-top:1px solid #ccc; font-size:11.5px; color:#444; }
+        .letter-signature { margin-top:10px; font-size:13px; font-weight:800; color:#1a1a1a; font-style:italic; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title"><i class="fas fa-inbox"></i> <span id="pageTitleTxt">البريد الوارد</span></div>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="markAllRead()" id="markAllReadBtn" title="تعليم الكل كمقروء"><i class="fas fa-envelope-open"></i></button>
+            <button class="icon-btn" onclick="clearAllMessages()" id="clearAllBtn" title="حذف الكل"><i class="fas fa-trash"></i></button>
+        </div>
+    </div>
+
+    <div class="filter-tabs" id="filterTabs"></div>
+
+    <div class="card">
+        <div id="messagesContainer"></div>
+    </div>
+
+    <div class="modal-overlay" id="letterModal">
+        <div class="letter-sheet">
+            <button class="close-letter" onclick="closeLetter()"><i class="fas fa-xmark"></i></button>
+            <div class="letter-letterhead">
+                <div class="letter-org-icon" id="letterOrgIcon"><i class="fas fa-landmark"></i></div>
+                <div class="letter-org-name" id="letterOrgName">—</div>
+                <div class="letter-org-sub" id="letterOrgSub">مراسلة رسمية</div>
+            </div>
+            <div class="letter-meta-row">
+                <span id="letterRefNo">—</span>
+                <span id="letterDate">—</span>
+            </div>
+            <div class="letter-divider"></div>
+            <div class="letter-to" id="letterTo">إلى: —</div>
+            <div class="letter-salutation">تحية طيبة وبعد،</div>
+            <div class="letter-body" id="letterBody">—</div>
+            <div class="letter-closing">
+                <div>وتفضلوا بقبول فائق الاحترام والتقدير،</div>
+                <div class="letter-signature" id="letterSignature">—</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        function showToast(msg) { const t=document.getElementById('toast'); t.innerHTML=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 2500); }
+
+        // ============================================================
+        // نظام لغات حقيقي (عربي/إنجليزي/إسباني) — يغطي نصوص واجهة صندوق الوارد الثابتة والديناميكية
+        // ============================================================
+        function getSafeLang() {
+            const ALLOWED = ['ar','en','es'];
+            const stored = localStorage.getItem('gameLanguage') || 'ar';
+            if (!ALLOWED.includes(stored)) { localStorage.setItem('gameLanguage','ar'); return 'ar'; }
+            return stored;
+        }
+        const INBOX_I18N = {
+            pageTitleTxt: { ar:'البريد الوارد', en:'Inbox', es:'Bandeja de entrada' },
+            markAllReadTitle: { ar:'تعليم الكل كمقروء', en:'Mark all as read', es:'Marcar todo como leído' },
+            clearAllTitle: { ar:'حذف الكل', en:'Delete all', es:'Eliminar todo' },
+            catAll: { ar:'الكل', en:'All', es:'Todo' },
+            catTransfer: { ar:'الانتقالات', en:'Transfers', es:'Traspasos' },
+            catFinance: { ar:'المالية', en:'Finance', es:'Finanzas' },
+            catFederation: { ar:'الاتحاد والإدارة', en:'Federation & Admin', es:'Federación y administración' },
+            catSystem: { ar:'النظام', en:'System', es:'Sistema' },
+            emptyNoCategory: { ar:'في هذا التصنيف', en:'in this category', es:'en esta categoría' },
+            emptyMsg: { ar:(cat)=>`لا توجد رسائل ${cat} حالياً.`, en:(cat)=>`No messages ${cat} currently.`, es:(cat)=>`No hay mensajes ${cat} actualmente.` },
+            emptyMsgSub: { ar:'ستصلك هنا كل مراسلات الرعاة والانتقالات والإدارة والاتحاد فور حدوثها فعلياً.', en:'All correspondence from sponsors, transfers, administration, and the federation will arrive here as it actually happens.', es:'Toda la correspondencia de patrocinadores, traspasos, administración y la federación llegará aquí en cuanto ocurra realmente.' },
+            refLbl: { ar:'المرجع: ', en:'Ref: ', es:'Ref.: ' },
+            toLbl: { ar:(c)=>`إلى: السيد رئيس نادي ${c} المحترم`, en:(c)=>`To: The Honorable President of ${c}`, es:(c)=>`Para: El Honorable Presidente de ${c}` },
+            defaultOfficialLetter: { ar:'مراسلة رسمية', en:'Official Correspondence', es:'Correspondencia oficial' },
+        };
+        function it(key, ...args) {
+            const lang = getSafeLang();
+            const entry = INBOX_I18N[key];
+            if (!entry) return key;
+            const val = entry[lang] || entry['ar'];
+            return typeof val === 'function' ? val(...args) : val;
+        }
+        function applyInboxLanguage() {
+            for (const key in INBOX_I18N) {
+                const el = document.getElementById(key);
+                if (el) { const t = it(key); if (typeof t === 'string') el.innerText = t; }
+            }
+            const markBtn = document.getElementById('markAllReadBtn'); if (markBtn) markBtn.title = it('markAllReadTitle');
+            const clearBtn = document.getElementById('clearAllBtn'); if (clearBtn) clearBtn.title = it('clearAllTitle');
+        }
+
+        // ============================================================
+        // قاموس ترجمة الرسائل المشترك — يُملأ تدريجياً بمفاتيح من كل صفحة نُحوِّلها لنظام المفاتيح بدل النص الجاهز
+        // كل رسالة جديدة يجب أن تُخزَّن بمفتاح (m.textKey + m.textArgs) لا نص جاهز، لتترجم فعلياً وقت العرض لا وقت الحفظ
+        // ============================================================
+        const MSG_I18N = {
+            perfBonusMsg: { ar:(n,b)=>`💰 استحق ${n} مكافأة الأداء المتفَق عليها (${b}M €) بعد بلوغ الأداء المطلوب فعلياً.`, en:(n,b)=>`💰 ${n} earned the agreed performance bonus (${b}M €) after reaching the required performance.`, es:(n,b)=>`💰 ${n} obtuvo la bonificación de rendimiento acordada (${b}M €) tras alcanzar el rendimiento requerido.` },
+            newStadiumDone: { ar:(c,b)=>`<i class="fas fa-landmark-dome"></i> اكتمل بناء الملعب الجديد بالكامل — السعة الجديدة ${c} مقعد، وكل المرافق بحالة جديدة تماماً.${b>0?` تحسّنت صورة النادي فعلياً (+${b} سمعة) بفضل جودة التنفيذ الفاخرة.`:''}`, en:(c,b)=>`<i class="fas fa-landmark-dome"></i> The new stadium is fully complete — new capacity ${c} seats, all facilities brand new.${b>0?` Club image genuinely improved (+${b} reputation) thanks to premium execution quality.`:''}`, es:(c,b)=>`<i class="fas fa-landmark-dome"></i> El nuevo estadio está completamente terminado — nueva capacidad ${c} asientos.${b>0?` La imagen del club mejoró realmente (+${b} reputación).`:''}` },
+            fullRenovationDone: { ar:(b)=>`<i class="fas fa-person-digging"></i> اكتمل التجديد الشامل للملعب فعلياً — كل المرافق أُعيدت لحالة ممتازة تقريباً.${b>0?` تحسّنت صورة النادي فعلياً (+${b} سمعة) بفضل جودة التنفيذ الفاخرة.`:''}`, en:(b)=>`<i class="fas fa-person-digging"></i> Full stadium renovation genuinely complete — all facilities restored to near-excellent condition.${b>0?` Club image genuinely improved (+${b} reputation).`:''}`, es:(b)=>`<i class="fas fa-person-digging"></i> Renovación completa del estadio terminada — todas las instalaciones restauradas.${b>0?` La imagen del club mejoró (+${b} reputación).`:''}` },
+            partialRebuildDone: { ar:(b)=>`<i class="fas fa-hammer"></i> اكتمل إعادة بناء جزء من المدرجات فعلياً — تحسّنت حالة المدرجات بشكل ملموس.${b>0?` تحسّنت صورة النادي فعلياً (+${b} سمعة).`:''}`, en:(b)=>`<i class="fas fa-hammer"></i> Partial stands rebuild genuinely complete — stand condition noticeably improved.${b>0?` Club image genuinely improved (+${b} reputation).`:''}`, es:(b)=>`<i class="fas fa-hammer"></i> Reconstrucción parcial de las gradas terminada.${b>0?` La imagen del club mejoró (+${b} reputación).`:''}` },
+            expansionDone: { ar:(q,s,b)=>`<i class="fas fa-person-digging"></i> اكتمل مشروع توسعة الملعب (جودة ${q}) فعلياً — أُضيف ${s} مقعد جديد للسعة الرسمية.${b>0?` تحسّنت صورة النادي فعلياً (+${b} سمعة).`:''}`, en:(q,s,b)=>`<i class="fas fa-person-digging"></i> Stadium expansion project genuinely complete (quality: ${q}) — ${s} new seats added to official capacity.${b>0?` Club image genuinely improved (+${b} reputation).`:''}`, es:(q,s,b)=>`<i class="fas fa-person-digging"></i> Proyecto de ampliación del estadio terminado (calidad: ${q}) — ${s} asientos nuevos añadidos.${b>0?` La imagen del club mejoró (+${b} reputación).`:''}` },
+            loanApproved: { ar:(p,a,r,y,m)=>`<i class="fas fa-circle-check"></i> قرض تمويل مشروع "${p}" بقيمة ${a}M € — فائدة ${r}% لمدة ${y} سنوات، قسط شهري ${m}M €.`, en:(p,a,r,y,m)=>`<i class="fas fa-circle-check"></i> Financing loan for "${p}" project worth €${a}M — ${r}% interest over ${y} years, monthly installment €${m}M.`, es:(p,a,r,y,m)=>`<i class="fas fa-circle-check"></i> Préstamo de financiación para "${p}" por €${a}M — interés ${r}% durante ${y} años, cuota mensual €${m}M.` },
+            ownerContribution: { ar:(v,p)=>`<i class="fas fa-circle-check"></i> ساهمت شخصياً بـ${v}M € في تمويل "${p}".`, en:(v,p)=>`<i class="fas fa-circle-check"></i> Personally contributed €${v}M to financing "${p}".`, es:(v,p)=>`<i class="fas fa-circle-check"></i> Contribuiste personalmente con €${v}M a la financiación de "${p}".` },
+            matchAttendance: { ar:(n,c,o,r)=>`<i class="fas fa-ticket"></i> حضر ${n} مشجّع مباراة ${c} × ${o} عبر 4 قطاعات — عائد تذاكر ${r}M €.`, en:(n,c,o,r)=>`<i class="fas fa-ticket"></i> ${n} fans attended the ${c} × ${o} match across 4 tiers — ticket revenue €${r}M.`, es:(n,c,o,r)=>`<i class="fas fa-ticket"></i> ${n} aficionados asistieron al partido ${c} × ${o} — ingresos por entradas €${r}M.` },
+            facilityStage_maintenance: { ar:'<i class="fas fa-screwdriver-wrench"></i> بدأت بعض مرافق الملعب تحتاج صيانة دورية فعلية.', en:'<i class="fas fa-screwdriver-wrench"></i> Some stadium facilities genuinely need periodic maintenance.', es:'<i class="fas fa-screwdriver-wrench"></i> Algunas instalaciones del estadio necesitan mantenimiento periódico.' },
+            facilityStage_warning: { ar:'<i class="fas fa-triangle-exclamation"></i> تحذير رسمي: حالة الملعب تدهورت — مهلة إصلاح قبل فرض قيود فعلية.', en:'<i class="fas fa-triangle-exclamation"></i> Official warning: stadium condition has deteriorated — repair deadline before real restrictions apply.', es:'<i class="fas fa-triangle-exclamation"></i> Aviso oficial: la condición del estadio se ha deteriorado — plazo de reparación antes de restricciones.' },
+            facilityStage_restricted: { ar:'<i class="fas fa-road-barrier"></i> فُرضت قيود حقيقية على سعة الملعب بسبب إهمال الصيانة — جزء من المدرجات أُغلق.', en:'<i class="fas fa-road-barrier"></i> Real capacity restrictions imposed due to maintenance neglect — part of the stands closed.', es:'<i class="fas fa-road-barrier"></i> Se impusieron restricciones de capacidad reales por negligencia de mantenimiento — parte de las gradas cerradas.' },
+            facilityStage_banned: { ar:'<i class="fas fa-ban"></i> الملعب فقد اعتماده بالكامل — يُستخدم ملعب بديل حتى إصلاح العناصر الحرجة فوراً.', en:'<i class="fas fa-ban"></i> The stadium has fully lost its certification — a temporary stadium is used until critical elements are repaired.', es:'<i class="fas fa-ban"></i> El estadio ha perdido totalmente su certificación — se usa un estadio temporal hasta reparar elementos críticos.' },
+            tempStadiumRent: { ar:(c,o)=>`<i class="fas fa-landmark-dome"></i> دُفعت تكلفة إيجار الملعب البديل: ${c}M € (ضد ${o}).`, en:(c,o)=>`<i class="fas fa-landmark-dome"></i> Paid temporary stadium rental cost: €${c}M (vs ${o}).`, es:(c,o)=>`<i class="fas fa-landmark-dome"></i> Se pagó el alquiler del estadio temporal: €${c}M (vs ${o}).` },
+            projectStarted: { ar:(l,c,d)=>`<i class="fas fa-screwdriver-wrench"></i> بدأ مشروع "${l}" بتكلفة ${c}M € ومدة ${d} يوماً.`, en:(l,c,d)=>`<i class="fas fa-screwdriver-wrench"></i> Project "${l}" started, cost €${c}M, duration ${d} days.`, es:(l,c,d)=>`<i class="fas fa-screwdriver-wrench"></i> Proyecto "${l}" iniciado, coste €${c}M, duración ${d} días.` },
+            projectDoneGeneric: { ar:(l)=>`<i class="fas fa-circle-check"></i> اكتمل مشروع "${l}" فعلياً.`, en:(l)=>`<i class="fas fa-circle-check"></i> Project "${l}" genuinely complete.`, es:(l)=>`<i class="fas fa-circle-check"></i> Proyecto "${l}" completado.` },
+            workAccelerated: { ar:(c,r)=>`<i class="fas fa-bolt"></i> تم تسريع العمل مقابل ${c}M € إضافية — اختصار ${r} يوماً من المدة المتبقية.`, en:(c,r)=>`<i class="fas fa-bolt"></i> Work accelerated for an extra €${c}M — ${r} days cut from remaining duration.`, es:(c,r)=>`<i class="fas fa-bolt"></i> Trabajo acelerado por €${c}M adicionales — ${r} días recortados.` },
+            boardApprovedProject: { ar:(t,c,m)=>`<i class="fas fa-circle-check"></i> وافق المجلس على "${t}" بميزانية ${c}M € — يستغرق نحو ${m} شهراً.`, en:(t,c,m)=>`<i class="fas fa-circle-check"></i> The board approved "${t}" with a budget of €${c}M — takes about ${m} months.`, es:(t,c,m)=>`<i class="fas fa-circle-check"></i> La junta aprobó "${t}" con un presupuesto de €${c}M — tarda unos ${m} meses.` },
+            boardApprovedExpansion: { ar:(s,c,m,cs)=>`<i class="fas fa-circle-check"></i> وافق المجلس على توسعة الملعب بـ${s} مقعد بميزانية معتمدة ${c}M € (تشمل احتياطي مخاطر 10%) — العمل الإنشائي يبدأ الآن ويستغرق نحو ${m} شهراً، مع إغلاق ${cs} مقعد مؤقتاً أثناء التنفيذ.`, en:(s,c,m,cs)=>`<i class="fas fa-circle-check"></i> The board approved a ${s}-seat stadium expansion with an approved budget of €${c}M (including a 10% risk reserve) — construction begins now and takes about ${m} months, with ${cs} seats temporarily closed during execution.`, es:(s,c,m,cs)=>`<i class="fas fa-circle-check"></i> La junta aprobó una ampliación de ${s} asientos con un presupuesto de €${c}M — la construcción comienza ahora y tarda unos ${m} meses, con ${cs} asientos cerrados temporalmente.` },
+            contractorDelay: { ar:(d)=>`⏱️ تأخر المقاول المنفِّذ ${d} يوماً عن الجدول الأصلي.`, en:(d)=>`⏱️ The contractor fell behind schedule by ${d} days.`, es:(d)=>`⏱️ El contratista se retrasó ${d} días.` },
+            materialCost: { ar:(p,c)=>`<i class="fas fa-chart-line"></i> ارتفعت أسعار مواد البناء ${p}% أثناء التنفيذ — تكلفة إضافية ${c}M € خُصمت مباشرة من ميزانيتك.`, en:(p,c)=>`<i class="fas fa-chart-line"></i> Construction material prices rose ${p}% during execution — an extra €${c}M was deducted from your budget.`, es:(p,c)=>`<i class="fas fa-chart-line"></i> Los precios de materiales subieron ${p}%, coste adicional de €${c}M.` },
+            engineering: { ar:(d,c)=>`<i class="fas fa-triangle-exclamation"></i> اكتُشفت مشكلة هندسية فعلية أثناء التنفيذ — تأخير ${d} يوماً وتكلفة إصلاح إضافية ${c}M €.`, en:(d,c)=>`<i class="fas fa-triangle-exclamation"></i> A real engineering issue was discovered during execution — ${d} days delay and an extra €${c}M repair cost.`, es:(d,c)=>`<i class="fas fa-triangle-exclamation"></i> Se descubrió un problema de ingeniería — retraso de ${d} días, coste de €${c}M.` },
+            designChange: { ar:(c,d)=>`<i class="fas fa-drafting-compass"></i> طلبت الإدارة الفنية تعديلاً في التصميم — تكلفة إضافية ${c}M € وتأخير ${d} يوماً.`, en:(c,d)=>`<i class="fas fa-drafting-compass"></i> The technical department requested a design change — an extra €${c}M cost and ${d} days delay.`, es:(c,d)=>`<i class="fas fa-drafting-compass"></i> Se solicitó un cambio de diseño — coste de €${c}M, retraso de ${d} días.` },
+            weather: { ar:(d)=>`<i class="fas fa-cloud-rain"></i> تأخير ${d} يوماً بسبب سوء الأحوال الجوية أو تأخر موافقة رسمية.`, en:(d)=>`<i class="fas fa-cloud-rain"></i> ${d} days delay due to bad weather or a delayed official approval.`, es:(d)=>`<i class="fas fa-cloud-rain"></i> Retraso de ${d} días por mal tiempo o aprobación oficial.` },
+            budgetOverrun: { ar:(c)=>`<i class="fas fa-money-bill-transfer"></i> تجاوزت التكلفة الفعلية الميزانية المعتمدة بـ${c}M € — نفقات تنفيذية غير متوقَّعة.`, en:(c)=>`<i class="fas fa-money-bill-transfer"></i> Actual cost exceeded the approved budget by €${c}M — unexpected execution expenses.`, es:(c)=>`<i class="fas fa-money-bill-transfer"></i> El coste real superó el presupuesto aprobado en €${c}M.` },
+            // سيُضاف هنا مفتاح لكل رسالة حقيقية أثناء تحويل كل صفحة لنظام المفاتيح
+        };
+        function resolveMsgText(m) {
+            if (m.textKey && MSG_I18N[m.textKey]) {
+                const lang = getSafeLang();
+                const entry = MSG_I18N[m.textKey];
+                const val = entry[lang] || entry['ar'];
+                return typeof val === 'function' ? val(...(m.textArgs||[])) : val;
+            }
+            return m.text || ''; // توافق عكسي حقيقي لرسائل قديمة محفوظة بنص جاهز (تبقى بلغتها الأصلية، لا يمكن ترجمتها رجعياً)
+        }
+
+        function getClubName() { return localStorage.getItem('presidentialClub') || 'النادي'; }
+
+        // ============================================================
+        // نفس بنية gameInbox الحقيقية المستخدمة بالضبط في كل صفحات اللعبة الأخرى —
+        // {id, sender, text, time, read, category} — لا بنية جديدة مُختلقة
+        // ============================================================
+        function getInbox() { try { return JSON.parse(localStorage.getItem('gameInbox')) || []; } catch(e) { return []; } }
+        function saveInbox(inbox) { localStorage.setItem('gameInbox', JSON.stringify(inbox)); }
+
+        const CATEGORY_META = {
+            transfer:   { label: 'الانتقالات',    icon: 'fa-right-left',      color: '#3b82f6' },
+            finance:    { label: 'المالية',        icon: 'fa-sack-dollar',     color: '#22c55e' },
+            federation: { label: 'الاتحاد والإدارة', icon: 'fa-landmark',       color: '#e8b84b' },
+            system:     { label: 'النظام',         icon: 'fa-gear',            color: '#8b96ab' },
+        };
+        // أيقونة أدق حسب المُرسِل الفعلي الحقيقي (مطابقة لكل الأسماء المستخدمة عبر اللعبة)
+        const SENDER_ICONS = {
+            'مدير الانتقالات': 'fa-handshake', 'وكيل اللاعب': 'fa-user-tie', 'وكيل المدرب': 'fa-user-tie', 'وكيل': 'fa-user-tie', 'وكيل انتقالات': 'fa-user-tie',
+            'الإدارة المالية': 'fa-sack-dollar', 'مجلس الإدارة': 'fa-landmark', 'مالك النادي': 'fa-crown',
+            'الطاقم الطبي': 'fa-notes-medical', 'المركز الطبي': 'fa-house-medical',
+            'المتجر الرسمي': 'fa-shop', 'إدارة الملعب': 'fa-landmark-dome',
+            'الاتحاد القاري': 'fa-globe', 'لجنة الانضباط بالاتحاد': 'fa-gavel', 'لجنة المسابقات بالاتحاد': 'fa-trophy',
+            'شبكة رياضية عالمية': 'fa-satellite-dish', 'الإدارة الإعلامية': 'fa-satellite',
+            'الإدارة الرياضية': 'fa-futbol', 'مدير الإدارة الفنية': 'fa-clipboard-list',
+        };
+        function iconFor(sender, category) {
+            if (SENDER_ICONS[sender]) return SENDER_ICONS[sender];
+            return (CATEGORY_META[category] || CATEGORY_META.system).icon;
+        }
+        function colorFor(category) { return (CATEGORY_META[category] || CATEGORY_META.system).color; }
+
+        // العنوان الرسمي/القسم الحقيقي لكل مُرسِل — يمنح كل رسالة طابع مراسلة رسمية حقيقية
+        const SENDER_TITLES = {
+            'مدير الانتقالات': 'دائرة الانتقالات والتعاقدات', 'وكيل اللاعب': 'مكتب تمثيل ومصالح اللاعبين', 'وكيل المدرب': 'مكتب تمثيل ومصالح الأجهزة الفنية',
+            'وكيل': 'مكتب الوكالة الرياضية', 'وكيل انتقالات': 'مكتب الوكالة الرياضية',
+            'الإدارة المالية': 'الإدارة المالية للنادي', 'مجلس الإدارة': 'الأمانة العامة لمجلس الإدارة', 'مالك النادي': 'مكتب مالك النادي',
+            'الطاقم الطبي': 'الإدارة الطبية للنادي', 'المركز الطبي': 'إدارة المركز الطبي',
+            'المتجر الرسمي': 'إدارة المتجر الرسمي والتسويق', 'إدارة الملعب': 'إدارة المنشآت والملعب',
+            'الاتحاد القاري': 'الأمانة العامة للاتحاد القاري', 'لجنة الانضباط بالاتحاد': 'لجنة الانضباط', 'لجنة المسابقات بالاتحاد': 'لجنة تنظيم المسابقات',
+            'شبكة رياضية عالمية': 'إدارة حقوق البث والإعلام', 'الإدارة الإعلامية': 'الإدارة الإعلامية للنادي',
+            'الإدارة الرياضية': 'الإدارة الرياضية للنادي', 'مدير الإدارة الفنية': 'الجهاز الفني للنادي',
+        };
+        function titleFor(sender) { return SENDER_TITLES[sender] || it('defaultOfficialLetter'); }
+
+        let activeFilter = 'all';
+
+        function renderFilterTabs() {
+            const inbox = getInbox();
+            const counts = { all: inbox.length };
+            inbox.forEach(m => { counts[m.category] = (counts[m.category]||0) + 1; });
+            const CAT_LABEL_KEYS = { transfer:'catTransfer', finance:'catFinance', federation:'catFederation', system:'catSystem' };
+            const tabs = [{ key:'all', label:it('catAll'), icon:'fa-inbox' }, ...Object.keys(CATEGORY_META).map(k => ({ key:k, label:it(CAT_LABEL_KEYS[k]) || CATEGORY_META[k].label, icon:CATEGORY_META[k].icon }))];
+            document.getElementById('filterTabs').innerHTML = tabs.map(t => `
+                <div class="filter-chip ${activeFilter===t.key?'active':''}" onclick="setFilter('${t.key}')">
+                    <i class="fas ${t.icon}"></i> ${t.label} <span class="count">${counts[t.key]||0}</span>
+                </div>
+            `).join('');
+        }
+
+        function setFilter(key) { activeFilter = key; renderFilterTabs(); renderMessages(); }
+
+        function renderMessages() {
+            let inbox = getInbox();
+            if (activeFilter !== 'all') inbox = inbox.filter(m => m.category === activeFilter);
+            const el = document.getElementById('messagesContainer');
+            if (!inbox.length) {
+                el.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i>${it('emptyMsg', activeFilter!=='all' ? it('emptyNoCategory') : '')}<br>${it('emptyMsgSub')}</div>`;
+                return;
+            }
+            el.innerHTML = inbox.map(m => {
+                const meta = CATEGORY_META[m.category] || CATEGORY_META.system;
+                const icon = iconFor(m.sender, m.category);
+                const color = colorFor(m.category);
+                return `
+                <div class="msg-row ${m.read?'':'unread'}" onclick="openMessage(${m.id})">
+                    <div class="msg-icon" style="background:${color}22; color:${color};"><i class="fas ${icon}"></i></div>
+                    <div class="msg-body">
+                        <div class="msg-top">
+                            <div class="msg-sender">${m.sender}</div>
+                            <div class="msg-time">${m.time || ''}</div>
+                        </div>
+                        <div class="msg-text">${resolveMsgText(m)}</div>
+                        <span class="msg-cat-badge" style="background:${color}22; color:${color};">${meta.label}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function openMessage(id) {
+            const inbox = getInbox();
+            const msg = inbox.find(m => m.id === id);
+            if (!msg) return;
+            if (!msg.read) {
+                msg.read = true;
+                saveInbox(inbox);
+                renderFilterTabs();
+                renderMessages();
+            }
+
+            const color = colorFor(msg.category);
+            const icon = iconFor(msg.sender, msg.category);
+            document.getElementById('letterOrgIcon').innerHTML = `<i class="fas ${icon}"></i>`;
+            document.getElementById('letterOrgIcon').style.background = color;
+            document.getElementById('letterOrgName').innerText = msg.sender;
+            document.getElementById('letterOrgSub').innerText = titleFor(msg.sender);
+            document.getElementById('letterRefNo').innerText = it('refLbl') + String(msg.id).slice(-6);
+            document.getElementById('letterDate').innerText = msg.time || '';
+            document.getElementById('letterTo').innerText = it('toLbl', getClubName());
+            document.getElementById('letterBody').innerText = resolveMsgText(msg);
+            document.getElementById('letterSignature').innerText = msg.sender;
+            document.getElementById('letterModal').classList.add('active');
+        }
+        function closeLetter() { document.getElementById('letterModal').classList.remove('active'); }
+
+        function markAllRead() {
+            const inbox = getInbox();
+            inbox.forEach(m => m.read = true);
+            saveInbox(inbox);
+            localStorage.removeItem('hasNewMessage');
+            renderFilterTabs();
+            renderMessages();
+            showToast('تم تعليم كل الرسائل كمقروءة.');
+        }
+
+        function clearAllMessages() {
+            if (!getInbox().length) return;
+            if (!confirm('سيتم حذف كل الرسائل نهائياً. هل أنت متأكد؟')) return;
+            saveInbox([]);
+            localStorage.removeItem('hasNewMessage');
+            activeFilter = 'all';
+            renderFilterTabs();
+            renderMessages();
+            showToast('تم حذف كل الرسائل.');
+        }
+
+        window.onload = function() {
+            applyInboxLanguage();
+            localStorage.removeItem('hasNewMessage'); // فتح صندوق الوارد يُسقط شارة "رسالة جديدة" في الصفحة الرئيسية
+            renderFilterTabs();
+            renderMessages();
+        };
+    </script>
+</body>
+</html>

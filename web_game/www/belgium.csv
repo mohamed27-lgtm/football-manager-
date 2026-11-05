@@ -1,0 +1,55 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+AND,RSC Anderlecht,أندرلخت,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,34,"1947,1949,1950,1951,1954,1955,1956,1959,1962,1964,1965,1966,1967,1968,1972,1974,1981,1985,1986,1987,1991,1993,1994,1995,2000,2001,2004,2006,2007,2010,2012,2013,2014,2017"
+AND,RSC Anderlecht,أندرلخت,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,9,"1965,1972,1973,1975,1976,1988,1989,1994,2008"
+AND,RSC Anderlecht,أندرلخت,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,13,"1985,1987,1988,1989,1991,1995,2000,2001,2006,2007,2010,2012,2013"
+AND,RSC Anderlecht,أندرلخت,بلجيكا,196,UEFA,13,UCWC,UEFA Cup Winners' Cup,Continental,2,"1976,1978"
+AND,RSC Anderlecht,أندرلخت,بلجيكا,196,UEFA,13,UEL,UEFA Europa League,Continental,1,1983
+AND,RSC Anderlecht,أندرلخت,بلجيكا,196,UEFA,13,USC,UEFA Super Cup,Continental,2,"1976,1978"
+CLU,Club Brugge,كلوب بروج,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,19,"1920,1973,1976,1977,1978,1980,1988,1990,1992,1996,1998,2003,2005,2016,2018,2020,2021,2022,2024"
+CLU,Club Brugge,كلوب بروج,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,11,"1968,1970,1977,1986,1991,1995,1996,2002,2004,2007,2015"
+CLU,Club Brugge,كلوب بروج,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,17,"1980,1986,1988,1990,1991,1992,1994,1996,1998,2002,2003,2004,2005,2016,2018,2021,2022"
+CLU,Club Brugge,كلوب بروج,بلجيكا,196,UEFA,13,UCL,UEFA Champions League,Continental,0,·
+CLU,Club Brugge,كلوب بروج,بلجيكا,196,UEFA,13,UEL,UEFA Europa League,Continental,0,·
+CLU,Club Brugge,كلوب بروج,بلجيكا,196,UEFA,13,USC,UEFA Super Cup,Continental,0,·
+STL,Standard Liège,ستاندارد لييج,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,10,"1958,1961,1963,1969,1970,1971,1982,1983,2008,2009"
+STL,Standard Liège,ستاندارد لييج,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,8,"1954,1966,1967,1981,1993,2011,2016,2018"
+STL,Standard Liège,ستاندارد لييج,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,4,"1981,1983,2008,2009"
+STL,Standard Liège,ستاندارد لييج,بلجيكا,196,UEFA,13,UCWC,UEFA Cup Winners' Cup,Continental,0,·
+GEN,KRC Genk,جينك,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,4,"1999,2002,2011,2019"
+GEN,KRC Genk,جينك,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,5,"1998,2000,2009,2013,2021"
+GEN,KRC Genk,جينك,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,2,"2011,2019"
+GNT,KAA Gent,غينت,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,1,2015
+GNT,KAA Gent,غينت,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,4,"1964,1984,2010,2022"
+GNT,KAA Gent,غينت,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,1,2015
+MEC,KV Mechelen,ميخيلين,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,4,"1943,1946,1948,1989"
+MEC,KV Mechelen,ميخيلين,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,2,"1987,2019"
+MEC,KV Mechelen,ميخيلين,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,1,1988
+MEC,KV Mechelen,ميخيلين,بلجيكا,196,UEFA,13,UCWC,UEFA Cup Winners' Cup,Continental,1,1988
+MEC,KV Mechelen,ميخيلين,بلجيكا,196,UEFA,13,USC,UEFA Super Cup,Continental,0,·
+DU,Union Saint-Gilloise,يونيون سان جيلواز,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,11,"1904,1905,1906,1907,1908,1909,1910,1923,1933,1934,1935"
+DU,Union Saint-Gilloise,يونيون سان جيلواز,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,2,"1913,1914,2024,2025"
+DU,Union Saint-Gilloise,يونيون سان جيلواز,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,1,"2025"
+CER,Cercle Brugge,سيركل بروج,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,3,"1911,1927,1930"
+CER,Cercle Brugge,سيركل بروج,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,2,"1927,1985"
+CER,Cercle Brugge,سيركل بروج,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,0,·
+BEV,SK Beveren,بيفيرين,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,2,"1979,1984"
+BEV,SK Beveren,بيفيرين,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,2,"1978,1983"
+BEV,SK Beveren,بيفيرين,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,0,·
+CHA,Sporting Charleroi,شارلروا,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,0,·
+CHA,Sporting Charleroi,شارلروا,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,0,·
+CHA,Sporting Charleroi,شارلروا,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,0,·
+OHL,OH Leuven,أو إتش لوفين,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,0,·
+OHL,OH Leuven,أو إتش لوفين,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,0,·
+OHL,OH Leuven,أو إتش لوفين,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,0,·
+KVK,KV Kortrijk,كورتريك,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,0,·
+KVK,KV Kortrijk,كورتريك,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,0,·
+KVK,KV Kortrijk,كورتريك,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,0,·
+STA,Sint-Truiden,سينت تراودن,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,0,·
+STA,Sint-Truiden,سينت تراودن,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,0,·
+STA,Sint-Truiden,سينت تراودن,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,0,·
+WES,KVC Westerlo,ويستيرلو,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,0,·
+WES,KVC Westerlo,ويستيرلو,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,0,·
+WES,KVC Westerlo,ويستيرلو,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,0,·
+DENDER,FCV Dender EH,ديندر,بلجيكا,196,UEFA,13,JPL,Pro League,First Tier,0,·
+DENDER,FCV Dender EH,ديندر,بلجيكا,196,UEFA,13,CB,Belgian Cup,Domestic Cup,0,·
+DENDER,FCV Dender EH,ديندر,بلجيكا,196,UEFA,13,BSC,Belgian Super Cup,Domestic Super Cup,0,·

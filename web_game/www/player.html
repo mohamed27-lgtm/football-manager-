@@ -1,0 +1,2042 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة اللاعبين والعقود | محاكي كرة القدم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0a0e17; --card: #141b2d; --accent: #e8b84b;
+            --success: #22c55e; --danger: #ef4444; --warning: #eab308;
+            --text: #f1f5f9; --dim: #8b96ab; --gold: #e8b84b;
+            --rating-high: #22c55e; --rating-mid: #eab308; --rating-low: #ef4444;
+            /* Material Design 3 — نفس نظام الرموز الموحَّد عبر اللعبة (game_main.html/transfers.html) */
+            --md-elevation-1: 0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.5);
+            --md-elevation-2: 0 3px 8px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.5);
+            --md-shape-sm:12px; --md-shape-md:16px; --md-shape-lg:20px; --md-shape-full:999px;
+        }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --accent: #b8862f;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #a16207;
+            --text: #151a24;
+            --dim: #6b7385;
+            --gold: #b8862f;
+            --rating-high: #16a34a;
+            --rating-mid: #a16207;
+            --rating-low: #dc2626;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 10px; }
+
+        .header-pro {
+            background: var(--card);
+            padding: 16px; border-radius: var(--md-shape-lg); margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px;
+            box-shadow: var(--md-elevation-1); position: sticky; top: 0; z-index: 100;
+        }
+        .stat-item { text-align: center; background: rgba(255,255,255,0.04); padding: 6px 14px; border-radius: var(--md-shape-full); }
+        .stat-val { display: block; font-size: 1rem; font-weight: 800; color: var(--gold); }
+        .stat-lbl { font-size: 0.55rem; color: var(--dim); text-transform: uppercase; }
+        .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .header-actions .btn { padding: 9px 16px; border-radius: var(--md-shape-full); border: none; font-weight: bold; cursor: pointer; font-size: 0.7rem; box-shadow: var(--md-elevation-1); }
+        .btn-primary { background: var(--accent); color: #06090f; }
+        .btn-success { background: var(--success); color: #06090f; }
+        .btn-warning { background: var(--gold); color: #06090f; }
+        .btn-danger { background: var(--danger); color: #fff; }
+
+        .filters-bar { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 0; align-items: center; }
+        .filters-bar input, .filters-bar select {
+            background: var(--card); border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text); padding: 9px 14px; border-radius: var(--md-shape-full); font-size: 0.75rem;
+        }
+        .filters-bar input::placeholder { color: var(--dim); }
+
+        .squad-list { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+        .player-card { background: var(--card); border-radius: var(--md-shape-md); border: 1px solid rgba(255,255,255,0.06); box-shadow: var(--md-elevation-1); cursor: pointer; transition: 0.2s; }
+        .player-card:active { transform: scale(0.98); box-shadow: var(--md-elevation-2); }
+        .matrix-row {
+            display: grid; grid-template-columns: 50px 45px 1fr 80px 85px 55px 70px;
+            padding: 10px 5px; text-align: center; font-size: 0.8rem; align-items: center;
+        }
+        .matrix-row div { display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,0.06); }
+        .matrix-row div:last-child { border-left: none; }
+        .matrix-row small { font-size: 0.5rem; color: var(--dim); margin-bottom: 2px; }
+        .p-name { font-weight: bold; color: var(--accent); font-size: 0.85rem; }
+        .jersey-num { display: inline-block; background: rgba(232,184,75,0.15); color: var(--gold); border: 1px solid rgba(232,184,75,0.4); border-radius: 5px; padding: 0px 5px; font-size: 0.7rem; font-weight: 900; margin-left: 4px; }
+        .p-nat { display:flex; align-items:center; gap:5px; font-size:0.6rem; color:var(--dim); margin-top:2px; flex-wrap:wrap; }
+        .flag { width:18px; height:13px; border-radius:2px; object-fit:cover; box-shadow:0 0 0 1px rgba(255,255,255,.12); vertical-align:middle; }
+        .flag-lg { width:26px; height:19px; border-radius:3px; object-fit:cover; box-shadow:0 0 0 1px rgba(255,255,255,.15); }
+        .badge-eu { background: #1a5276; color: #90caf9; padding: 1px 8px; border-radius: 12px; font-size: 0.5rem; }
+        .badge-foreign { background: #4a1a1a; color: #ff6b6b; padding: 1px 8px; border-radius: 12px; font-size: 0.5rem; }
+        .badge-home { background: #1a4a1a; color: #6bff6b; padding: 1px 8px; border-radius: 12px; font-size: 0.5rem; }
+        .badge-region { background: #3a2e1a; color: #f0c674; padding: 1px 8px; border-radius: 12px; font-size: 0.5rem; }
+        .badge-sale { background: #4a3a1a; color: var(--warning); padding: 1px 8px; border-radius: 12px; font-size: 0.5rem; border: 1px solid var(--warning); }
+        .morale-mini { font-size: 0.85rem; }
+        .injury-badge { font-size: 0.65rem; font-weight: 800; color: #ff4d4d; background: rgba(255,77,77,0.15); padding: 1px 6px; border-radius: 999px; margin-right: 4px; }
+        .player-card-injured { border-color: rgba(255,77,77,0.4) !important; opacity: 0.88; }
+
+        .pos-section { margin-bottom: 18px; }
+        .pos-section-title { font-size: 0.85rem; font-weight: 800; color: var(--gold, #e8b84b); padding: 8px 4px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 8px; }
+        .pos-count { background: rgba(255,255,255,0.08); font-size: 0.65rem; padding: 2px 8px; border-radius: 999px; color: #ccc; margin-right: auto; }
+        .pos-empty { font-size: 0.72rem; color: #ff8080; padding: 10px 4px; }
+
+        .squad-intel-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; margin: 10px 0; }
+        .intel-stats { display: flex; justify-content: space-around; margin-bottom: 10px; }
+        .intel-stat { text-align: center; }
+        .intel-stat b { display: block; font-size: 1.1rem; color: var(--gold, #e8b84b); }
+        .intel-stat small { font-size: 0.65rem; color: #999; }
+        .intel-warnings { display: flex; flex-direction: column; gap: 6px; }
+        .intel-warning { font-size: 0.72rem; color: #ffb84d; background: rgba(255,184,77,0.08); padding: 7px 10px; border-radius: 8px; line-height: 1.6; }
+        .intel-ok { font-size: 0.75rem; color: #4ade80; background: rgba(74,222,128,0.08); padding: 9px 10px; border-radius: 8px; text-align: center; }
+        .rating-oval {
+            display: inline-block; width: 32px; height: 32px; border-radius: 50%;
+            line-height: 32px; text-align: center; font-size: 0.65rem; font-weight: bold; border: 2px solid var(--gold);
+        }
+        .rating-high { color: var(--rating-high); border-color: var(--rating-high); }
+        .rating-mid { color: var(--rating-mid); border-color: var(--rating-mid); }
+        .rating-low { color: var(--rating-low); border-color: var(--rating-low); }
+
+        .wage-fair { color: var(--success); } .wage-high { color: var(--danger); }
+        .empty-box { text-align:center; padding:40px 20px; color:var(--dim); font-size:0.85rem; line-height:1.7; }
+        .empty-box a { color: var(--accent); text-decoration:none; font-weight:bold; }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-content { width: 100%; max-width: 580px; background: linear-gradient(160deg, #131c2e, #0a0f1a); border-radius: 20px; border: 1px solid var(--gold); padding: 20px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+        .modal-tabs { display: flex; gap: 5px; margin: 10px 0; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 4px; }
+        .modal-tab { flex: 1; padding: 9px; border: none; background: transparent; color: var(--dim); border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.7rem; transition: 0.3s; }
+        .modal-tab.active { background: var(--gold); color: #000; }
+        .modal-section { display: none; padding: 10px 0; }
+        .modal-section.active { display: block; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; margin: 5px 0; font-size: 0.72rem; }
+        .stat-row .bar { flex: 1; height: 6px; background: rgba(128,128,128,0.15); border-radius: 3px; margin: 0 8px; overflow: hidden; }
+        .stat-row .bar .fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+        .stat-row .bar .fill.high { background: var(--rating-high); }
+        .stat-row .bar .fill.mid { background: var(--rating-mid); }
+        .stat-row .bar .fill.low { background: var(--rating-low); }
+        .contract-field { background: rgba(255,255,255,0.045); padding: 11px 12px; border-radius: 10px; margin: 5px 0; border: 1px solid rgba(255,255,255,0.06); border-right: 3px solid var(--gold); }
+        .contract-field label { font-size: 0.62rem; color: var(--dim); display: flex; align-items: center; gap: 5px; letter-spacing: 0.2px; }
+        .contract-field input { width: 100%; padding: 8px; background: var(--bg); border: 1px solid var(--border, rgba(255,255,255,0.15)); color: var(--text); border-radius: 6px; margin-top: 3px; font-size: 0.85rem; }
+        .contract-field input:focus { border-color: var(--gold); outline: none; }
+        .contract-field input:disabled { opacity: 0.5; cursor: not-allowed; }
+        .fair-hint { font-size:0.62rem; margin-top:5px; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .btn-group .btn { padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.7rem; }
+        .btn-group .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .toast-msg { position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(255,255,255,0.08); border-right: 4px solid var(--gold); padding: 12px; border-radius: 50px; text-align: center; z-index: 2000; font-size: 0.9rem; }
+        .renewal-window { background: rgba(255,204,0,0.1); border: 1px solid var(--warning); padding: 8px 12px; border-radius: 8px; font-size: 0.7rem; color: var(--warning); margin: 5px 0; }
+        .renewal-window .success { color: var(--success); }
+        .renewal-window .danger { color: var(--danger); }
+        
+        .skill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+        .skill-item { background: rgba(128,128,128,0.08); padding: 6px 10px; border-radius: 6px; border-left: 3px solid var(--gold); }
+        .skill-item .skill-name { font-size: 0.6rem; color: var(--dim); }
+        .skill-item .skill-val { font-weight: bold; font-size: 0.85rem; }
+        .skill-item .skill-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; margin-top: 3px; overflow: hidden; }
+        .skill-item .skill-bar .fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+        @media (max-width: 768px) {
+            .matrix-row { grid-template-columns: 35px 35px 1fr 58px 60px 38px 55px; font-size: 0.6rem; padding: 8px 3px; }
+            .rating-oval { width: 25px; height: 25px; line-height: 25px; font-size: 0.5rem; }
+            .header-actions .btn { font-size: 0.6rem; padding: 5px 10px; }
+            .btn-group { grid-template-columns: 1fr; }
+            .flag { width:15px; height:11px; }
+            .skill-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-pro">
+    <div class="stat-item"><span class="stat-val" id="countDisplay">0</span><span class="stat-lbl" id="lblPlayers">لاعباً</span></div>
+    <div class="stat-item"><span class="stat-val" style="color:var(--accent)" id="clubNameDisplay">--</span><span class="stat-lbl" id="lblClub">النادي</span></div>
+    <div class="stat-item"><span class="stat-val" id="totalMarketValue">0</span><span class="stat-lbl" id="lblSquadVal">قيمة القائمة</span></div>
+    <div class="stat-item"><span class="stat-val" id="avgRating">0</span><span class="stat-lbl" id="lblAvgRating">متوسط التقييم</span></div>
+    <div class="stat-item"><span class="stat-val" id="totalWage">0</span><span class="stat-lbl" id="lblWages">الرواتب/أسبوع</span></div>
+    <div class="header-actions">
+        <button class="btn btn-primary" onclick="loadSquad(true)" title="إعادة استيراد الفريق الحقيقي من CSV"><i class="fas fa-sync"></i></button>
+    </div>
+</div>
+
+<div id="fedRestrictBanner" style="display:none; background:rgba(239,51,102,0.08); border:1px solid var(--danger); border-radius:10px; padding:10px 14px; margin:10px 0; font-size:0.78rem; color:var(--text); align-items:center; gap:8px;">
+    <i class="fas fa-triangle-exclamation" style="color:var(--danger);"></i>
+    <span id="fedRestrictText"></span>
+</div>
+
+<div id="squadIntelBox" class="squad-intel-box"></div>
+
+<div class="squad-list" id="squadGrid"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="controlModal">
+    <div class="modal-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;background:linear-gradient(90deg, rgba(232,184,75,0.08), transparent); border-radius:12px; padding:10px 12px; margin-bottom:4px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span id="modalJerseyNum" class="jersey-num" style="font-size:1rem; padding:3px 9px;"></span>
+                <span id="modalFlagEmoji" class="flag-lg" style="font-size:1.4rem;"></span>
+                <h2 id="modalPlayerName" style="color:var(--gold);font-size:1.2rem;"></h2>
+            </div>
+            <span id="modalPlayerRating" style="font-size:1.7rem;font-weight:900;color:var(--accent);text-shadow:0 0 12px rgba(96,165,250,0.4);"></span>
+        </div>
+        <p id="modalPlayerInfo" style="color:var(--dim);font-size:0.8rem;margin:5px 2px;"></p>
+        <div class="modal-tabs">
+            <button class="modal-tab active" data-tab="info" onclick="switchModalTab('info')"><i class="fas fa-circle-info"></i> <span id="tabInfo">المعلومات</span></button>
+            <button class="modal-tab" data-tab="skills" onclick="switchModalTab('skills')"><i class="fas fa-chart-simple"></i> <span id="tabSkills">المهارات</span></button>
+            <button class="modal-tab" data-tab="contract" onclick="switchModalTab('contract')"><i class="fas fa-file-signature"></i> <span id="tabContract">العقد</span></button>
+        </div>
+        <div class="modal-section active" id="tab-info">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div class="contract-field" style="border-right-color:#60a5fa;"><label><i class="fas fa-calendar-day"></i> <span id="lblAge">العمر</span></label><span id="infoAge" style="color:var(--text);font-size:1rem;"></span></div>
+                <div class="contract-field" style="border-right-color:#60a5fa;"><label><i class="fas fa-earth-africa"></i> <span id="lblNationality">الجنسية</span></label><span id="infoNationality" style="color:var(--text);font-size:1rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></span></div>
+                <div class="contract-field" style="border-right-color:var(--gold);"><label><i class="fas fa-chart-line"></i> <span id="lblPotential">الإمكانية</span></label><span id="infoPotential" style="color:var(--gold);font-size:1rem;"></span></div>
+                <div class="contract-field" style="border-right-color:#a78bfa;"><label><i class="fas fa-face-smile"></i> <span id="lblMorale">الحالة المعنوية</span></label><span id="infoMorale" style="font-size:1rem;"></span></div>
+                <div class="contract-field" style="border-right-color:#ff4d4d;"><label><i class="fas fa-notes-medical"></i> <span id="lblInjuryStatus">الحالة الصحية</span></label><span id="infoInjuryStatus" style="font-size:1rem;"></span></div>
+                <div class="contract-field" style="border-right-color:var(--success);"><label><i class="fas fa-sack-dollar"></i> <span id="lblMarketValue">القيمة السوقية</span></label><span id="infoValue" style="color:var(--success);font-size:1rem;"></span></div>
+                <div class="contract-field" style="border-right-color:var(--success);"><label><i class="fas fa-futbol"></i> <span id="lblGoals">الأهداف</span></label><span id="infoGoals" style="color:var(--success);font-size:1rem;"></span></div>
+                <div class="contract-field" style="border-right-color:var(--accent);"><label><i class="fas fa-a" style="color:var(--accent);"></i> <span id="lblAssists">التمريرات</span></label><span id="infoAssists" style="color:var(--accent);font-size:1rem;"></span></div>
+                <div class="contract-field" style="border-right-color:#60a5fa;"><label><i class="fas fa-list-check"></i> <span id="lblMatches">المباريات</span></label><span id="infoMatches" style="color:var(--text);font-size:1rem;"></span></div>
+                <div class="contract-field" style="border-right-color:var(--warning);"><label><i class="fas fa-shield-halved"></i> <span id="lblRelease">الشرط الجزائي</span></label><span id="infoRelease" style="color:var(--warning);font-size:1rem;"></span></div>
+            </div>
+            <div class="contract-field" style="margin-top:10px;border-right-color:var(--gold);">
+                <label><i class="fas fa-comment-dots"></i> <span id="lblThought">تفكير اللاعب</span></label>
+                <p id="playerThought" style="color:var(--dim);font-size:0.85rem;line-height:1.5;margin-top:5px;"></p>
+            </div>
+        </div>
+        <div class="modal-section" id="tab-skills">
+            <div id="detailedRatings"></div>
+        </div>
+        <div class="modal-section" id="tab-contract">
+            <div id="contractDetails"></div>
+            <div id="renewalStatus" class="renewal-window"></div>
+            <div style="margin-top:15px;border-top:1px solid rgba(255,255,255,0.08);padding-top:15px;">
+                <h4 style="color:var(--gold);font-size:0.8rem;"><i class="fas fa-pen-to-square"></i> تعديل العقد</h4>
+                <div id="contractEditArea">
+                    <div class="contract-field">
+                        <label><i class="fas fa-money-bill-wave"></i> <span id="lblProposedWage">الراتب الأسبوعي المقترح (€)</span></label>
+                        <input type="number" id="editWage" oninput="checkWageFairness()">
+                        <div class="fair-hint" id="wageFairHint"></div>
+                    </div>
+                    <div class="contract-field"><label><i class="fas fa-calendar-days"></i> <span id="lblContractYears">مدة العقد (سنوات)</span></label><input type="number" id="editYears" min="1" max="5" oninput="clampRenewalYears()"><div id="editYearsHint" style="font-size:0.65rem;color:var(--text-muted);margin-top:3px;"></div></div>
+                    <div class="contract-field"><label><i class="fas fa-gift"></i> <span id="lblSignBonus">مكافأة التوقيع (€)</span></label><input type="number" id="editBonus" placeholder="اختياري"></div>
+                    <div id="negotiationResult" style="margin: 8px 0; font-size: 0.75rem; padding: 8px; border-radius: 6px; display:none;"></div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" id="renewBtn" onclick="attemptRenewal()"><i class="fas fa-file-signature"></i> <span id="btnRenewTxt">عرض تجديد</span></button>
+                        <button class="btn btn-warning" id="listBtn" onclick="listForTransfer()"><i class="fas fa-tags"></i> <span id="btnListTxt">عرض للبيع</span></button>
+                        <button class="btn btn-danger" onclick="releasePlayer()"><i class="fas fa-user-slash"></i> <span id="btnReleaseTxt">فسخ</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button onclick="closeModals()" style="width:100%;margin-top:15px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:0.8rem;">
+            <i class="fas fa-times"></i> إغلاق
+        </button>
+    </div>
+</div>
+
+<script>
+    /* ============================================================
+       دوال أساسية
+       ============================================================ */
+    function getClubName(){ return localStorage.getItem('presidentialClub') || 'نادي المستقبل'; }
+    function getClubId(){ return localStorage.getItem('presidentialTeamId') || ''; }
+    
+    function fedGetRules(){
+        return JSON.parse(localStorage.getItem('federationRules')) || {
+            tier:1,
+            squadMax:25,
+            foreignMax:3,
+            homegrownMin:0,
+            wageCapPct:70,
+            tierLabel:'الدرجة الأولى (الممتاز)',
+            confederationLabel:'الاتحاد الأوروبي (UEFA)',
+            confederation:'UEFA'
+        };
+    }
+
+    /* ============================================================
+       ★ قاعدة بيانات شاملة لدول العالم
+       ============================================================ */
+    const COUNTRY_DB = {"england":["gb-eng","UEFA"],"scotland":["gb-sct","UEFA"],"wales":["gb-wls","UEFA"],"northern ireland":["gb-nir","UEFA"],"republic of ireland":["ie","UEFA"],"ireland":["ie","UEFA"],"spain":["es","UEFA"],"france":["fr","UEFA"],"germany":["de","UEFA"],"italy":["it","UEFA"],"portugal":["pt","UEFA"],"netherlands":["nl","UEFA"],"belgium":["be","UEFA"],"croatia":["hr","UEFA"],"serbia":["rs","UEFA"],"switzerland":["ch","UEFA"],"austria":["at","UEFA"],"poland":["pl","UEFA"],"sweden":["se","UEFA"],"norway":["no","UEFA"],"denmark":["dk","UEFA"],"greece":["gr","UEFA"],"turkey":["tr","UEFA"],"ukraine":["ua","UEFA"],"russia":["ru","UEFA"],"czech republic":["cz","UEFA"],"czechia":["cz","UEFA"],"slovakia":["sk","UEFA"],"slovenia":["si","UEFA"],"hungary":["hu","UEFA"],"romania":["ro","UEFA"],"bulgaria":["bg","UEFA"],"bosnia and herzegovina":["ba","UEFA"],"bosnia":["ba","UEFA"],"north macedonia":["mk","UEFA"],"macedonia":["mk","UEFA"],"albania":["al","UEFA"],"montenegro":["me","UEFA"],"kosovo":["xk","UEFA"],"finland":["fi","UEFA"],"iceland":["is","UEFA"],"estonia":["ee","UEFA"],"latvia":["lv","UEFA"],"lithuania":["lt","UEFA"],"luxembourg":["lu","UEFA"],"malta":["mt","UEFA"],"cyprus":["cy","UEFA"],"belarus":["by","UEFA"],"moldova":["md","UEFA"],"georgia":["ge","UEFA"],"armenia":["am","UEFA"],"azerbaijan":["az","UEFA"],"andorra":["ad","UEFA"],"san marino":["sm","UEFA"],"liechtenstein":["li","UEFA"],"gibraltar":["gi","UEFA"],"kazakhstan":["kz","UEFA"],"faroe islands":["fo","UEFA"],"brazil":["br","CONMEBOL"],"argentina":["ar","CONMEBOL"],"uruguay":["uy","CONMEBOL"],"colombia":["co","CONMEBOL"],"chile":["cl","CONMEBOL"],"peru":["pe","CONMEBOL"],"ecuador":["ec","CONMEBOL"],"paraguay":["py","CONMEBOL"],"bolivia":["bo","CONMEBOL"],"venezuela":["ve","CONMEBOL"],"united states":["us","CONCACAF"],"usa":["us","CONCACAF"],"mexico":["mx","CONCACAF"],"canada":["ca","CONCACAF"],"costa rica":["cr","CONCACAF"],"jamaica":["jm","CONCACAF"],"honduras":["hn","CONCACAF"],"panama":["pa","CONCACAF"],"el salvador":["sv","CONCACAF"],"guatemala":["gt","CONCACAF"],"trinidad and tobago":["tt","CONCACAF"],"haiti":["ht","CONCACAF"],"curacao":["cw","CONCACAF"],"cuba":["cu","CONCACAF"],"nicaragua":["ni","CONCACAF"],"dominican republic":["do","CONCACAF"],"suriname":["sr","CONCACAF"],"guyana":["gy","CONCACAF"],"belize":["bz","CONCACAF"],"bermuda":["bm","CONCACAF"],"barbados":["bb","CONCACAF"],"egypt":["eg","CAF"],"morocco":["ma","CAF"],"algeria":["dz","CAF"],"tunisia":["tn","CAF"],"nigeria":["ng","CAF"],"ghana":["gh","CAF"],"senegal":["sn","CAF"],"cameroon":["cm","CAF"],"ivory coast":["ci","CAF"],"cote d'ivoire":["ci","CAF"],"côte d'ivoire":["ci","CAF"],"south africa":["za","CAF"],"mali":["ml","CAF"],"dr congo":["cd","CAF"],"democratic republic of the congo":["cd","CAF"],"congo":["cg","CAF"],"kenya":["ke","CAF"],"zambia":["zm","CAF"],"zimbabwe":["zw","CAF"],"angola":["ao","CAF"],"guinea":["gn","CAF"],"mozambique":["mz","CAF"],"uganda":["ug","CAF"],"tanzania":["tz","CAF"],"ethiopia":["et","CAF"],"burkina faso":["bf","CAF"],"gabon":["ga","CAF"],"benin":["bj","CAF"],"togo":["tg","CAF"],"libya":["ly","CAF"],"sudan":["sd","CAF"],"namibia":["na","CAF"],"botswana":["bw","CAF"],"rwanda":["rw","CAF"],"madagascar":["mg","CAF"],"equatorial guinea":["gq","CAF"],"guinea-bissau":["gw","CAF"],"sierra leone":["sl","CAF"],"comoros":["km","CAF"],"mauritania":["mr","CAF"],"niger":["ne","CAF"],"chad":["td","CAF"],"cape verde":["cv","CAF"],"gambia":["gm","CAF"],"liberia":["lr","CAF"],"eswatini":["sz","CAF"],"lesotho":["ls","CAF"],"malawi":["mw","CAF"],"burundi":["bi","CAF"],"central african republic":["cf","CAF"],"djibouti":["dj","CAF"],"eritrea":["er","CAF"],"somalia":["so","CAF"],"seychelles":["sc","CAF"],"mauritius":["mu","CAF"],"south sudan":["ss","CAF"],"saudi arabia":["sa","AFC"],"qatar":["qa","AFC"],"united arab emirates":["ae","AFC"],"uae":["ae","AFC"],"iraq":["iq","AFC"],"iran":["ir","AFC"],"jordan":["jo","AFC"],"kuwait":["kw","AFC"],"bahrain":["bh","AFC"],"oman":["om","AFC"],"lebanon":["lb","AFC"],"syria":["sy","AFC"],"palestine":["ps","AFC"],"yemen":["ye","AFC"],"japan":["jp","AFC"],"south korea":["kr","AFC"],"korea republic":["kr","AFC"],"north korea":["kp","AFC"],"china":["cn","AFC"],"china pr":["cn","AFC"],"australia":["au","AFC"],"uzbekistan":["uz","AFC"],"india":["in","AFC"],"indonesia":["id","AFC"],"thailand":["th","AFC"],"vietnam":["vn","AFC"],"malaysia":["my","AFC"],"singapore":["sg","AFC"],"philippines":["ph","AFC"],"myanmar":["mm","AFC"],"cambodia":["kh","AFC"],"laos":["la","AFC"],"kyrgyzstan":["kg","AFC"],"tajikistan":["tj","AFC"],"turkmenistan":["tm","AFC"],"afghanistan":["af","AFC"],"pakistan":["pk","AFC"],"bangladesh":["bd","AFC"],"nepal":["np","AFC"],"sri lanka":["lk","AFC"],"bhutan":["bt","AFC"],"maldives":["mv","AFC"],"hong kong":["hk","AFC"],"chinese taipei":["tw","AFC"],"taiwan":["tw","AFC"],"timor-leste":["tl","AFC"],"brunei":["bn","AFC"],"macau":["mo","AFC"],"new zealand":["nz","OFC"],"fiji":["fj","OFC"],"papua new guinea":["pg","OFC"],"solomon islands":["sb","OFC"],"vanuatu":["vu","OFC"],"new caledonia":["nc","OFC"],"tahiti":["pf","OFC"],"samoa":["ws","OFC"],"tonga":["to","OFC"],"tuvalu":["tv","OFC"],"cookinseln":["ck","OFC"],"cook islands":["ck","OFC"],"american virgin islands":["vi","CONCACAF"],"antigua and barbuda":["ag","CONCACAF"],"aruba":["aw","CONCACAF"],"bonaire":["bq","CONCACAF"],"bosnia-herzegovina":["ba","UEFA"],"british virgin islands":["vg","CONCACAF"],"brunei darussalam":["bn","AFC"],"cayman islands":["ky","CONCACAF"],"french guiana":["gf","CONMEBOL"],"grenada":["gd","CONCACAF"],"guadeloupe":["gp","CONCACAF"],"guernsey":["gg","UEFA"],"hongkong":["hk","AFC"],"israel":["il","UEFA"],"jersey":["je","UEFA"],"korea, north":["kp","AFC"],"korea, south":["kr","AFC"],"macao":["mo","AFC"],"martinique":["mq","CONCACAF"],"mongolia":["mn","AFC"],"montserrat":["ms","CONCACAF"],"puerto rico":["pr","CONCACAF"],"saint-martin":["mf","CONCACAF"],"sao tome and principe":["st","CAF"],"sint maarten":["sx","CONCACAF"],"southern sudan":["ss","CAF"],"st. kitts & nevis":["kn","CONCACAF"],"st. lucia":["lc","CONCACAF"],"st. vincent & grenadinen":["vc","CONCACAF"],"the gambia":["gm","CAF"],"türkiye":["tr","UEFA"]};
+
+    const CONF_NAMES_I18N = {
+        UEFA: { ar:'أوروبي', en:'European', fr:'Européen', es:'Europeo', de:'Europäisch', pt:'Europeu', tr:'Avrupa' },
+        CONMEBOL: { ar:'أمريكا الجنوبية', en:'South American', fr:'Sud-américain', es:'Sudamericano', de:'Südamerikanisch', pt:'Sul-americano', tr:'Güney Amerika' },
+        CONCACAF: { ar:'أمريكا الشمالية والوسطى', en:'North & Central American', fr:'Nord et Centraméricain', es:'Norte y Centroamericano', de:'Nord- und Mittelamerikanisch', pt:'Norte e Centro-americano', tr:'Kuzey ve Orta Amerika' },
+        CAF: { ar:'أفريقي', en:'African', fr:'Africain', es:'Africano', de:'Afrikanisch', pt:'Africano', tr:'Afrika' },
+        AFC: { ar:'آسيوي', en:'Asian', fr:'Asiatique', es:'Asiático', de:'Asiatisch', pt:'Asiático', tr:'Asya' },
+        OFC: { ar:'أوقيانوسي', en:'Oceanian', fr:'Océanien', es:'Oceánico', de:'Ozeanisch', pt:'Oceânico', tr:'Okyanusya' },
+    };
+    const CONF_LABELS = {
+        UEFA: { get label(){ return CONF_NAMES_I18N.UEFA[localStorage.getItem('gameLanguage')||'ar']; }, cls: 'badge-region', icon: '🇪🇺' },
+        CONMEBOL: { get label(){ return CONF_NAMES_I18N.CONMEBOL[localStorage.getItem('gameLanguage')||'ar']; }, cls: 'badge-region', icon: '🌎' },
+        CONCACAF: { get label(){ return CONF_NAMES_I18N.CONCACAF[localStorage.getItem('gameLanguage')||'ar']; }, cls: 'badge-region', icon: '🌎' },
+        CAF: { get label(){ return CONF_NAMES_I18N.CAF[localStorage.getItem('gameLanguage')||'ar']; }, cls: 'badge-region', icon: '🌍' },
+        AFC: { get label(){ return CONF_NAMES_I18N.AFC[localStorage.getItem('gameLanguage')||'ar']; }, cls: 'badge-region', icon: '🌏' },
+        OFC: { get label(){ return CONF_NAMES_I18N.OFC[localStorage.getItem('gameLanguage')||'ar']; }, cls: 'badge-region', icon: '🌏' }
+    };
+
+    function countryInfo(nat){
+        if(!nat) return null;
+        return COUNTRY_DB[String(nat).trim().toLowerCase()] || null;
+    }
+    function isoOf(nat){
+        const info = countryInfo(nat);
+        return info ? info[0] : null;
+    }
+    function confederationOf(nat){
+        const info = countryInfo(nat);
+        return info ? info[1] : null;
+    }
+
+    function isoToEmoji(iso){
+        if(!iso || iso.length !== 2) return '🌍';
+        const A = 0x1F1E6;
+        const code = [...iso.toUpperCase()].map(c => A + (c.charCodeAt(0) - 65));
+        try { return String.fromCodePoint(...code); } catch(e){ return '🌍'; }
+    }
+    function flagEmoji(nat){
+        const iso = isoOf(nat);
+        const SPECIAL = { 'gb-eng':'🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'gb-sct':'🏴󠁧󠁢󠁳󠁣󠁴󠁿', 'gb-wls':'🏴󠁧󠁢󠁷󠁬󠁳󠁿', 'gb-nir':'🇬🇧' };
+        if(iso && SPECIAL[iso]) return SPECIAL[iso];
+        if(!iso) return '🌍';
+        return isoToEmoji(iso);
+    }
+    function flagImg(nat, cls){
+        cls = cls || 'flag';
+        const size = cls === 'flag-lg' ? '1.4rem' : '1rem';
+        return `<span class="${cls}" style="font-size:${size}; display:inline-block; line-height:1;">${flagEmoji(nat)}</span>`;
+    }
+
+    // نفس خريطة تطبيع الجنسية الحقيقية المستخدمة في transfers.html بالضبط — الجنسية التركية في بيانات CSV الخام
+    // مكتوبة "Türkiye" بالحرف الخاص، بينما بقية اللعبة (homeCountry) تستخدم "Turkiye" بلا حرف خاص
+    const NATIONALITY_ALIASES = { 'türkiye': 'turkiye' };
+    function normalizeNationalityStr(nat) {
+        const key = String(nat||'').trim().toLowerCase();
+        return NATIONALITY_ALIASES[key] || key;
+    }
+    const PLAYER_STATUS_I18N = {
+        unknown: { ar:'غير معروف', en:'Unknown', fr:'Inconnu', es:'Desconocido', de:'Unbekannt', pt:'Desconhecido', tr:'Bilinmiyor' },
+        home: { ar:'محلي', en:'Domestic', fr:'National', es:'Nacional', de:'Inländisch', pt:'Nacional', tr:'Yerli' },
+        regional: { ar:'إقليمي', en:'Regional', fr:'Régional', es:'Regional', de:'Regional', pt:'Regional', tr:'Bölgesel' },
+        foreign: { ar:'أجنبي', en:'Foreign', fr:'Étranger', es:'Extranjero', de:'Ausländisch', pt:'Estrangeiro', tr:'Yabancı' },
+    };
+    function psLang() { return localStorage.getItem('gameLanguage') || 'ar'; }
+    function getPlayerStatus(nat){
+        if(!nat) return { type: 'unknown', label: PLAYER_STATUS_I18N.unknown[psLang()], badge: '' };
+        const home = localStorage.getItem('homeCountry') || 'Saudi Arabia';
+        const natLower = normalizeNationalityStr(nat);
+        const homeLower = normalizeNationalityStr(home);
+
+        if (natLower === homeLower) {
+            return { type: 'home', label: PLAYER_STATUS_I18N.home[psLang()], badge: `<span class="badge-home">🏠 ${PLAYER_STATUS_I18N.home[psLang()]}</span>` };
+        }
+
+        const rules = fedGetRules();
+        const natConf = confederationOf(nat);
+        if (natConf && rules.confederation && natConf === rules.confederation) {
+            const info = CONF_LABELS[natConf] || { label: PLAYER_STATUS_I18N.regional[psLang()], icon: '🌐' };
+            return { type: 'regional', label: info.label, badge: `<span class="badge-region">${info.icon} ${info.label}</span>` };
+        }
+
+        return { type: 'foreign', label: PLAYER_STATUS_I18N.foreign[psLang()], badge: `<span class="badge-foreign">🛫 ${PLAYER_STATUS_I18N.foreign[psLang()]}</span>` };
+    }
+
+    function fedIsForeign(nat){
+        return getPlayerStatus(nat).type === 'foreign';
+    }
+
+    /* ============================================================
+       ★ نظام المهارات مثل FIFA حسب المركز ★
+       ============================================================ */
+    const POSITION_SKILL_WEIGHTS = {
+        'GK': {
+            primary: ['diving', 'handling', 'kicking', 'positioning', 'reflexes'],
+            secondary: ['agility', 'strength', 'jumping'],
+            ignore: ['shooting', 'finishing', 'heading', 'volleys', 'crossing', 'dribbling', 'dribbling_skill']
+        },
+        'CB': {
+            primary: ['defending', 'heading', 'strength', 'positioning', 'tackling'],
+            secondary: ['short_passing', 'pace', 'jumping', 'stamina'],
+            ignore: ['shooting', 'finishing', 'dribbling', 'dribbling_skill', 'crossing']
+        },
+        'LB': {
+            primary: ['defending', 'tackling', 'pace', 'stamina', 'crossing'],
+            secondary: ['short_passing', 'dribbling', 'positioning', 'acceleration'],
+            ignore: ['shooting', 'finishing', 'heading', 'volleys']
+        },
+        'RB': {
+            primary: ['defending', 'tackling', 'pace', 'stamina', 'crossing'],
+            secondary: ['short_passing', 'dribbling', 'positioning', 'acceleration'],
+            ignore: ['shooting', 'finishing', 'heading', 'volleys']
+        },
+        'CDM': {
+            primary: ['defending', 'tackling', 'positioning', 'short_passing', 'stamina'],
+            secondary: ['strength', 'long_passing', 'pace', 'vision'],
+            ignore: ['shooting', 'finishing', 'dribbling', 'dribbling_skill']
+        },
+        'CM': {
+            primary: ['short_passing', 'long_passing', 'ball_control', 'vision', 'stamina'],
+            secondary: ['defending', 'shooting', 'dribbling', 'pace', 'strength'],
+            ignore: ['heading', 'crossing', 'tackling']
+        },
+        'CAM': {
+            primary: ['ball_control', 'dribbling', 'short_passing', 'vision', 'shooting'],
+            secondary: ['long_passing', 'pace', 'agility', 'dribbling_skill'],
+            ignore: ['defending', 'heading', 'tackling', 'strength']
+        },
+        'LW': {
+            primary: ['dribbling', 'pace', 'crossing', 'ball_control', 'agility'],
+            secondary: ['shooting', 'short_passing', 'acceleration', 'dribbling_skill'],
+            ignore: ['defending', 'heading', 'strength', 'tackling']
+        },
+        'RW': {
+            primary: ['dribbling', 'pace', 'crossing', 'ball_control', 'agility'],
+            secondary: ['shooting', 'short_passing', 'acceleration', 'dribbling_skill'],
+            ignore: ['defending', 'heading', 'strength', 'tackling']
+        },
+        'ST': {
+            primary: ['finishing', 'shooting', 'heading', 'positioning', 'pace'],
+            secondary: ['dribbling', 'strength', 'ball_control', 'volleys'],
+            ignore: ['defending', 'tackling', 'crossing', 'long_passing']
+        },
+        'CF': {
+            primary: ['finishing', 'shooting', 'ball_control', 'dribbling', 'short_passing'],
+            secondary: ['vision', 'pace', 'heading', 'dribbling_skill'],
+            ignore: ['defending', 'tackling', 'crossing']
+        }
+    };
+    // ★ مرادفات مراكز موجودة في بيانات CSV الحقيقية وغير معرّفة أعلاه ★
+    POSITION_SKILL_WEIGHTS['LM'] = POSITION_SKILL_WEIGHTS['LW'];
+    POSITION_SKILL_WEIGHTS['RM'] = POSITION_SKILL_WEIGHTS['RW'];
+    POSITION_SKILL_WEIGHTS['LWB'] = POSITION_SKILL_WEIGHTS['LB'];
+    POSITION_SKILL_WEIGHTS['RWB'] = POSITION_SKILL_WEIGHTS['RB'];
+
+    // ★ أسماء المهارات بالعربية ★
+    const SKILL_NAMES = {
+        'pace': { ar:'السرعة', en:'Pace', fr:'Vitesse', es:'Velocidad', de:'Tempo', pt:'Ritmo', tr:'Hız' },
+        'shooting': { ar:'التسديد', en:'Shooting', fr:'Tir', es:'Tiro', de:'Torschuss', pt:'Finalização', tr:'Şut' },
+        'passing': { ar:'التمرير', en:'Passing', fr:'Passe', es:'Pase', de:'Passspiel', pt:'Passe', tr:'Pas' },
+        'dribbling': { ar:'المراوغة', en:'Dribbling', fr:'Dribble', es:'Regate', de:'Dribbling', pt:'Drible', tr:'Çalım' },
+        'defending': { ar:'الدفاع', en:'Defending', fr:'Défense', es:'Defensa', de:'Verteidigung', pt:'Defesa', tr:'Defans' },
+        'physical': { ar:'القوة البدنية', en:'Physical', fr:'Physique', es:'Físico', de:'Physis', pt:'Físico', tr:'Fizik' },
+        'crossing': { ar:'العرضيات', en:'Crossing', fr:'Centre', es:'Centro', de:'Flanke', pt:'Cruzamento', tr:'Orta' },
+        'finishing': { ar:'الإنهاء', en:'Finishing', fr:'Finition', es:'Definición', de:'Abschluss', pt:'Finalização', tr:'Bitiricilik' },
+        'heading': { ar:'الرأسية', en:'Heading', fr:'Jeu de tête', es:'Cabeceo', de:'Kopfball', pt:'Cabeceio', tr:'Kafa Vuruşu' },
+        'short_passing': { ar:'التمرير القصير', en:'Short Passing', fr:'Passe courte', es:'Pase corto', de:'Kurzpass', pt:'Passe curto', tr:'Kısa Pas' },
+        'volleys': { ar:'الكرة الرائعة', en:'Volleys', fr:'Volées', es:'Voleas', de:'Volleyschuss', pt:'Voleios', tr:'Vole' },
+        'dribbling_skill': { ar:'مهارة المراوغة', en:'Dribbling Skill', fr:'Technique de dribble', es:'Habilidad de regate', de:'Dribbelfertigkeit', pt:'Habilidade de drible', tr:'Çalım Becerisi' },
+        'curve': { ar:'الانحناء', en:'Curve', fr:'Effet', es:'Efecto', de:'Effet', pt:'Efeito', tr:'Falso' },
+        'fk_accuracy': { ar:'الأخطاء المباشرة', en:'Free Kick Accuracy', fr:'Précision des coups francs', es:'Precisión de tiros libres', de:'Freistoßgenauigkeit', pt:'Precisão de faltas', tr:'Serbest Vuruş İsabeti' },
+        'long_passing': { ar:'التمرير الطويل', en:'Long Passing', fr:'Passe longue', es:'Pase largo', de:'Langpass', pt:'Passe longo', tr:'Uzun Pas' },
+        'ball_control': { ar:'التحكم بالكرة', en:'Ball Control', fr:'Contrôle de balle', es:'Control de balón', de:'Ballkontrolle', pt:'Controlo de bola', tr:'Top Kontrolü' },
+        'acceleration': { ar:'التسارع', en:'Acceleration', fr:'Accélération', es:'Aceleración', de:'Beschleunigung', pt:'Aceleração', tr:'İvmelenme' },
+        'sprint_speed': { ar:'سرعة الانطلاق', en:'Sprint Speed', fr:'Vitesse de pointe', es:'Velocidad punta', de:'Sprintgeschwindigkeit', pt:'Velocidade de sprint', tr:'Sprint Hızı' },
+        'agility': { ar:'الرشاقة', en:'Agility', fr:'Agilité', es:'Agilidad', de:'Beweglichkeit', pt:'Agilidade', tr:'Çeviklik' },
+        'reactions': { ar:'ردود الفعل', en:'Reactions', fr:'Réactions', es:'Reacciones', de:'Reaktionen', pt:'Reações', tr:'Reaksiyon' },
+        'balance': { ar:'التوازن', en:'Balance', fr:'Équilibre', es:'Equilibrio', de:'Balance', pt:'Equilíbrio', tr:'Denge' },
+        'shot_power': { ar:'قوة التسديد', en:'Shot Power', fr:'Puissance de tir', es:'Potencia de tiro', de:'Schusskraft', pt:'Potência de remate', tr:'Şut Gücü' },
+        'jumping': { ar:'القفز', en:'Jumping', fr:'Détente', es:'Salto', de:'Sprungkraft', pt:'Impulsão', tr:'Zıplama' },
+        'stamina': { ar:'اللياقة', en:'Stamina', fr:'Endurance', es:'Resistencia', de:'Ausdauer', pt:'Resistência', tr:'Dayanıklılık' },
+        'strength': { ar:'القوة', en:'Strength', fr:'Force', es:'Fuerza', de:'Kraft', pt:'Força', tr:'Güç' },
+        'tackling': { ar:'التدخل', en:'Tackling', fr:'Tacle', es:'Entrada', de:'Tackling', pt:'Desarme', tr:'Top Kapma' },
+        'positioning': { ar:'التمركز', en:'Positioning', fr:'Placement', es:'Posicionamiento', de:'Stellungsspiel', pt:'Posicionamento', tr:'Pozisyon Alma' },
+        'vision': { ar:'الرؤية', en:'Vision', fr:'Vision de jeu', es:'Visión', de:'Spielübersicht', pt:'Visão de jogo', tr:'Oyun Görüşü' },
+        'diving': { ar:'التصدي', en:'Diving', fr:'Plongeon', es:'Estirada', de:'Hechtsprung', pt:'Mergulho', tr:'Uçuş' },
+        'handling': { ar:'الإمساك', en:'Handling', fr:'Prise de balle', es:'Manejo', de:'Ballsicherheit', pt:'Manejo', tr:'Top Tutma' },
+        'kicking': { ar:'الركل', en:'Kicking', fr:'Dégagement', es:'Saque', de:'Abstoß', pt:'Saque', tr:'Vuruş' },
+        'reflexes': { ar:'ردود الفعل السريعة', en:'Reflexes', fr:'Réflexes', es:'Reflejos', de:'Reflexe', pt:'Reflexos', tr:'Refleks' }
+    };
+
+    // ★ خريطة أعمدة CSV إلى المهارات ★
+    const CSV_TO_SKILL = {
+        'pace': 'pace',
+        'acceleration': 'acceleration',
+        'sprint_speed': 'sprint_speed',
+        'agility': 'agility',
+        'reactions': 'reactions',
+        'balance': 'balance',
+        'shot_power': 'shot_power',
+        'jumping': 'jumping',
+        'stamina': 'stamina',
+        'strength': 'strength',
+        'shooting': 'shooting',
+        'finishing': 'finishing',
+        'heading': 'heading',
+        'volleys': 'volleys',
+        'passing': 'passing',
+        'short_passing': 'short_passing',
+        'long_passing': 'long_passing',
+        'crossing': 'crossing',
+        'fk_accuracy': 'fk_accuracy',
+        'curve': 'curve',
+        'dribbling': 'dribbling',
+        'dribbling_skill': 'dribbling_skill',
+        'ball_control': 'ball_control',
+        'defending': 'defending'
+    };
+
+    // ★ جميع أسماء المهارات ★
+    const ALL_SKILLS = ['pace', 'shooting', 'passing', 'dribbling', 'defending', 'physical',
+        'crossing', 'finishing', 'heading', 'short_passing', 'volleys', 'dribbling_skill',
+        'curve', 'fk_accuracy', 'long_passing', 'ball_control', 'acceleration', 'sprint_speed',
+        'agility', 'reactions', 'balance', 'shot_power', 'jumping', 'stamina', 'strength',
+        'tackling', 'positioning', 'vision', 'diving', 'handling', 'kicking', 'reflexes'];
+
+    // ★ أعمدة السمات الحقيقية في ملف new-players-data-full.csv (بيانات FC25 الحقيقية) ★
+    const REAL_ATTR_COLS = ['crossing','finishing','heading_accuracy','short_passing','volleys','dribbling',
+        'curve','fk_accuracy','long_passing','ball_control','acceleration','sprint_speed','agility','reactions',
+        'balance','shot_power','jumping','stamina','strength','long_shots','aggression','interceptions',
+        'positioning','vision','penalties','composure','defensive_awareness','standing_tackle','sliding_tackle',
+        'gk_diving','gk_handling','gk_kicking','gk_positioning','gk_reflexes'];
+
+    function hasRealAttrColumns(row){
+        return REAL_ATTR_COLS.some(col => row[col] !== undefined && row[col] !== '' && !isNaN(parseFloat(row[col])));
+    }
+
+    function num(row, col, fallback){
+        const v = parseFloat(row[col]);
+        return isNaN(v) ? fallback : v;
+    }
+    function avg(vals){
+        const v = vals.filter(x => typeof x === 'number' && !isNaN(x));
+        if(!v.length) return null;
+        return v.reduce((a,b)=>a+b,0) / v.length;
+    }
+    function clampSkill(v){ return Math.min(99, Math.max(1, Math.round(v))); }
+
+    // ★ استخراج المهارات الحقيقية من أعمدة CSV (بدون أي عشوائية) ★
+    function extractSkillsFromRealAttrs(row){
+        const skills = {};
+
+        // السمات التفصيلية المطابقة مباشرة لأعمدة CSV الحقيقية
+        skills.crossing       = clampSkill(num(row,'crossing', 40));
+        skills.finishing      = clampSkill(num(row,'finishing', 40));
+        skills.heading         = clampSkill(num(row,'heading_accuracy', 40));
+        skills.short_passing   = clampSkill(num(row,'short_passing', 40));
+        skills.volleys         = clampSkill(num(row,'volleys', 40));
+        skills.dribbling_skill = clampSkill(num(row,'dribbling', 40));
+        skills.curve           = clampSkill(num(row,'curve', 40));
+        skills.fk_accuracy     = clampSkill(num(row,'fk_accuracy', 40));
+        skills.long_passing    = clampSkill(num(row,'long_passing', 40));
+        skills.ball_control    = clampSkill(num(row,'ball_control', 40));
+        skills.acceleration    = clampSkill(num(row,'acceleration', 40));
+        skills.sprint_speed    = clampSkill(num(row,'sprint_speed', 40));
+        skills.agility         = clampSkill(num(row,'agility', 40));
+        skills.reactions       = clampSkill(num(row,'reactions', 40));
+        skills.balance         = clampSkill(num(row,'balance', 40));
+        skills.shot_power      = clampSkill(num(row,'shot_power', 40));
+        skills.jumping         = clampSkill(num(row,'jumping', 40));
+        skills.stamina         = clampSkill(num(row,'stamina', 40));
+        skills.strength        = clampSkill(num(row,'strength', 40));
+        skills.tackling        = clampSkill(num(row,'standing_tackle', 30));
+        skills.positioning     = clampSkill(num(row,'positioning', 40));
+        skills.vision          = clampSkill(num(row,'vision', 40));
+        skills.defending       = clampSkill(num(row,'defensive_awareness', 30));
+        // مهارات حراسة المرمى
+        skills.diving      = clampSkill(num(row,'gk_diving', 10));
+        skills.handling    = clampSkill(num(row,'gk_handling', 10));
+        skills.kicking     = clampSkill(num(row,'gk_kicking', 10));
+        skills.reflexes    = clampSkill(num(row,'gk_reflexes', 10));
+
+        // السمات المُجمّعة الست الأساسية (تُحسب من السمات الحقيقية التفصيلية - نفس منطق FIFA/FC)
+        const pace = avg([num(row,'acceleration',null), num(row,'sprint_speed',null)]);
+        skills.pace = clampSkill(pace !== null ? pace : 55);
+
+        const shooting = avg([num(row,'finishing',null), num(row,'shot_power',null), num(row,'long_shots',null),
+            num(row,'volleys',null), num(row,'penalties',null)]);
+        skills.shooting = clampSkill(shooting !== null ? shooting : 45);
+
+        const passing = avg([num(row,'short_passing',null), num(row,'long_passing',null), num(row,'vision',null),
+            num(row,'crossing',null), num(row,'fk_accuracy',null), num(row,'curve',null)]);
+        skills.passing = clampSkill(passing !== null ? passing : 45);
+
+        const dribbling = avg([num(row,'dribbling',null), num(row,'ball_control',null), num(row,'agility',null),
+            num(row,'balance',null), num(row,'reactions',null), num(row,'composure',null)]);
+        skills.dribbling = clampSkill(dribbling !== null ? dribbling : 45);
+
+        const defending = avg([num(row,'defensive_awareness',null), num(row,'standing_tackle',null),
+            num(row,'sliding_tackle',null), num(row,'interceptions',null), num(row,'heading_accuracy',null)]);
+        skills.defending = clampSkill(defending !== null ? defending : 35);
+
+        const physical = avg([num(row,'strength',null), num(row,'stamina',null), num(row,'jumping',null),
+            num(row,'aggression',null)]);
+        skills.physical = clampSkill(physical !== null ? physical : 50);
+
+        return skills;
+    }
+
+    // ★ استخراج المهارات من CSV أو توليدها ★
+    function extractSkills(row) {
+        const pos = row.best_position || row.main_position || row.position || 'CM';
+
+        // 1. الأولوية لبيانات السمات الحقيقية (ملف new-players-data-full.csv)
+        if (hasRealAttrColumns(row)) {
+            return extractSkillsFromRealAttrs(row);
+        }
+
+        // 2. محاولة قراءة المهارات من صيغة CSV القديمة (توافقية)
+        const skills = {};
+        let hasRealSkills = false;
+        Object.keys(CSV_TO_SKILL).forEach(csvCol => {
+            const val = parseFloat(row[csvCol]);
+            if (!isNaN(val) && val > 0) {
+                const skillKey = CSV_TO_SKILL[csvCol];
+                skills[skillKey] = Math.min(99, Math.max(1, Math.round(val)));
+                hasRealSkills = true;
+            }
+        });
+
+        if (hasRealSkills) {
+            ALL_SKILLS.forEach(skill => {
+                if (!skills[skill]) {
+                    skills[skill] = generateSkillFromPosition(skill, pos, 50);
+                }
+            });
+            return skills;
+        }
+
+        // 3. توليد مهارات حسب المركز (فقط إذا لم تتوفر أي بيانات حقيقية)
+        const baseRating = parseInt(row.overall_rating || row.rating || row.ovr || 65);
+        return generateSkillsByPosition(pos, baseRating);
+    }
+
+    // ★ توليد مهارات حسب المركز ★
+    function generateSkillsByPosition(position, baseRating) {
+        const skills = {};
+        ALL_SKILLS.forEach(skill => {
+            skills[skill] = generateSkillFromPosition(skill, position, baseRating);
+        });
+        return skills;
+    }
+
+    // ★ توليد مهارة واحدة حسب المركز ★
+    function generateSkillFromPosition(skill, position, baseRating) {
+        const posConfig = POSITION_SKILL_WEIGHTS[position] || POSITION_SKILL_WEIGHTS['CM'];
+        
+        if (posConfig.primary && posConfig.primary.includes(skill)) {
+            return Math.min(99, Math.max(30, baseRating + Math.floor(Math.random() * 8) - 2));
+        }
+        else if (posConfig.secondary && posConfig.secondary.includes(skill)) {
+            return Math.min(95, Math.max(25, baseRating - 4 + Math.floor(Math.random() * 6)));
+        }
+        else if (posConfig.ignore && posConfig.ignore.includes(skill)) {
+            return Math.min(70, Math.max(15, baseRating - 18 + Math.floor(Math.random() * 10)));
+        }
+        else {
+            return Math.min(85, Math.max(20, baseRating - 10 + Math.floor(Math.random() * 12)));
+        }
+    }
+
+    // ★ حساب التقييم العام من المهارات (مثل FIFA) ★
+    function calculateOverallFromSkills(skills, position) {
+        if (!skills || Object.keys(skills).length === 0) return 60;
+        
+        const posConfig = POSITION_SKILL_WEIGHTS[position] || POSITION_SKILL_WEIGHTS['CM'];
+        let total = 0;
+        let count = 0;
+        
+        if (posConfig.primary) {
+            posConfig.primary.forEach(skill => {
+                if (skills[skill]) {
+                    total += skills[skill] * 1.5;
+                    count += 1.5;
+                }
+            });
+        }
+        
+        if (posConfig.secondary) {
+            posConfig.secondary.forEach(skill => {
+                if (skills[skill]) {
+                    total += skills[skill] * 1.0;
+                    count += 1.0;
+                }
+            });
+        }
+        
+        if (posConfig.ignore) {
+            posConfig.ignore.forEach(skill => {
+                if (skills[skill]) {
+                    total += skills[skill] * 0.4;
+                    count += 0.4;
+                }
+            });
+        }
+        
+        ALL_SKILLS.forEach(skill => {
+            if (!posConfig.primary?.includes(skill) && 
+                !posConfig.secondary?.includes(skill) && 
+                !posConfig.ignore?.includes(skill) &&
+                skills[skill]) {
+                total += skills[skill] * 0.3;
+                count += 0.3;
+            }
+        });
+        
+        return count > 0 ? Math.min(99, Math.max(30, Math.round(total / count))) : 60;
+    }
+
+    function parseMarketValue(valueStr) {
+        if (!valueStr) return 0;
+        if (typeof valueStr === 'number' && !isNaN(valueStr)) return valueStr;
+        
+        let str = String(valueStr).trim();
+        if (str === '') return 0;
+        
+        let cleanStr = str.replace(/[€\s]/g, '');
+        let numMatch = cleanStr.match(/[\d.]+/);
+        if (!numMatch) return 0;
+        
+        let num = parseFloat(numMatch[0]);
+        if (isNaN(num) || num === 0) return 0;
+        
+        let suffix = cleanStr.replace(/[\d.]/g, '').toLowerCase();
+        
+        if (suffix.includes('b')) num *= 1e9;
+        else if (suffix.includes('m')) num *= 1e6;
+        else if (suffix.includes('k')) num *= 1e3;
+        else if (num < 1000 && num > 0) num *= 1e6;
+        
+        return Math.round(num);
+    }
+
+    function estimateMarketValue(rating, age, position) {
+        let baseValue = 0;
+        if (rating >= 90) baseValue = 100000000;
+        else if (rating >= 85) baseValue = 50000000;
+        else if (rating >= 80) baseValue = 25000000;
+        else if (rating >= 75) baseValue = 10000000;
+        else if (rating >= 70) baseValue = 5000000;
+        else if (rating >= 65) baseValue = 2000000;
+        else if (rating >= 60) baseValue = 800000;
+        else baseValue = 300000;
+        
+        if (age < 23) baseValue *= 1.5;
+        else if (age > 30) baseValue *= 0.7;
+        else if (age > 33) baseValue *= 0.5;
+        
+        if (['ST', 'CF', 'LW', 'RW'].includes(position)) baseValue *= 1.2;
+        else if (['GK'].includes(position)) baseValue *= 0.8;
+        
+        return Math.round(baseValue / 100000) * 100000;
+    }
+
+    // ★ تقدير تقييم واقعي من القيمة السوقية الحقيقية (عكس estimateMarketValue) ★
+    // يُستخدم فقط عندما لا يوجد للاعب صف مهارات حقيقي مطابق في new-players-data-full.csv
+    function estimateRatingFromMarketValue(marketValue, age, position){
+        let base = marketValue || 0;
+        if (['ST', 'CF', 'LW', 'RW'].includes(position)) base /= 1.2;
+        else if (position === 'GK') base /= 0.8;
+
+        if (age < 23) base /= 1.5;
+        else if (age > 33) base /= 0.5;
+        else if (age > 30) base /= 0.7;
+
+        if (base >= 90000000) return 90;
+        if (base >= 45000000) return 85;
+        if (base >= 22000000) return 80;
+        if (base >= 9000000) return 75;
+        if (base >= 4000000) return 70;
+        if (base >= 1500000) return 65;
+        if (base >= 600000) return 60;
+        return 55;
+    }
+
+    // ★ تحليل تواريخ مرنة: يدعم صيغة ISO الكاملة وصيغة "YYYY-M-D" غير المبطّنة بالأصفار ★
+    function parseFlexibleDate(str){
+        if (!str) return null;
+        let d = new Date(str);
+        if (!isNaN(d.getTime())) return d;
+        const m = String(str).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (m) {
+            d = new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+            if (!isNaN(d.getTime())) return d;
+        }
+        return null;
+    }
+
+    /* ============================================================
+       ★ استخراج الجنسية الحقيقية من نص الوصف (description) ★
+       معظم صفوف new-players-data-full.csv لا تملك عمود country_name
+       معبأ، لكن الجنسية الحقيقية مذكورة داخل الوصف نفسه، مثل:
+       "...is an Egyptian footballer... the Egypt national team."
+       ============================================================ */
+    const DEMONYM_TO_COUNTRY = {
+        'albanian':'Albania','algerian':'Algeria','andorran':'Andorra','angolan':'Angola',
+        'antigua and barbuda':'Antigua and Barbuda','argentine':'Argentina','argentinian':'Argentina',
+        'armenian':'Armenia','american':'United States','australian':'Australia','austrian':'Austria',
+        'azerbaijani':'Azerbaijan','bangladeshi':'Bangladesh','barbadian':'Barbados','belarusian':'Belarus',
+        'belgian':'Belgium','beninese':'Benin','bermudian':'Bermuda','bissau-guinean':'Guinea-Bissau',
+        'bolivian':'Bolivia','bosnian':'Bosnia and Herzegovina','bosnia and herzegovina':'Bosnia and Herzegovina',
+        'brazilian':'Brazil','british':'England','bulgarian':'Bulgaria','burkinabe':'Burkina Faso',
+        'burundian':'Burundi','cameroonian':'Cameroon','canadian':'Canada','cape verdean':'Cape Verde',
+        'central african republic':'Central African Republic','chadian':'Chad','chilean':'Chile',
+        'chinese':'China','colombian':'Colombia','comorian':'Comoros','costa rican':'Costa Rica',
+        'croatian':'Croatia','cuban':'Cuba','cypriot':'Cyprus','czech':'Czech Republic','danish':'Denmark',
+        'dominican republic':'Dominican Republic','dutch':'Netherlands','ecuadorian':'Ecuador',
+        'egyptian':'Egypt','emirati':'United Arab Emirates','english':'England',
+        'equatoguinean':'Equatorial Guinea','estonian':'Estonia','ethiopian':'Ethiopia','faroese':'Faroe Islands',
+        'fijian':'Fiji','filipino':'Philippines','finnish':'Finland','french':'France','gabonese':'Gabon',
+        'gambian':'Gambia','georgian':'Georgia','german':'Germany','ghanaian':'Ghana','gibraltarian':'Gibraltar',
+        'greek':'Greece','grenadian':'Grenada','guatemalan':'Guatemala','guinean':'Guinea','guyanese':'Guyana',
+        'haitian':'Haiti','honduran':'Honduras','hungarian':'Hungary','icelandic':'Iceland','indian':'India',
+        'indonesian':'Indonesia','iranian':'Iran','iraqi':'Iraq','irish':'Republic of Ireland','israeli':'Israel',
+        'italian':'Italy','ivorian':'Ivory Coast','jamaican':'Jamaica','japanese':'Japan','jordanian':'Jordan',
+        'kazakh':'Kazakhstan','kazakhstani':'Kazakhstan','kenyan':'Kenya','korean':'South Korea',
+        'south korean':'South Korea','north korean':'North Korea','kosovan':'Kosovo','kuwaiti':'Kuwait',
+        'latvian':'Latvia','lebanese':'Lebanon','liberian':'Liberia','libyan':'Libya',
+        'liechtenstein':'Liechtenstein','lithuanian':'Lithuania','luxembourgian':'Luxembourg',
+        'luxembourgish':'Luxembourg','macedonian':'North Macedonia','malagasy':'Madagascar','malawian':'Malawi',
+        'malian':'Mali','malaysian':'Malaysia','maltese':'Malta','mauritanian':'Mauritania','mauritian':'Mauritius',
+        'mexican':'Mexico','moldovan':'Moldova','montenegrin':'Montenegro','montserratian':'Montserrat',
+        'moroccan':'Morocco','mozambican':'Mozambique','myanmarese':'Myanmar','namibian':'Namibia',
+        'nambian':'Namibia','new caledonian':'New Caledonia','new zealand association':'New Zealand',
+        'new zealand':'New Zealand','nigerian':'Nigeria','nigerien':'Niger','northern irish':'Northern Ireland',
+        'norwegian':'Norway','omani':'Oman','pakistani':'Pakistan','palestinian':'Palestine',
+        'panamanian':'Panama','paraguayan':'Paraguay','peruvian':'Peru','polish':'Poland','portuguese':'Portugal',
+        'puerto rican':'Puerto Rico','qatari':'Qatar','romanian':'Romania','russian':'Russia','rwandan':'Rwanda',
+        'saint lucian':'St. Lucia','salvadoran':'El Salvador','saudi':'Saudi Arabia','saudi arabian':'Saudi Arabia',
+        'scottish':'Scotland','senegalese':'Senegal','serbian':'Serbia','seychellois':'Seychelles',
+        'sierra leonean':'Sierra Leone','singaporean':'Singapore','slovak':'Slovakia','slovenian':'Slovenia',
+        'somalian':'Somalia','somali':'Somalia','south african':'South Africa','south sudanese':'South Sudan',
+        'spanish':'Spain','sri lankan':'Sri Lanka','sudanese':'Sudan','surinamese':'Suriname','swedish':'Sweden',
+        'swiss':'Switzerland','syrian':'Syria','taiwanese':'Chinese Taipei','tajikistani':'Tajikistan',
+        'tanzanian':'Tanzania','thai':'Thailand','togolese':'Togo','trinidad and tobago':'Trinidad and Tobago',
+        'tunisian':'Tunisia','turkish':'Turkey','ugandan':'Uganda','ukranian':'Ukraine','ukrainian':'Ukraine',
+        'uruguayan':'Uruguay','uzbek':'Uzbekistan','uzbekistani':'Uzbekistan','vanuatuan':'Vanuatu',
+        'venezuelan':'Venezuela','vietnamese':'Vietnam','welsh':'Wales','yemeni':'Yemen','zambian':'Zambia',
+        'zimbabwean':'Zimbabwe'
+    };
+
+    function extractNationalityFromDescription(desc){
+        if (!desc) return null;
+
+        // 1) الأدق: "...the <Country> national team"
+        const teamMatch = desc.match(/the\s+([A-Za-z .'-]+?)\s+national team/i);
+        if (teamMatch) {
+            const country = teamMatch[1].trim();
+            if (country.length > 1) return country;
+        }
+
+        // 2) صفة الجنسية: "is a/an <demonym> footballer"
+        const demMatch = desc.match(/is\s+(?:an|a)\s+([A-Za-z\-]+(?:\s[A-Za-z\-]+){0,2})\s+footballer/i);
+        if (demMatch) {
+            const demonym = demMatch[1].trim().toLowerCase();
+            if (DEMONYM_TO_COUNTRY[demonym]) return DEMONYM_TO_COUNTRY[demonym];
+        }
+
+        return null;
+    }
+
+    /* ============================================================
+       دوال استخراج البيانات
+       ============================================================ */
+    // ★ حساب العمر الحقيقي من تاريخ الميلاد (dob) ★
+    function ageFromDob(dob){
+        if(!dob) return null;
+        const d = new Date(dob);
+        if (isNaN(d.getTime())) return null;
+        const now = new Date();
+        let age = now.getFullYear() - d.getFullYear();
+        const m = now.getMonth() - d.getMonth();
+        if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+        return age;
+    }
+
+    // ★ تحويل سنة انتهاء العقد إلى timestamp حقيقي ★
+    function contractYearToTs(yearVal){
+        const y = parseInt(yearVal);
+        if (isNaN(y) || y <= 0) return null;
+        return new Date(y, 5, 30).getTime(); // 30 يونيو من سنة انتهاء العقد
+    }
+
+    // ★ تحويل رموز مراكز ملف الهوية المختصرة لما يوافق نظام أوزان المهارات ★
+    const OLD_POS_MAP = { 'AM': 'CAM', 'DM': 'CDM', 'SS': 'CF' };
+
+    function extractPlayerData(row, index, skillsNameIndex) {
+        // ★ الاسم: دائمًا من الملف الأساسي (player_interface_part_1.csv) ★
+        const name = row.player_name || row.name || row.player_display_name || row.full_name || row.long_name || 'لاعب';
+        const displayName = row.player_display_name || '';
+
+        // ★ إيجاد صف المهارات الحقيقي المطابق (إن وُجد) من new-players-data-full.csv ★
+        const matchedSkillsRow = findSkillsRow(name, displayName, skillsNameIndex, row.club || row.club_name);
+
+        // ★ الجنسية: من الملف الأساسي أولاً (كما طلب المستخدم)، ثم من صف المهارات المطابق إن كانت فارغة ★
+        let nationality = (row.nationality || row.nationality_id || row.country || '').trim();
+        if (!nationality && matchedSkillsRow) {
+            nationality = (matchedSkillsRow.country_name || '').trim() ||
+                extractNationalityFromDescription(matchedSkillsRow.description) || '';
+        }
+        if (!nationality) nationality = 'Saudi Arabia';
+
+        // ★ المركز: من الملف الأساسي مع تحويل الرموز المختصرة (AM/DM/SS) ★
+        let position = (row.main_position || row.position || row.pos || 'CM').trim();
+        position = OLD_POS_MAP[position] || position || 'CM';
+
+        // ★ العمر: معطى مباشرة في الملف الأساسي ★
+        const age = Math.round(parseFloat(row.age)) || 25;
+
+        const teamId = row.team_id || row.club_id || row.teamId || '';
+
+        // ★ القيمة السوقية: تُحفظ دائمًا من الملف الأساسي كما طلب المستخدم صراحةً ★
+        let marketValue = parseMarketValue(row.market_value_cur || row.market_value_cur_short || row.value);
+
+        // ★ المهارات والتقييم والإمكانية: حقيقية من صف المهارات المطابق إن وُجد، وإلا تُقدَّر ★
+        let skills, rating, potential;
+        const hasRealSkills = !!matchedSkillsRow;
+        if (matchedSkillsRow) {
+            skills = extractSkills(matchedSkillsRow);
+            rating = parseInt(matchedSkillsRow.overall_rating) || null;
+            potential = parseInt(matchedSkillsRow.potential) || null;
+        }
+        if (!rating) rating = estimateRatingFromMarketValue(marketValue, age, position);
+        if (!skills) skills = generateSkillsByPosition(position, rating);
+        if (!potential) potential = Math.min(99, rating + (age <= 23 ? 6 : age <= 27 ? 2 : 0));
+        if (marketValue === 0) marketValue = estimateMarketValue(rating, age, position);
+
+        // ★ العقد: تاريخ الانتهاء وآخر تجديد الحقيقيان من الملف الأساسي ★
+        let contractUntilTs = null;
+        const contractDate = parseFlexibleDate(row.contract_until);
+        if (contractDate) contractUntilTs = contractDate.getTime();
+        if (!contractUntilTs) contractUntilTs = Date.now() + 3 * 365.25 * 24 * 3600 * 1000;
+
+        let lastRenewalTs = null;
+        const renewalDate = parseFlexibleDate(row.last_contract_renewal);
+        if (renewalDate) lastRenewalTs = renewalDate.getTime();
+
+        // ★ القدم المفضلة: من الملف الأساسي (بحروف صغيرة فنُحوّلها لحرف كبير أول) ★
+        const rawFoot = (row.foot || '').trim();
+        const foot = rawFoot ? (rawFoot.charAt(0).toUpperCase() + rawFoot.slice(1).toLowerCase()) : 'Right';
+
+        // ★ الطول: بالأمتار في الملف الأساسي (مثال 1.80) فنحوّله لسم ★
+        let height = 0;
+        const rawHeight = parseFloat(row.height);
+        if (!isNaN(rawHeight) && rawHeight > 0) {
+            height = rawHeight <= 3 ? Math.round(rawHeight * 100) : Math.round(rawHeight);
+        }
+
+        return {
+            name: name.trim(),
+            nationality: nationality,
+            position: position,
+            rating: rating,
+            age: age,
+            market_value_eur: marketValue,
+            weekly_wage: 0,
+            contract_until_ts: contractUntilTs,
+            last_renewal_ts: lastRenewalTs,
+            id: 'p_' + (row.tmid || index),
+            goals: parseInt(row.goals) || 0,
+            assists: parseInt(row.assists) || 0,
+            matches: parseInt(row.matches) || 0,
+            potential: potential,
+            team_id: teamId,
+            club: row.club || row.club_name || '',
+            jersey: parseInt(row.jersey) || (index % 30 + 1),
+            is_captain: row.is_captain === '1' || row.is_captain === 'true' || row.is_captain === 'True' || row.is_captain === true || false,
+            skills: skills,
+            has_real_skills: hasRealSkills,
+            height: height,
+            foot: foot
+        };
+    }
+
+    /* ============================================================
+       حفظ واسترجاع البيانات
+       ============================================================ */
+    function getSquadData(){
+        const all = JSON.parse(localStorage.getItem('signed_players_by_club')) || {};
+        const club = getClubName();
+        if(!all[club]) all[club] = [];
+        return all;
+    }
+
+    function saveSquad(){
+        const all = getSquadData();
+        all[getClubName()] = players;
+        localStorage.setItem('signed_players_by_club', JSON.stringify(all));
+    }
+
+    // ============================================================
+    // مكافآت الأداء الحقيقية — تُدفع فعلياً مرة واحدة فقط عند بلوغ اللاعب فعلياً حدّاً حقيقياً
+    // (كل 10 أهداف/مباريات رسمية حقيقية)، محسوبة من بيانات لعبه الفعلية، لا افتراضاً عاماً
+    // ============================================================
+    function getClubBudget(){ return parseFloat(localStorage.getItem('clubBudget')) || 0; }
+    function setClubBudget(v){ localStorage.setItem('clubBudget', v.toFixed(2)); }
+    function addMessageToSystem(sender, text, category) {
+        let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+        inbox.unshift({ id: Date.now(), sender, text, time: new Date().toLocaleTimeString('en-US', { hour12:false }), read:false, category: category || 'transfer' });
+        localStorage.setItem('gameInbox', JSON.stringify(inbox));
+        localStorage.setItem('hasNewMessage', 'true');
+    }
+    function checkPerformanceBonuses() {
+        let changed = false;
+        players.forEach(p => {
+            const bonus = parseFloat(p.performanceBonus) || 0;
+            if (!bonus || p.performanceBonusPaid) return;
+            const contribUnits = (parseFloat(p.goals)||0) + (parseFloat(p.matches)||0); // مساهمة حقيقية فعلية (أهداف + مباريات لعبها)
+            const baseline = parseFloat(p.performanceBonusBaseline) || 0;
+            if (contribUnits - baseline >= 10) { // كل 10 وحدات مساهمة حقيقية فعلية منذ التوقيع
+                setClubBudget(getClubBudget() + bonus / 1000000);
+                p.performanceBonusPaid = true; // مكافأة واحدة لكل عقد كما تم الاتفاق عليه عند التوقيع
+                addMessageToSystem('الإدارة المالية', `💰 ${pt('perfBonusMsg', p.player_name||p.name, (bonus/1000000).toFixed(2))}`, 'finance');
+                changed = true;
+            }
+        });
+        if (changed) saveSquad();
+    }
+
+    let players = [];
+    let filteredPlayers = [];
+    let activeIdx = null;
+    let isLoading = false;
+
+    /* ============================================================
+       تحميل اللاعبين من ملف CSV
+       ============================================================ */
+    function parseCSV(text){
+        const rows = [];
+        let row = [], field = '', inQuotes = false;
+        for (let i = 0; i < text.length; i++){
+            const c = text[i], next = text[i+1];
+            if (inQuotes){
+                if (c === '"' && next === '"'){ field += '"'; i++; }
+                else if (c === '"'){ inQuotes = false; }
+                else field += c;
+            } else {
+                if (c === '"') inQuotes = true;
+                else if (c === ','){ row.push(field); field = ''; }
+                else if (c === '\r'){ /* تجاهل */ }
+                else if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+                else field += c;
+            }
+        }
+        if (field.length || row.length){ row.push(field); rows.push(row); }
+        if (!rows.length) return [];
+        const headers = rows[0];
+        const out = [];
+        for (let i = 1; i < rows.length; i++){
+            if (rows[i].length === 1 && rows[i][0] === '') continue;
+            const obj = {};
+            headers.forEach((h, idx) => obj[h] = rows[i][idx] !== undefined ? rows[i][idx] : '');
+            out.push(obj);
+        }
+        return out;
+    }
+
+    // ★ الملف الأساسي (القديم): مصدر الحقيقة للاسم/النادي/الجنسية/القيمة السوقية/العقد ★
+    // ★ مُقسّم على ملفين بدون أي تداخل بينهما - يجب دمجهما في قائمة واحدة ★
+    const IDENTITY_CSV_FILES = ['player_interface_part_1.csv', 'player_interface_part_2.csv'];
+    // ★ الملف الثانوي (الجديد): يُستخدم فقط لتعويض البيانات الناقصة (المهارات + التقييم) ★
+    const SKILLS_CSV_FILE = 'new-players-data-full.csv';
+
+    let identityRowsCache = null, identityFetchPromise = null;
+    let skillsRowsCache = null, skillsFetchPromise = null;
+    let skillsNameIndex = null;
+
+    function fetchIdentityRows(){
+        if (identityRowsCache) return Promise.resolve(identityRowsCache);
+        if (identityFetchPromise) return identityFetchPromise;
+        identityFetchPromise = Promise.all(
+            IDENTITY_CSV_FILES.map(file =>
+                fetch(file)
+                    .then(r => { if (!r.ok) throw new Error(file + '-not-found'); return r.text(); })
+                    .then(csv => parseCSV(csv))
+                    .catch(err => { console.warn('تعذر تحميل', file, err); return []; })
+            )
+        ).then(partsArrays => {
+            const combined = [].concat(...partsArrays);
+            if (!combined.length) throw new Error('identity-csv-not-found');
+            identityRowsCache = combined;
+            return identityRowsCache;
+        }).catch(err => { identityFetchPromise = null; throw err; });
+        return identityFetchPromise;
+    }
+
+    function fetchSkillsRows(){
+        if (skillsRowsCache) return Promise.resolve(skillsRowsCache);
+        if (skillsFetchPromise) return skillsFetchPromise;
+        skillsFetchPromise = fetch(SKILLS_CSV_FILE)
+            .then(r => { if (!r.ok) throw new Error('skills-csv-not-found'); return r.text(); })
+            .then(csv => { skillsRowsCache = parseCSV(csv); return skillsRowsCache; })
+            .catch(err => { skillsFetchPromise = null; throw err; });
+        return skillsFetchPromise;
+    }
+
+    // ★ توحيد اسم اللاعب للمطابقة بين الملفين (تجاهل حالة الأحرف والتشكيل والمسافات الزائدة) ★
+    function normalizeName(s){
+        if (!s) return '';
+        return String(s)
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\u0600-\u06FF]+/g, ' ')
+            .trim();
+    }
+
+    // ★ بناء فهرس بالاسم لملف المهارات (new-players-data-full.csv) لإيجاد بيانات كل لاعب بسرعة ★
+    // يشمل: الاسم، الاسم الكامل، والاسم الشائع المستخرج من بداية نص الوصف (الأدق للمطابقة)
+    function buildSkillsNameIndex(skillsRows){
+        const idx = new Map();
+        function addVariant(key, row){
+            if (!key) return;
+            if (!idx.has(key)) idx.set(key, []);
+            idx.get(key).push(row);
+        }
+        skillsRows.forEach(row => {
+            addVariant(normalizeName(row.name), row);
+            addVariant(normalizeName(row.full_name), row);
+            const m = (row.description || '').match(/^([^(]+)\(/);
+            if (m) addVariant(normalizeName(m[1]), row);
+        });
+        return idx;
+    }
+
+    // ★ إيجاد صف المهارات الحقيقي المطابق للاعب من الملف الأساسي (عبر الاسم، مع ترجيح تطابق النادي عند التكرار) ★
+    function findSkillsRow(name, displayName, nameIndex, clubHint){
+        if (!nameIndex) return null;
+        const keys = [normalizeName(name), normalizeName(displayName)].filter(Boolean);
+        let candidates = null;
+        for (const k of keys) {
+            if (nameIndex.has(k)) { candidates = nameIndex.get(k); break; }
+        }
+        if (!candidates || !candidates.length) return null;
+        if (candidates.length === 1) return candidates[0];
+        const normClub = normalizeClubName(clubHint);
+        const clubMatch = normClub && candidates.find(c => normalizeClubName(c.club_name) === normClub);
+        return clubMatch || candidates[0];
+    }
+
+    // ★ توحيد اسم النادي لتفادي فروقات بسيطة (أحرف كبيرة/صغيرة، FC، مسافات...) عند المطابقة ★
+    function normalizeClubName(s){
+        if (!s) return '';
+        return String(s)
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/\b(fc|cf|afc|sc|cfc|ac|calcio|club|athletic|deportivo)\b/g, '')
+            .replace(/[^a-z0-9\u0600-\u06FF]+/g, '')
+            .trim();
+    }
+
+    // ★ إيجاد لاعبي النادي الحقيقي من صفوف ملف الهوية (player_interface_part_1.csv) بمرونة أكبر في المطابقة ★
+    function matchClubPlayers(rows, clubName, clubId){
+        const normTarget = normalizeClubName(clubName);
+
+        let matched = rows.filter(row => {
+            const rowName = row.name || row.player_name || '';
+            if (!rowName.trim()) return false;
+            const rowTeamId = row.club_id || row.team_id || '';
+            if (rowTeamId && clubId && String(rowTeamId).trim() === String(clubId).trim()) return true;
+            const rowClub = normalizeClubName(row.club_name || row.club || '');
+            return normTarget && rowClub === normTarget;
+        });
+
+        // مطابقة تقريبية (احتواء) إذا لم يوجد تطابق تام في الاسم
+        if (matched.length === 0 && normTarget) {
+            matched = rows.filter(row => {
+                const rowName = row.name || row.player_name || '';
+                if (!rowName.trim()) return false;
+                const rowClub = normalizeClubName(row.club_name || row.club || '');
+                return rowClub && (rowClub.includes(normTarget) || normTarget.includes(rowClub));
+            });
+        }
+        return matched;
+    }
+
+    function loadSquad(forceReload){
+        const all = getSquadData();
+        const storedPlayers = all[getClubName()] || [];
+
+        if (!forceReload && storedPlayers.length > 0 && storedPlayers[0]?.skills) {
+            players = storedPlayers;
+            updatePlayersData();
+            renderAll();
+            return;
+        }
+
+        if (isLoading) return;
+        isLoading = true;
+
+        Promise.all([fetchIdentityRows(), fetchSkillsRows().catch(() => [])])
+            .then(([identityRows, skillsRows]) => {
+                if (!skillsNameIndex && skillsRows.length) {
+                    skillsNameIndex = buildSkillsNameIndex(skillsRows);
+                }
+                const clubName = getClubName();
+                const clubId = getClubId();
+
+                const clubPlayers = matchClubPlayers(identityRows, clubName, clubId)
+                    .map((row, idx) => extractPlayerData(row, idx, skillsNameIndex));
+
+                if (clubPlayers.length > 0) {
+                    clubPlayers.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                    const allData = getSquadData();
+                    allData[clubName] = clubPlayers;
+                    localStorage.setItem('signed_players_by_club', JSON.stringify(allData));
+                    players = clubPlayers;
+                    updatePlayersData();
+                    renderAll();
+                    if (typeof showToast === 'function') {
+                        const withSkills = clubPlayers.filter(p => p.has_real_skills).length;
+                        showToast(`<i class="fas fa-circle-check"></i> ${pt('extractedToast', clubPlayers.length, clubName, withSkills)}`);
+                    }
+                } else {
+                    createDefaultTeam();
+                    if (typeof showToast === 'function') {
+                        showToast('<i class="fas fa-triangle-exclamation"></i> لم يُعثر على هذا النادي — اختر ناديك الحقيقي من القائمة أعلاه');
+                    }
+                }
+                isLoading = false;
+            })
+            .catch(() => {
+                createDefaultTeam();
+                isLoading = false;
+            });
+    }
+
+    function createDefaultTeam() {
+        const club = getClubName();
+        const defaultPlayers = generateDefaultSquad();
+        const all = getSquadData();
+        all[club] = defaultPlayers;
+        localStorage.setItem('signed_players_by_club', JSON.stringify(all));
+        players = defaultPlayers;
+        updatePlayersData();
+        renderAll();
+        isLoading = false;
+    }
+
+    function generateDefaultSquad() {
+        const positions = ['GK', 'CB', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CM', 'CAM', 'LW', 'RW', 'ST', 'ST', 'CB', 'CM', 'LW', 'RW', 'CDM'];
+        const firstNames = ['أحمد', 'محمد', 'علي', 'حسن', 'خالد', 'سعيد', 'عبدالله', 'فهد', 'نايف', 'سلطان', 'ماجد', 'ياسر', 'بدر', 'نواف', 'سالم', 'عمر', 'زيد', 'سعود'];
+        const lastNames = ['الغامدي', 'الدوسري', 'القحطاني', 'الراجحي', 'العتيبي', 'المطيري', 'الشمري', 'الزهراني', 'الخالدي', 'القرني', 'البلوي', 'الحربي'];
+
+        return positions.map((pos, i) => {
+            const baseRating = 55 + ((i * 6 + pos.length * 2) % 30);
+            const rating = Math.min(85, baseRating);
+            const age = 19 + ((i * 5 + 2) % 15);
+            const value = estimateMarketValue(rating, age, pos);
+            
+            // ★ توليد مهارات حسب المركز ★
+            const skills = generateSkillsByPosition(pos, rating);
+
+            return {
+                name: firstNames[i % firstNames.length] + ' ' + lastNames[i % lastNames.length],
+                nationality: 'Saudi Arabia',
+                position: pos,
+                rating: rating,
+                age: age,
+                market_value_eur: value,
+                weekly_wage: 0,
+                contract_until_ts: Date.now() + (1 + (i % 4)) * 365.25 * 24 * 3600 * 1000,
+                last_renewal_ts: null,
+                id: 'default_' + i,
+                goals: 0,
+                assists: 0,
+                matches: 0,
+                potential: Math.min(99, rating + (age < 24 ? 10 : 4)),
+                team_id: '',
+                club: getClubName(),
+                jersey: i + 1,
+                is_captain: i === 0,
+                skills: skills,
+                height: 175 + (i % 20),
+                foot: i % 2 === 0 ? 'Right' : 'Left'
+            };
+        });
+    }
+
+    function updatePlayersData() {
+        let changed = false;
+        players.forEach((p, idx) => {
+            const fair = fairWage(p);
+            const cur = parseFloat(p.weekly_wage) || 0;
+            if(!cur || cur > fair * 2.5 || cur < fair * 0.4) {
+                p.weekly_wage = fair;
+                changed = true;
+            }
+            if(!p.id) p.id = 'gen_' + idx + '_' + nameOf(p).replace(/\s+/g,'_');
+            if(!p.contract_until_ts) { 
+                p.contract_until_ts = Date.now() + 3 * 365.25 * 24 * 3600 * 1000; 
+                changed = true; 
+            }
+            if(!p.nationality) p.nationality = 'Saudi Arabia';
+            if(!p.position) p.position = 'CM';
+            
+            // ★ تحديث المهارات إذا كانت مفقودة ★
+            if(!p.skills || Object.keys(p.skills).length === 0) {
+                p.skills = generateSkillsByPosition(p.position, p.rating || 65);
+                p.rating = calculateOverallFromSkills(p.skills, p.position);
+                changed = true;
+            }
+            
+            // ★ التحقق من صحة التقييم ★
+            if(!p.rating || p.rating < 30 || p.rating > 99) {
+                p.rating = calculateOverallFromSkills(p.skills, p.position);
+                changed = true;
+            }
+            
+            if(!p.age) p.age = 25;
+            if(!p.market_value_eur || p.market_value_eur === 0) {
+                p.market_value_eur = estimateMarketValue(p.rating || 65, p.age || 25, p.position || 'CM');
+                changed = true;
+            }
+        });
+        if(changed) saveSquad();
+    }
+
+    /* ============================================================
+       عرض القائمة
+       ============================================================ */
+    function renderAll() {
+        filteredPlayers = players.slice();
+        checkPerformanceBonuses();
+        renderSquad();
+        renderHeaderStats();
+        renderSquadIntel();
+        fedRenderRestrictions();
+    }
+
+    function renderHeaderStats(){
+        document.getElementById('clubNameDisplay').innerText = getClubName();
+        document.getElementById('countDisplay').innerText = players.length;
+        const totalVal = players.reduce((s,p) => s + marketValueEUR(p), 0);
+        document.getElementById('totalMarketValue').innerText = fmtMoney(totalVal) + '€';
+        const avg = players.length ? Math.round(players.reduce((s,p) => s + ratingOf(p), 0) / players.length) : 0;
+        document.getElementById('avgRating').innerText = avg;
+        const totalWage = players.reduce((s,p) => s + (parseFloat(p.weekly_wage) || 0), 0);
+        document.getElementById('totalWage').innerText = fmtMoney(totalWage) + '€';
+    }
+
+    function ratingClass(r){ return r>=80?'rating-high':r>=68?'rating-mid':'rating-low'; }
+
+    function formatContractRemaining(years){
+        if (years <= 0) return '0 شهر';
+        if (years < 1) return Math.max(1, Math.round(years * 12)) + ' شهر';
+        return Math.round(years) + ' سنة';
+    }
+
+    function maxRenewalYears(age){
+        if (age <= 23) return 6;
+        if (age <= 27) return 5;
+        if (age <= 30) return 4;
+        if (age <= 33) return 2;
+        return 1;
+    }
+
+    function clampRenewalYears(){
+        if (activeIdx == null) return;
+        const p = players[activeIdx];
+        const max = maxRenewalYears(ageOf(p));
+        const input = document.getElementById('editYears');
+        let v = parseInt(input.value) || 1;
+        if (v > max) v = max;
+        if (v < 1) v = 1;
+        input.value = v;
+    }
+
+    const POS_GROUP_I18N = {
+        FWD: { ar:'خط الهجوم', en:'Forward Line', fr:'Ligne d\'attaque', es:'Línea de ataque', de:'Angriffslinie', pt:'Linha de ataque', tr:'Forvet Hattı' },
+        MID: { ar:'خط الوسط', en:'Midfield Line', fr:'Ligne du milieu', es:'Línea del medio', de:'Mittelfeldlinie', pt:'Linha do meio', tr:'Orta Saha Hattı' },
+        DEF: { ar:'خط الدفاع', en:'Defense Line', fr:'Ligne défensive', es:'Línea defensiva', de:'Verteidigungslinie', pt:'Linha defensiva', tr:'Defans Hattı' },
+        GK: { ar:'حراس المرمى', en:'Goalkeepers', fr:'Gardiens de but', es:'Porteros', de:'Torhüter', pt:'Guarda-redes', tr:'Kaleciler' },
+    };
+    function pgLang() { return localStorage.getItem('gameLanguage') || 'ar'; }
+    const POSITION_GROUPS = [
+        { key:'FWD', get label(){ return POS_GROUP_I18N.FWD[pgLang()]; }, icon:'<i class="fas fa-bolt"></i>', positions:['LW','RW','ST','CF'] },
+        { key:'MID', get label(){ return POS_GROUP_I18N.MID[pgLang()]; }, icon:'<i class="fas fa-gears"></i>', positions:['CDM','CM','CAM','LM','RM'] },
+        { key:'DEF', get label(){ return POS_GROUP_I18N.DEF[pgLang()]; }, icon:'<i class="fas fa-shield-halved"></i>', positions:['CB','LB','RB','LWB','RWB'] },
+        { key:'GK', get label(){ return POS_GROUP_I18N.GK[pgLang()]; }, icon:'<i class="fas fa-hand-fist"></i>', positions:['GK'] },
+    ];
+    function groupKeyForPosition(pos){
+        for (const g of POSITION_GROUPS) if (g.positions.includes(pos)) return g.key;
+        return 'MID'; // احتياط منطقي لأي مركز غير مصنَّف صراحة
+    }
+
+    function renderSquad(){
+        const grid = document.getElementById('squadGrid');
+        if(!players.length){
+            grid.innerHTML = `<div class="empty-box">
+                <i class="fas fa-shield"></i> قائمة ناديك فارغة حالياً.<br>
+                توجّه إلى <a href="transfers.html">سوق الانتقالات</a> للتعاقد مع لاعبين.
+            </div>`;
+            return;
+        }
+
+        const groups = {};
+        POSITION_GROUPS.forEach(g => groups[g.key] = []);
+        players.forEach(p => { groups[groupKeyForPosition(posOf(p))].push(p); });
+        POSITION_GROUPS.forEach(g => groups[g.key].sort((a,b) => ratingOf(b) - ratingOf(a)));
+
+        grid.innerHTML = POSITION_GROUPS.map(g => {
+            const list = groups[g.key];
+            if (!list.length) return `<div class="pos-section"><div class="pos-section-title">${g.icon} ${g.label} <span class="pos-count">0</span></div><div class="pos-empty">${pt('emptyLine')}</div></div>`;
+            return `<div class="pos-section">
+                <div class="pos-section-title">${g.icon} ${g.label} <span class="pos-count">${list.length}</span></div>
+                ${list.map(p => renderPlayerCard(p)).join('')}
+            </div>`;
+        }).join('');
+    }
+
+    function renderPlayerCard(p){
+        const idx = players.indexOf(p);
+        const r = ratingOf(p);
+        const wage = parseFloat(p.weekly_wage) || 0;
+        const fair = fairWage(p);
+        const wageClass = wage > fair * 1.4 ? 'wage-high' : 'wage-fair';
+        const contract = getContractStatus(p);
+        const contractText = formatContractRemaining(contract.remaining);
+        const nat = natOf(p);
+        const status = getPlayerStatus(nat);
+        const listed = isPlayerListed(p);
+        const mInfo = moraleInfo(moraleOf(p));
+        const injury = injuryOf(p);
+        const contractDisplay = contract.isExpiring ?
+            `<span style="color:var(--danger);">${contractText} <i class="fas fa-triangle-exclamation"></i></span>` :
+            contract.canRenew ?
+            `<span style="color:var(--warning);">${contractText} <i class="fas fa-rotate"></i></span>` :
+            `${contractText}`;
+
+        return `<div class="player-card ${injury?'player-card-injured':''}" onclick="openPlayer(${idx})">
+            <div class="matrix-row">
+                <div><span class="rating-oval ${ratingClass(r)}">${r}</span></div>
+                <div><small>المركز</small><b>${posOf(p)}</b></div>
+                <div style="align-items:flex-start;padding-right:6px;">
+                    <span class="p-name"><span class="jersey-num">#${p.jersey || '-'}</span> ${nameOf(p)} <span class="morale-mini" style="color:${mInfo.color};" title="${mInfo.label}">${mInfo.icon}</span>${injury ? `<span class="injury-badge" title="${injury.type}"><i class="fas fa-kit-medical"></i> ${injury.remaining}ي</span>` : ''}</span>
+                    <span class="p-nat">${flagImg(nat)} ${nat||'—'} ${listed ? '<span class="badge-sale"><i class="fas fa-tag"></i> للبيع</span>' : ''}</span>
+                </div>
+                <div class="${wageClass}"><small>أسبوعي</small><b>${fmtMoney(wage)}€</b></div>
+                <div><small>القيمة</small><b>${fmtMoney(marketValueEUR(p))}€</b></div>
+                <div><small>العمر</small><b>${ageOf(p)}</b></div>
+                <div><small>العقد</small><b>${contractDisplay}</b></div>
+            </div>
+        </div>`;
+    }
+
+    // ============================================================
+    // ذكاء واقعي حقيقي: تحليل فعلي لعمق التشكيلة، لا نص عام — يحسب من بيانات لاعبيك الحقيقيين فقط
+    // ============================================================
+    function renderSquadIntel(){
+        const box = document.getElementById('squadIntelBox');
+        if (!players.length) { box.innerHTML = ''; return; }
+
+        const groups = {};
+        POSITION_GROUPS.forEach(g => groups[g.key] = players.filter(p => groupKeyForPosition(posOf(p)) === g.key));
+
+        const warnings = [];
+        if (groups.GK.length < 2) warnings.push('<i class="fas fa-hand-fist"></i> نقص حقيقي في حراس المرمى — لديك أقل من حارسين بديلين.');
+        if (groups.DEF.length < 4) warnings.push('<i class="fas fa-shield-halved"></i> خط الدفاع رقيق جداً — أقل من 4 مدافعين حقيقيين.');
+        if (groups.MID.length < 4) warnings.push('<i class="fas fa-gears"></i> خط الوسط يحتاج تعزيزاً — أقل من 4 لاعبي وسط.');
+        if (groups.FWD.length < 3) warnings.push('<i class="fas fa-bolt"></i> نقص في خط الهجوم — أقل من 3 مهاجمين جاهزين.');
+
+        const oldPlayers = players.filter(p => ageOf(p) >= 33).length;
+        if (oldPlayers >= 3) warnings.push(`<i class="fas fa-person-cane"></i> ${pt('oldPlayersWarning', oldPlayers)}`);
+
+        const expiringCount = players.filter(p => getContractStatus(p).isExpiring).length;
+        if (expiringCount > 0) warnings.push(`<i class="fas fa-triangle-exclamation"></i> ${pt('expiringWarning', expiringCount)}`);
+
+        const injuredCount = players.filter(p => injuryOf(p)).length;
+        if (injuredCount > 0) warnings.push(`<i class="fas fa-kit-medical"></i> ${pt('injuredWarning', injuredCount)}`);
+
+        box.innerHTML = `
+            ${warnings.length ? `<div class="intel-warnings">${warnings.map(w=>`<div class="intel-warning">${w}</div>`).join('')}</div>` : `<div class="intel-ok"><i class="fas fa-circle-check"></i> ${pt('squadBalanced')}</div>`}
+        `;
+    }
+
+
+    function fedRenderRestrictions(){
+        const banner = document.getElementById('fedRestrictBanner');
+        const rules = fedGetRules();
+        const foreignCount = players.filter(p => fedIsForeign(natOf(p))).length;
+        const msgs = [];
+        if(players.length > rules.squadMax) {
+            msgs.push(pt('squadOverMax', players.length, rules.squadMax));
+        }
+        if(foreignCount > rules.foreignMax) {
+            msgs.push(pt('foreignOverMax', foreignCount, rules.foreignMax));
+        }
+        if(msgs.length){ 
+            banner.style.display = 'flex'; 
+            document.getElementById('fedRestrictText').innerText = msgs.join(' | '); 
+        } else {
+            banner.style.display = 'none';
+        }
+    }
+
+    /* ============================================================
+       دوال نافذة اللاعب
+       ============================================================ */
+    function nameOf(p){ return p.name || p.player_name || p.player_display_name || p.long_name || 'لاعب'; }
+    function natOf(p){ return p.nationality || p.nationality_id || p.country || ''; }
+    function marketValueEUR(p){ return parseFloat(p.market_value_eur) || 0; }
+    function ratingOf(p){ return parseInt(p.rating) || 65; }
+    function ageOf(p){ return parseInt(p.age) || 25; }
+    function posOf(p){ return p.position || p.main_position || '--'; }
+
+    function fmtMoney(v){
+        v = Math.round(v||0);
+        if(v>=1e9) return (v/1e9).toFixed(v%1e9===0?0:1).replace(/\.0$/,'')+'B';
+        if(v>=1e6) return (v/1e6).toFixed(v%1e6===0?0:1).replace(/\.0$/,'')+'M';
+        if(v>=1e3) return Math.round(v/1e3)+'k';
+        return v;
+    }
+
+    function fairWage(p){
+        const mv = marketValueEUR(p);
+        const rules = fedGetRules();
+        const tierFactorMap = {1: 0.0045, 2: 0.0030, 3: 0.0020, 4: 0.0012};
+        const tierFactor = tierFactorMap[rules.tier] || 0.0030;
+        let wage = mv * tierFactor;
+
+        const r = ratingOf(p);
+        if(r>=85) wage*=1.35; else if(r>=80) wage*=1.20; else if(r>=75) wage*=1.08;
+        else if(r<60) wage*=0.65; else if(r<65) wage*=0.80;
+
+        const age = ageOf(p);
+        if(age>=24 && age<=29) wage*=1.08;
+        else if(age>=30 && age<=32) wage*=0.95;
+        else if(age>32) wage*=0.78;
+        else if(age<21) wage*=0.72;
+
+        const annualCap = mv * 0.45;
+        if(annualCap>0 && wage*52 > annualCap) wage = annualCap/52;
+
+        const floorMap = {1: 5000, 2: 2500, 3: 1200, 4: 700};
+        const floor = floorMap[rules.tier] || 1500;
+        wage = Math.max(floor, wage);
+        return Math.round(wage/100)*100;
+    }
+    function getContractStatus(p){
+        const untilTs = p.contract_until_ts || (Date.now() + 3 * 365.25 * 24 * 3600 * 1000);
+        const msRemaining = untilTs - Date.now();
+        const remaining = Math.max(0, msRemaining / (365.25 * 24 * 3600 * 1000));
+        const sinceTs = p.last_renewal_ts || (untilTs - 3 * 365.25 * 24 * 3600 * 1000);
+        const total = Math.max(0.5, (untilTs - sinceTs) / (365.25 * 24 * 3600 * 1000));
+        return {
+            total: total,
+            remaining: remaining,
+            monthsRemaining: remaining * 12,
+            untilTs: untilTs,
+            isExpiring: remaining < 0.5,
+            canRenew: remaining < 1 && remaining > 0
+        };
+    }
+
+    function getTransferListed(){ return JSON.parse(localStorage.getItem('transferListed')) || []; }
+    function saveTransferListed(list){ localStorage.setItem('transferListed', JSON.stringify(list)); }
+    function isPlayerListed(p){
+        return getTransferListed().some(x => x.name === nameOf(p) && x.club === getClubName());
+    }
+
+    // ============================================================
+    // حالة الإصابة الحقيقية — نفس بيانات club_injuries المستخدمة بالضبط في medical.html
+    // بدل تجاهل حالة اللاعب الصحية الفعلية هنا تماماً
+    // ============================================================
+    function getGameDate(){ return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+    function dateSortKey(d){ return d.year*10000+d.month*100+d.day; }
+    function getClubInjuries(){ try { return JSON.parse(localStorage.getItem('club_injuries')) || []; } catch(e){ return []; } }
+    function injuryOf(p){
+        const injuries = getClubInjuries();
+        const inj = injuries.find(x => String(x.tmid) === String(p.tmid) || x.playerName === nameOf(p));
+        if (!inj) return null;
+        const today = dateSortKey(getGameDate());
+        const elapsed = Math.max(0, today - inj.occurredDateSort);
+        const remaining = Math.max(0, Math.ceil(inj.totalDays - elapsed));
+        return { ...inj, remaining };
+    }
+
+    function moraleOf(p){
+        let m = 65;
+        const wage = parseFloat(p.weekly_wage) || 0;
+        const fair = fairWage(p);
+        const ratio = fair > 0 ? wage / fair : 1;
+        if (ratio >= 1.3) m += 15;
+        else if (ratio >= 1.0) m += 8;
+        else if (ratio >= 0.85) m += 0;
+        else if (ratio >= 0.65) m -= 15;
+        else m -= 30;
+
+        const status = getContractStatus(p);
+        if (status.isExpiring) m -= 12;
+        else if (status.remaining > 3) m += 5;
+
+        if (isPlayerListed(p)) m -= 20;
+
+        const injury = injuryOf(p);
+        if (injury) m -= Math.min(20, Math.round(injury.remaining / 3)); // إصابة طويلة تؤثر سلباً على معنوياته فعلياً
+
+        const age = ageOf(p);
+        if (age >= 32) m -= 5;
+        if (p.is_captain) m += 8;
+
+        return Math.max(5, Math.min(100, Math.round(m)));
+    }
+
+    function moraleInfo(m){
+        const lang = localStorage.getItem('gameLanguage') || 'ar';
+        const L = {
+            veryHappy: {ar:'سعيد جداً ومندمج',en:'Very Happy & Settled',fr:'Très heureux et intégré',es:'Muy feliz e integrado',de:'Sehr zufrieden und integriert',pt:'Muito feliz e integrado',tr:'Çok Mutlu ve Uyumlu'},
+            content: {ar:'راضٍ ومستقر',en:'Content & Stable',fr:'Satisfait et stable',es:'Contento y estable',de:'Zufrieden und stabil',pt:'Contente e estável',tr:'Memnun ve İstikrarlı'},
+            neutral: {ar:'محايد',en:'Neutral',fr:'Neutre',es:'Neutral',de:'Neutral',pt:'Neutro',tr:'Nötr'},
+            unhappy: {ar:'غير راضٍ',en:'Unhappy',fr:'Mécontent',es:'Descontento',de:'Unzufrieden',pt:'Descontente',tr:'Mutsuz'},
+            angry: {ar:'غاضب ويطلب الرحيل',en:'Angry & Requesting Transfer',fr:'En colère et demande un transfert',es:'Enfadado y pide salir',de:'Wütend und fordert Wechsel',pt:'Zangado e pede transferência',tr:'Kızgın ve Transfer İstiyor'},
+        };
+        if (m >= 80) return { label: L.veryHappy[lang], icon: '<i class="fas fa-face-laugh-beam"></i>', color: 'var(--success)' };
+        if (m >= 60) return { label: L.content[lang], icon: '<i class="fas fa-face-smile"></i>', color: 'var(--success)' };
+        if (m >= 40) return { label: L.neutral[lang], icon: '<i class="fas fa-face-meh"></i>', color: 'var(--warning)' };
+        if (m >= 20) return { label: L.unhappy[lang], icon: '<i class="fas fa-face-frown"></i>', color: 'var(--danger)' };
+        return { label: L.angry[lang], icon: '<i class="fas fa-face-angry"></i>', color: 'var(--danger)' };
+    }
+
+    function negotiateContract(p, offeredWage, years, bonus){
+        const fair = fairWage(p);
+        const ratio = offeredWage / fair;
+        const status = getContractStatus(p);
+        
+        let acceptance = 0.5;
+        if (ratio >= 1.2) acceptance += 0.30;
+        else if (ratio >= 1.0) acceptance += 0.15;
+        else if (ratio >= 0.85) acceptance += 0.05;
+        else if (ratio >= 0.7) acceptance -= 0.10;
+        else acceptance -= 0.30;
+        
+        const age = ageOf(p);
+        if (age > 30 && years > 2) acceptance -= 0.15;
+        else if (age > 30 && years <= 2) acceptance += 0.05;
+        else if (age < 23 && years >= 3) acceptance += 0.10;
+        
+        const rating = ratingOf(p);
+        if (rating >= 85 && ratio < 1.1) acceptance -= 0.20;
+        else if (rating >= 80 && ratio < 1.0) acceptance -= 0.10;
+        else if (rating < 70 && ratio >= 0.9) acceptance += 0.10;
+        
+        if (bonus > 0) {
+            const bonusRatio = bonus / (fair * 52);
+            acceptance += Math.min(0.15, bonusRatio * 0.5);
+        }
+        
+        if (status.isExpiring) acceptance += 0.10;
+        else if (!status.canRenew && !status.isExpiring) acceptance -= 0.30;
+
+        const morale = moraleOf(p);
+        acceptance += (morale - 50) / 250;
+
+        acceptance = Math.max(0, Math.min(1, acceptance));
+
+        return {
+            accepted: acceptance >= 0.6,
+            acceptanceRate: Math.round(acceptance * 100),
+            message: acceptance >= 0.6 ? '<i class="fas fa-circle-check"></i> وافق اللاعب!' : acceptance >= 0.4 ? '<i class="fas fa-hourglass-half"></i> اللاعب متردد. حاول تحسين العرض.' : '<i class="fas fa-circle-xmark"></i> رفض اللاعب العرض.'
+        };
+    }
+
+    /* ============================================================
+       ★ عرض المهارات في المودال ★
+       ============================================================ */
+    function renderSkillsModal(p) {
+        const skills = p.skills || {};
+        const container = document.getElementById('detailedRatings');
+        
+        if (!skills || Object.keys(skills).length === 0) {
+            container.innerHTML = `<div style="color:var(--dim);text-align:center;padding:20px;">${pt('noSkillsForPlayer')}</div>`;
+            return;
+        }
+
+        let html = '';
+        
+        // مجموعات المهارات للعرض
+        const groups = {
+            'بدنية': ['pace', 'acceleration', 'sprint_speed', 'agility', 'balance', 'jumping', 'stamina', 'strength'],
+            'هجومية': ['shooting', 'finishing', 'heading', 'volleys', 'shot_power'],
+            'تمرير ومهارة': ['passing', 'short_passing', 'long_passing', 'crossing', 'fk_accuracy', 'curve', 'dribbling', 'dribbling_skill', 'ball_control'],
+            'دفاعية': ['defending', 'tackling', 'positioning', 'vision'],
+            'حارس مرمى': ['diving', 'handling', 'kicking', 'reflexes']
+        };
+
+        Object.entries(groups).forEach(([group, keys]) => {
+            const groupSkills = keys.filter(k => skills[k] !== undefined && skills[k] > 0);
+            if (groupSkills.length === 0) return;
+            
+            html += `<div style="margin: 10px 0 4px 0; font-size: 0.7rem; color: var(--gold); font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 4px;">${group}</div>`;
+            html += `<div class="skill-grid">`;
+            
+            groupSkills.forEach(key => {
+                const val = skills[key] || 50;
+                const currentLang = localStorage.getItem('gameLanguage') || 'ar';
+                const displayName = (SKILL_NAMES[key] && SKILL_NAMES[key][currentLang]) || key.replace('_', ' ');
+                const color = val >= 80 ? 'var(--rating-high)' : val >= 65 ? 'var(--rating-mid)' : 'var(--rating-low)';
+                html += `
+                    <div class="skill-item">
+                        <div style="display:flex;justify-content:space-between;">
+                            <span class="skill-name">${displayName}</span>
+                            <span class="skill-val" style="color:${color}">${val}</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="fill" style="width:${val}%;background:${color};"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function openPlayer(idx){
+        activeIdx = idx;
+        const p = players[idx];
+        const r = ratingOf(p);
+        const nat = natOf(p);
+        const status = getPlayerStatus(nat);
+        const listed = isPlayerListed(p);
+
+        document.getElementById('modalPlayerName').innerText = nameOf(p);
+        document.getElementById('modalJerseyNum').innerText = '#' + (p.jersey || '-');
+        document.getElementById('modalFlagEmoji').textContent = flagEmoji(nat);
+        
+        document.getElementById('modalPlayerRating').innerText = r;
+        document.getElementById('modalPlayerRating').style.color = r>=80?'var(--success)':r>=68?'var(--warning)':'var(--danger)';
+        document.getElementById('modalPlayerInfo').innerHTML = `${posOf(p)} • ${getClubName()} ${listed ? `<span class="badge-sale"><i class="fas fa-tag"></i> ${pt('listedForSale')}</span>` : ''}`;
+
+        document.getElementById('infoAge').innerText = ageOf(p);
+        document.getElementById('infoNationality').innerHTML = `${flagImg(nat,'flag')} <span>${nat||'--'}</span>`;
+        document.getElementById('infoPotential').innerText = (p.potential ?? Math.min(99, r + 3));
+        const morale = moraleOf(p);
+        const mInfo = moraleInfo(morale);
+        document.getElementById('infoMorale').innerHTML = `<span style="color:${mInfo.color};">${mInfo.icon} ${mInfo.label} (${morale}/100)</span>`;
+        const injury = injuryOf(p);
+        document.getElementById('infoInjuryStatus').innerHTML = injury
+            ? `<span style="color:#ff4d4d;"><i class="fas fa-user-injured"></i> ${pt('injuredStatus', injury.type, injury.remaining)} <a href="medical.html" style="color:#ff8080; font-size:0.75rem;">${pt('detailsArrow')}</a></span>`
+            : `<span style="color:var(--success);"><i class="fas fa-circle-check"></i> ${pt('fullyReady')}</span>`;
+        document.getElementById('infoValue').innerText = fmtMoney(marketValueEUR(p)) + '€';
+        document.getElementById('infoGoals').innerText = p.goals ?? 0;
+        document.getElementById('infoAssists').innerText = p.assists ?? 0;
+        document.getElementById('infoMatches').innerText = p.matches ?? 0;
+        const PLAYER_TEXT_I18N = {
+            noRelease: { ar:'لا يوجد', en:'None', fr:'Aucune', es:'Ninguna', de:'Keine', pt:'Nenhuma', tr:'Yok' },
+            listedForSale: { ar:'معروض للبيع', en:'Listed for Sale', fr:'Mis en vente', es:'Puesto en venta', de:'Zum Verkauf gelistet', pt:'Colocado à venda', tr:'Satışa Çıkarıldı' },
+            nowListedToast: { ar:'معروض للبيع الآن في سوق الانتقالات', en:'is now listed for sale in the transfer market', fr:'est désormais mis en vente sur le marché des transferts', es:'está ahora en venta en el mercado de fichajes', de:'steht jetzt auf dem Transfermarkt zum Verkauf', pt:'está agora à venda no mercado de transferências', tr:'artık transfer pazarında satışta' },
+            perfBonusMsg: { ar:(n,b)=>`استحق ${n} مكافأة الأداء المتفَق عليها (${b}M €) بعد بلوغ الأداء المطلوب فعلياً.`, en:(n,b)=>`${n} earned the agreed performance bonus (${b}M €) after reaching the required performance.`, fr:(n,b)=>`${n} a obtenu la prime de performance convenue (${b}M €).`, es:(n,b)=>`${n} obtuvo la bonificación de rendimiento acordada (${b}M €).`, de:(n,b)=>`${n} hat die vereinbarte Leistungsprämie (${b}Mio €) erhalten.`, pt:(n,b)=>`${n} obteve o prémio de desempenho acordado (${b}M €).`, tr:(n,b)=>`${n} kararlaştırılan performans bonusunu (${b}M €) hak etti.` },
+            extractedToast: { ar:(n,c,w)=>`تم استخراج ${n} لاعباً لنادي ${c} (${w} منهم بمهارات حقيقية كاملة)`, en:(n,c,w)=>`Extracted ${n} players for ${c} (${w} with full real skills)`, fr:(n,c,w)=>`${n} joueurs extraits pour ${c} (${w} avec compétences réelles complètes)`, es:(n,c,w)=>`${n} jugadores extraídos para ${c} (${w} con habilidades reales completas)`, de:(n,c,w)=>`${n} Spieler für ${c} extrahiert (${w} mit vollständigen echten Fähigkeiten)`, pt:(n,c,w)=>`${n} jogadores extraídos para ${c} (${w} com habilidades reais completas)`, tr:(n,c,w)=>`${c} için ${n} oyuncu çıkarıldı (${w} tam gerçek beceriyle)` },
+            oldPlayersWarning: { ar:(n)=>`${n} لاعبين فوق 33 عاماً — التخطيط للتجديد ضروري`, en:(n)=>`${n} players over 33 — succession planning needed`, fr:(n)=>`${n} joueurs de plus de 33 ans — planification nécessaire`, es:(n)=>`${n} jugadores mayores de 33 años — se necesita planificación`, de:(n)=>`${n} Spieler über 33 — Nachfolgeplanung nötig`, pt:(n)=>`${n} jogadores com mais de 33 anos — planeamento necessário`, tr:(n)=>`33 yaş üstü ${n} oyuncu — planlama gerekli` },
+            expiringWarning: { ar:(n)=>`${n} عقد على وشك الانتهاء — راجع التجديدات`, en:(n)=>`${n} contract(s) about to expire — review renewals`, fr:(n)=>`${n} contrat(s) sur le point d'expirer`, es:(n)=>`${n} contrato(s) a punto de expirar`, de:(n)=>`${n} Vertrag/Verträge laufen bald aus`, pt:(n)=>`${n} contrato(s) prestes a expirar`, tr:(n)=>`${n} sözleşme sona ermek üzere` },
+            injuredWarning: { ar:(n)=>`${n} لاعب مصاب حالياً — راجع المركز الطبي`, en:(n)=>`${n} player(s) currently injured — check medical center`, fr:(n)=>`${n} joueur(s) actuellement blessé(s)`, es:(n)=>`${n} jugador(es) lesionado(s) actualmente`, de:(n)=>`${n} Spieler derzeit verletzt`, pt:(n)=>`${n} jogador(es) atualmente lesionado(s)`, tr:(n)=>`${n} oyuncu şu anda sakat` },
+            squadOverMax: { ar:(n,m)=>`القائمة (${n}) تتجاوز الحد الأقصى (${m}).`, en:(n,m)=>`Squad size (${n}) exceeds the maximum (${m}).`, fr:(n,m)=>`L'effectif (${n}) dépasse le maximum (${m}).`, es:(n,m)=>`La plantilla (${n}) supera el máximo (${m}).`, de:(n,m)=>`Der Kader (${n}) überschreitet das Maximum (${m}).`, pt:(n,m)=>`O plantel (${n}) excede o máximo (${m}).`, tr:(n,m)=>`Kadro (${n}) maksimumu (${m}) aşıyor.` },
+            foreignOverMax: { ar:(n,m)=>`الأجانب (${n}) يتجاوزون الحد (${m}).`, en:(n,m)=>`Foreign players (${n}) exceed the limit (${m}).`, fr:(n,m)=>`Les joueurs étrangers (${n}) dépassent la limite (${m}).`, es:(n,m)=>`Los jugadores extranjeros (${n}) superan el límite (${m}).`, de:(n,m)=>`Ausländische Spieler (${n}) überschreiten das Limit (${m}).`, pt:(n,m)=>`Jogadores estrangeiros (${n}) excedem o limite (${m}).`, tr:(n,m)=>`Yabancı oyuncular (${n}) sınırı (${m}) aşıyor.` },
+            noSkillsAvailable: { ar:'لا توجد مهارات متاحة لهذا المركز.', en:'No skills available for this position.', fr:'Aucune compétence disponible pour ce poste.', es:'No hay habilidades disponibles para esta posición.', de:'Keine Fähigkeiten für diese Position verfügbar.', pt:'Sem habilidades disponíveis para esta posição.', tr:'Bu pozisyon için beceri mevcut değil.' },
+            squadBalanced: { ar:'التشكيلة متوازنة عبر كل الخطوط، بلا نواقص حرجة حالياً.', en:'The squad is balanced across all lines, with no critical gaps currently.', fr:'L\'effectif est équilibré sur toutes les lignes, sans lacune critique.', es:'La plantilla está equilibrada en todas las líneas, sin carencias críticas.', de:'Der Kader ist über alle Linien ausgeglichen, derzeit keine kritischen Lücken.', pt:'O plantel está equilibrado em todas as linhas, sem falhas críticas.', tr:'Kadro tüm hatlarda dengeli, şu anda kritik eksiklik yok.' },
+            noSkillsForPlayer: { ar:'لا توجد مهارات متاحة لهذا اللاعب', en:'No skills available for this player', fr:'Aucune compétence disponible pour ce joueur', es:'No hay habilidades disponibles para este jugador', de:'Keine Fähigkeiten für diesen Spieler verfügbar', pt:'Sem habilidades disponíveis para este jogador', tr:'Bu oyuncu için beceri mevcut değil' },
+            emptyLine: { ar:'لا يوجد لاعبون في هذا الخط — نقص حقيقي يحتاج تعزيزاً.', en:'No players in this line — a real gap that needs reinforcement.', fr:'Aucun joueur dans cette ligne — un manque réel à renforcer.', es:'No hay jugadores en esta línea — una carencia real que necesita refuerzo.', de:'Keine Spieler in dieser Linie — eine echte Lücke, die verstärkt werden muss.', pt:'Sem jogadores nesta linha — uma falha real que precisa de reforço.', tr:'Bu hatta oyuncu yok — güçlendirme gerektiren gerçek bir eksiklik.' },
+            injuredStatus: { ar:(t,r)=>`مصاب — ${t} (${r} يوم متبقٍ)`, en:(t,r)=>`Injured — ${t} (${r} days remaining)`, fr:(t,r)=>`Blessé — ${t} (${r} jours restants)`, es:(t,r)=>`Lesionado — ${t} (${r} días restantes)`, de:(t,r)=>`Verletzt — ${t} (${r} Tage verbleibend)`, pt:(t,r)=>`Lesionado — ${t} (${r} dias restantes)`, tr:(t,r)=>`Sakat — ${t} (${r} gün kaldı)` },
+            detailsArrow: { ar:'التفاصيل ←', en:'Details →', fr:'Détails →', es:'Detalles →', de:'Details →', pt:'Detalhes →', tr:'Detaylar →' },
+            fullyReady: { ar:'جاهز تماماً', en:'Fully Ready', fr:'Totalement prêt', es:'Totalmente listo', de:'Voll einsatzbereit', pt:'Totalmente pronto', tr:'Tamamen Hazır' },
+            contractEndingSoon: { ar:(m)=>`العقد ينتهي خلال ${m} شهراً`, en:(m)=>`Contract ends in ${m} months`, fr:(m)=>`Le contrat se termine dans ${m} mois`, es:(m)=>`El contrato termina en ${m} meses`, de:(m)=>`Vertrag endet in ${m} Monaten`, pt:(m)=>`O contrato termina em ${m} meses`, tr:(m)=>`Sözleşme ${m} ay içinde sona eriyor` },
+            renewalWindowOpen: { ar:(m)=>`نافذة التجديد مفتوحة (${m} شهراً متبقية)`, en:(m)=>`Renewal window open (${m} months remaining)`, fr:(m)=>`Fenêtre de renouvellement ouverte (${m} mois restants)`, es:(m)=>`Ventana de renovación abierta (${m} meses restantes)`, de:(m)=>`Verlängerungsfenster offen (${m} Monate übrig)`, pt:(m)=>`Janela de renovação aberta (${m} meses restantes)`, tr:(m)=>`Yenileme penceresi açık (${m} ay kaldı)` },
+            contractValidFor: { ar:(t)=>`العقد ساري لمدة ${t} أخرى`, en:(t)=>`Contract valid for another ${t}`, fr:(t)=>`Contrat valable encore ${t}`, es:(t)=>`Contrato válido por ${t} más`, de:(t)=>`Vertrag noch ${t} gültig`, pt:(t)=>`Contrato válido por mais ${t}`, tr:(t)=>`Sözleşme ${t} daha geçerli` },
+            withdrawFromSale: { ar:'سحب من البيع', en:'Withdraw from Sale', fr:'Retirer de la vente', es:'Retirar de la venta', de:'Vom Verkauf zurückziehen', pt:'Retirar da venda', tr:'Satıştan Çek' },
+            listForSaleBtn: { ar:'عرض للبيع', en:'List for Sale', fr:'Mettre en vente', es:'Poner en venta', de:'Zum Verkauf anbieten', pt:'Colocar à venda', tr:'Satışa Çıkar' },
+            maxAgeHint: { ar:(a,y)=>`الحد الأقصى الواقعي لعمره (${a} سنة): ${y}`, en:(a,y)=>`Realistic maximum contract length at his age (${a}): ${y}`, fr:(a,y)=>`Durée maximale réaliste à son âge (${a} ans) : ${y}`, es:(a,y)=>`Duración máxima realista a su edad (${a} años): ${y}`, de:(a,y)=>`Realistische Höchstdauer in seinem Alter (${a}): ${y}`, pt:(a,y)=>`Duração máxima realista com a sua idade (${a} anos): ${y}`, tr:(a,y)=>`Yaşına (${a}) göre gerçekçi maksimum süre: ${y}` },
+            yearSingular: { ar:'سنة', en:'year', fr:'an', es:'año', de:'Jahr', pt:'ano', tr:'yıl' },
+            yearsPlural: { ar:'سنوات', en:'years', fr:'ans', es:'años', de:'Jahre', pt:'anos', tr:'yıl' },
+            cmUnit: { ar:'سم', en:'cm', fr:'cm', es:'cm', de:'cm', pt:'cm', tr:'cm' },
+            kgUnit: { ar:'كجم', en:'kg', fr:'kg', es:'kg', de:'kg', pt:'kg', tr:'kg' },
+            heightLbl: { ar:'الطول', en:'Height', fr:'Taille', es:'Altura', de:'Größe', pt:'Altura', tr:'Boy' },
+            weightLbl: { ar:'الوزن', en:'Weight', fr:'Poids', es:'Peso', de:'Gewicht', pt:'Peso', tr:'Kilo' },
+            footLbl: { ar:'القدم المفضلة', en:'Preferred Foot', fr:'Pied préféré', es:'Pie preferido', de:'Bevorzugter Fuß', pt:'Pé preferido', tr:'Tercih Edilen Ayak' },
+            rightFoot: { ar:'يمنى', en:'Right', fr:'Droit', es:'Derecho', de:'Rechts', pt:'Direito', tr:'Sağ' },
+            leftFoot: { ar:'يسرى', en:'Left', fr:'Gauche', es:'Izquierdo', de:'Links', pt:'Esquerdo', tr:'Sol' },
+            wageHigh: { ar:(f)=>`مرتفع: العادل ~${f}€/أسبوع.`, en:(f)=>`High: fair value ~${f}€/week.`, fr:(f)=>`Élevé : valeur équitable ~${f}€/semaine.`, es:(f)=>`Alto: valor justo ~${f}€/semana.`, de:(f)=>`Hoch: fairer Wert ~${f}€/Woche.`, pt:(f)=>`Alto: valor justo ~${f}€/semana.`, tr:(f)=>`Yüksek: adil değer ~${f}€/hafta.` },
+            wageRejectRisk: { ar:(f)=>`قد يرفضه اللاعب. العادل ~${f}€/أسبوع.`, en:(f)=>`The player may reject it. Fair value ~${f}€/week.`, fr:(f)=>`Le joueur pourrait refuser. Valeur équitable ~${f}€/semaine.`, es:(f)=>`El jugador podría rechazarlo. Valor justo ~${f}€/semana.`, de:(f)=>`Der Spieler könnte ablehnen. Fairer Wert ~${f}€/Woche.`, pt:(f)=>`O jogador pode rejeitar. Valor justo ~${f}€/semana.`, tr:(f)=>`Oyuncu reddedebilir. Adil değer ~${f}€/hafta.` },
+            wageFair: { ar:(f)=>`عرض عادل ومنطقي (~${f}€/أسبوع).`, en:(f)=>`Fair and reasonable offer (~${f}€/week).`, fr:(f)=>`Offre juste et raisonnable (~${f}€/semaine).`, es:(f)=>`Oferta justa y razonable (~${f}€/semana).`, de:(f)=>`Faires und vernünftiges Angebot (~${f}€/Woche).`, pt:(f)=>`Oferta justa e razoável (~${f}€/semana).`, tr:(f)=>`Adil ve makul teklif (~${f}€/hafta).` },
+            acceptanceRateLbl: { ar:(r)=>`نسبة القبول: ${r}%`, en:(r)=>`Acceptance rate: ${r}%`, fr:(r)=>`Taux d'acceptation : ${r}%`, es:(r)=>`Tasa de aceptación: ${r}%`, de:(r)=>`Annahmequote: ${r}%`, pt:(r)=>`Taxa de aceitação: ${r}%`, tr:(r)=>`Kabul oranı: %${r}` },
+            renewedToast: { ar:(n,d)=>`تم تجديد عقد ${n} حتى ${d}!`, en:(n,d)=>`${n}'s contract renewed until ${d}!`, fr:(n,d)=>`Contrat de ${n} renouvelé jusqu'au ${d} !`, es:(n,d)=>`¡Contrato de ${n} renovado hasta ${d}!`, de:(n,d)=>`Vertrag von ${n} bis ${d} verlängert!`, pt:(n,d)=>`Contrato de ${n} renovado até ${d}!`, tr:(n,d)=>`${n} sözleşmesi ${d} tarihine kadar yenilendi!` },
+            withdrawnToast: { ar:(n)=>`تم سحب ${n} من سوق الانتقالات`, en:(n)=>`${n} withdrawn from the transfer market`, fr:(n)=>`${n} retiré du marché des transferts`, es:(n)=>`${n} retirado del mercado de fichajes`, de:(n)=>`${n} vom Transfermarkt zurückgezogen`, pt:(n)=>`${n} retirado do mercado de transferências`, tr:(n)=>`${n} transfer pazarından çekildi` },
+            releaseConfirm: { ar:(n)=>`فسخ عقد ${n}؟`, en:(n)=>`Release ${n}'s contract?`, fr:(n)=>`Résilier le contrat de ${n} ?`, es:(n)=>`¿Rescindir el contrato de ${n}?`, de:(n)=>`Vertrag von ${n} auflösen?`, pt:(n)=>`Rescindir o contrato de ${n}?`, tr:(n)=>`${n} sözleşmesi feshedilsin mi?` },
+            releasedToast: { ar:(n)=>`تم فسخ عقد ${n}`, en:(n)=>`${n}'s contract released`, fr:(n)=>`Contrat de ${n} résilié`, es:(n)=>`Contrato de ${n} rescindido`, de:(n)=>`Vertrag von ${n} aufgelöst`, pt:(n)=>`Contrato de ${n} rescindido`, tr:(n)=>`${n} sözleşmesi feshedildi` },
+            thoughtListed: { ar:'شعر اللاعب بخبر عرضه للبيع، وهو يترقّب بقلق أي عرض جدّي من الأندية الأخرى.', en:'The player learned he was listed for sale and is anxiously awaiting any serious offer from other clubs.', fr:'Le joueur a appris qu\'il était mis en vente et attend anxieusement une offre sérieuse d\'un autre club.', es:'El jugador se enteró de que fue puesto en venta y espera con ansiedad una oferta seria de otro club.', de:'Der Spieler hat erfahren, dass er zum Verkauf steht, und wartet gespannt auf ein ernsthaftes Angebot.', pt:'O jogador soube que foi colocado à venda e aguarda ansiosamente uma proposta séria.', tr:'Oyuncu satışa çıkarıldığını öğrendi ve endişeyle ciddi bir teklif bekliyor.' },
+            thoughtUnhappy: { ar:'اللاعب غير راضٍ إطلاقاً عن وضعه ويفكّر جدياً في طلب الرحيل.', en:'The player is completely unhappy with his situation and is seriously considering requesting a transfer.', fr:'Le joueur est totalement mécontent de sa situation et envisage sérieusement de demander un transfert.', es:'El jugador está totalmente descontento con su situación y considera seriamente pedir su salida.', de:'Der Spieler ist mit seiner Situation völlig unzufrieden und erwägt ernsthaft einen Wechsel.', pt:'O jogador está totalmente insatisfeito e considera seriamente pedir a saída.', tr:'Oyuncu durumundan hiç memnun değil ve ciddi şekilde ayrılmayı düşünüyor.' },
+            thoughtUnderpaid: { ar:'يشعر اللاعب أن راتبه أقل من قيمته في السوق ويطمح لتحسينه.', en:'The player feels his wage is below his market value and hopes to improve it.', fr:'Le joueur estime que son salaire est inférieur à sa valeur marchande et espère l\'améliorer.', es:'El jugador siente que su salario está por debajo de su valor de mercado y espera mejorarlo.', de:'Der Spieler empfindet sein Gehalt als unter seinem Marktwert und hofft auf eine Verbesserung.', pt:'O jogador sente que o seu salário está abaixo do seu valor de mercado e espera melhorá-lo.', tr:'Oyuncu maaşının piyasa değerinin altında olduğunu düşünüyor ve iyileştirilmesini umuyor.' },
+            thoughtOverpaid: { ar:'اللاعب راضٍ جداً مالياً، لكن راتبه يشكّل عبئاً على كتلة أجور النادي.', en:'The player is very financially satisfied, but his wage is a burden on the club\'s wage bill.', fr:'Le joueur est très satisfait financièrement, mais son salaire pèse sur la masse salariale du club.', es:'El jugador está muy satisfecho financieramente, pero su salario es una carga para el club.', de:'Der Spieler ist finanziell sehr zufrieden, aber sein Gehalt belastet die Gehaltssumme des Vereins.', pt:'O jogador está muito satisfeito financeiramente, mas o salário pesa na folha do clube.', tr:'Oyuncu mali açıdan çok memnun, ancak maaşı kulübün bütçesine yük oluyor.' },
+            thoughtHappy: { ar:'اللاعب راضٍ عن وضعه المالي ومندمج مع النادي.', en:'The player is satisfied with his financial situation and well-integrated with the club.', fr:'Le joueur est satisfait de sa situation financière et bien intégré au club.', es:'El jugador está satisfecho con su situación financiera y bien integrado en el club.', de:'Der Spieler ist mit seiner finanziellen Situation zufrieden und gut in den Verein integriert.', pt:'O jogador está satisfeito com a sua situação financeira e bem integrado no clube.', tr:'Oyuncu mali durumundan memnun ve kulübe iyi entegre olmuş durumda.' },
+        };
+        function pt(key, ...args) {
+            const lang = localStorage.getItem('gameLanguage') || 'ar';
+            const entry = PLAYER_TEXT_I18N[key];
+            if (!entry) return key;
+            const val = entry[lang] || entry['ar'];
+            return typeof val === 'function' ? val(...args) : val;
+        }
+        document.getElementById('infoRelease').innerText = p.release_clause ? fmtMoney(p.release_clause) + '€' : pt('noRelease');
+
+        const wage = parseFloat(p.weekly_wage) || 0;
+        const fair = fairWage(p);
+        let thought;
+        if (listed) thought = pt('thoughtListed');
+        else if (morale < 30) thought = pt('thoughtUnhappy');
+        else if (wage < fair * 0.85) thought = pt('thoughtUnderpaid');
+        else if (wage > fair * 1.4) thought = pt('thoughtOverpaid');
+        else thought = pt('thoughtHappy');
+        document.getElementById('playerThought').innerText = thought;
+
+        // ★ عرض المهارات ★
+        renderSkillsModal(p);
+
+        renderContract(p);
+        
+        const contractStatus = getContractStatus(p);
+        const renewDiv = document.getElementById('renewalStatus');
+        const renewalMsg = contractStatus.isExpiring ? 
+            `<i class="fas fa-triangle-exclamation"></i> ${pt('contractEndingSoon', Math.round(contractStatus.monthsRemaining))}.` :
+            contractStatus.canRenew ?
+            `<i class="fas fa-rotate"></i> ${pt('renewalWindowOpen', Math.round(contractStatus.monthsRemaining))}.` :
+            `<i class="fas fa-circle-check"></i> ${pt('contractValidFor', formatContractRemaining(contractStatus.remaining))}.`;
+        renewDiv.innerHTML = `<div class="${contractStatus.isExpiring ? 'danger' : contractStatus.canRenew ? 'success' : 'success'}">${renewalMsg}</div>`;
+        
+        const renewBtn = document.getElementById('renewBtn');
+        renewBtn.disabled = !(contractStatus.canRenew || contractStatus.isExpiring);
+
+        const listBtn = document.getElementById('listBtn');
+        if (listBtn) {
+            listBtn.innerHTML = listed ? `<i class="fas fa-rotate-left"></i> ${pt('withdrawFromSale')}` : `<i class="fas fa-tags"></i> ${pt('listForSaleBtn')}`;
+            listBtn.classList.toggle('btn-warning', !listed);
+            listBtn.classList.toggle('btn-danger', listed);
+        }
+        
+        document.getElementById('editWage').value = Math.round(wage);
+        const maxYears = maxRenewalYears(ageOf(p));
+        const yearsInput = document.getElementById('editYears');
+        yearsInput.min = 1; yearsInput.max = maxYears;
+        yearsInput.value = Math.min(3, maxYears);
+        document.getElementById('editYearsHint').textContent = pt('maxAgeHint', ageOf(p), maxYears + ' ' + pt(maxYears===1?'yearSingular':'yearsPlural'));
+        document.getElementById('editBonus').value = '';
+        document.getElementById('negotiationResult').style.display = 'none';
+        checkWageFairness();
+        switchModalTab('info');
+        document.getElementById('controlModal').style.display = 'flex';
+    }
+
+    function renderContract(p){
+        const wage = parseFloat(p.weekly_wage) || 0;
+        const fair = fairWage(p);
+        const status = getContractStatus(p);
+        const morale = moraleOf(p);
+        const mInfo = moraleInfo(morale);
+        const untilDate = new Date(status.untilTs);
+        const untilStr = untilDate.toLocaleDateString('ar-EG', { year:'numeric', month:'long', day:'numeric' });
+        const lastRenewalStr = p.last_renewal_ts ? new Date(p.last_renewal_ts).toLocaleDateString('ar-EG', { year:'numeric', month:'long', day:'numeric' }) : 'غير معروف (عقد أصلي)';
+        document.getElementById('contractDetails').innerHTML = `
+            <div class="stat-row"><span>الراتب الأسبوعي الحالي</span><b>${fmtMoney(wage)}€</b></div>
+            <div class="stat-row"><span>الأجر السنوي</span><b>${fmtMoney(wage * 52)}€</b></div>
+            <div class="stat-row"><span>الراتب العادل</span><b style="color:var(--gold)">${fmtMoney(fair)}€</b></div>
+            <div class="stat-row"><span>تاريخ انتهاء العقد الفعلي</span><b>${untilStr}</b></div>
+            <div class="stat-row"><span>آخر تجديد للعقد</span><b>${lastRenewalStr}</b></div>
+            <div class="stat-row"><span>المتبقي من العقد</span><b>${formatContractRemaining(status.remaining)}</b></div>
+            <div class="stat-row"><span>الحالة المعنوية</span><div class="bar"><div class="fill ${morale>=60?'high':morale>=40?'mid':'low'}" style="width:${morale}%"></div></div><b style="color:${mInfo.color}">${mInfo.icon} ${morale}</b></div>
+            ${p.height ? `<div class="stat-row"><span>${pt('heightLbl')}</span><b>${p.height} ${pt('cmUnit')}</b></div>` : ''}
+            ${p.weight ? `<div class="stat-row"><span>${pt('weightLbl')}</span><b>${p.weight} ${pt('kgUnit')}</b></div>` : ''}
+            ${p.foot ? `<div class="stat-row"><span>${pt('footLbl')}</span><b>${p.foot === 'Right' ? pt('rightFoot')+' <i class="fas fa-shoe-prints"></i>' : pt('leftFoot')+' <i class="fas fa-shoe-prints"></i>'}</b></div>` : ''}
+        `;
+    }
+
+    function checkWageFairness(){
+        if(activeIdx == null) return;
+        const p = players[activeIdx];
+        const val = parseFloat(document.getElementById('editWage').value) || 0;
+        const fair = fairWage(p);
+        const hint = document.getElementById('wageFairHint');
+        if(val > fair * 1.4){ 
+            hint.style.color = 'var(--danger)'; 
+            hint.innerText = pt('wageHigh', fmtMoney(fair)); 
+        } else if(val < fair * 0.85){ 
+            hint.style.color = 'var(--warning)'; 
+            hint.innerText = pt('wageRejectRisk', fmtMoney(fair)); 
+        } else { 
+            hint.style.color = 'var(--success)'; 
+            hint.innerText = pt('wageFair', fmtMoney(fair)); 
+        }
+    }
+
+    const SQUAD_AGENTS = [
+        { name: 'وكالة الأفق الرياضي', tone: 'متعاون ويرى أن العرض عادل ما دام قريباً من قيمة السوق.' },
+        { name: 'مجموعة النخبة للإدارة', tone: 'يدافع بشدة عن مصلحة لاعبه ويرفض أي عرض أقل من قيمته الحقيقية.' },
+        { name: 'الوكيل المستقل مراد حلمي', tone: 'عملي ويهتم بضمان مدة عقد طويلة تحمي مستقبل لاعبه.' },
+        { name: 'شركة القمة للتمثيل', tone: 'حريص على مكافآت الأداء أكثر من الراتب الأساسي نفسه.' }
+    ];
+
+    function squadAgentFor(p){
+        const seed = String(nameOf(p)).split('').reduce((s,c)=>s+c.charCodeAt(0),0);
+        return SQUAD_AGENTS[seed % SQUAD_AGENTS.length];
+    }
+
+    function attemptRenewal(){
+        if(activeIdx == null) return;
+        const p = players[activeIdx];
+        const status = getContractStatus(p);
+        
+        if (!status.canRenew && !status.isExpiring) {
+            showToast('ليس وقت تجديد العقد!', '#aa3e2e');
+            return;
+        }
+        
+        const offeredWage = parseFloat(document.getElementById('editWage').value) || fairWage(p);
+        const maxYears = maxRenewalYears(ageOf(p));
+        let years = parseInt(document.getElementById('editYears').value) || Math.min(3, maxYears);
+        years = Math.max(1, Math.min(maxYears, years));
+        document.getElementById('editYears').value = years;
+        const bonus = parseFloat(document.getElementById('editBonus').value) || 0;
+        
+        const negotiation = negotiateContract(p, offeredWage, years, bonus);
+        
+        const resultDiv = document.getElementById('negotiationResult');
+        resultDiv.style.display = 'block';
+        resultDiv.style.background = negotiation.accepted ? 'rgba(0,255,136,0.1)' : 'rgba(255,51,102,0.1)';
+        resultDiv.style.border = negotiation.accepted ? '1px solid var(--success)' : '1px solid var(--danger)';
+        resultDiv.style.color = negotiation.accepted ? 'var(--success)' : 'var(--danger)';
+        const agent = squadAgentFor(p);
+        resultDiv.innerHTML = `${negotiation.message} (${pt('acceptanceRateLbl', negotiation.acceptanceRate)})`
+            + `<div style="margin-top:8px;font-size:0.72rem;color:var(--text-muted);border-top:1px solid rgba(255,255,255,.08);padding-top:6px;">`
+            + `<i class="fas fa-user-tie"></i> <b>${agent.name}:</b> ${agent.tone}</div>`;
+        
+        if (negotiation.accepted) {
+            p.weekly_wage = offeredWage;
+            p.contract_until_ts = Date.now() + years * 365.25 * 24 * 3600 * 1000;
+            p.last_renewal_ts = Date.now();
+
+            const oldValue = marketValueEUR(p);
+            const valueFactor = 1 + (years - 3) * 0.05;
+            const fairVal = fairWage(p);
+            const wageFactor = 1 + (offeredWage / fairVal - 1) * 0.2;
+            let newValue = oldValue * valueFactor * wageFactor;
+            if (bonus > 0) newValue += bonus * 0.3;
+            p.market_value_eur = Math.round(newValue);
+            
+            if (p.release_clause) {
+                p.release_clause = Math.round(p.release_clause * (newValue / oldValue));
+            }
+            
+            saveSquad();
+            loadSquad();
+            closeModals();
+            showToast(pt('renewedToast', nameOf(p), new Date(p.contract_until_ts).toLocaleDateString(localStorage.getItem('gameLanguage')==='ar'?'ar-EG':'en-GB')));
+        }
+    }
+
+    function listForTransfer(){
+        if(activeIdx == null) return;
+        const p = players[activeIdx];
+        if (isPlayerListed(p)) { unlistFromTransfer(); return; }
+
+        let list = getTransferListed();
+        list.push({
+            name: nameOf(p), club: getClubName(), position: posOf(p), pos: posOf(p),
+            value: marketValueEUR(p), val: marketValueEUR(p), age: ageOf(p),
+            nationality: natOf(p), wage: parseFloat(p.weekly_wage) || 0,
+            skills: p.skills || {}
+        });
+        saveTransferListed(list);
+        showToast(`<i class="fas fa-tag"></i> ${nameOf(p)} ${pt('nowListedToast')}`);
+        renderAll();
+        openPlayer(activeIdx);
+    }
+
+    function unlistFromTransfer(){
+        if(activeIdx == null) return;
+        const p = players[activeIdx];
+        const list = getTransferListed().filter(x => !(x.name === nameOf(p) && x.club === getClubName()));
+        saveTransferListed(list);
+        showToast(`↩️ ${pt('withdrawnToast', nameOf(p))}`);
+        renderAll();
+        openPlayer(activeIdx);
+    }
+    
+    function releasePlayer(){
+        if(activeIdx == null) return;
+        const p = players[activeIdx];
+        if(!confirm(pt('releaseConfirm', nameOf(p)))) return;
+        saveTransferListed(getTransferListed().filter(x => !(x.name === nameOf(p) && x.club === getClubName())));
+        players.splice(activeIdx, 1);
+        saveSquad();
+        loadSquad();
+        closeModals();
+        showToast(pt('releasedToast', nameOf(p)));
+    }
+
+    function switchModalTab(t){
+        document.querySelectorAll('.modal-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+        document.querySelectorAll('.modal-section').forEach(s => s.classList.remove('active'));
+        document.getElementById('tab-' + t).classList.add('active');
+    }
+    
+    function closeModals(){ 
+        document.getElementById('controlModal').style.display = 'none'; 
+        activeIdx = null; 
+    }
+    
+    function showToast(msg, bgColor){ 
+        const t = document.createElement('div'); 
+        t.className = 'toast-msg'; 
+        t.innerHTML = msg; 
+        if(bgColor) t.style.background = bgColor;
+        document.body.appendChild(t); 
+        setTimeout(() => t.remove(), 3000); 
+    }
+
+    // ============================================================
+    // نظام لغات حقيقي — النصوص البنيوية الثابتة (رأس الصفحة، تبويبات النافذة، أزرار العقد) مترجمة فعلياً لـ7 لغات
+    // (بصراحة: تفاصيل المهارات والمعلومات المولَّدة ديناميكياً داخل دوال JS تحتاج عملاً إضافياً منفصلاً لتغطيتها بالكامل)
+    // ============================================================
+    const I18N_PLAYER = {
+        lblPlayers: { ar:'لاعباً', en:'Players', fr:'Joueurs', es:'Jugadores', de:'Spieler', pt:'Jogadores', tr:'Oyuncu' },
+        lblClub: { ar:'النادي', en:'Club', fr:'Club', es:'Club', de:'Verein', pt:'Clube', tr:'Kulüp' },
+        lblSquadVal: { ar:'قيمة القائمة', en:'Squad Value', fr:'Valeur de l\'effectif', es:'Valor de la plantilla', de:'Kaderwert', pt:'Valor do elenco', tr:'Kadro Değeri' },
+        lblAvgRating: { ar:'متوسط التقييم', en:'Average Rating', fr:'Note moyenne', es:'Valoración media', de:'Durchschnittsbewertung', pt:'Classificação média', tr:'Ortalama Reyting' },
+        lblWages: { ar:'الرواتب/أسبوع', en:'Wages/Week', fr:'Salaires/semaine', es:'Salarios/semana', de:'Gehälter/Woche', pt:'Salários/semana', tr:'Maaşlar/Hafta' },
+        tabInfo: { ar:'المعلومات', en:'Info', fr:'Infos', es:'Información', de:'Info', pt:'Informação', tr:'Bilgi' },
+        tabSkills: { ar:'المهارات', en:'Skills', fr:'Compétences', es:'Habilidades', de:'Fähigkeiten', pt:'Habilidades', tr:'Yetenekler' },
+        tabContract: { ar:'العقد', en:'Contract', fr:'Contrat', es:'Contrato', de:'Vertrag', pt:'Contrato', tr:'Sözleşme' },
+        btnRenewTxt: { ar:'عرض تجديد', en:'Renewal Offer', fr:'Offre de renouvellement', es:'Oferta de renovación', de:'Verlängerungsangebot', pt:'Oferta de renovação', tr:'Yenileme Teklifi' },
+        btnListTxt: { ar:'عرض للبيع', en:'List for Sale', fr:'Mettre en vente', es:'Poner en venta', de:'Zum Verkauf anbieten', pt:'Colocar à venda', tr:'Satışa Çıkar' },
+        btnReleaseTxt: { ar:'فسخ', en:'Release', fr:'Résilier', es:'Rescindir', de:'Auflösen', pt:'Rescindir', tr:'Fesih' },
+        lblAge: { ar:'العمر', en:'Age', fr:'Âge', es:'Edad', de:'Alter', pt:'Idade', tr:'Yaş' },
+        lblNationality: { ar:'الجنسية', en:'Nationality', fr:'Nationalité', es:'Nacionalidad', de:'Nationalität', pt:'Nacionalidade', tr:'Uyruk' },
+        lblPotential: { ar:'الإمكانية', en:'Potential', fr:'Potentiel', es:'Potencial', de:'Potenzial', pt:'Potencial', tr:'Potansiyel' },
+        lblMorale: { ar:'الحالة المعنوية', en:'Morale', fr:'Moral', es:'Moral', de:'Moral', pt:'Moral', tr:'Moral' },
+        lblInjuryStatus: { ar:'الحالة الصحية', en:'Health Status', fr:'État de santé', es:'Estado de salud', de:'Gesundheitszustand', pt:'Estado de saúde', tr:'Sağlık Durumu' },
+        lblMarketValue: { ar:'القيمة السوقية', en:'Market Value', fr:'Valeur marchande', es:'Valor de mercado', de:'Marktwert', pt:'Valor de mercado', tr:'Piyasa Değeri' },
+        lblGoals: { ar:'الأهداف', en:'Goals', fr:'Buts', es:'Goles', de:'Tore', pt:'Golos', tr:'Gol' },
+        lblAssists: { ar:'التمريرات', en:'Assists', fr:'Passes décisives', es:'Asistencias', de:'Vorlagen', pt:'Assistências', tr:'Asist' },
+        lblMatches: { ar:'المباريات', en:'Matches', fr:'Matchs', es:'Partidos', de:'Spiele', pt:'Jogos', tr:'Maçlar' },
+        lblRelease: { ar:'الشرط الجزائي', en:'Release Clause', fr:'Clause libératoire', es:'Cláusula de rescisión', de:'Ablöseklausel', pt:'Cláusula de rescisão', tr:'Bonservis Bedeli' },
+        lblThought: { ar:'تفكير اللاعب', en:"Player's Thoughts", fr:'Pensées du joueur', es:'Pensamientos del jugador', de:'Gedanken des Spielers', pt:'Pensamentos do jogador', tr:'Oyuncunun Düşünceleri' },
+        lblProposedWage: { ar:'الراتب الأسبوعي المقترح (€)', en:'Proposed Weekly Wage (€)', fr:'Salaire hebdomadaire proposé (€)', es:'Salario semanal propuesto (€)', de:'Vorgeschlagenes Wochengehalt (€)', pt:'Salário semanal proposto (€)', tr:'Önerilen Haftalık Maaş (€)' },
+        lblContractYears: { ar:'مدة العقد (سنوات)', en:'Contract Length (years)', fr:'Durée du contrat (années)', es:'Duración del contrato (años)', de:'Vertragsdauer (Jahre)', pt:'Duração do contrato (anos)', tr:'Sözleşme Süresi (yıl)' },
+        lblSignBonus: { ar:'مكافأة التوقيع (€)', en:'Signing Bonus (€)', fr:'Prime à la signature (€)', es:'Bono de fichaje (€)', de:'Unterschriftsprämie (€)', pt:'Prémio de assinatura (€)', tr:'İmza Bonusu (€)' },
+    };
+    function applyPlayerLanguage() {
+        const lang = localStorage.getItem('gameLanguage') || 'ar';
+        for (const key in I18N_PLAYER) {
+            const el = document.getElementById(key);
+            if (el && I18N_PLAYER[key][lang]) el.innerText = I18N_PLAYER[key][lang];
+        }
+    }
+    applyPlayerLanguage();
+
+    // بدء التحميل
+    loadSquad();
+</script>
+</body>
+</html>         

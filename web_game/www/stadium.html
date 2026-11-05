@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>الملعب | Football Manager World</title>
+    <script src="indexeddb.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444;
+            --md-surface-container-high:#1a2236;
+            --md-elevation-1: 0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.5);
+            --md-elevation-2: 0 3px 8px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.5);
+            --md-elevation-3: 0 8px 22px rgba(0,0,0,0.5);
+            --md-shape-sm:12px; --md-shape-md:16px; --md-shape-lg:20px; --md-shape-xl:28px; --md-shape-full:999px;
+        }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+            --md-surface-container-high: #eef0f5;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:12px 14px; border-radius:var(--md-shape-md); box-shadow:var(--md-elevation-1); }
+        .back-btn { background:var(--md-surface-container-high); color:var(--text); border:none; padding:9px 13px; font-size:12px; border-radius:var(--md-shape-full); text-decoration:none; }
+        .page-title { font-size:14px; font-weight:800; color:var(--gold); }
+
+        .stadium-hero {
+            border-radius:var(--md-shape-xl); overflow:hidden; padding:26px 18px; text-align:center; position:relative;
+            background:linear-gradient(135deg, #0f2818, #0a1710);
+            box-shadow:var(--md-elevation-3);
+        }
+        .stadium-hero::before {
+            content:''; position:absolute; inset:0;
+            background: repeating-linear-gradient(90deg, rgba(34,197,94,0.05) 0 40px, rgba(34,197,94,0.09) 40px 80px);
+        }
+        .stadium-hero .icon-box { width:60px; height:60px; border-radius:var(--md-shape-lg); background:rgba(34,197,94,0.15); border:2px solid var(--green); display:flex; align-items:center; justify-content:center; font-size:26px; color:var(--green); margin:0 auto 12px auto; position:relative; box-shadow:0 4px 14px rgba(34,197,94,0.25); }
+        .stadium-hero .sname { font-size:18px; font-weight:800; position:relative; }
+        .stadium-hero .ssub { font-size:11px; color:var(--muted); margin-top:4px; position:relative; }
+        .stadium-hero .cap-value { font-size:30px; font-weight:900; color:var(--gold); margin-top:14px; position:relative; text-shadow:0 2px 10px rgba(232,184,75,0.3); }
+        .stadium-hero .cap-lbl { font-size:10px; color:var(--muted); position:relative; }
+        .real-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(34,197,94,0.15); color:var(--green); font-size:9.5px; font-weight:800; padding:4px 11px; border-radius:var(--md-shape-full); margin-top:10px; position:relative; }
+        .est-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(232,184,75,0.15); color:var(--gold); font-size:9.5px; font-weight:800; padding:4px 11px; border-radius:var(--md-shape-full); margin-top:10px; position:relative; }
+
+        .card { background:var(--card); border:1px solid rgba(255,255,255,0.06); border-radius:var(--md-shape-lg); box-shadow:var(--md-elevation-1); overflow:hidden; }
+        .card-title { font-size:12px; font-weight:800; color:var(--gold); padding:12px 14px 8px 14px; display:flex; align-items:center; gap:6px; }
+        .empty-state { text-align:center; padding:26px 16px; color:var(--muted); font-size:12.5px; line-height:1.8; }
+
+        .ticket-row { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.05); }
+        .ticket-row:last-child { border-bottom:none; }
+        .ticket-row .tname { flex:1; font-size:11.5px; font-weight:700; }
+        .ticket-row input { width:70px; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:7px; border-radius:var(--md-shape-full); font-size:12px; text-align:center; font-weight:800; }
+
+        .match-row { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.05); }
+        .match-row:last-child { border-bottom:none; }
+        .match-row .info { flex:1; }
+        .match-row .mname { font-size:12.5px; font-weight:700; }
+        .match-row .msub { font-size:10.5px; color:var(--muted); margin-top:2px; }
+        .match-row .att { text-align:left; }
+        .match-row .att .num { font-size:13px; font-weight:800; color:var(--gold); }
+        .match-row .att .lbl { font-size:9px; color:var(--muted); }
+        .fill-track { height:6px; background:var(--border); border-radius:var(--md-shape-full); overflow:hidden; margin-top:6px; }
+        .fill-bar { height:100%; border-radius:var(--md-shape-full); }
+
+        .report-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; padding:10px 14px 14px 14px; }
+        .report-box { background:rgba(255,255,255,0.03); border-radius:var(--md-shape-md); padding:12px; }
+        .report-box .lbl { font-size:10px; color:var(--muted); }
+        .report-box .val { font-size:14px; font-weight:800; margin-top:3px; color:var(--gold); }
+
+        .btn { width:100%; border:none; padding:14px; border-radius:var(--md-shape-full); font-size:13px; font-weight:800; cursor:pointer; background:var(--gold); color:#06090f; box-shadow:var(--md-elevation-1); }
+        .btn:disabled { opacity:0.5; }
+        .btn-outline2 { width:100%; border:1px solid var(--border); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; background:var(--bg); color:var(--text); }
+
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:50; align-items:flex-end; justify-content:center; }
+        .modal-overlay.active { display:flex; }
+        .modal-sheet { background:var(--card); width:100%; max-width:480px; border-radius:16px 16px 0 0; padding:16px; display:flex; flex-direction:column; gap:10px; }
+        .close-modal { margin-right:auto; background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; }
+        .vote-row { display:flex; align-items:center; gap:8px; padding:6px 0; font-size:11.5px; }
+        .vote-row i { width:16px; text-align:center; }
+        .vote-yes { color:var(--green); } .vote-no { color:var(--red); }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="budget_office.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title"><i class="fas fa-landmark-dome"></i> <span id="pageTitleTxt">الملعب</span></div>
+        <div style="width:34px;"></div>
+    </div>
+
+    <div class="stadium-hero" id="stadiumHero"></div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-ticket"></i> <span id="titleTickets">أسعار التذاكر (تحدَّد يدوياً)</span></div>
+        <div id="ticketPricesContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-calendar-day"></i> <span id="titleUpcoming">المباريات القادمة على أرضك</span></div>
+        <div id="upcomingMatchesContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-signature"></i> <span id="titleNaming">حقوق تسمية الملعب</span></div>
+        <div id="namingRightsContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-shield-heart"></i> <span id="titleSafety">ملف اعتماد السلامة والحالة العامة</span></div>
+        <div id="safetyCertContainer"></div>
+    </div>
+
+    <div class="card" id="altStadiumCard" style="display:none;">
+        <div class="card-title"><i class="fas fa-map-location-dot"></i> <span id="titleTemp">الملعب البديل قيد الاستخدام</span></div>
+        <div id="altStadiumContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-screwdriver-wrench"></i> <span id="titleMaintenance">مشاريع الصيانة</span></div>
+        <div id="maintenanceProjectsContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-hammer"></i> <span id="titleDev">مشاريع التطوير</span></div>
+        <div id="developmentProjectsContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-timeline"></i> <span id="titleHistory">دورة حياة الملعب</span></div>
+        <div id="stadiumHistoryContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-chart-simple"></i> <span id="titleFinance">التقرير المالي للملعب</span></div>
+        <div class="report-grid" id="reportGrid"></div>
+    </div>
+
+    <div class="card" style="padding:14px;">
+        <div id="constructionStatusBox"></div>
+        <div class="card-title" style="padding:0 0 8px 0;"><i class="fas fa-city"></i> <span id="titleMega">مشاريع ضخمة</span></div>
+        <div id="megaProjectButtons" style="display:flex; flex-direction:column; gap:8px;">
+            <button class="btn" id="expansionBtn" onclick="openExpansionModal()">توسعة الملعب (زيادة السعة)</button>
+            <button class="btn-outline2" onclick="openMegaProjectModal('partialRebuild')">إعادة بناء جزء من المدرجات</button>
+            <button class="btn-outline2" onclick="openMegaProjectModal('fullRenovation')">تجديد شامل للملعب</button>
+            <button class="btn-outline2" onclick="openMegaProjectModal('newStadium')">بناء ملعب جديد بالكامل</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="voteModal">
+        <div class="modal-sheet">
+            <div style="display:flex; align-items:center;">
+                <div style="font-size:14px; font-weight:800; color:var(--gold);" id="voteModalTitle">مشروع توسعة الملعب</div>
+                <button class="close-modal" onclick="closeVoteModal()"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div id="voteModalAmountSection" style="display:none;">
+                <div style="font-size:11px; color:var(--muted); margin-top:4px;">مستوى الجودة</div>
+                <div style="display:flex; gap:6px; padding:8px 0;" id="qualityTierRow"></div>
+                <div style="font-size:9.5px; color:var(--muted); margin-bottom:6px;" id="qualityTierDesc"></div>
+                <div style="font-size:11px; color:var(--muted); margin-top:4px;">طريقة التمويل</div>
+                <div style="display:flex; gap:6px; padding:8px 0;" id="financingRow"></div>
+                <div style="font-size:9.5px; color:var(--muted); margin-bottom:6px;" id="financingDesc"></div>
+                <div id="capacityInputRow">
+                    <div style="font-size:11px; color:var(--muted); margin-top:4px;" id="capacityInputLabel">زيادة السعة المطلوبة (عدد المقاعد)</div>
+                    <div style="display:flex; align-items:center; gap:8px; padding:8px 0;"><input type="number" id="capacityInput" min="500" step="500" oninput="onCapacityInputChange()" style="flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:12px; font-size:14px; text-align:center; font-weight:800;"></div>
+                </div>
+                <div id="expansionCostLabel" style="font-size:11px; color:var(--muted); padding:8px 0; line-height:1.8;">--</div>
+                <div class="vote-row"><span>فرصة موافقة المجلس</span><b id="voteChanceLabel" style="color:var(--gold); margin-right:auto;">--%</b></div>
+                <div style="height:8px; background:var(--border); border-radius:5px; overflow:hidden; margin:6px 0;"><div id="voteChanceBar" style="height:100%; width:0%; transition:width 0.2s;"></div></div>
+                <button id="voteConfirmBtn" onclick="onSubmitProject()" style="width:100%; border:none; padding:12px; border-radius:10px; font-size:13px; font-weight:800; cursor:pointer; background:var(--gold); color:#06090f; margin-top:10px;">عرض المشروع على المجلس</button>
+            </div>
+            <div id="voteModalBody"></div>
+        </div>
+    </div>
+
+    <div id="toast" style="position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--gold); color:var(--text); padding:10px 16px; border-radius:10px; font-size:12px; display:none; z-index:99; max-width:90%; text-align:center;"></div>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || '';
+        const homeCountry = localStorage.getItem('homeCountry') || 'Saudi Arabia';
+        function showToast(msg) { const t=document.getElementById('toast'); t.innerHTML=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 3200); }
+        function seedHash(str) { let h=0; const s=String(str); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+        function getClubBudget() { return parseFloat(localStorage.getItem('clubBudget')) || 150.0; }
+        function setClubBudget(v) { localStorage.setItem('clubBudget', v.toFixed(2)); }
+        function getClubReputation() { return parseFloat(localStorage.getItem('clubReputation')) || 50; }
+        function getClubTrophyCount() { try { return (JSON.parse(localStorage.getItem('club_trophies'))||[]).length; } catch(e){ return 0; } }
+        function fedGetRules() { return JSON.parse(localStorage.getItem('federationRules')) || { tier:1 }; }
+        function getGameDate() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+        function dateLabel(d) { return `${String(d.day).padStart(2,'0')}/${String(d.month).padStart(2,'0')}/${d.year}`; }
+        function dateSortKey(d) { return d.year*10000+d.month*100+d.day; }
+        function addDaysToDate(base, days) {
+            let d = { ...base };
+            for (let i=0;i<days;i++){
+                d.day++; let dim=30;
+                if ([1,3,5,7,8,10,12].includes(d.month)) dim=31;
+                else if (d.month===2) dim=(d.year%4===0)?29:28;
+                if (d.day>dim){ d.day=1; d.month++; }
+                if (d.month>12){ d.month=1; d.year++; }
+            }
+            return d;
+        }
+        function getTeamLogoUrl(t) { return `teams_logos/${(t||'').trim()}.png`; }
+        function addMessageToSystem(sender, text, category) {
+            let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+            inbox.unshift({ id: Date.now(), sender, text, time: new Date().toLocaleTimeString('en-US', { hour12:false }), read:false, category: category || 'finance' });
+            localStorage.setItem('gameInbox', JSON.stringify(inbox));
+            localStorage.setItem('hasNewMessage', 'true');
+        }
+
+        // ============================================================
+        // دورة حياة الملعب — سجل تاريخي حقيقي مؤرَّخ بالأحداث الفعلية التي وقعت لهذا الملعب تحديداً، وليس نصاً عاماً
+        // ============================================================
+        function getStadiumHistory() { try { return JSON.parse(localStorage.getItem('stadiumHistory_' + activeClub)) || []; } catch(e){ return []; } }
+        function logStadiumHistory(icon, event) {
+            const history = getStadiumHistory();
+            const gd = getGameDate();
+            history.push({ year: gd.year, month: gd.month, icon, event, dateSort: dateSortKey(gd) });
+            localStorage.setItem('stadiumHistory_' + activeClub, JSON.stringify(history));
+        }
+        function ensureHistorySeed() {
+            const history = getStadiumHistory();
+            if (history.length > 0) return;
+            const info = getStadiumInfo();
+            logStadiumHistory('<i class="fas fa-landmark-dome"></i>', `بداية إدارتك الرئاسية — الملعب: ${info.name} (${info.capacity.toLocaleString()} مقعد)${info.isReal ? ' — بيانات حقيقية موثَّقة' : ''}.`);
+        }
+        function renderStadiumHistory() {
+            const el = document.getElementById('stadiumHistoryContainer');
+            if (!el) return;
+            const history = getStadiumHistory().slice().sort((a,b) => b.dateSort - a.dateSort);
+            el.innerHTML = history.map(h => `
+                <div class="ticket-row" style="align-items:flex-start;">
+                    <div style="font-size:16px;">${h.icon}</div>
+                    <div style="flex:1;">
+                        <div style="font-size:9.5px; color:var(--gold); font-weight:700;">${h.month}/${h.year}</div>
+                        <div style="font-size:11px; color:var(--text); margin-top:2px;">${h.event}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================
+        // بيانات ملعب حقيقية فعلية من team.csv (81 نادياً حقيقياً موثَّقاً بالاسم والسعة الحقيقيين)
+        // ============================================================
+        const REAL_STADIUMS = {"FC Barcelona Atlètic": {"stadium_name": "Spotify Camp Nou", "stadium_capacity": "99354.0"}, "FC Barcelona": {"stadium_name": "Spotify Camp Nou", "stadium_capacity": "99354.0"}, "Real Madrid": {"stadium_name": "Santiago Bernabéu", "stadium_capacity": "81044.0"}, "RCD Espanyol Barcelona": {"stadium_name": "Spotify Camp Nou", "stadium_capacity": "99354.0"}, "Real Madrid C": {"stadium_name": "Santiago Bernabéu", "stadium_capacity": "81044.0"}, "Al-Ittihad Club": {"stadium_name": "King Abdullah Sports City", "stadium_capacity": "62345.0"}, "Al-Hilal SFC": {"stadium_name": "Kingdom Arena", "stadium_capacity": "27000.0"}, "Manchester United U21": {"stadium_name": "Old Trafford", "stadium_capacity": "74310.0"}, "Arsenal FC": {"stadium_name": "Emirates Stadium", "stadium_capacity": "60704.0"}, "Chelsea FC": {"stadium_name": "Stamford Bridge", "stadium_capacity": "40341.0"}, "Liverpool FC": {"stadium_name": "Anfield", "stadium_capacity": "61276.0"}, "Manchester City": {"stadium_name": "Etihad Stadium", "stadium_capacity": "53400.0"}, "Manchester United": {"stadium_name": "Old Trafford", "stadium_capacity": "74310.0"}, "Tottenham Hotspur": {"stadium_name": "Tottenham Hotspur Stadium", "stadium_capacity": "62850.0"}, "Real Madrid Castilla": {"stadium_name": "Santiago Bernabéu", "stadium_capacity": "81044.0"}, "Manchester City U21": {"stadium_name": "Etihad Stadium", "stadium_capacity": "53400.0"}, "SL Benfica U23": {"stadium_name": "Estádio da Luz", "stadium_capacity": "64642.0"}, "Paris Saint-Germain Espoirs": {"stadium_name": "Parc des Princes", "stadium_capacity": "47929.0"}, "Chelsea FC U21": {"stadium_name": "Stamford Bridge", "stadium_capacity": "40341.0"}, "Borussia Dortmund II": {"stadium_name": "Signal Iduna Park", "stadium_capacity": "81365.0"}, "Manchester United U18": {"stadium_name": "Old Trafford", "stadium_capacity": "74310.0"}, "Manchester City U18": {"stadium_name": "Etihad Stadium", "stadium_capacity": "53400.0"}, "Liverpool FC U18": {"stadium_name": "Anfield", "stadium_capacity": "61276.0"}, "Arsenal FC U18": {"stadium_name": "Emirates Stadium", "stadium_capacity": "60704.0"}, "Chelsea FC U18": {"stadium_name": "Stamford Bridge", "stadium_capacity": "40341.0"}, "Tottenham Hotspur U18": {"stadium_name": "Tottenham Hotspur Stadium", "stadium_capacity": "62850.0"}, "Arsenal FC U21": {"stadium_name": "Emirates Stadium", "stadium_capacity": "60704.0"}, "Tottenham Hotspur U21": {"stadium_name": "Tottenham Hotspur Stadium", "stadium_capacity": "62850.0"}, "Liverpool FC U21": {"stadium_name": "Anfield", "stadium_capacity": "61276.0"}, "Arsenal Dzerzhinsk": {"stadium_name": "Emirates Stadium", "stadium_capacity": "60704.0"}, "Liverpool FC Montevideo": {"stadium_name": "Anfield", "stadium_capacity": "61276.0"}, "Paris Saint-Germain": {"stadium_name": "Parc des Princes", "stadium_capacity": "47929.0"}, "Paris Saint-Germain U19": {"stadium_name": "Parc des Princes", "stadium_capacity": "47929.0"}, "FC Porto Portugais Amiens": {"stadium_name": "Estádio do Dragão", "stadium_capacity": "50033.0"}, "Ajax Amsterdam U19": {"stadium_name": "Johan Cruyff Arena", "stadium_capacity": "54990.0"}, "Ajax Amsterdam U17": {"stadium_name": "Johan Cruyff Arena", "stadium_capacity": "54990.0"}, "PSV Eindhoven": {"stadium_name": "Philips Stadion", "stadium_capacity": "35000.0"}, "Ajax Amsterdam": {"stadium_name": "Johan Cruyff Arena", "stadium_capacity": "54990.0"}, "Feyenoord Rotterdam": {"stadium_name": "De Kuip", "stadium_capacity": "51117.0"}, "FC Utrecht": {"stadium_name": "Stadion Galgenwaard", "stadium_capacity": "23750.0"}, "AZ Alkmaar": {"stadium_name": "AFAS Stadion", "stadium_capacity": "19500.0"}, "SL Benfica": {"stadium_name": "Estádio da Luz", "stadium_capacity": "64642.0"}, "FC Porto": {"stadium_name": "Estádio do Dragão", "stadium_capacity": "50033.0"}, "SL Benfica B": {"stadium_name": "Estádio da Luz", "stadium_capacity": "64642.0"}, "FC Porto B": {"stadium_name": "Estádio do Dragão", "stadium_capacity": "50033.0"}, "Arsenal Tula": {"stadium_name": "Emirates Stadium", "stadium_capacity": "60704.0"}, "Arsenal-2 Tula": {"stadium_name": "Emirates Stadium", "stadium_capacity": "60704.0"}, "Galatasaray": {"stadium_name": "RAMS Park", "stadium_capacity": "52650.0"}, "Fenerbahce": {"stadium_name": "Sukru Saracoglu Stadium", "stadium_capacity": "47544.0"}, "Besiktas JK": {"stadium_name": "Tupras Stadium", "stadium_capacity": "42445.0"}, "Basaksehir FK": {"stadium_name": "Basaksehir Fatih Terim Stadium", "stadium_capacity": "17319.0"}, "Trabzonspor": {"stadium_name": "Papara Park", "stadium_capacity": "40782.0"}, "Arsenal Tivat": {"stadium_name": "Emirates Stadium", "stadium_capacity": "60704.0"}, "Ajax Amsterdam U21": {"stadium_name": "Johan Cruyff Arena", "stadium_capacity": "54990.0"}, "CR Flamengo": {"stadium_name": "Maracana", "stadium_capacity": "78838.0"}, "Santos FC": {"stadium_name": "Vila Belmiro", "stadium_capacity": "16068.0"}, "Barcelona SC Guayaquil": {"stadium_name": "Spotify Camp Nou", "stadium_capacity": "99354.0"}, "Barcelona FC (BA)": {"stadium_name": "Spotify Camp Nou", "stadium_capacity": "99354.0"}, "Barcelona FC (RO)": {"stadium_name": "Spotify Camp Nou", "stadium_capacity": "99354.0"}, "Pyramids FC": {"stadium_name": "30 June Stadium", "stadium_capacity": "30000.0"}, "Al Ahly FC": {"stadium_name": "Cairo International Stadium", "stadium_capacity": "75000.0"}, "Zamalek SC": {"stadium_name": "Cairo International Stadium", "stadium_capacity": "75000.0"}, "AS FAR Rabat": {"stadium_name": "Prince Moulay Abdellah Stadium", "stadium_capacity": "53000.0"}, "Raja Club Athletic": {"stadium_name": "Stade Mohammed V", "stadium_capacity": "67000.0"}, "Berekum Chelsea FC": {"stadium_name": "Stamford Bridge", "stadium_capacity": "40341.0"}, "Bayern Munich": {"stadium_name": "Allianz Arena", "stadium_capacity": "75000.0"}, "Borussia Dortmund U19": {"stadium_name": "Signal Iduna Park", "stadium_capacity": "81365.0"}, "FC Bayern Munich U19 ": {"stadium_name": "Allianz Arena", "stadium_capacity": "75000.0"}, "Racing Club": {"stadium_name": "Estadio Presidente Peron", "stadium_capacity": "55000.0"}, "Borussia Dortmund U17": {"stadium_name": "Signal Iduna Park", "stadium_capacity": "81365.0"}, "Borussia Dortmund": {"stadium_name": "Signal Iduna Park", "stadium_capacity": "81365.0"}, "SSC Napoli": {"stadium_name": "Stadio Diego Armando Maradona", "stadium_capacity": "54726.0"}, "Inter Milan": {"stadium_name": "San Siro", "stadium_capacity": "75817.0"}, "Juventus FC": {"stadium_name": "Allianz Stadium", "stadium_capacity": "41507.0"}, "AC Milan": {"stadium_name": "San Siro", "stadium_capacity": "75817.0"}, "Inter Milan Primavera": {"stadium_name": "San Siro", "stadium_capacity": "75817.0"}, "AC Milan Primavera": {"stadium_name": "San Siro", "stadium_capacity": "75817.0"}, "FK Arsenal Ceska Lipa": {"stadium_name": "Emirates Stadium", "stadium_capacity": "60704.0"}, "JK Arsenal": {"stadium_name": "Emirates Stadium", "stadium_capacity": "60704.0"}, "FC Bayern Munich II": {"stadium_name": "Allianz Arena", "stadium_capacity": "75000.0"}, "FC Bayern Munich U17 ": {"stadium_name": "Allianz Arena", "stadium_capacity": "75000.0"}};
+
+        function normalizeForMatch(s) { return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
+        function findRealStadiumRecord(clubName) {
+            // مطابقة مباشرة أولاً
+            if (REAL_STADIUMS[clubName]) return REAL_STADIUMS[clubName];
+            // مطابقة مرنة (فراغات/حالة أحرف) لتفادي فشل صامت بسبب فرق بسيط في التسمية بين صفحة اختيار النادي وقاعدة البيانات
+            const target = normalizeForMatch(clubName);
+            for (const key in REAL_STADIUMS) {
+                if (normalizeForMatch(key) === target) return REAL_STADIUMS[key];
+            }
+            return null;
+        }
+        function getStadiumInfo() {
+            const rebuilt = (() => { try { return JSON.parse(localStorage.getItem('stadiumRebuilt_' + activeClub)); } catch(e){ return null; } })();
+            if (rebuilt && rebuilt.capacity) {
+                return { name: `الملعب الجديد لـ${activeClub}`, capacity: rebuilt.capacity, isReal: false, isRebuilt: true };
+            }
+            const real = findRealStadiumRecord(activeClub);
+            if (real && real.stadium_name && real.stadium_capacity) {
+                return { name: real.stadium_name, capacity: Math.round(parseFloat(real.stadium_capacity)), isReal: true };
+            }
+            // لا بيانات حقيقية لهذا النادي تحديداً — نقدّر سعة معقولة من سمعته ودرجته، ونُصرّح بذلك بوضوح
+            const rep = getClubReputation();
+            const rules = fedGetRules();
+            const tierMult = rules.tier === 1 ? 1.0 : rules.tier === 2 ? 0.55 : 0.3;
+            const estCapacity = Math.round((8000 + (rep/100) * 42000) * tierMult / 500) * 500;
+            return { name: `ملعب ${activeClub}`, capacity: estCapacity, isReal: false };
+        }
+
+        function getStadiumUpgrade() { return parseInt(localStorage.getItem('stadiumCapacityUpgrade_' + activeClub)) || 0; }
+        function getAltStadiumCapacity() { return Math.round(getStadiumInfo().capacity * 0.55 / 500) * 500; }
+        function getEffectiveCapacity() {
+            if (isStadiumBanned()) return getAltStadiumCapacity();
+            const base = getStadiumInfo().capacity + getStadiumUpgrade();
+            const project = getActiveConstruction();
+            let capacity = base;
+            if (project && project.closedSeats) capacity = Math.max(1000, base - project.closedSeats);
+            capacity = Math.round(capacity * getCapacityRestrictionFactor());
+            return Math.max(1000, capacity);
+        }
+
+        // ============================================================
+        // مشروع إنشائي حقيقي بمدة زمنية فعلية — لا توسعة فورية، تماماً كمشاريع الملاعب الحقيقية
+        // ============================================================
+        function getActiveConstruction() { try { return JSON.parse(localStorage.getItem('stadiumConstruction_' + activeClub)); } catch(e){ return null; } }
+        // مدد إنشاء واقعية فعلية حسب حجم المشروع (مطابقة لمعدلات مشاريع توسعة الملاعب الحقيقية حول العالم)
+        // تشمل المدة الكاملة: دراسة + تمويل + موافقات + تصميم ومناقصة + بناء + فحص واعتماد — وليس البناء فقط
+        function daysForConstruction(seats) {
+            const months = seats <= 5000
+                ? 6 + (seats/5000) * 9                          // توسعة صغيرة: 6–15 شهراً
+                : seats <= 15000
+                ? 12 + ((seats-5000)/10000) * 12                 // توسعة متوسطة: 12–24 شهراً
+                : 18 + Math.min(1, (seats-15000)/15000) * 18;    // توسعة كبيرة: 18–36 شهراً (تُقفل عند 30 ألف مقعد إضافي)
+            return Math.round(months * 30.4);
+        }
+        // احتياطي مخاطر واقعي (10% من التكلفة الأساسية) — يُضاف دائماً للميزانية المعتمدة، مطابقاً لممارسات مشاريع الإنشاءات الحقيقية
+        function riskReserve(baseCost) { return Math.round(baseCost * 0.10 * 20) / 20; }
+        // مرحلة المشروع الحالية ضمن دورة حياته الحقيقية الكاملة (دراسة → تمويل → موافقات → تصميم ومناقصة → بناء → فحص واعتماد)
+        function getProjectStage(pct) {
+            if (pct < 20) return 'التخطيط والموافقات';
+            if (pct < 30) return 'المناقصة والتعاقد';
+            if (pct < 93) return 'أعمال البناء الفعلية';
+            return 'الاعتماد والافتتاح';
+        }
+        // تقسيم حقيقي واضح لمدة المشروع الكاملة إلى مراحلها الفعلية المنفصلة — وليست نسبة مئوية مجردة فقط
+        function getStageBreakdown(totalDays) {
+            const months = totalDays / 30.4;
+            return {
+                planning: Math.max(1, Math.round(months * 0.20)),
+                tendering: Math.max(1, Math.round(months * 0.10)),
+                construction: Math.max(1, Math.round(months * 0.63)),
+                certification: Math.max(1, Math.round(months * 0.07)),
+                total: Math.round(months),
+            };
+        }
+        function renderStageBreakdownHTML(totalDays) {
+            const b = getStageBreakdown(totalDays);
+            return `
+                <div style="font-size:10px; color:var(--muted); margin-top:6px; line-height:1.9;">
+                    <div style="display:flex; justify-content:space-between;"><span><i class="fas fa-clipboard-list"></i> التخطيط والموافقات</span><b style="color:var(--text);">${b.planning} شهراً</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span><i class="fas fa-file-signature"></i> المناقصة والتعاقد</span><b style="color:var(--text);">${b.tendering} شهراً</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span><i class="fas fa-person-digging"></i> أعمال البناء</span><b style="color:var(--text);">${b.construction} شهراً</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span><i class="fas fa-circle-check"></i> الاعتماد والافتتاح</span><b style="color:var(--text);">${b.certification} شهراً</b></div>
+                </div>`;
+        }
+
+        function processConstructionCompletion() {
+            const project = getActiveConstruction();
+            if (!project) return;
+            const todayAbs = toAbsDay(getGameDate());
+            if (todayAbs < project.completionAbsDay) return;
+
+            const quality = QUALITY_TIERS.find(q=>q.key===(project.quality||'standard'));
+            let msg = '';
+
+            if (project.megaType === 'newStadium') {
+                // ملعب جديد بالكامل: يستبدل السعة، ويعيد كل عناصر الحالة إلى حالة "جديد تماماً"
+                localStorage.setItem('stadiumRebuilt_' + activeClub, JSON.stringify({ capacity: project.targetCapacity, builtAtDateSort: dateSortKey(getGameDate()) }));
+                localStorage.setItem('stadiumCapacityUpgrade_' + activeClub, '0');
+                FACILITY_ELEMENTS.forEach(k => setFacilityCondition(k, 100));
+                msg = `<i class="fas fa-landmark-dome"></i> اكتمل بناء الملعب الجديد بالكامل — السعة الجديدة ${project.targetCapacity.toLocaleString()} مقعد، وكل المرافق بحالة جديدة تماماً.`;
+            } else if (project.megaType === 'fullRenovation') {
+                FACILITY_ELEMENTS.forEach(k => setFacilityCondition(k, 96));
+                localStorage.setItem('stadiumCapacityUpgrade_' + activeClub, String(getStadiumUpgrade() + Math.round(getEffectiveCapacity()*0.05)));
+                msg = `<i class="fas fa-person-digging"></i> اكتمل التجديد الشامل للملعب فعلياً — كل المرافق أُعيدت لحالة ممتازة تقريباً.`;
+            } else if (project.megaType === 'partialRebuild') {
+                setFacilityCondition('stands', Math.min(100, getFacilityCondition('stands') + 35));
+                localStorage.setItem('stadiumCapacityUpgrade_' + activeClub, String(getStadiumUpgrade() + Math.round(project.seats*0.1)));
+                msg = `<i class="fas fa-hammer"></i> اكتمل إعادة بناء جزء من المدرجات فعلياً — تحسّنت حالة المدرجات بشكل ملموس.`;
+            } else {
+                // توسعة السعة العادية
+                localStorage.setItem('stadiumCapacityUpgrade_' + activeClub, String(getStadiumUpgrade() + project.seats));
+                msg = `<i class="fas fa-person-digging"></i> اكتمل مشروع توسعة الملعب (جودة ${quality.label}) فعلياً — أُضيف ${project.seats.toLocaleString()} مقعد جديد للسعة الرسمية.`;
+            }
+
+            localStorage.removeItem('stadiumConstruction_' + activeClub);
+            if (quality.satisfactionBonus > 0) {
+                const rep = getClubReputation();
+                localStorage.setItem('clubReputation', String(Math.min(100, rep + quality.satisfactionBonus)));
+                msg += ` تحسّنت صورة النادي فعلياً (+${quality.satisfactionBonus} سمعة) بفضل جودة التنفيذ الفاخرة.`;
+            }
+            addMessageToSystem('إدارة الملعب', msg, 'finance');
+            logStadiumHistory(project.megaType==='newStadium'?'<i class="fas fa-landmark-dome"></i>':project.megaType==='fullRenovation'?'<i class="fas fa-hammer"></i>':project.megaType==='partialRebuild'?'<i class="fas fa-trowel-bricks"></i>':'<i class="fas fa-chart-line"></i>', msg);
+        }
+
+        const ST_I18N = {
+            heroSub: { ar:'الملعب الرسمي لـ', en:'Official Stadium of', fr:'Stade officiel de', es:'Estadio oficial de', de:'Offizielles Stadion von', pt:'Estádio oficial do', tr:'Resmi Stadyumu' },
+            capLbl: { ar:'السعة الإجمالية (مقعد)', en:'Total Capacity (seats)', fr:'Capacité totale (places)', es:'Capacidad total (asientos)', de:'Gesamtkapazität (Sitzplätze)', pt:'Capacidade total (lugares)', tr:'Toplam Kapasite (koltuk)' },
+            realBadge: { ar:'بيانات حقيقية موثَّقة', en:'Verified Real Data', fr:'Données réelles vérifiées', es:'Datos reales verificados', de:'Verifizierte Echtdaten', pt:'Dados reais verificados', tr:'Doğrulanmış Gerçek Veri' },
+            estBadge: { ar:'سعة تقديرية (لا بيانات حقيقية موثَّقة لهذا النادي)', en:'Estimated Capacity (no verified real data for this club)', fr:'Capacité estimée (aucune donnée réelle vérifiée)', es:'Capacidad estimada (sin datos reales verificados)', de:'Geschätzte Kapazität (keine verifizierten Echtdaten)', pt:'Capacidade estimada (sem dados reais verificados)', tr:'Tahmini Kapasite (doğrulanmış veri yok)' },
+            tierGeneral: { ar:'المدرجات العامة (اقتصادية)', en:'General Stands (Economy)', fr:'Tribunes générales (économique)', es:'Gradas generales (económico)', de:'Allgemeine Tribüne (Economy)', pt:'Bancadas gerais (económico)', tr:'Genel Tribünler (Ekonomik)' },
+            tierRegular: { ar:'مقاعد عادية', en:'Regular Seats', fr:'Places normales', es:'Asientos normales', de:'Normale Sitzplätze', pt:'Lugares normais', tr:'Normal Koltuklar' },
+            tierPremium: { ar:'مقاعد مميزة (خط نظر أفضل)', en:'Premium Seats (better view)', fr:'Places premium (meilleure vue)', es:'Asientos premium (mejor vista)', de:'Premium-Sitzplätze (bessere Sicht)', pt:'Lugares premium (melhor vista)', tr:'Premium Koltuklar (daha iyi görüş)' },
+            tierVip: { ar:'لوج VIP وضيافة خاصة', en:'VIP Boxes & Hospitality', fr:'Loges VIP et hospitalité', es:'Palcos VIP y hospitalidad', de:'VIP-Logen & Hospitality', pt:'Camarotes VIP e hospitalidade', tr:'VIP Locaları ve Ağırlama' },
+            ofCapacity: { ar:'من السعة', en:'of capacity', fr:'de la capacité', es:'de la capacidad', de:'der Kapazität', pt:'da capacidade', tr:'kapasitenin' },
+            currentOccupancy: { ar:'الامتلاء الحالي', en:'Current Occupancy', fr:'Occupation actuelle', es:'Ocupación actual', de:'Aktuelle Auslastung', pt:'Ocupação atual', tr:'Mevcut Doluluk' },
+            currentRevenue: { ar:'الإيراد الحالي', en:'Current Revenue', fr:'Revenu actuel', es:'Ingreso actual', de:'Aktueller Umsatz', pt:'Receita atual', tr:'Mevcut Gelir' },
+            suggestedPrice: { ar:'السعر المقترح', en:'Suggested Price', fr:'Prix suggéré', es:'Precio sugerido', de:'Empfohlener Preis', pt:'Preço sugerido', tr:'Önerilen Fiyat' },
+            occupancy: { ar:'امتلاء', en:'occupancy', fr:'occupation', es:'ocupación', de:'Auslastung', pt:'ocupação', tr:'doluluk' },
+            andRevenue: { ar:'وإيراد', en:'and revenue', fr:'et revenu', es:'e ingreso', de:'und Umsatz', pt:'e receita', tr:'ve gelir' },
+            applyBtn: { ar:'تطبيق', en:'Apply', fr:'Appliquer', es:'Aplicar', de:'Anwenden', pt:'Aplicar', tr:'Uygula' },
+            noUpcoming: { ar:'لا توجد مباريات قادمة على أرضك حالياً.', en:'No upcoming home matches at the moment.', fr:'Aucun match à domicile à venir.', es:'No hay próximos partidos en casa.', de:'Derzeit keine kommenden Heimspiele.', pt:'Sem próximos jogos em casa.', tr:'Şu anda yaklaşan ev sahibi maçı yok.' },
+            typeLeague: { ar:'الدوري', en:'League', fr:'Championnat', es:'Liga', de:'Liga', pt:'Liga', tr:'Lig' },
+            typeFriendly: { ar:'ودية', en:'Friendly', fr:'Amical', es:'Amistoso', de:'Freundschaftsspiel', pt:'Amigável', tr:'Hazırlık' },
+            typeContinental: { ar:'قارية', en:'Continental', fr:'Continental', es:'Continental', de:'Kontinental', pt:'Continental', tr:'Kıtasal' },
+            vs: { ar:'ضد', en:'vs', fr:'contre', es:'vs', de:'gegen', pt:'vs', tr:'vs' },
+            avgTicket: { ar:'متوسط تذكرة', en:'Avg. ticket', fr:'Billet moyen', es:'Entrada media', de:'Ø Ticketpreis', pt:'Bilhete médio', tr:'Ort. bilet' },
+            globalRival: { ar:'خصم عالمي — إقبال أعلى', en:'Global rival — higher demand', fr:'Rival mondial — demande plus élevée', es:'Rival global — mayor demanda', de:'Weltklasse-Gegner — höhere Nachfrage', pt:'Rival global — maior procura', tr:'Global rakip — daha yüksek talep' },
+            full: { ar:'ممتلئ', en:'full', fr:'plein', es:'lleno', de:'ausgelastet', pt:'cheio', tr:'dolu' },
+        };
+        function st(key) { const lang = localStorage.getItem('gameLanguage') || 'ar'; return (ST_I18N[key] && ST_I18N[key][lang]) || (ST_I18N[key] && ST_I18N[key]['ar']) || key; }
+
+        function renderHero() {
+            const info = getStadiumInfo();
+            const capacity = getEffectiveCapacity();
+            const ct = getRealStadiumSponsorContract();
+            const realStadiumName = localStorage.getItem('clubStadiumName');
+            const displayName = (ct && realStadiumName) ? realStadiumName : info.name;
+            document.getElementById('stadiumHero').innerHTML = `
+                <div class="icon-box"><i class="fas fa-landmark-dome"></i></div>
+                <div class="sname">${displayName}</div>
+                <div class="ssub">${st('heroSub')} ${activeClub}</div>
+                <div class="cap-value">${capacity.toLocaleString()}</div>
+                <div class="cap-lbl">${st('capLbl')}</div>
+                <div class="${info.isReal?'real-badge':'est-badge'}"><i class="fas ${info.isReal?'fa-check-circle':'fa-circle-info'}"></i> ${info.isReal?st('realBadge'):st('estBadge')}</div>
+            `;
+        }
+
+        // ============================================================
+        // تنوع تسعير حقيقي: 4 قطاعات فعلية كأي ملعب حقيقي، لكل قطاع سعته وسعره وحساسيته السعرية المستقلة
+        // ============================================================
+        const SEATING_TIERS = [
+            { key:'general', get label(){ return st('tierGeneral'); }, capShare:0.35, defaultPrice:12, priceSensitivity:1.4 },
+            { key:'regular', get label(){ return st('tierRegular'); }, capShare:0.40, defaultPrice:22, priceSensitivity:1.0 },
+            { key:'premium', get label(){ return st('tierPremium'); }, capShare:0.20, defaultPrice:45, priceSensitivity:0.6 },
+            { key:'vip', get label(){ return st('tierVip'); }, capShare:0.05, defaultPrice:120, priceSensitivity:0.25 },
+        ];
+        const MATCH_TYPE_MULT = { league:1.0, continental:1.6, friendly:0.55 };
+        function getTierPrice(tierKey) {
+            const stored = localStorage.getItem('tierPrice_' + activeClub + '_' + tierKey);
+            if (stored) return parseFloat(stored);
+            return getTierFairDefault(tierKey);
+        }
+        function getTierFairDefault(tierKey) {
+            const t = SEATING_TIERS.find(x=>x.key===tierKey);
+            const rep = getClubReputation();
+            const rules = fedGetRules();
+            const tierMult = rules.tier === 1 ? 1.0 : rules.tier === 2 ? 0.55 : 0.3;
+            // مقياس واقعي: نادٍ بسمعة متواضعة يقترب من السعر الأساسي، ونادٍ عملاق يصل لأضعافه فعلياً (كفارق أسعار الدوريات الكبرى عن الصغرى)
+            const prestigeMult = (0.55 + (rep/100) * 1.9) * tierMult;
+            return Math.max(3, Math.round(t.defaultPrice * prestigeMult));
+        }
+        function setTierPrice(tierKey, v) { localStorage.setItem('tierPrice_' + activeClub + '_' + tierKey, String(v)); renderUpcomingMatches(); renderReport(); }
+        // يحاكي إشغال وعائد قطاع تذاكر واحد بسعر معيّن لمباراة دوري نموذجية — نفس معادلة الحضور الحقيقية بالضبط
+        function simulateTierAtPrice(tierKey, price) {
+            const t = SEATING_TIERS.find(x=>x.key===tierKey);
+            const capacity = getEffectiveCapacity();
+            const rep = getClubReputation();
+            const form = getRecentFormFactor();
+            const safetyScore = getOverallSafetyScore();
+            const conditionFactor = 0.7 + (safetyScore/100) * 0.4;
+            const seasonTicketFloor = 0.30 + (rep/100) * 0.20;
+            const fairDefault = getTierFairDefault(tierKey);
+            const priceFactor = Math.max(0.35, 1 - Math.max(0, price - fairDefault) * 0.008 * t.priceSensitivity);
+            const base = 0.35 + (rep/100) * 0.55;
+            let rate = base * form * priceFactor * 1.0 * 1.0 * conditionFactor; // مباراة دوري نموذجية بلا خصم عالمي خاص
+            rate = Math.max(rate, seasonTicketFloor * (1 - t.priceSensitivity*0.15));
+            rate = Math.max(0.1, Math.min(0.99, rate));
+            const tierCapacity = Math.round(capacity * t.capShare);
+            const attendance = Math.round(tierCapacity * rate);
+            const revenue = (attendance * price) / 1000000;
+            return { occupancyPct: Math.round(rate*100), revenue };
+        }
+        // يبحث عن السعر الأعلى عائداً فعلياً بفحص نطاق واقعي من الأسعار حول السعر العادل — قرار الرئيس النهائي يبقى له
+        function suggestOptimalPrice(tierKey) {
+            const fairDefault = getTierFairDefault(tierKey);
+            let best = { price: fairDefault, revenue: -1 };
+            for (let mult = 0.5; mult <= 1.8; mult += 0.05) {
+                const price = Math.max(1, Math.round(fairDefault * mult));
+                const sim = simulateTierAtPrice(tierKey, price);
+                if (sim.revenue > best.revenue) best = { price, revenue: sim.revenue };
+            }
+            return best.price;
+        }
+
+        function renderTicketPrices() {
+            document.getElementById('ticketPricesContainer').innerHTML = SEATING_TIERS.map(t => {
+                const current = getTierPrice(t.key);
+                const suggested = suggestOptimalPrice(t.key);
+                const currentSim = simulateTierAtPrice(t.key, current);
+                const suggestedSim = simulateTierAtPrice(t.key, suggested);
+                const diff = suggested - current;
+                return `
+                <div class="ticket-row" style="flex-direction:column; align-items:stretch; gap:6px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div class="tname">${t.label} <span style="color:var(--muted); font-weight:400;">(${Math.round(t.capShare*100)}% ${st('ofCapacity')})</span></div>
+                        <div style="display:flex; align-items:center; gap:4px;">
+                            <input type="number" min="1" step="1" value="${current}" oninput="setTierPrice('${t.key}', this.value)" style="width:60px;">
+                            <span style="font-size:10px; color:var(--muted);">€</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:9.5px; color:var(--muted); background:rgba(255,255,255,0.03); border-radius:7px; padding:6px 8px;">
+                        <span>${st('currentOccupancy')}: <b style="color:var(--text);">${currentSim.occupancyPct}%</b></span>
+                        <span>${st('currentRevenue')}: <b style="color:var(--text);">${currentSim.revenue.toFixed(2)}M €</b></span>
+                    </div>
+                    ${Math.abs(diff) >= 1 ? `
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:9.5px; background:rgba(232,184,75,0.08); border-radius:7px; padding:6px 8px;">
+                        <span style="color:var(--gold);"><i class="fas fa-lightbulb"></i> ${st('suggestedPrice')}: <b>${suggested}€</b> (${diff>0?'+':''}${diff}€) — ${st('occupancy')} ${suggestedSim.occupancyPct}% ${st('andRevenue')} ${suggestedSim.revenue.toFixed(2)}M €</span>
+                        <button onclick="setTierPrice('${t.key}', ${suggested}); renderTicketPrices();" style="background:var(--gold); color:#06090f; border:none; padding:4px 10px; border-radius:999px; font-size:9px; font-weight:800; cursor:pointer;">${st('applyBtn')}</button>
+                    </div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        // يحسب الحضور والعائد الفعليين لكل قطعة على حدة، ثم يجمعها — قطاع VIP يمتلئ شبه دائماً (حساسية سعر منخفضة)،
+        // بينما القطاع الاقتصادي يتأثر بشدة بارتفاع السعر (حساسية سعر عالية) — تماماً كاقتصاديات الملاعب الحقيقية
+        function computeTieredAttendance(capacity, matchType, opponentName) {
+            const rep = getClubReputation();
+            const form = getRecentFormFactor();
+            const opponentFactor = getOpponentPrestigeFactor(opponentName);
+            const typeFactor = MATCH_TYPE_MULT[matchType] || 1.0;
+            const seasonTicketFloor = 0.30 + (rep/100) * 0.20;
+            // حالة الملعب الحقيقية تؤثر فعلياً على الحضور — ملعب مهمل يقلل الإقبال، ملعب متطوَّر يزيده
+            const safetyScore = getOverallSafetyScore();
+            const conditionFactor = 0.7 + (safetyScore/100) * 0.4;
+
+            let totalAttendance = 0, totalRevenue = 0;
+            const hospitalityBonus = hasDevelopment('vipZones') ? 1.6 : 1.0; // تطوير مناطق VIP الحقيقي يرفع حصة مقاعد VIP الفعلية من السعة
+            const perTier = SEATING_TIERS.map(t => {
+                const price = getTierPrice(t.key);
+                const effectiveCapShare = t.key === 'vip' ? Math.min(0.12, t.capShare * hospitalityBonus) : t.capShare;
+                const tierCapacity = Math.round(capacity * effectiveCapShare);
+                const fairDefault = getTierFairDefault(t.key);
+                const priceFactor = Math.max(0.35, 1 - Math.max(0, price - fairDefault) * 0.008 * t.priceSensitivity);
+                const base = 0.35 + (rep/100) * 0.55;
+                let rate = base * form * priceFactor * typeFactor * opponentFactor * conditionFactor;
+                rate = Math.max(rate, seasonTicketFloor * (1 - t.priceSensitivity*0.15)); // القطاعات المميزة تحافظ على أرضية حضور أعلى (اشتراكات VIP ثابتة عادة)
+                rate = Math.max(0.1, Math.min(0.99, rate));
+                const attendance = Math.round(tierCapacity * rate);
+                const revenue = (attendance * price) / 1000000;
+                totalAttendance += attendance; totalRevenue += revenue;
+                return { ...t, price, tierCapacity, rate, attendance, revenue };
+            });
+            return { perTier, totalAttendance, totalRevenue, blendedRate: capacity>0 ? totalAttendance/capacity : 0 };
+        }
+
+
+        // ============================================================
+        // نسبة الحضور الواقعية: سمعة ناديك + أداؤك الأخير + أهمية المباراة + سعر التذكرة (أعلى سعر يقلل الإقبال)
+        // ============================================================
+        function getRecentFormFactor() {
+            try {
+                const scores = JSON.parse(localStorage.getItem('full_season_scores')) || [];
+                if (!scores.length) return 1.0;
+                const recent = scores.slice(-5);
+                let pts = 0;
+                recent.forEach(s => { if (s.homeScore>s.awayScore) pts+=3; else if (s.homeScore===s.awayScore) pts+=1; });
+                return 0.8 + (pts/(recent.length*3)) * 0.35;
+            } catch(e) { return 1.0; }
+        }
+        // نفس قائمة الأندية العالمية المشهورة المستخدمة في tv_channels.html — للاتساق الكامل عبر اللعبة
+        const FAMOUS_CLUBS = ['Real Madrid','Barcelona','Manchester United','Manchester City','Liverpool','Chelsea FC','Arsenal','Bayern Munich','Paris Saint-Germain','Juventus','AC Milan','Inter Milan','Atletico Madrid','Borussia Dortmund','Tottenham Hotspur'];
+
+        // ============================================================
+        // قرار مجلس إدارة حقيقي شامل — لا يعتمد على التكلفة مقابل الميزانية فقط، بل على الصورة المالية والرياضية الكاملة فعلياً
+        // (الديون، التدفق النقدي، أداء الفريق، وجود مشروع آخر) — مطابق تماماً لما طلبته
+        // ============================================================
+        function getClubDebt() {
+            try {
+                const loans = JSON.parse(localStorage.getItem('clubLoans_v1')) || [];
+                return loans.filter(l=>l.status==='active').reduce((s,l)=>s+(l.remainingBalance??l.principal??0),0);
+            } catch(e) { return 0; }
+        }
+        function getNetCashFlowMomentum() {
+            // زخم مالي حقيقي مبسّط: دخل التذاكر المتراكم مقابل الأجور الأسبوعية السنوية لفريقك الحقيقي
+            try {
+                const signed = JSON.parse(localStorage.getItem('signed_players_by_club'))?.[activeClub] || [];
+                const annualWage = signed.reduce((s,p)=>s+(parseFloat(p.weekly_wage)||0),0) * 52 / 1000000;
+                const ticketIncome = parseFloat(localStorage.getItem('ticketRevenueTotal_' + activeClub)) || 0;
+                const shopIncome = parseFloat(localStorage.getItem('shopRevenue')) || 0;
+                const broadcastIncome = parseFloat(localStorage.getItem('broadcastIncomeTotal')) || 0;
+                return (ticketIncome + shopIncome + broadcastIncome) - annualWage;
+            } catch(e) { return 0; }
+        }
+        // ============================================================
+        // تمويل حقيقي متعدد المصادر — يعيد استخدام نفس نظام القروض الحقيقي بالضبط من finance.html
+        // بدل خصم كامل المبلغ من خزينة النادي مباشرة دائماً
+        // ============================================================
+        const BANK_NAMES = ['البنك الأهلي التجاري','بنك الاستثمار الرياضي','مصرف النخبة المالي','بنك المستقبل للتمويل'];
+        function pickBankName(rate) {
+            if (rate<=8) return BANK_NAMES[0];
+            if (rate<=14) return BANK_NAMES[1];
+            if (rate<=20) return BANK_NAMES[2];
+            return BANK_NAMES[3];
+        }
+        function loanEligibility() {
+            const rep = getClubReputation();
+            const active = (() => { try { return (JSON.parse(localStorage.getItem('clubLoans_v1'))||[]).filter(l=>l.status==='active'); } catch(e){ return []; } })();
+            const currentDebt = active.reduce((s,l)=>s+(l.remainingBalance??l.principal??0),0);
+            const rules = fedGetRules();
+            const tierFactor = {1:1, 2:0.5, 3:0.22}[rules.tier] || 1;
+            const baseCeiling = (rep*2.2) * tierFactor;
+            const maxLoan = Math.max(0, baseCeiling - currentDebt);
+            const interestRate = Math.max(4, 22 - rep*0.15);
+            return { maxLoan, interestRate };
+        }
+        function computeLoanTerms(amount, termYears, interestRate) {
+            const termMonths = termYears*12;
+            const monthlyRate = interestRate/100/12;
+            const monthlyPayment = monthlyRate===0 ? amount/termMonths : amount*monthlyRate*Math.pow(1+monthlyRate,termMonths)/(Math.pow(1+monthlyRate,termMonths)-1);
+            return { termMonths, monthlyPayment: Math.round(monthlyPayment*1000)/1000, totalRepay: Math.round(monthlyPayment*termMonths*100)/100 };
+        }
+        function createStadiumLoan(amount, termYears, projectLabel) {
+            const elig = loanEligibility();
+            const actualAmount = Math.min(amount, elig.maxLoan);
+            if (actualAmount <= 0) return 0;
+            const terms = computeLoanTerms(actualAmount, termYears, elig.interestRate);
+            const bank = pickBankName(elig.interestRate);
+            const today = getGameDate(); const startAbs = toAbsDay(today);
+            const loan = {
+                loanId: `LN-STD-${Date.now()}`, bank,
+                principal: actualAmount, interestRatePct: Math.round(elig.interestRate*10)/10,
+                termMonths: terms.termMonths, monthlyPayment: terms.monthlyPayment,
+                totalRepay: terms.totalRepay, remainingBalance: terms.totalRepay,
+                startAbsDay: startAbs, nextPaymentAbsDay: startAbs+30,
+                missedPayments: 0, status:'active'
+            };
+            const loans = (() => { try { return JSON.parse(localStorage.getItem('clubLoans_v1'))||[]; } catch(e){ return []; } })();
+            loans.push(loan);
+            localStorage.setItem('clubLoans_v1', JSON.stringify(loans));
+            addMessageToSystem(bank, `<i class="fas fa-circle-check"></i> قرض تمويل مشروع "${projectLabel}" بقيمة ${actualAmount.toFixed(1)}M € — فائدة ${loan.interestRatePct}% لمدة ${termYears} سنوات، قسط شهري ${terms.monthlyPayment.toFixed(3)}M €.`, 'finance');
+            return actualAmount;
+        }
+
+        const FINANCING_I18N = {
+            treasury: { label:{ar:'تمويل ذاتي كامل',en:'Full Self-Financing',fr:'Autofinancement complet',es:'Autofinanciación completa',de:'Vollständige Eigenfinanzierung',pt:'Autofinanciamento total',tr:'Tam Öz Kaynak Finansmanı'}, desc:{ar:'يُخصم المبلغ بالكامل من خزينة النادي فوراً — لا ديون، لكن ضغط مباشر على السيولة.',en:'The full amount is deducted immediately from the club treasury — no debt, but direct pressure on liquidity.',fr:'Le montant total est déduit immédiatement de la trésorerie du club.',es:'El monto total se deduce inmediatamente de la tesorería del club.',de:'Der volle Betrag wird sofort von der Vereinskasse abgezogen.',pt:'O valor total é deduzido imediatamente da tesouraria do clube.',tr:'Tam tutar kulüp hazinesinden anında düşülür.'} },
+            mixed: { label:{ar:'تمويل مختلط',en:'Mixed Financing',fr:'Financement mixte',es:'Financiación mixta',de:'Mischfinanzierung',pt:'Financiamento misto',tr:'Karma Finansman'}, desc:{ar:'توزيع واقعي: 40% خزينة + 40% قرض بنكي + 20% تمويل من المالك — يخفف الضغط الفوري على السيولة.',en:'Realistic split: 40% treasury + 40% bank loan + 20% owner financing — eases immediate pressure on liquidity.',fr:'Répartition réaliste : 40% trésorerie + 40% prêt bancaire + 20% financement du propriétaire.',es:'Distribución realista: 40% tesorería + 40% préstamo bancario + 20% financiación del propietario.',de:'Realistische Aufteilung: 40% Kasse + 40% Bankkredit + 20% Eigentümerfinanzierung.',pt:'Divisão realista: 40% tesouraria + 40% empréstimo bancário + 20% financiamento do proprietário.',tr:'Gerçekçi dağılım: %40 hazine + %40 banka kredisi + %20 sahip finansmanı.'} },
+            loan: { label:{ar:'قرض بنكي كامل',en:'Full Bank Loan',fr:'Prêt bancaire complet',es:'Préstamo bancario completo',de:'Vollständiger Bankkredit',pt:'Empréstimo bancário total',tr:'Tam Banka Kredisi'}, desc:{ar:'يُموَّل المشروع بالكامل عبر قرض بنكي حقيقي — لا ضغط فوري على الخزينة، لكن التزام فوائد طويل الأمد.',en:'The project is fully financed via a real bank loan — no immediate pressure on the treasury, but long-term interest commitment.',fr:'Le projet est entièrement financé par un prêt bancaire réel.',es:'El proyecto se financia completamente mediante un préstamo bancario real.',de:'Das Projekt wird vollständig über einen echten Bankkredit finanziert.',pt:'O projeto é totalmente financiado através de um empréstimo bancário real.',tr:'Proje tamamen gerçek bir banka kredisiyle finanse edilir.'} },
+        };
+        function finLang() { return localStorage.getItem('gameLanguage') || 'ar'; }
+        const FINANCING_MIXES = [
+            { key:'treasury', get label(){ return FINANCING_I18N.treasury.label[finLang()]; }, treasuryPct:1.0, loanPct:0, ownerPct:0, get desc(){ return FINANCING_I18N.treasury.desc[finLang()]; } },
+            { key:'mixed', get label(){ return FINANCING_I18N.mixed.label[finLang()]; }, treasuryPct:0.4, loanPct:0.4, ownerPct:0.2, get desc(){ return FINANCING_I18N.mixed.desc[finLang()]; } },
+            { key:'loan', get label(){ return FINANCING_I18N.loan.label[finLang()]; }, treasuryPct:0, loanPct:1.0, ownerPct:0, get desc(){ return FINANCING_I18N.loan.desc[finLang()]; } },
+        ];
+        function getSelectedFinancing() { return localStorage.getItem('projectFinancing_' + activeClub) || 'treasury'; }
+        function setSelectedFinancing(key) { localStorage.setItem('projectFinancing_' + activeClub, key); renderFinancingSelector(); }
+        function renderFinancingSelector() {
+            const active = getSelectedFinancing();
+            const el = document.getElementById('financingRow');
+            if (!el) return;
+            el.innerHTML = FINANCING_MIXES.map(f => `
+                <div class="kit-type-chip" onclick="setSelectedFinancing('${f.key}')" style="flex:1; text-align:center; padding:8px 4px; border-radius:9px; background:${f.key===active?'var(--gold)':'var(--bg)'}; color:${f.key===active?'#06090f':'var(--text)'}; border:1px solid var(--border); font-size:10.5px; font-weight:700; cursor:pointer;">${f.label}</div>
+            `).join('');
+            document.getElementById('financingDesc').innerText = FINANCING_MIXES.find(f=>f.key===active).desc;
+        }
+        // ينفّذ التمويل الفعلي حسب المزيج المختار، ويعيد المبلغ الذي تحمّلته الخزينة فوراً فقط (وليس المبلغ الكامل)
+        function executeFinancing(totalCost, projectLabel) {
+            const mix = FINANCING_MIXES.find(f=>f.key===getSelectedFinancing());
+            let treasuryPortion = totalCost * mix.treasuryPct;
+            const loanPortion = totalCost * mix.loanPct;
+            const ownerPortion = totalCost * mix.ownerPct;
+
+            if (loanPortion > 0) {
+                const funded = createStadiumLoan(loanPortion, 5, projectLabel);
+                if (funded < loanPortion) treasuryPortion += (loanPortion - funded); // إن لم تكفِ الأهلية الائتمانية، يتحمّل الفرق من الخزينة مباشرة
+            }
+            if (ownerPortion > 0) {
+                setConfidence(getConfidence() - Math.min(10, Math.round(ownerPortion/5)));
+                addMessageToSystem('مالك النادي', `<i class="fas fa-circle-check"></i> ساهمت شخصياً بـ${ownerPortion.toFixed(1)}M € في تمويل "${projectLabel}".`, 'finance');
+            }
+            setClubBudget(getClubBudget() - treasuryPortion);
+            return treasuryPortion;
+        }
+        function getConfidence() { return parseFloat(localStorage.getItem('board_confidence_' + activeClub)) || 60; }
+        function setConfidence(v) { localStorage.setItem('board_confidence_' + activeClub, String(Math.max(0, Math.min(100, Math.round(v))))); }
+
+        function computeBoardApprovalChance(cost, expectedBudgetRef) {
+            const budget = getClubBudget();
+            const debt = getClubDebt();
+            const momentum = getNetCashFlowMomentum();
+            const form = getRecentFormFactor(); // 0.8–1.15 تقريباً حسب آخر 5 نتائج حقيقية
+
+            // القاعدة: الطلب المعقول نسبةً للقدرة الحقيقية للنادي (سمعة + درجة)
+            const ratio = cost / Math.max(5, expectedBudgetRef);
+            let chance = 78 - Math.max(0, ratio - 1) * 24;
+
+            // الديون الحالية تُصعّب الموافقة فعلياً كلما كانت كبيرة نسبة لميزانيتك
+            const debtRatio = debt / Math.max(1, budget + 50);
+            chance -= Math.min(25, debtRatio * 40);
+
+            // زخم مالي سلبي (خسارة تشغيلية حقيقية) يُصعّب الموافقة بشدة — بالضبط كمثالك (80M مقابل خسارة 20M سنوية)
+            if (momentum < 0) chance -= Math.min(30, Math.abs(momentum) * 0.6);
+            else chance += Math.min(8, momentum * 0.15);
+
+            // أداء الفريق الرياضي الحالي يؤثر فعلياً على ثقة المجلس بجدوى الاستثمار
+            chance += (form - 1) * 25;
+
+            // مستوى صعوبة حقيقي من صفحة الإعدادات — مجلس "صارم" فعلياً أصعب موافقة، "متساهل" أسهل، وليس مجرد تسمية بلا أثر
+            const difficulty = localStorage.getItem('boardDifficulty') || 'normal';
+            if (difficulty === 'strict') chance -= 12;
+            else if (difficulty === 'lenient') chance += 12;
+
+            return Math.max(2, Math.min(94, Math.round(chance)));
+        }
+        function getBoardConcernNote() {
+            const debt = getClubDebt();
+            const momentum = getNetCashFlowMomentum();
+            const notes = [];
+            if (debt > 20) notes.push(`ديون قائمة ${debt.toFixed(0)}M €`);
+            if (momentum < 0) notes.push(`تدفق نقدي سلبي (${momentum.toFixed(1)}M € خسارة تشغيلية)`);
+            if (getRecentFormFactor() < 0.9) notes.push('نتائج رياضية أخيرة ضعيفة');
+            return notes.length ? ` المجلس قلق أيضاً من: ${notes.join('، ')}.` : '';
+        }
+
+        function getOpponentPrestigeFactor(opponentName) {
+            if (!opponentName) return 1.0;
+            // خصم مباشر أمام ناد عالمي مشهور يمتلئ الملعب دائماً تقريباً، بغض النظر عن نتائجك الأخيرة — ظاهرة واقعية معروفة
+            const isFamous = FAMOUS_CLUBS.some(c => opponentName.includes(c) || c.includes(opponentName));
+            return isFamous ? 1.5 : 1.0;
+        }
+
+
+        async function getUpcomingHomeMatches() {
+            const gd = getGameDate();
+            let candidates = [];
+            try {
+                const teams = JSON.parse(localStorage.getItem('current_league_teams')||'[]').filter(t=>t!=='إستراحة'&&t.trim()!=='');
+                const currentRound = parseInt(localStorage.getItem('database_current_round'))||0;
+                if (teams.length > 1 && teams.includes(activeClub)) {
+                    let pool = [...teams];
+                    if (pool.length % 2 !== 0) pool.push('إستراحة');
+                    const total = pool.length, rounds = total-1, perRound = total/2;
+                    let schedule = [];
+                    for (let r=0;r<rounds;r++){
+                        let matches=[];
+                        for(let i=0;i<perRound;i++){
+                            let home=pool[i], away=pool[total-1-i];
+                            if (home==='إستراحة'||away==='إستراحة') continue;
+                            if (r%2===1){ const t=home; home=away; away=t; }
+                            matches.push({home,away});
+                        }
+                        schedule.push(matches); pool.splice(1,0,pool.pop());
+                    }
+                    const half = schedule.length;
+                    for (let r=0;r<half;r++) schedule.push(schedule[r].map(m=>({home:m.away,away:m.home})));
+                    const seasonStartYear = (gd.month>=8) ? gd.year : gd.year-1;
+                    const seasonStart = { day:15, month:8, year:seasonStartYear };
+                    for (let i = currentRound; i < Math.min(schedule.length, currentRound+8); i++) {
+                        const match = schedule[i].find(m => m.home===activeClub);
+                        if (match) candidates.push({ type:'league', opponent: match.away, date: addDaysToDate(seasonStart, i*7) });
+                    }
+                }
+            } catch(e) {}
+            try {
+                await clubDB.init();
+                const upcoming = await clubDB.getAllUpcomingMatches();
+                upcoming.filter(m => m.competition === 'ودية' && m.venue === 'home' && (m.ownerClub===undefined || m.ownerClub===activeClub)).forEach(f => {
+                    const [dd,mm,yy] = (f.date||'').split('/').map(Number);
+                    if (dd) candidates.push({ type:'friendly', opponent: f.opponent, date:{day:dd,month:mm,year:yy} });
+                });
+            } catch(e) {}
+            candidates.sort((a,b) => dateSortKey(a.date) - dateSortKey(b.date));
+            return candidates.slice(0, 5);
+        }
+
+        let cachedMatches = [];
+        function renderUpcomingMatches() {
+            const el = document.getElementById('upcomingMatchesContainer');
+            if (!cachedMatches.length) { el.innerHTML = `<div class="empty-state"><i class="fas fa-house-circle-check"></i>${st('noUpcoming')}</div>`; return; }
+            const capacity = getEffectiveCapacity();
+            el.innerHTML = cachedMatches.map(m => {
+                const result = computeTieredAttendance(capacity, m.type, m.opponent);
+                const pct = Math.round(result.blendedRate*100);
+                const avgPrice = Math.round(result.totalAttendance>0 ? (result.totalRevenue*1000000)/result.totalAttendance : 0);
+                const typeLabel = m.type==='league'?st('typeLeague'):m.type==='friendly'?st('typeFriendly'):st('typeContinental');
+                return `
+                <div class="match-row">
+                    <img src="${getTeamLogoUrl(m.opponent)}" onerror="this.style.display='none';" style="width:26px;height:26px;object-fit:contain;">
+                    <div class="info">
+                        <div class="mname">${activeClub} ${st('vs')} ${m.opponent}</div>
+                        <div class="msub">${dateLabel(m.date)} · ${typeLabel} · ${st('avgTicket')} ~${avgPrice}€${getOpponentPrestigeFactor(m.opponent)>1?` · <i class="fas fa-star" style="color:var(--gold);"></i> ${st('globalRival')}`:''}</div>
+                        <div class="fill-track"><div class="fill-bar" style="width:${pct}%; background:${pct>=80?'var(--green)':pct>=50?'var(--gold)':'var(--red)'};"></div></div>
+                    </div>
+                    <div class="att"><div class="num">${result.totalAttendance.toLocaleString()}</div><div class="lbl">${pct}% ${st('full')} · ${result.totalRevenue.toFixed(2)}M €</div></div>
+                </div>`;
+            }).join('');
+        }
+
+        // ============================================================
+        // التقرير المالي: عائد التذاكر الحقيقي (بجمع كل القطاعات الأربعة) يُدفع تلقائياً عند وصول موعد كل مباراة فعلياً
+        // ============================================================
+        function processMatchDayRevenue() {
+            const today = getGameDate();
+            const todayAbs = dateSortKey(today);
+            let totalNew = 0;
+            cachedMatches.forEach(m => {
+                if (dateSortKey(m.date) > todayAbs) return;
+                const payKey = 'ticketRevenuePaid_' + activeClub + '_' + dateSortKey(m.date) + '_' + m.opponent;
+                if (localStorage.getItem(payKey)) return;
+                const capacity = getEffectiveCapacity();
+                const result = computeTieredAttendance(capacity, m.type, m.opponent);
+                setClubBudget(getClubBudget() + result.totalRevenue);
+                const prior = parseFloat(localStorage.getItem('ticketRevenueTotal_' + activeClub)) || 0;
+                localStorage.setItem('ticketRevenueTotal_' + activeClub, (prior + result.totalRevenue).toFixed(3));
+                localStorage.setItem(payKey, '1');
+                totalNew += result.totalRevenue;
+                addMessageToSystem('إدارة الملعب', `<i class="fas fa-ticket"></i> حضر ${result.totalAttendance.toLocaleString()} مشجّع مباراة ${activeClub} × ${m.opponent} عبر 4 قطاعات — عائد تذاكر ${result.totalRevenue.toFixed(2)}M €.`, 'finance');
+            });
+            return totalNew;
+        }
+
+        // ============================================================
+        // حقوق تسمية الملعب — ربط حقيقي 100% بعقد "راعي تسمية الملعب" الموقَّع فعلياً عبر sponsors.html
+        // لا نظام منفصل، لا شركات وهمية، لا اختيار عشوائي — فقط قراءة العقد الحقيقي الموجود
+        // ============================================================
+        function toAbsDay(d) { return Math.floor(new Date(d.year, d.month-1, d.day).getTime()/86400000); }
+        function getRealStadiumSponsorContract() {
+            try {
+                const contracts = JSON.parse(localStorage.getItem('sponsorContracts_v1')) || {};
+                const ct = contracts['stadium'];
+                if (!ct || ct.status !== 'active') return null;
+                const todayAbs = toAbsDay(getGameDate());
+                if (typeof ct.endAbsDay === 'number' && todayAbs > ct.endAbsDay) return null;
+                return ct;
+            } catch(e) { return null; }
+        }
+        function renderNamingRights() {
+            const el = document.getElementById('namingRightsContainer');
+            const ct = getRealStadiumSponsorContract();
+            const stadiumName = localStorage.getItem('clubStadiumName');
+            if (ct && stadiumName) {
+                const todayAbs = toAbsDay(getGameDate());
+                const daysLeft = Math.max(0, (ct.endAbsDay||todayAbs) - todayAbs);
+                el.innerHTML = `
+                    <div style="padding:14px;">
+                        <div style="font-size:13px; font-weight:800; color:var(--gold);">${stadiumName}</div>
+                        <div style="font-size:11px; color:var(--muted); margin-top:4px;">عقد تسمية حقيقي مع ${ct.companyName} — ${(ct.annualValue||0).toFixed(2)}M €/سنوياً — ${daysLeft} يوم متبقٍ من العقد</div>
+                        <a href="sponsors.html" style="display:block; margin-top:8px; font-size:10.5px; color:var(--gold);">إدارة العقد من مركز الرعاة ←</a>
+                    </div>`;
+            } else {
+                el.innerHTML = `
+                    <div style="padding:14px;">
+                        <div style="font-size:11px; color:var(--muted); margin-bottom:10px;">لا يوجد عقد تسمية ملعب موقَّع حالياً. حقوق التسمية تُفاوَض وتُوقَّع حصرياً من مركز الرعاة الحقيقي — لا قرار هنا.</div>
+                        <a href="sponsors.html" class="btn-outline2" style="display:block; text-align:center; text-decoration:none;">التفاوض على راعي تسمية الملعب ←</a>
+                    </div>`;
+            }
+        }
+        // ============================================================
+        // حالة مرافق الملعب الحقيقية — تتدهور فعلياً مع الوقت، وتحتاج صيانة دورية حقيقية (0-100 لكل عنصر)
+        // ============================================================
+        const FACILITY_ELEMENTS = ['grass','stands','lighting','lockerRooms','security'];
+        const FACILITY_NAMES_I18N = {
+            grass: { ar:'العشب', en:'Pitch/Grass', fr:'Pelouse', es:'Césped', de:'Rasen', pt:'Relva', tr:'Çim Saha' },
+            stands: { ar:'المدرجات', en:'Stands', fr:'Tribunes', es:'Gradas', de:'Tribünen', pt:'Bancadas', tr:'Tribünler' },
+            lighting: { ar:'الإضاءة', en:'Lighting', fr:'Éclairage', es:'Iluminación', de:'Beleuchtung', pt:'Iluminação', tr:'Aydınlatma' },
+            lockerRooms: { ar:'غرف الملابس', en:'Locker Rooms', fr:'Vestiaires', es:'Vestuarios', de:'Umkleidekabinen', pt:'Vestiários', tr:'Soyunma Odaları' },
+            security: { ar:'أنظمة الأمن', en:'Security Systems', fr:'Systèmes de sécurité', es:'Sistemas de seguridad', de:'Sicherheitssysteme', pt:'Sistemas de segurança', tr:'Güvenlik Sistemleri' },
+        };
+        const FACILITY_LABELS = new Proxy({}, { get: (t, key) => (FACILITY_NAMES_I18N[key] && FACILITY_NAMES_I18N[key][localStorage.getItem('gameLanguage')||'ar']) || key });
+        function getFacilityCondition(key) {
+            const stored = localStorage.getItem('facilityCond_' + activeClub + '_' + key);
+            if (stored !== null) return parseFloat(stored);
+            return 78; // حالة ابتدائية واقعية جيدة وليست مثالية
+        }
+        function setFacilityCondition(key, v) { localStorage.setItem('facilityCond_' + activeClub + '_' + key, String(Math.max(0, Math.min(100, Math.round(v))))); }
+        function degradeFacilitiesOverTime() {
+            const today = getGameDate();
+            const monthKey = 'facilityDegradeApplied_' + activeClub + '_' + today.year + '_' + today.month;
+            if (localStorage.getItem(monthKey)) return;
+            const prevStage = getSafetyStatus(getOverallSafetyScore()).stage;
+            FACILITY_ELEMENTS.forEach(key => {
+                const rate = key === 'grass' ? 4 : key === 'lighting' ? 1.5 : key === 'security' ? 1.2 : 2; // العشب يتدهور أسرع فعلياً من الأمن مثلاً
+                setFacilityCondition(key, getFacilityCondition(key) - rate);
+            });
+            localStorage.setItem(monthKey, '1');
+            const newStage = getSafetyStatus(getOverallSafetyScore()).stage;
+            const stageOrder = ['good','maintenance','warning','restricted','banned'];
+            if (stageOrder.indexOf(newStage) > stageOrder.indexOf(prevStage)) {
+                const messages = {
+                    maintenance: '<i class="fas fa-screwdriver-wrench"></i> بدأت بعض مرافق الملعب تحتاج صيانة دورية فعلية.',
+                    warning: '<i class="fas fa-triangle-exclamation"></i> تحذير رسمي: حالة الملعب تدهورت — مهلة إصلاح قبل فرض قيود فعلية.',
+                    restricted: '<i class="fas fa-road-barrier"></i> فُرضت قيود حقيقية على سعة الملعب بسبب إهمال الصيانة — جزء من المدرجات أُغلق.',
+                    banned: '<i class="fas fa-ban"></i> الملعب فقد اعتماده بالكامل — يُستخدم ملعب بديل حتى إصلاح العناصر الحرجة فوراً.',
+                };
+                if (messages[newStage]) { addMessageToSystem('إدارة الملعب', messages[newStage], 'finance'); logStadiumHistory('<i class="fas fa-triangle-exclamation"></i>', messages[newStage]); }
+            }
+        }
+
+        // ============================================================
+        // ملف اعتماد السلامة — نفس منطق: تحذير → مهلة إصلاح → قيود سعة → منع استضافة → ملعب بديل
+        // ============================================================
+        function getSafetyStatus(cond) {
+            const lang = localStorage.getItem('gameLanguage') || 'ar';
+            const L = {
+                good: {ar:'جيد',en:'Good',fr:'Bon',es:'Bueno',de:'Gut',pt:'Bom',tr:'İyi'},
+                maintenance: {ar:'يحتاج صيانة',en:'Needs Maintenance',fr:'Nécessite un entretien',es:'Necesita mantenimiento',de:'Wartung erforderlich',pt:'Necessita manutenção',tr:'Bakım Gerekiyor'},
+                warning: {ar:'تحذير — مهلة إصلاح',en:'Warning — Repair Deadline',fr:'Avertissement — Délai de réparation',es:'Advertencia — Plazo de reparación',de:'Warnung — Reparaturfrist',pt:'Aviso — Prazo de reparo',tr:'Uyarı — Onarım Süresi'},
+                restricted: {ar:'قيود على السعة',en:'Capacity Restricted',fr:'Capacité restreinte',es:'Capacidad restringida',de:'Kapazität eingeschränkt',pt:'Capacidade restrita',tr:'Kapasite Kısıtlı'},
+                banned: {ar:'غير معتمد — حظر كامل',en:'Not Certified — Full Ban',fr:'Non certifié — Interdiction totale',es:'No certificado — Prohibición total',de:'Nicht zertifiziert — Vollständiges Verbot',pt:'Não certificado — Proibição total',tr:'Onaylanmamış — Tam Yasak'},
+            };
+            if (cond >= 70) return { label:L.good[lang], color:'var(--green)', stage:'good' };
+            if (cond >= 45) return { label:L.maintenance[lang], color:'var(--gold)', stage:'maintenance' };
+            if (cond >= 25) return { label:L.warning[lang], color:'#f97316', stage:'warning' };
+            if (cond >= 15) return { label:L.restricted[lang], color:'#ef4444', stage:'restricted' };
+            return { label:L.banned[lang], color:'#dc2626', stage:'banned' };
+        }
+        function getCapacityRestrictionFactor() {
+            // بين 15-25%: تقييد جزئي حقيقي للسعة (مدرجات مغلقة جزئياً بانتظار الإصلاح) — وليس حظراً كاملاً بعد
+            const overall = getOverallSafetyScore();
+            if (overall >= 25 || overall < 15) return 1.0; // إما لا تقييد بعد، أو تجاوزنا لمرحلة الحظر الكامل أصلاً
+            return 0.7; // خفض 30% من السعة المتاحة فعلياً خلال مرحلة "قيود السعة"
+        }
+        function getOverallSafetyScore() { return Math.round(FACILITY_ELEMENTS.reduce((s,k)=>s+getFacilityCondition(k),0) / FACILITY_ELEMENTS.length); }
+        function isStadiumBanned() { return getOverallSafetyScore() < 15; }
+        function renderSafetyCert() {
+            const el = document.getElementById('safetyCertContainer');
+            const overall = getOverallSafetyScore();
+            const overallStatus = getSafetyStatus(overall);
+            const restrictFactor = getCapacityRestrictionFactor();
+            el.innerHTML = `
+                <div style="padding:10px 14px 4px 14px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:11px; color:var(--muted);">الحالة العامة المعتمدة</span>
+                    <b style="color:${overallStatus.color}; font-size:13px;">${overall}% — ${overallStatus.label}</b>
+                </div>
+                ${FACILITY_ELEMENTS.map(key => {
+                    const cond = getFacilityCondition(key);
+                    const st = getSafetyStatus(cond);
+                    return `<div class="ticket-row" style="align-items:center;">
+                        <div class="tname">${FACILITY_LABELS[key]}</div>
+                        <div style="flex:1; height:6px; background:var(--border); border-radius:4px; overflow:hidden; margin:0 10px;"><div style="height:100%; width:${cond}%; background:${st.color};"></div></div>
+                        <span style="font-size:10px; color:${st.color}; font-weight:700; min-width:90px; text-align:left;">${st.label}</span>
+                    </div>`;
+                }).join('')}
+                ${overallStatus.stage === 'restricted' ? `<div style="padding:10px 14px; color:#ef4444; font-size:11px; font-weight:700; line-height:1.7;"><i class="fas fa-triangle-exclamation"></i> قيود سعة حقيقية سارية: تُستخدَم فقط ${Math.round(restrictFactor*100)}% من سعة ملعبك (مدرجات مغلقة جزئياً بانتظار الإصلاح) — أصلح العناصر الحرجة فوراً لتفادي الحظر الكامل.</div>` : ''}
+                ${overallStatus.stage === 'banned' ? `<div style="padding:10px 14px; color:var(--red); font-size:11px; font-weight:700; line-height:1.7;"><i class="fas fa-ban"></i> الملعب غير معتمد نهائياً لاستضافة المباريات — يُستخدم ملعب بديل تلقائياً حتى إصلاح العناصر الحرجة.</div>` : ''}
+            `;
+        }
+
+        // ============================================================
+        // الملعب البديل — يُستخدم تلقائياً عند حظر الملعب الرئيسي (سلامة) أو أثناء مشروع إغلاق كامل
+        // ============================================================
+        function isUsingAltStadium() { return isStadiumBanned(); }
+        function renderAltStadiumCard() {
+            const card = document.getElementById('altStadiumCard');
+            if (!isUsingAltStadium()) { card.style.display = 'none'; return; }
+            card.style.display = 'block';
+            const seed = seedHash(activeClub + 'altstadium');
+            const altCapacity = getAltStadiumCapacity();
+            const rentCost = Math.round((altCapacity/1000) * 0.08 * 20) / 20;
+            document.getElementById('altStadiumContainer').innerHTML = `
+                <div style="padding:14px; font-size:11.5px; color:var(--muted); line-height:1.8;">
+                    ملعبك الرئيسي غير معتمد حالياً للاستضافة. تستخدم إدارة النادي ملعباً بديلاً بسعة تقديرية <b style="color:var(--gold);">${altCapacity.toLocaleString()}</b> مقعد،
+                    بتكلفة إيجار <b style="color:var(--red);">${rentCost.toFixed(2)}M €</b> لكل مباراة — يُخصم تلقائياً من ميزانيتك حتى إصلاح ملعبك الأصلي.
+                </div>
+            `;
+        }
+        function processAltStadiumRent() {
+            if (!isUsingAltStadium()) return;
+            cachedMatches.forEach(m => {
+                const today = getGameDate();
+                if (dateSortKey(m.date) > dateSortKey(today)) return;
+                const payKey = 'altStadiumRentPaid_' + activeClub + '_' + dateSortKey(m.date) + '_' + m.opponent;
+                if (localStorage.getItem(payKey)) return;
+                const altCapacity = getAltStadiumCapacity();
+                const rentCost = Math.round((altCapacity/1000) * 0.08 * 20) / 20;
+                setClubBudget(getClubBudget() - rentCost);
+                localStorage.setItem(payKey, '1');
+                addMessageToSystem('إدارة الملعب', `<i class="fas fa-landmark-dome"></i> دُفعت تكلفة إيجار الملعب البديل: ${rentCost.toFixed(2)}M € (ضد ${m.opponent}).`, 'finance');
+            });
+        }
+
+        // ============================================================
+        // كتالوج مشاريع حقيقي شامل — كل نوع مشروع بنطاق تكلفة ومدة واقعيين فعليين من مراجع مشاريع الملاعب الحقيقية
+        // ============================================================
+        function projLang() { return localStorage.getItem('gameLanguage') || 'ar'; }
+        const MAINT_PROJ_I18N = {
+            grass: {ar:'صيانة العشب',en:'Pitch Maintenance',fr:'Entretien de la pelouse',es:'Mantenimiento del césped',de:'Rasenpflege',pt:'Manutenção do relvado',tr:'Saha Bakımı'},
+            grassFull: {ar:'تغيير العشب بالكامل',en:'Full Pitch Replacement',fr:'Remplacement complet de la pelouse',es:'Reemplazo completo del césped',de:'Kompletter Rasenaustausch',pt:'Substituição total do relvado',tr:'Tam Saha Değişimi'},
+            stands: {ar:'إصلاحات مدرجات محدودة',en:'Limited Stand Repairs',fr:'Réparations limitées des tribunes',es:'Reparaciones limitadas de gradas',de:'Begrenzte Tribünenreparaturen',pt:'Reparos limitados nas bancadas',tr:'Sınırlı Tribün Onarımları'},
+            lighting: {ar:'تحديث الإضاءة',en:'Lighting Upgrade',fr:'Mise à niveau de l\'éclairage',es:'Mejora de iluminación',de:'Beleuchtungs-Upgrade',pt:'Atualização da iluminação',tr:'Aydınlatma Yükseltmesi'},
+            lockerRooms: {ar:'تطوير غرف الملابس',en:'Locker Room Development',fr:'Rénovation des vestiaires',es:'Mejora de vestuarios',de:'Umkleidekabinen-Ausbau',pt:'Melhoria dos vestiários',tr:'Soyunma Odası Geliştirme'},
+            security: {ar:'تحديث أنظمة الأمن والتقنية',en:'Security & Tech Systems Upgrade',fr:'Mise à niveau sécurité et technologie',es:'Mejora de seguridad y tecnología',de:'Sicherheits- und Technik-Upgrade',pt:'Atualização de segurança e tecnologia',tr:'Güvenlik ve Teknoloji Yükseltmesi'},
+        };
+        const MAINTENANCE_PROJECTS = [
+            { key:'grass', get label(){ return MAINT_PROJ_I18N.grass[projLang()]; }, costRange:[0.05,0.5], daysRange:[1,7], facilityKey:'grass', restoreTo:95 },
+            { key:'grassFull', get label(){ return MAINT_PROJ_I18N.grassFull[projLang()]; }, costRange:[0.5,2.5], daysRange:[7,28], facilityKey:'grass', restoreTo:100 },
+            { key:'stands', get label(){ return MAINT_PROJ_I18N.stands[projLang()]; }, costRange:[1,8], daysRange:[30,90], facilityKey:'stands', restoreTo:90 },
+            { key:'lighting', get label(){ return MAINT_PROJ_I18N.lighting[projLang()]; }, costRange:[1,4], daysRange:[30,90], facilityKey:'lighting', restoreTo:95 },
+            { key:'lockerRooms', get label(){ return MAINT_PROJ_I18N.lockerRooms[projLang()]; }, costRange:[1,8], daysRange:[60,180], facilityKey:'lockerRooms', restoreTo:95 },
+            { key:'security', get label(){ return MAINT_PROJ_I18N.security[projLang()]; }, costRange:[1,10], daysRange:[30,120], facilityKey:'security', restoreTo:100 },
+        ];
+        const DEV_PROJ_I18N = {
+            vipZones: { label:{ar:'تطوير مناطق VIP وضيافة',en:'VIP & Hospitality Zone Development',fr:'Développement des zones VIP',es:'Desarrollo de zonas VIP',de:'VIP-Zonen-Entwicklung',pt:'Desenvolvimento de zonas VIP',tr:'VIP ve Ağırlama Bölgesi Geliştirme'}, benefit:{ar:'يرفع حصة مقاعد VIP الفعلية من السعة',en:'Increases the actual VIP seat share of capacity',fr:'Augmente la part réelle de sièges VIP',es:'Aumenta la proporción real de asientos VIP',de:'Erhöht den tatsächlichen VIP-Sitzplatzanteil',pt:'Aumenta a proporção real de lugares VIP',tr:'Kapasitenin gerçek VIP koltuk payını artırır'} },
+            museumStore: { label:{ar:'تطوير المتحف والمتجر',en:'Museum & Store Development',fr:'Développement du musée et de la boutique',es:'Desarrollo del museo y la tienda',de:'Museum- und Shop-Entwicklung',pt:'Desenvolvimento do museu e da loja',tr:'Müze ve Mağaza Geliştirme'}, benefit:{ar:'دخل سياحي شهري ثابت حسب سمعة ناديك',en:'Fixed monthly tourism income based on your club\'s reputation',fr:'Revenu touristique mensuel fixe selon la réputation',es:'Ingreso turístico mensual fijo según la reputación',de:'Feste monatliche Tourismuseinnahmen je nach Ruf',pt:'Rendimento turístico mensal fixo consoante a reputação',tr:'Kulüp itibarına göre sabit aylık turizm geliri'} },
+            entrances: { label:{ar:'تحسين مداخل الجماهير',en:'Fan Entrance Improvement',fr:'Amélioration des entrées des supporters',es:'Mejora de entradas de aficionados',de:'Verbesserung der Fan-Eingänge',pt:'Melhoria das entradas dos adeptos',tr:'Taraftar Giriş İyileştirmesi'}, benefit:{ar:'يرفع رضا الجماهير عن تجربة الحضور',en:'Raises fan satisfaction with the matchday experience',fr:'Augmente la satisfaction des supporters',es:'Aumenta la satisfacción de los aficionados',de:'Erhöht die Zufriedenheit der Fans',pt:'Aumenta a satisfação dos adeptos',tr:'Taraftarların maç günü memnuniyetini artırır'} },
+            screens: { label:{ar:'تركيب شاشات وأنظمة تقنية',en:'Screens & Tech Systems Installation',fr:'Installation d\'écrans et systèmes techniques',es:'Instalación de pantallas y sistemas técnicos',de:'Installation von Bildschirmen und Technik',pt:'Instalação de ecrãs e sistemas técnicos',tr:'Ekran ve Teknik Sistem Kurulumu'}, benefit:{ar:'يرفع جاذبية الملعب إعلامياً',en:'Increases the stadium\'s media appeal',fr:'Augmente l\'attrait médiatique du stade',es:'Aumenta el atractivo mediático del estadio',de:'Erhöht die mediale Attraktivität des Stadions',pt:'Aumenta o apelo mediático do estádio',tr:'Stadyumun medya çekiciliğini artırır'} },
+            parking: { label:{ar:'تحسين مواقف السيارات',en:'Parking Improvement',fr:'Amélioration du stationnement',es:'Mejora de estacionamiento',de:'Parkplatzverbesserung',pt:'Melhoria do estacionamento',tr:'Otopark İyileştirmesi'}, benefit:{ar:'يرفع رضا الجماهير ويسهّل الحضور',en:'Raises fan satisfaction and eases attendance',fr:'Augmente la satisfaction et facilite la présence',es:'Aumenta la satisfacción y facilita la asistencia',de:'Erhöht Zufriedenheit und erleichtert den Besuch',pt:'Aumenta a satisfação e facilita a presença',tr:'Memnuniyeti artırır ve katılımı kolaylaştırır'} },
+            media: { label:{ar:'تطوير مرافق الإعلام والبث',en:'Media & Broadcast Facilities Development',fr:'Développement des installations médias',es:'Desarrollo de instalaciones de medios',de:'Entwicklung von Medieneinrichtungen',pt:'Desenvolvimento de instalações de media',tr:'Medya ve Yayın Tesisleri Geliştirme'}, benefit:{ar:'يرفع جودة عقود البث المستقبلية',en:'Improves the quality of future broadcast deals',fr:'Améliore la qualité des futurs contrats de diffusion',es:'Mejora la calidad de futuros contratos de transmisión',de:'Verbessert die Qualität künftiger Übertragungsverträge',pt:'Melhora a qualidade de futuros contratos de transmissão',tr:'Gelecekteki yayın anlaşmalarının kalitesini artırır'} },
+        };
+        const DEVELOPMENT_PROJECTS = [
+            { key:'vipZones', get label(){ return DEV_PROJ_I18N.vipZones.label[projLang()]; }, costRange:[2,15], daysRange:[90,270], get benefit(){ return DEV_PROJ_I18N.vipZones.benefit[projLang()]; } },
+            { key:'museumStore', get label(){ return DEV_PROJ_I18N.museumStore.label[projLang()]; }, costRange:[1,6], daysRange:[60,180], get benefit(){ return DEV_PROJ_I18N.museumStore.benefit[projLang()]; } },
+            { key:'entrances', get label(){ return DEV_PROJ_I18N.entrances.label[projLang()]; }, costRange:[0.5,3], daysRange:[30,90], get benefit(){ return DEV_PROJ_I18N.entrances.benefit[projLang()]; } },
+            { key:'screens', get label(){ return DEV_PROJ_I18N.screens.label[projLang()]; }, costRange:[1,4], daysRange:[30,120], get benefit(){ return DEV_PROJ_I18N.screens.benefit[projLang()]; } },
+            { key:'parking', get label(){ return DEV_PROJ_I18N.parking.label[projLang()]; }, costRange:[0.5,3], daysRange:[30,90], get benefit(){ return DEV_PROJ_I18N.parking.benefit[projLang()]; } },
+            { key:'media', get label(){ return DEV_PROJ_I18N.media.label[projLang()]; }, costRange:[1,4], daysRange:[30,120], get benefit(){ return DEV_PROJ_I18N.media.benefit[projLang()]; } },
+        ];
+        function projectCost(proj) {
+            const seed = seedHash(activeClub + proj.key + 'cost');
+            const [min,max] = proj.costRange;
+            return Math.round((min + (seed % 1000)/1000 * (max-min)) * 20) / 20;
+        }
+        function projectDuration(proj) {
+            const seed = seedHash(activeClub + proj.key + 'days');
+            const [min,max] = proj.daysRange;
+            return Math.round(min + (seed % 1000)/1000 * (max-min));
+        }
+        function getActiveMaintProject(key) { try { return JSON.parse(localStorage.getItem('maintProject_' + activeClub + '_' + key)); } catch(e){ return null; } }
+        function startMaintenanceProject(key) {
+            const proj = MAINTENANCE_PROJECTS.find(p=>p.key===key) || DEVELOPMENT_PROJECTS.find(p=>p.key===key);
+            const cost = projectCost(proj);
+            const budget = getClubBudget();
+            if (cost > budget) { showToast('الميزانية لا تكفي لهذا المشروع!'); return; }
+            setClubBudget(budget - cost);
+            const days = projectDuration(proj);
+            const todayAbs = toAbsDay(getGameDate());
+            const record = { cost, days, startAbsDay: todayAbs, completionAbsDay: todayAbs + days };
+            localStorage.setItem('maintProject_' + activeClub + '_' + key, JSON.stringify(record));
+            addMessageToSystem('إدارة الملعب', `<i class="fas fa-screwdriver-wrench"></i> بدأ مشروع "${proj.label}" بتكلفة ${cost.toFixed(2)}M € ومدة ${days} يوماً.`, 'finance');
+            showToast('<i class="fas fa-circle-check"></i> بدأ المشروع فعلياً');
+            renderMaintenanceProjects();
+            renderDevelopmentProjects();
+        }
+        function processMaintenanceCompletion() {
+            [...MAINTENANCE_PROJECTS, ...DEVELOPMENT_PROJECTS].forEach(proj => {
+                const record = getActiveMaintProject(proj.key);
+                if (!record) return;
+                const todayAbs = toAbsDay(getGameDate());
+                if (todayAbs >= record.completionAbsDay) {
+                    if (proj.facilityKey) setFacilityCondition(proj.facilityKey, proj.restoreTo);
+                    if (DEVELOPMENT_PROJECTS.includes(proj)) localStorage.setItem('devDone_' + activeClub + '_' + proj.key, '1');
+                    localStorage.removeItem('maintProject_' + activeClub + '_' + proj.key);
+                    const doneMsg = `<i class="fas fa-circle-check"></i> اكتمل مشروع "${proj.label}" فعلياً.`;
+                    addMessageToSystem('إدارة الملعب', doneMsg, 'finance');
+                    logStadiumHistory(MAINTENANCE_PROJECTS.includes(proj)?'<i class="fas fa-screwdriver-wrench"></i>':'<i class="fas fa-sparkles"></i>', doneMsg);
+                }
+            });
+        }
+        function renderMaintenanceProjects() {
+            document.getElementById('maintenanceProjectsContainer').innerHTML = MAINTENANCE_PROJECTS.map(p => {
+                const active = getActiveMaintProject(p.key);
+                const cond = getFacilityCondition(p.facilityKey);
+                if (active) {
+                    const todayAbs = toAbsDay(getGameDate());
+                    const pct = Math.min(100, Math.round(((todayAbs-active.startAbsDay)/active.days)*100));
+                    return `<div class="ticket-row" style="flex-direction:column; align-items:stretch; gap:5px;">
+                        <div style="display:flex; justify-content:space-between;"><span class="tname">${p.label}</span><span style="font-size:10px; color:var(--gold);">${pct}%</span></div>
+                        <div style="height:5px; background:var(--border); border-radius:3px; overflow:hidden;"><div style="height:100%; width:${pct}%; background:var(--gold);"></div></div>
+                    </div>`;
+                }
+                return `<div class="ticket-row">
+                    <div class="tname">${p.label} <span style="font-size:9px; color:var(--muted);">(حالة العنصر: ${Math.round(cond)}%)</span></div>
+                    <button class="btn-outline2" style="width:auto; padding:6px 12px; font-size:10px;" onclick="startMaintenanceProject('${p.key}')">${projectCost(p).toFixed(2)}M €</button>
+                </div>`;
+            }).join('');
+        }
+        function renderDevelopmentProjects() {
+            document.getElementById('developmentProjectsContainer').innerHTML = DEVELOPMENT_PROJECTS.map(p => {
+                const active = getActiveMaintProject(p.key);
+                const done = localStorage.getItem('devDone_' + activeClub + '_' + p.key) === '1';
+                if (done) return `<div class="ticket-row"><div class="tname">${p.label}</div><span style="color:var(--green); font-size:11px; font-weight:800;"><i class="fas fa-circle-check"></i> مكتمل</span></div>`;
+                if (active) {
+                    const todayAbs = toAbsDay(getGameDate());
+                    const pct = Math.min(100, Math.round(((todayAbs-active.startAbsDay)/active.days)*100));
+                    return `<div class="ticket-row" style="flex-direction:column; align-items:stretch; gap:5px;">
+                        <div style="display:flex; justify-content:space-between;"><span class="tname">${p.label}</span><span style="font-size:10px; color:var(--gold);">${pct}%</span></div>
+                        <div style="height:5px; background:var(--border); border-radius:3px; overflow:hidden;"><div style="height:100%; width:${pct}%; background:var(--gold);"></div></div>
+                    </div>`;
+                }
+                return `<div class="ticket-row" style="flex-direction:column; align-items:stretch; gap:4px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div class="tname">${p.label}</div>
+                        <button class="btn-outline2" style="width:auto; padding:6px 12px; font-size:10px;" onclick="startMaintenanceProject('${p.key}')">${projectCost(p).toFixed(2)}M €</button>
+                    </div>
+                    <div style="font-size:9.5px; color:var(--muted);">${p.benefit}</div>
+                </div>`;
+            }).join('');
+        }
+        function hasDevelopment(key) { return localStorage.getItem('devDone_' + activeClub + '_' + key) === '1'; }
+
+        // ============================================================
+        // أحداث واقعية بالبذرة أثناء البناء (ثابتة لكل مشروع، وليست عشوائية حقيقية) — ارتفاع تكلفة مواد أو تأخر مقاول
+        // ============================================================
+        function ceLang() { return localStorage.getItem('gameLanguage') || 'ar'; }
+        const CONSTR_EVENT_I18N = {
+            contractorDelay: {ar:(d)=>`⏱️ تأخر المقاول المنفِّذ ${d} يوماً عن الجدول الأصلي.`, en:(d)=>`⏱️ The contractor fell behind schedule by ${d} days.`, fr:(d)=>`⏱️ L'entrepreneur a pris ${d} jours de retard.`, es:(d)=>`⏱️ El contratista se retrasó ${d} días.`, de:(d)=>`⏱️ Der Bauunternehmer geriet ${d} Tage in Verzug.`, pt:(d)=>`⏱️ O empreiteiro atrasou-se ${d} dias.`, tr:(d)=>`⏱️ Yüklenici ${d} gün gecikti.`},
+            materialCost: {ar:(p,c)=>`<i class="fas fa-chart-line"></i> ارتفعت أسعار مواد البناء ${p}% أثناء التنفيذ — تكلفة إضافية ${c}M € خُصمت مباشرة من ميزانيتك.`, en:(p,c)=>`<i class="fas fa-chart-line"></i> Construction material prices rose ${p}% during execution — an extra ${c}M € was deducted from your budget.`, fr:(p,c)=>`<i class="fas fa-chart-line"></i> Les prix des matériaux ont augmenté de ${p}%, coût supplémentaire de ${c}M €.`, es:(p,c)=>`<i class="fas fa-chart-line"></i> Los precios de materiales subieron ${p}%, coste adicional de ${c}M €.`, de:(p,c)=>`<i class="fas fa-chart-line"></i> Die Materialpreise stiegen um ${p}%, zusätzliche Kosten von ${c}Mio €.`, pt:(p,c)=>`<i class="fas fa-chart-line"></i> Os preços dos materiais subiram ${p}%, custo adicional de ${c}M €.`, tr:(p,c)=>`<i class="fas fa-chart-line"></i> Malzeme fiyatları %${p} arttı, ek maliyet ${c}M €.`},
+            engineering: {ar:(d,c)=>`<i class="fas fa-triangle-exclamation"></i> اكتُشفت مشكلة هندسية فعلية أثناء التنفيذ — تأخير ${d} يوماً وتكلفة إصلاح إضافية ${c}M €.`, en:(d,c)=>`<i class="fas fa-triangle-exclamation"></i> A real engineering issue was discovered during execution — ${d} days delay and an extra ${c}M € repair cost.`, fr:(d,c)=>`<i class="fas fa-triangle-exclamation"></i> Un problème d'ingénierie a été découvert — retard de ${d} jours, coût de ${c}M €.`, es:(d,c)=>`<i class="fas fa-triangle-exclamation"></i> Se descubrió un problema de ingeniería — retraso de ${d} días, coste de ${c}M €.`, de:(d,c)=>`<i class="fas fa-triangle-exclamation"></i> Ein technisches Problem wurde entdeckt — ${d} Tage Verzögerung, ${c}Mio € Zusatzkosten.`, pt:(d,c)=>`<i class="fas fa-triangle-exclamation"></i> Foi descoberto um problema de engenharia — atraso de ${d} dias, custo de ${c}M €.`, tr:(d,c)=>`<i class="fas fa-triangle-exclamation"></i> Gerçek bir mühendislik sorunu keşfedildi — ${d} gün gecikme, ${c}M € ek maliyet.`},
+            designChange: {ar:(c,d)=>`<i class="fas fa-drafting-compass"></i> طلبت الإدارة الفنية تعديلاً في التصميم — تكلفة إضافية ${c}M € وتأخير ${d} يوماً.`, en:(c,d)=>`<i class="fas fa-drafting-compass"></i> The technical department requested a design change — an extra ${c}M € cost and ${d} days delay.`, fr:(c,d)=>`<i class="fas fa-drafting-compass"></i> Modification de conception demandée — coût de ${c}M €, retard de ${d} jours.`, es:(c,d)=>`<i class="fas fa-drafting-compass"></i> Se solicitó un cambio de diseño — coste de ${c}M €, retraso de ${d} días.`, de:(c,d)=>`<i class="fas fa-drafting-compass"></i> Designänderung angefordert — ${c}Mio € Kosten, ${d} Tage Verzögerung.`, pt:(c,d)=>`<i class="fas fa-drafting-compass"></i> Foi solicitada uma alteração de design — custo de ${c}M €, atraso de ${d} dias.`, tr:(c,d)=>`<i class="fas fa-drafting-compass"></i> Tasarım değişikliği talep edildi — ${c}M € maliyet, ${d} gün gecikme.`},
+            weather: {ar:(d)=>`<i class="fas fa-cloud-rain"></i> تأخير ${d} يوماً بسبب سوء الأحوال الجوية أو تأخر موافقة رسمية.`, en:(d)=>`<i class="fas fa-cloud-rain"></i> ${d} days delay due to bad weather or a delayed official approval.`, fr:(d)=>`<i class="fas fa-cloud-rain"></i> Retard de ${d} jours dû aux intempéries ou à une approbation officielle.`, es:(d)=>`<i class="fas fa-cloud-rain"></i> Retraso de ${d} días por mal tiempo o aprobación oficial.`, de:(d)=>`<i class="fas fa-cloud-rain"></i> ${d} Tage Verzögerung durch schlechtes Wetter oder behördliche Genehmigung.`, pt:(d)=>`<i class="fas fa-cloud-rain"></i> Atraso de ${d} dias devido a mau tempo ou aprovação oficial.`, tr:(d)=>`<i class="fas fa-cloud-rain"></i> Kötü hava koşulları veya resmi onay nedeniyle ${d} gün gecikme.`},
+            budgetOverrun: {ar:(c)=>`<i class="fas fa-money-bill-transfer"></i> تجاوزت التكلفة الفعلية الميزانية المعتمدة بـ${c}M € — نفقات تنفيذية غير متوقَّعة.`, en:(c)=>`<i class="fas fa-money-bill-transfer"></i> Actual cost exceeded the approved budget by ${c}M € — unexpected execution expenses.`, fr:(c)=>`<i class="fas fa-money-bill-transfer"></i> Le coût réel a dépassé le budget approuvé de ${c}M €.`, es:(c)=>`<i class="fas fa-money-bill-transfer"></i> El coste real superó el presupuesto aprobado en ${c}M €.`, de:(c)=>`<i class="fas fa-money-bill-transfer"></i> Die tatsächlichen Kosten überschritten das Budget um ${c}Mio €.`, pt:(c)=>`<i class="fas fa-money-bill-transfer"></i> O custo real excedeu o orçamento aprovado em ${c}M €.`, tr:(c)=>`<i class="fas fa-money-bill-transfer"></i> Gerçek maliyet onaylanan bütçeyi ${c}M € aştı.`},
+        };
+        const CONSTRUCTION_EVENTS = [
+            { key:'contractor_delay', label:'تأخر المقاول', weight:20, apply:(project)=>{
+                const extraDays = Math.round(project.buildDays * (0.08 + (seedHash(activeClub+'cd'+project.startAbsDay)%10)/100));
+                project.completionAbsDay += extraDays;
+                return CONSTR_EVENT_I18N.contractorDelay[ceLang()](extraDays);
+            }},
+            { key:'material_cost', label:'ارتفاع أسعار المواد', weight:20, apply:(project)=>{
+                const pct = 4 + (seedHash(activeClub+'mc'+project.startAbsDay)%5);
+                const extraCost = Math.round(project.cost * (pct/100) * 20) / 20;
+                setClubBudget(getClubBudget() - extraCost);
+                return CONSTR_EVENT_I18N.materialCost[ceLang()](pct, extraCost.toFixed(2));
+            }},
+            { key:'engineering_problem', label:'مشكلة هندسية', weight:12, apply:(project)=>{
+                const extraDays = Math.round(project.buildDays * 0.10);
+                const extraCost = Math.round(project.cost * 0.04 * 20) / 20;
+                project.completionAbsDay += extraDays;
+                setClubBudget(getClubBudget() - extraCost);
+                return CONSTR_EVENT_I18N.engineering[ceLang()](extraDays, extraCost.toFixed(2));
+            }},
+            { key:'design_change', label:'تغيير في التصميم', weight:10, apply:(project)=>{
+                const extraDays = Math.round(project.buildDays * 0.12);
+                const extraCost = Math.round(project.cost * 0.05 * 20) / 20;
+                project.completionAbsDay += extraDays;
+                setClubBudget(getClubBudget() - extraCost);
+                return CONSTR_EVENT_I18N.designChange[ceLang()](extraCost.toFixed(2), extraDays);
+            }},
+            { key:'weather_approval', label:'تأخير الطقس أو الموافقات', weight:25, apply:(project)=>{
+                const extraDays = Math.round(project.buildDays * 0.05) + 5;
+                project.completionAbsDay += extraDays;
+                return CONSTR_EVENT_I18N.weather[ceLang()](extraDays);
+            }},
+            { key:'budget_overrun', label:'تجاوز الميزانية العام', weight:13, apply:(project)=>{
+                const extraCost = Math.round(project.cost * 0.08 * 20) / 20;
+                setClubBudget(getClubBudget() - extraCost);
+                return CONSTR_EVENT_I18N.budgetOverrun[ceLang()](extraCost.toFixed(2));
+            }},
+        ];
+        // فحص شهري حقيقي حسب تقويم اللعبة — وليس فحصاً واحداً فقط عند البدء، مطابق لطول المشاريع الكبرى الحقيقية
+        function checkConstructionRiskEvent() {
+            const project = getActiveConstruction();
+            if (!project) return;
+            const today = getGameDate();
+            const monthKey = `${today.year}_${today.month}`;
+            if (project.lastRiskCheckMonth === monthKey) return;
+            project.lastRiskCheckMonth = monthKey;
+
+            const seed = seedHash(activeClub + 'risk' + project.startAbsDay + monthKey);
+            const roll = seed % 100;
+            if (roll < 15) { // ~15% فرصة شهرية ثابتة (محسوبة بالبذرة) لحدث تنفيذي حقيقي واحد كل شهر أثناء التنفيذ
+                let cum = 0, chosen = CONSTRUCTION_EVENTS[0];
+                const totalWeight = CONSTRUCTION_EVENTS.reduce((s,e)=>s+e.weight,0);
+                const pick = seed % totalWeight;
+                for (const ev of CONSTRUCTION_EVENTS) { cum += ev.weight; if (pick < cum) { chosen = ev; break; } }
+                const msg = chosen.apply(project);
+                addMessageToSystem('المقاول المنفِّذ', msg, 'finance');
+                logStadiumHistory('<i class="fas fa-triangle-exclamation"></i>', msg);
+            }
+            localStorage.setItem('stadiumConstruction_' + activeClub, JSON.stringify(project));
+        }
+        // تسريع المشروع مقابل تكلفة إضافية حقيقية — خيار رئاسي فعلي يقلّص المدة المتبقية
+        function accelerateProject() {
+            const project = getActiveConstruction();
+            if (!project) return;
+            const todayAbs = toAbsDay(getGameDate());
+            const remainingDays = Math.max(1, project.completionAbsDay - todayAbs);
+            const accelCost = Math.round(project.cost * 0.25 * 20) / 20;
+            if (accelCost > getClubBudget()) { showToast('الميزانية لا تكفي لتسريع المشروع!'); return; }
+            if (!confirm(`تسريع المشروع بتكلفة إضافية ${accelCost.toFixed(2)}M € سيقلّص المدة المتبقية (${remainingDays} يوم) بنسبة 30% تقريباً. هل تريد المتابعة؟`)) return;
+            setClubBudget(getClubBudget() - accelCost);
+            const reduction = Math.round(remainingDays * 0.3);
+            project.completionAbsDay -= reduction;
+            localStorage.setItem('stadiumConstruction_' + activeClub, JSON.stringify(project));
+            addMessageToSystem('المقاول المنفِّذ', `<i class="fas fa-bolt"></i> تم تسريع العمل مقابل ${accelCost.toFixed(2)}M € إضافية — اختصار ${reduction} يوماً من المدة المتبقية.`, 'finance');
+            showToast(`<i class="fas fa-circle-check"></i> تم تسريع المشروع — اختصار ${reduction} يوماً`);
+            renderConstructionStatus();
+            renderReport();
+        }
+
+        function renderReport() {
+            const total = parseFloat(localStorage.getItem('ticketRevenueTotal_' + activeClub)) || 0;
+            const capacity = getEffectiveCapacity();
+            const upgradeSpent = parseFloat(localStorage.getItem('stadiumUpgradeSpent_' + activeClub)) || 0;
+            document.getElementById('reportGrid').innerHTML = `
+                <div class="report-box"><div class="lbl">السعة الحالية</div><div class="val">${capacity.toLocaleString()}</div></div>
+                <div class="report-box"><div class="lbl">إجمالي عائد التذاكر</div><div class="val">${total.toFixed(2)}M €</div></div>
+                <div class="report-box"><div class="lbl">استثمار التوسعة حتى الآن</div><div class="val">${upgradeSpent.toFixed(2)}M €</div></div>
+                <div class="report-box"><div class="lbl">أعلى قطاع سعراً</div><div class="val">${getTierPrice('vip')}€ (VIP)</div></div>
+            `;
+        }
+
+        // ============================================================
+        // مشروع توسعة الملعب — نفس نظام الطلب اليدوي الحقيقي (مبلغ حر + فرصة حية) المستخدم في مجلس الإدارة
+        // ============================================================
+        function generateBoard() {
+            const stored = localStorage.getItem('board_members_' + activeClub);
+            if (stored) return JSON.parse(stored);
+            return [{ position:'مالك النادي', votingWeight:30, personality:'conservative', loyalty:50 },
+                    { position:'رئيس مجلس الإدارة', votingWeight:20, personality:'ambitious', loyalty:50 },
+                    { position:'المدير المالي', votingWeight:15, personality:'profit', loyalty:50 }];
+        }
+        let activeExpansionRequest = null;
+        function onCapacityInputChange() { if (activeMegaType) updateMegaProjectPreview(); else updateExpansionPreview(); }
+        function onSubmitProject() { if (activeMegaType) submitMegaProject(); else submitExpansion(); }
+
+        function openExpansionModal() {
+            const activeProject = getActiveConstruction();
+            if (activeProject) {
+                const daysLeft = Math.max(0, activeProject.completionAbsDay - toAbsDay(getGameDate()));
+                showToast(`يوجد مشروع توسعة جارٍ فعلياً (+${activeProject.seats.toLocaleString()} مقعد) — يكتمل خلال ${daysLeft} يوم. لا يمكن بدء مشروع آخر أثناء ذلك.`);
+                return;
+            }
+            activeMegaType = null;
+            const capacity = getEffectiveCapacity();
+            document.getElementById('voteModalTitle').innerText = 'مشروع توسعة الملعب';
+            document.getElementById('voteModalBody').innerHTML = '';
+            document.getElementById('voteModalAmountSection').style.display = 'block';
+            document.getElementById('capacityInputRow').style.display = 'flex';
+            document.getElementById('capacityInputLabel').innerText = 'زيادة السعة المطلوبة (عدد المقاعد)';
+            renderQualitySelector();
+            renderFinancingSelector();
+            document.getElementById('capacityInput').value = Math.round(capacity * 0.15 / 500) * 500;
+            updateExpansionPreview();
+            document.getElementById('voteModal').classList.add('active');
+        }
+        function closeVoteModal() { document.getElementById('voteModal').classList.remove('active'); document.getElementById('voteModalAmountSection').style.display='none'; activeMegaType = null; }
+        // تكلفة إنشاءات واقعية: ~4,500€ لكل مقعد أساساً، ترتفع تدريجياً كلما كبر المشروع (تعقيد إنشائي إضافي حقيقي)
+        // مطابقة لتكاليف مشاريع توسعة الملاعب الفعلية (وليس بناء ملعب جديد بالكامل)
+        // مؤشر تكلفة إنشاءات حقيقي لكل دولة — يعكس فارق تكلفة العمالة والمواد والتنظيم الفعلي بين الدول
+        const COUNTRY_CONSTRUCTION_INDEX = {
+            'Switzerland': 1.55, 'Norway': 1.5, 'Austria': 1.25, 'Germany': 1.2, 'Belgium': 1.15,
+            'England': 1.3, 'Netherlands': 1.2, 'France': 1.15, 'Ireland': 1.2, 'Japan': 1.35,
+            'Portugal': 0.85, 'Spain': 0.95, 'Italy': 1.0, 'United Arab Emirates': 1.1, 'Saudi Arabia': 0.95,
+            'Turkiye': 0.7, 'Russia': 0.75, 'Brazil': 0.65, 'Egypt': 0.5, 'Morocco': 0.55, 'Ukraine': 0.55, 'Wales': 1.2,
+        };
+        function getCountryConstructionIndex() { return COUNTRY_CONSTRUCTION_INDEX[homeCountry] || 0.8; }
+
+        // مستوى الجودة — قرار رئاسي حقيقي حسب مواصفاتك: يؤثر على التكلفة والنتيجة معاً (تجربة جماهيرية وسعة تسويقية لاحقاً)
+        const QUALITY_I18N = {
+            economic: { label:{ar:'اقتصادي',en:'Economic',fr:'Économique',es:'Económico',de:'Wirtschaftlich',pt:'Económico',tr:'Ekonomik'}, desc:{ar:'إنجاز أسرع وأرخص، دون تحسين حقيقي في تجربة الجمهور.',en:'Faster and cheaper completion, without real improvement to the fan experience.',fr:'Réalisation plus rapide et moins chère, sans réelle amélioration.',es:'Finalización más rápida y barata, sin mejora real.',de:'Schnellere und günstigere Fertigstellung ohne echte Verbesserung.',pt:'Conclusão mais rápida e barata, sem melhoria real.',tr:'Gerçek bir iyileştirme olmadan daha hızlı ve ucuz tamamlanma.'} },
+            standard: { label:{ar:'قياسي',en:'Standard',fr:'Standard',es:'Estándar',de:'Standard',pt:'Padrão',tr:'Standart'}, desc:{ar:'التوازن المعتاد بين التكلفة والجودة في معظم مشاريع الملاعب الحقيقية.',en:'The usual balance between cost and quality in most real stadium projects.',fr:'L\'équilibre habituel entre coût et qualité.',es:'El equilibrio habitual entre coste y calidad.',de:'Das übliche Gleichgewicht zwischen Kosten und Qualität.',pt:'O equilíbrio habitual entre custo e qualidade.',tr:'Çoğu gerçek stadyum projesindeki olağan maliyet-kalite dengesi.'} },
+            premium: { label:{ar:'فاخر',en:'Premium',fr:'Premium',es:'Premium',de:'Premium',pt:'Premium',tr:'Premium'}, desc:{ar:'مواد وتشطيبات متطورة، ترفع رضا الجماهير وقيمة تذاكر VIP لاحقاً.',en:'Advanced materials and finishes, raising fan satisfaction and future VIP ticket value.',fr:'Matériaux et finitions avancés, améliorant la satisfaction des fans.',es:'Materiales y acabados avanzados, mejorando la satisfacción de los aficionados.',de:'Fortschrittliche Materialien und Ausführungen, steigern die Fan-Zufriedenheit.',pt:'Materiais e acabamentos avançados, aumentando a satisfação dos adeptos.',tr:'Gelişmiş malzemeler ve kaplamalar, taraftar memnuniyetini artırır.'} },
+        };
+        const QUALITY_TIERS = [
+            { key:'economic', get label(){ return QUALITY_I18N.economic.label[projLang()]; }, costMult:0.75, satisfactionBonus:0, get desc(){ return QUALITY_I18N.economic.desc[projLang()]; } },
+            { key:'standard', get label(){ return QUALITY_I18N.standard.label[projLang()]; }, costMult:1.0, satisfactionBonus:3, get desc(){ return QUALITY_I18N.standard.desc[projLang()]; } },
+            { key:'premium', get label(){ return QUALITY_I18N.premium.label[projLang()]; }, costMult:1.45, satisfactionBonus:8, get desc(){ return QUALITY_I18N.premium.desc[projLang()]; } },
+        ];
+        function getSelectedQuality() { return localStorage.getItem('expansionQuality_' + activeClub) || 'standard'; }
+        function setSelectedQuality(key) { localStorage.setItem('expansionQuality_' + activeClub, key); renderQualitySelector(); updateExpansionPreview(); }
+        function renderQualitySelector() {
+            const active = getSelectedQuality();
+            document.getElementById('qualityTierRow').innerHTML = QUALITY_TIERS.map(q => `
+                <div class="kit-type-chip ${q.key===active?'active':''}" onclick="setSelectedQuality('${q.key}')" style="flex:1; text-align:center; padding:8px 4px; border-radius:9px; background:${q.key===active?'var(--gold)':'var(--bg)'}; color:${q.key===active?'#06090f':'var(--text)'}; border:1px solid var(--border); font-size:11px; font-weight:700; cursor:pointer;">${q.label}</div>
+            `).join('');
+            document.getElementById('qualityTierDesc').innerText = QUALITY_TIERS.find(q=>q.key===active).desc;
+        }
+
+        function expansionCost(seats) {
+            const baseCostPerSeat = 4500;
+            const complexityMult = 1 + Math.min(0.6, seats / 40000); // مشاريع أكبر تكلفتها تصاعدية وليست خطية بحتة
+            const countryIndex = getCountryConstructionIndex();
+            const quality = QUALITY_TIERS.find(q=>q.key===getSelectedQuality());
+            return Math.round((seats * baseCostPerSeat * complexityMult * countryIndex * quality.costMult) / 1000000 * 20) / 20;
+        }
+        function maxExpansionSeats() {
+            // سقف هيكلي واقعي: لا يمكن توسيع أكثر من 25% من السعة الحالية دفعة واحدة (قيود الأرض والهيكل الإنشائي)
+            return Math.round(getEffectiveCapacity() * 0.25 / 500) * 500;
+        }
+        function updateExpansionPreview() {
+            const maxSeats = maxExpansionSeats();
+            const input = document.getElementById('capacityInput');
+            input.max = maxSeats;
+            let seats = Math.max(0, parseInt(input.value) || 0);
+            if (seats > maxSeats) { seats = maxSeats; input.value = maxSeats; }
+            const baseCost = expansionCost(seats);
+            const reserve = riskReserve(baseCost);
+            const cost = baseCost + reserve;
+            const buildDays = daysForConstruction(seats);
+            const budget = getClubBudget();
+            const countryIdx = getCountryConstructionIndex();
+            const quality = QUALITY_TIERS.find(q=>q.key===getSelectedQuality());
+            document.getElementById('expansionCostLabel').innerHTML = `مؤشر تكلفة الإنشاء في ${homeCountry}: <b style="color:var(--gold);">×${countryIdx.toFixed(2)}</b> · جودة ${quality.label}: <b style="color:var(--gold);">×${quality.costMult.toFixed(2)}</b><br>التكلفة الأساسية: <b style="color:var(--gold);">${baseCost.toFixed(2)}M €</b> + احتياطي مخاطر (10%): <b style="color:var(--gold);">${reserve.toFixed(2)}M €</b> = الميزانية المعتمدة: <b style="color:var(--gold);">${cost.toFixed(2)}M €</b>${seats>=maxSeats ? ' <span style="color:var(--red);">(الحد الأقصى)</span>' : ''}<br>مدة التنفيذ الإجمالية: <b style="color:var(--gold);">~${Math.round(buildDays/30.4)} شهراً</b>${renderStageBreakdownHTML(buildDays)}`;
+            const chance = computeBoardApprovalChance(cost, budget * 0.4);
+            document.getElementById('voteChanceLabel').innerText = chance + '%';
+            document.getElementById('voteChanceBar').style.width = chance + '%';
+            document.getElementById('voteChanceBar').style.background = chance>=60?'var(--green)':chance>=30?'var(--gold)':'var(--red)';
+            document.getElementById('voteConfirmBtn').disabled = seats <= 0;
+        }
+        function renderConstructionStatus() {
+            const box = document.getElementById('constructionStatusBox');
+            const project = getActiveConstruction();
+            const btn = document.getElementById('expansionBtn');
+            if (!project) { box.innerHTML = ''; if (btn) { btn.disabled = false; btn.innerText = getStadiumLang('expansionIdleBtn') || 'مشروع توسعة الملعب'; } return; }
+            const todayAbs = toAbsDay(getGameDate());
+            const elapsed = Math.max(0, todayAbs - project.startAbsDay);
+            const pct = Math.min(100, Math.round((elapsed / project.buildDays) * 100));
+            const daysLeft = Math.max(0, project.completionAbsDay - todayAbs);
+            const stage = getProjectStage(pct);
+            box.innerHTML = `
+                <div style="font-size:11.5px; color:var(--gold); font-weight:700; margin-bottom:6px;"><i class="fas fa-person-digging"></i> مشروع إنشائي جارٍ: +${project.seats.toLocaleString()} مقعد</div>
+                <div style="height:8px; background:var(--border); border-radius:5px; overflow:hidden; margin-bottom:6px;"><div style="height:100%; width:${pct}%; background:var(--gold);"></div></div>
+                <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">${pct}% — المرحلة الحالية: <b style="color:var(--gold);">${stage}</b> — يتبقى ${daysLeft} يوم تقريباً</div>
+                ${renderStageBreakdownHTML(project.buildDays)}
+                ${project.closedSeats ? `<div style="font-size:10px; color:var(--red); margin:8px 0;"><i class="fas fa-triangle-exclamation"></i> ${project.closedSeats.toLocaleString()} مقعد مغلق مؤقتاً بسبب أعمال البناء</div>` : ''}
+                <button onclick="accelerateProject()" style="width:100%; margin-top:6px; border:1px solid var(--gold); background:transparent; color:var(--gold); padding:8px; border-radius:12px; font-size:10.5px; font-weight:700; cursor:pointer;"><i class="fas fa-bolt"></i> تسريع المشروع (بتكلفة إضافية 25%)</button>
+            `;
+            if (btn) { btn.disabled = true; btn.innerText = getStadiumLang('expansionActiveBtn') || 'يوجد مشروع إنشائي جارٍ حالياً'; }
+        }
+
+        // ============================================================
+        // المشاريع الضخمة الإضافية — إعادة بناء جزئي، تجديد شامل، بناء ملعب جديد بالكامل
+        // كل نوع بتكلفة ومدة حقيقيتين مطابقتين تماماً لجدولك المرجعي
+        // ============================================================
+        const MEGA_PROJECT_TYPES = {
+            partialRebuild: { title:'إعادة بناء جزء من المدرجات', minMonths:1, maxMonths:3, costPerSeat:2800, defaultPct:0.2 },
+            fullRenovation: { title:'تجديد شامل للملعب', minMonths:18, maxMonths:36, baseCostRange:[50,300] },
+            newStadium: { title:'بناء ملعب جديد بالكامل', minMonths:30, maxMonths:72, costPerSeat:11000 },
+        };
+        let activeMegaType = null;
+        function openMegaProjectModal(type) {
+            const activeProject = getActiveConstruction();
+            if (activeProject) { showToast('يوجد مشروع إنشائي جارٍ فعلياً — لا يمكن بدء مشروع آخر أثناء ذلك.'); return; }
+            activeMegaType = type;
+            const meta = MEGA_PROJECT_TYPES[type];
+            document.getElementById('voteModalTitle').innerText = meta.title;
+            document.getElementById('voteModalBody').innerHTML = '';
+            document.getElementById('voteModalAmountSection').style.display = 'block';
+            renderQualitySelector();
+            renderFinancingSelector();
+            const capacity = getEffectiveCapacity();
+            const input = document.getElementById('capacityInput');
+            if (type === 'partialRebuild') {
+                input.value = Math.round(capacity * meta.defaultPct / 500) * 500;
+            } else if (type === 'newStadium') {
+                input.value = Math.round(capacity * 1.15 / 1000) * 1000; // اقتراح افتراضي: ملعب جديد أكبر قليلاً من الحالي
+            } else {
+                input.value = 0; // التجديد الشامل لا يحتاج إدخال مقاعد، مبني على السعة الحالية مباشرة
+            }
+            document.getElementById('capacityInputRow').style.display = (type === 'fullRenovation') ? 'none' : 'flex';
+            document.getElementById('capacityInputLabel').innerText = type === 'partialRebuild' ? 'عدد المقاعد المطلوب إعادة بنائها' : type === 'newStadium' ? 'السعة المستهدفة للملعب الجديد' : '';
+            updateMegaProjectPreview();
+            document.getElementById('voteModal').classList.add('active');
+        }
+        function megaProjectCost(type, seats) {
+            const meta = MEGA_PROJECT_TYPES[type];
+            const countryIdx = getCountryConstructionIndex();
+            const quality = QUALITY_TIERS.find(q=>q.key===getSelectedQuality());
+            if (type === 'fullRenovation') {
+                const capacity = getEffectiveCapacity();
+                const seed = seedHash(activeClub + 'renovation');
+                const [min,max] = meta.baseCostRange;
+                const sizeFactor = Math.min(2, capacity/40000); // ملعب أكبر يكلّف تجديده أكثر فعلياً
+                const base = (min + (seed%1000)/1000*(max-min)) * (0.6 + sizeFactor*0.5);
+                return Math.round(base * countryIdx * quality.costMult * 20) / 20;
+            }
+            return Math.round(seats * meta.costPerSeat * countryIdx * quality.costMult / 1000000 * 20) / 20;
+        }
+        function megaProjectDuration(type, seats) {
+            const meta = MEGA_PROJECT_TYPES[type];
+            if (type === 'fullRenovation') return Math.round(((meta.minMonths+meta.maxMonths)/2) * 30.4);
+            const capacity = getEffectiveCapacity();
+            const scaleRatio = type === 'newStadium' ? Math.min(1, seats/70000) : Math.min(1, seats/(capacity*0.4));
+            const months = meta.minMonths + scaleRatio * (meta.maxMonths - meta.minMonths);
+            return Math.round(months * 30.4);
+        }
+        function updateMegaProjectPreview() {
+            const type = activeMegaType;
+            const meta = MEGA_PROJECT_TYPES[type];
+            let seats = Math.max(0, parseInt(document.getElementById('capacityInput').value) || 0);
+            const baseCost = megaProjectCost(type, seats);
+            const reserve = riskReserve(baseCost);
+            const cost = baseCost + reserve;
+            const buildDays = megaProjectDuration(type, seats);
+            const countryIdx = getCountryConstructionIndex();
+            const quality = QUALITY_TIERS.find(q=>q.key===getSelectedQuality());
+            document.getElementById('expansionCostLabel').innerHTML = `مؤشر تكلفة ${homeCountry}: <b style="color:var(--gold);">×${countryIdx.toFixed(2)}</b> · جودة ${quality.label}: <b style="color:var(--gold);">×${quality.costMult.toFixed(2)}</b><br>التكلفة الأساسية: <b style="color:var(--gold);">${baseCost.toFixed(2)}M €</b> + احتياطي مخاطر: <b style="color:var(--gold);">${reserve.toFixed(2)}M €</b> = <b style="color:var(--gold);">${cost.toFixed(2)}M €</b><br>مدة التنفيذ الإجمالية: <b style="color:var(--gold);">~${Math.round(buildDays/30.4)} شهراً</b>${renderStageBreakdownHTML(buildDays)}`;
+            const budget = getClubBudget();
+            const chance = computeBoardApprovalChance(cost, budget * 0.4);
+            document.getElementById('voteChanceLabel').innerText = chance + '%';
+            document.getElementById('voteChanceBar').style.width = chance + '%';
+            document.getElementById('voteChanceBar').style.background = chance>=60?'var(--green)':chance>=30?'var(--gold)':'var(--red)';
+        }
+        function submitMegaProject() {
+            const type = activeMegaType;
+            const meta = MEGA_PROJECT_TYPES[type];
+            let seats = Math.max(0, parseInt(document.getElementById('capacityInput').value) || 0);
+            const baseCost = megaProjectCost(type, seats);
+            const reserve = riskReserve(baseCost);
+            const cost = baseCost + reserve;
+            const budget = getClubBudget();
+            const buildDays = megaProjectDuration(type, seats);
+            const chance = computeBoardApprovalChance(cost, budget * 0.4);
+
+            const members = generateBoard();
+            let yesWeight = 0, votes = [];
+            members.forEach(m => {
+                const seed = seedHash(activeClub + type + m.position + seats);
+                const roll = seed % 100;
+                let bias = 0;
+                if (m.personality === 'ambitious' || m.personality === 'risk') bias += 10;
+                if (m.personality === 'conservative' || m.personality === 'profit') bias -= 15;
+                const yes = roll < chance + bias;
+                if (yes) yesWeight += m.votingWeight;
+                votes.push({ member:m, yes });
+            });
+            const approved = yesWeight >= 50 && cost <= budget;
+
+            document.getElementById('voteModalAmountSection').style.display = 'none';
+            document.getElementById('voteModalBody').innerHTML = `
+                <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">${meta.title} — الميزانية المعتمدة: <b style="color:var(--gold);">${cost.toFixed(2)}M €</b></div>
+                ${votes.map(v => `<div class="vote-row"><i class="fas ${v.yes?'fa-check-circle vote-yes':'fa-times-circle vote-no'}"></i> ${v.member.position} — ${v.yes?'موافق':'معارض'} <span style="color:var(--muted); margin-right:auto;">${v.member.votingWeight}%</span></div>`).join('')}
+                <div style="margin-top:10px; padding:10px; border-radius:12px; background:${approved?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; font-size:12.5px; font-weight:700; color:${approved?'var(--green)':'var(--red)'};">
+                    ${approved ? `<i class="fas fa-circle-check"></i> وافق المجلس (${yesWeight}%) — بدأ التنفيذ الفعلي.` : (cost>budget?'<i class="fas fa-circle-xmark"></i> السيولة لا تكفي لهذا المشروع الضخم.':`<i class="fas fa-circle-xmark"></i> رفض المجلس (${100-yesWeight}% معارضون).${getBoardConcernNote()}`)}
+                </div>
+            `;
+            if (approved) {
+                executeFinancing(cost, meta.title);
+                const completionAbsDay = toAbsDay(getGameDate()) + buildDays;
+                const closurePct = type === 'newStadium' ? 1.0 : type === 'fullRenovation' ? 0.5 : Math.min(0.3, seats / Math.max(1,getEffectiveCapacity()));
+                const closedSeats = Math.round(getEffectiveCapacity() * closurePct);
+                localStorage.setItem('stadiumConstruction_' + activeClub, JSON.stringify({ seats, cost, closedSeats, quality: getSelectedQuality(), megaType: type, targetCapacity: type==='newStadium'?seats:null, startAbsDay: toAbsDay(getGameDate()), completionAbsDay, buildDays }));
+                const priorSpent = parseFloat(localStorage.getItem('stadiumUpgradeSpent_' + activeClub)) || 0;
+                localStorage.setItem('stadiumUpgradeSpent_' + activeClub, (priorSpent + cost).toFixed(3));
+                addMessageToSystem('مجلس الإدارة', `<i class="fas fa-circle-check"></i> وافق المجلس على "${meta.title}" بميزانية ${cost.toFixed(2)}M € — يستغرق نحو ${Math.round(buildDays/30.4)} شهراً.`, 'finance');
+                renderHero(); renderReport(); renderUpcomingMatches();
+            }
+            document.getElementById('voteModal').classList.add('active');
+        }
+
+        function submitExpansion() {
+            const maxSeats = maxExpansionSeats();
+            let seats = Math.max(0, parseInt(document.getElementById('capacityInput').value) || 0);
+            if (seats > maxSeats) { seats = maxSeats; showToast(`الحد الهيكلي الأقصى ${maxSeats.toLocaleString()} مقعد لمشروع واحد.`); }
+            if (seats <= 0) return;
+            const baseCost = expansionCost(seats);
+            const reserve = riskReserve(baseCost);
+            const cost = baseCost + reserve;
+            const budget = getClubBudget();
+            const chance = computeBoardApprovalChance(cost, budget * 0.4);
+
+            const members = generateBoard();
+            let yesWeight = 0, votes = [];
+            members.forEach(m => {
+                const seed = seedHash(activeClub + 'stadium' + m.position + seats);
+                const roll = seed % 100;
+                let bias = 0;
+                if (m.personality === 'ambitious' || m.personality === 'risk') bias += 12;
+                if (m.personality === 'conservative' || m.personality === 'profit') bias -= 12;
+                const yes = roll < chance + bias;
+                if (yes) yesWeight += m.votingWeight;
+                votes.push({ member:m, yes });
+            });
+            const approved = yesWeight >= 50 && cost <= budget;
+
+            document.getElementById('voteModalAmountSection').style.display = 'none';
+            document.getElementById('voteModalBody').innerHTML = `
+                <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">التوسعة: <b style="color:var(--gold);">+${seats.toLocaleString()} مقعد</b> · الميزانية المعتمدة: <b style="color:var(--gold);">${cost.toFixed(2)}M €</b></div>
+                ${votes.map(v => `<div class="vote-row"><i class="fas ${v.yes?'fa-check-circle vote-yes':'fa-times-circle vote-no'}"></i> ${v.member.position} — ${v.yes?'موافق':'معارض'} <span style="color:var(--muted); margin-right:auto;">${v.member.votingWeight}%</span></div>`).join('')}
+                <div style="margin-top:10px; padding:10px; border-radius:12px; background:${approved?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; font-size:12.5px; font-weight:700; color:${approved?'var(--green)':'var(--red)'};">
+                    ${approved ? `<i class="fas fa-circle-check"></i> وافق المجلس (${yesWeight}%) — بدأ العمل الإنشائي الفعلي، وستنخفض سعتك المتاحة مؤقتاً أثناء البناء بسبب إغلاق أجزاء من المدرجات.` : (cost>budget?'<i class="fas fa-circle-xmark"></i> السيولة لا تكفي لهذا المشروع أصلاً.':`<i class="fas fa-circle-xmark"></i> رفض المجلس (${100-yesWeight}% معارضون).${getBoardConcernNote()}`)}
+                </div>
+            `;
+            if (approved) {
+                executeFinancing(cost, 'توسعة الملعب');
+                const buildDays = daysForConstruction(seats);
+                const completionAbsDay = toAbsDay(getGameDate()) + buildDays;
+                // إغلاق جزء من السعة الحالية مؤقتاً لإفساح المجال للبناء — نسبة تتناسب مع حجم المشروع، بحد أقصى واقعي 15%
+                const closurePct = Math.min(0.15, 0.03 + (seats / getEffectiveCapacity()) * 0.25);
+                const closedSeats = Math.round(getEffectiveCapacity() * closurePct);
+                localStorage.setItem('stadiumConstruction_' + activeClub, JSON.stringify({ seats, cost, closedSeats, quality: getSelectedQuality(), startAbsDay: toAbsDay(getGameDate()), completionAbsDay, buildDays }));
+                const priorSpent = parseFloat(localStorage.getItem('stadiumUpgradeSpent_' + activeClub)) || 0;
+                localStorage.setItem('stadiumUpgradeSpent_' + activeClub, (priorSpent + cost).toFixed(3));
+                addMessageToSystem('مجلس الإدارة', `<i class="fas fa-circle-check"></i> وافق المجلس على توسعة الملعب بـ${seats.toLocaleString()} مقعد بميزانية معتمدة ${cost.toFixed(2)}M € (تشمل احتياطي مخاطر 10%) — العمل الإنشائي يبدأ الآن ويستغرق نحو ${Math.round(buildDays/30.4)} شهراً، مع إغلاق ${closedSeats.toLocaleString()} مقعد مؤقتاً أثناء التنفيذ.`, 'finance');
+                renderHero(); renderReport(); renderUpcomingMatches();
+            }
+            document.getElementById('voteModal').classList.add('active');
+        }
+
+        // ============================================================
+        // نظام لغات حقيقي — النصوص البنيوية الثابتة (العناوين والأزرار الرئيسية) مترجمة فعلياً لـ7 لغات
+        // (بصراحة: النصوص الديناميكية العميقة المولَّدة داخل دوال JS — تفاصيل المشاريع، حالات المرافق — تحتاج عملاً إضافياً منفصلاً لتغطيتها بالكامل)
+        // ============================================================
+        const I18N_STADIUM = {
+            pageTitleTxt: { ar:'الملعب', en:'Stadium', fr:'Stade', es:'Estadio', de:'Stadion', pt:'Estádio', tr:'Stadyum' },
+            titleTickets: { ar:'أسعار التذاكر (تحدَّد يدوياً)', en:'Ticket Prices (set manually)', fr:'Prix des billets (réglage manuel)', es:'Precios de entradas (manual)', de:'Ticketpreise (manuell)', pt:'Preços dos bilhetes (manual)', tr:'Bilet Fiyatları (manuel)' },
+            titleUpcoming: { ar:'المباريات القادمة على أرضك', en:'Upcoming Home Matches', fr:'Prochains matchs à domicile', es:'Próximos partidos en casa', de:'Kommende Heimspiele', pt:'Próximos jogos em casa', tr:'Yaklaşan Ev Sahibi Maçları' },
+            titleNaming: { ar:'حقوق تسمية الملعب', en:'Stadium Naming Rights', fr:'Droits de dénomination du stade', es:'Derechos de nombre del estadio', de:'Stadion-Namensrechte', pt:'Direitos de nome do estádio', tr:'Stadyum İsim Hakları' },
+            titleSafety: { ar:'ملف اعتماد السلامة والحالة العامة', en:'Safety Certification & Condition', fr:'Certification de sécurité et état', es:'Certificación de seguridad y estado', de:'Sicherheitszertifizierung & Zustand', pt:'Certificação de segurança e estado', tr:'Güvenlik Sertifikası ve Durum' },
+            titleTemp: { ar:'الملعب البديل قيد الاستخدام', en:'Temporary Stadium in Use', fr:'Stade temporaire utilisé', es:'Estadio temporal en uso', de:'Übergangsstadion in Nutzung', pt:'Estádio temporário em uso', tr:'Kullanılan Geçici Stadyum' },
+            titleMaintenance: { ar:'مشاريع الصيانة', en:'Maintenance Projects', fr:'Projets de maintenance', es:'Proyectos de mantenimiento', de:'Wartungsprojekte', pt:'Projetos de manutenção', tr:'Bakım Projeleri' },
+            titleDev: { ar:'مشاريع التطوير', en:'Development Projects', fr:'Projets de développement', es:'Proyectos de desarrollo', de:'Entwicklungsprojekte', pt:'Projetos de desenvolvimento', tr:'Geliştirme Projeleri' },
+            titleHistory: { ar:'دورة حياة الملعب', en:'Stadium Lifecycle', fr:'Cycle de vie du stade', es:'Ciclo de vida del estadio', de:'Stadion-Lebenszyklus', pt:'Ciclo de vida do estádio', tr:'Stadyum Yaşam Döngüsü' },
+            titleFinance: { ar:'التقرير المالي للملعب', en:'Stadium Financial Report', fr:'Rapport financier du stade', es:'Informe financiero del estadio', de:'Finanzbericht des Stadions', pt:'Relatório financeiro do estádio', tr:'Stadyum Mali Raporu' },
+            titleMega: { ar:'مشاريع ضخمة', en:'Major Projects', fr:'Projets majeurs', es:'Proyectos importantes', de:'Großprojekte', pt:'Projetos importantes', tr:'Büyük Projeler' },
+            expansionIdleBtn: { ar:'مشروع توسعة الملعب', en:'Stadium Expansion Project', fr:'Projet d\'extension du stade', es:'Proyecto de expansión del estadio', de:'Stadionerweiterungsprojekt', pt:'Projeto de expansão do estádio', tr:'Stadyum Genişletme Projesi' },
+            expansionActiveBtn: { ar:'يوجد مشروع إنشائي جارٍ حالياً', en:'A construction project is underway', fr:'Un projet de construction est en cours', es:'Hay un proyecto de construcción en curso', de:'Ein Bauprojekt läuft derzeit', pt:'Há um projeto de construção em curso', tr:'Şu anda devam eden bir inşaat projesi var' },
+        };
+        function getStadiumLang(key) {
+            const lang = localStorage.getItem('gameLanguage') || 'ar';
+            return I18N_STADIUM[key] ? I18N_STADIUM[key][lang] : null;
+        }
+        function applyStadiumLanguage() {
+            for (const key in I18N_STADIUM) {
+                const el = document.getElementById(key);
+                if (el) { const t = getStadiumLang(key); if (t) el.innerText = t; }
+            }
+        }
+
+        window.onload = async function() {
+            applyStadiumLanguage();
+            ensureHistorySeed();
+            degradeFacilitiesOverTime();
+            processConstructionCompletion();
+            processMaintenanceCompletion();
+            checkConstructionRiskEvent();
+            renderHero();
+            renderTicketPrices();
+            renderNamingRights();
+            renderSafetyCert();
+            renderAltStadiumCard();
+            renderMaintenanceProjects();
+            renderDevelopmentProjects();
+            renderConstructionStatus();
+            renderStadiumHistory();
+            cachedMatches = await getUpcomingHomeMatches();
+            renderUpcomingMatches();
+            processMatchDayRevenue();
+            processAltStadiumRent();
+            renderReport();
+        };
+    </script>
+</body>
+</html>

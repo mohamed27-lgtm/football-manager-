@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>مكتب الميزانية | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444; --blue:#3b82f6; }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+            --blue: #2563eb;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:10px 12px; border-radius:12px; border:1px solid var(--border); }
+        .back-btn { background:var(--border); color:white; border:none; padding:8px 12px; font-size:12px; border-radius:8px; text-decoration:none; }
+        .page-title { font-size:14px; font-weight:800; color:var(--gold); }
+
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .card-title { font-size:12px; font-weight:800; color:var(--gold); padding:12px 14px 8px 14px; display:flex; align-items:center; gap:6px; }
+
+        .report-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:10px 14px 14px 14px; }
+        .report-box { background:var(--bg); border-radius:10px; padding:10px; }
+        .report-box .lbl { font-size:10px; color:var(--muted); }
+        .report-box .val { font-size:15px; font-weight:800; margin-top:3px; }
+        .report-box .val.pos { color:var(--green); } .report-box .val.neg { color:var(--red); }
+
+        .pool-row { display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--border); }
+        .pool-row:last-child { border-bottom:none; }
+        .pool-icon { width:34px; height:34px; border-radius:9px; background:rgba(232,184,75,0.1); color:var(--gold); display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+        .pool-info { flex:1; }
+        .pool-name { font-size:12.5px; font-weight:700; }
+        .pool-amount { font-size:11px; color:var(--muted); margin-top:2px; }
+        .pool-btn { background:var(--border); color:var(--text); border:none; padding:7px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; }
+
+        .consumption-track { height:8px; background:var(--border); border-radius:5px; overflow:hidden; margin:0 14px 14px 14px; }
+        .consumption-fill { height:100%; }
+
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:50; align-items:flex-end; justify-content:center; }
+        .modal-overlay.active { display:flex; }
+        .modal-sheet { background:var(--card); width:100%; max-width:480px; border-radius:16px 16px 0 0; padding:16px; display:flex; flex-direction:column; gap:8px; max-height:85vh; overflow-y:auto; }
+        .close-modal { margin-right:auto; background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; }
+        .vote-row { display:flex; align-items:center; gap:8px; padding:6px 0; font-size:11.5px; }
+        .vote-row i { width:16px; text-align:center; }
+        .vote-yes { color:var(--green); } .vote-no { color:var(--red); }
+
+        .empty-state { text-align:center; padding:20px 16px; color:var(--muted); font-size:12px; line-height:1.8; }
+        .warn-banner { display:flex; align-items:center; gap:8px; background:rgba(239,68,68,0.1); color:var(--red); padding:10px 14px; font-size:11.5px; line-height:1.7; border:1px solid rgba(239,68,68,0.3); border-radius:10px; }
+
+        .ffp-info { display:flex; justify-content:space-between; align-items:center; padding:0 14px 8px 14px; font-size:11.5px; }
+        .ffp-bar-bg { margin:0 14px 14px 14px; height:10px; background:var(--border); border-radius:6px; overflow:hidden; }
+        .ffp-bar-fill { height:100%; width:0%; transition:width 0.6s ease; }
+        .ffp-sub { padding:0 14px 14px 14px; font-size:10.5px; color:var(--muted); margin-top:-8px; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="finance.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title">🏦 مكتب الميزانية</div>
+        <div style="width:34px;"></div>
+    </div>
+
+    <div id="crisisWarning"></div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-chart-pie"></i> التقرير المالي الكامل</div>
+        <div class="report-grid" id="reportGrid"></div>
+        <div style="padding:0 14px 6px 14px; font-size:10.5px; color:var(--muted); display:flex; justify-content:space-between;">
+            <span>استهلاك ميزانية الانتقالات هذا الموسم</span><span id="consumptionPct">0%</span>
+        </div>
+        <div class="consumption-track"><div class="consumption-fill" id="consumptionFill"></div></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-balance-scale"></i> اللعب المالي النظيف (FFP)</div>
+        <div class="ffp-info"><span id="ffpStatus">--</span><span>الرواتب <b id="ffpPercentageText">0%</b> من الميزانية (الحد <span id="ffpCapText">70</span>%)</span></div>
+        <div class="ffp-bar-bg"><div class="ffp-bar-fill" id="ffpBar"></div></div>
+        <div class="ffp-sub" id="ffpNote"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-layer-group"></i> الميزانيات المستقلة</div>
+        <div id="poolsContainer"></div>
+    </div>
+
+    <div class="modal-overlay" id="voteModal">
+        <div class="modal-sheet">
+            <div style="display:flex; align-items:center;">
+                <div style="font-size:14px; font-weight:800; color:var(--gold);" id="voteModalTitle">طلب من المجلس</div>
+                <button class="close-modal" onclick="closeVoteModal()">✕</button>
+            </div>
+            <div id="voteModalAmountSection" style="display:none;">
+                <div style="font-size:11px; color:var(--muted); margin-top:4px;">المبلغ المطلوب (مليون €) — اطلب أي مبلغ تريده</div>
+                <div style="display:flex; align-items:center; gap:8px; padding:8px 0;"><input type="number" id="voteAmountInput" min="1" step="1" oninput="updateVotePreview()" style="flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; font-size:14px; text-align:center; font-weight:800;"></div>
+                <div class="vote-row"><span>فرصة الموافقة المتوقَّعة</span><b id="voteChanceLabel" style="color:var(--gold); margin-right:auto;">--%</b></div>
+                <div style="height:8px; background:var(--border); border-radius:5px; overflow:hidden; margin:6px 0;"><div id="voteChanceBar" style="height:100%; width:0%; transition:width 0.2s;"></div></div>
+                <button id="voteConfirmBtn" onclick="submitAmountVote()" style="width:100%; border:none; padding:12px; border-radius:10px; font-size:13px; font-weight:800; cursor:pointer; background:var(--gold); color:#06090f; margin-top:10px;">عرض الطلب على المجلس</button>
+            </div>
+            <div id="voteModalBody"></div>
+        </div>
+    </div>
+
+    <div id="toast" style="position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--gold); color:var(--text); padding:10px 16px; border-radius:10px; font-size:12px; display:none; z-index:99; max-width:90%; text-align:center;"></div>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || 'نادي المستقبل';
+        function showToast(msg) { const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 3200); }
+        function seedHash(str) { let h=0; const s=String(str); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+        function fmtM(v) { return v.toFixed(2) + 'M €'; }
+
+        function getClubBudget() { return parseFloat(localStorage.getItem('clubBudget')) || 150.0; }
+        function getGameDate() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+        function setClubBudget(v) { localStorage.setItem('clubBudget', v.toFixed(2)); }
+        function getClubReputation() { return parseFloat(localStorage.getItem('clubReputation')) || 50; }
+        function getSigned() { return JSON.parse(localStorage.getItem('signed_players_by_club')||'{}')[activeClub] || []; }
+        function getSignedCoach() { const a=JSON.parse(localStorage.getItem('signed_coach_by_club')||'{}'); return a[activeClub]||null; }
+        function getTotalWeeklyWage() {
+            const playersWage = getSigned().reduce((s,p)=>s+(parseFloat(p.weekly_wage)||0),0);
+            const coach = getSignedCoach();
+            return playersWage + (coach ? (parseFloat(coach.weekly_wage)||0) : 0);
+        }
+        function getActiveLoans() { try { return (JSON.parse(localStorage.getItem('clubLoans_v1'))||[]).filter(l=>l.status==='active'); } catch(e){ return []; } }
+
+        // ============================================================
+        // نفس مجلس الإدارة الحقيقي المُولَّد في board_room.html بالضبط (تناسق كامل بين الصفحتين)
+        // ============================================================
+        const BOARD_POSITIONS = ['مالك النادي', 'رئيس مجلس الإدارة', 'المدير التنفيذي', 'المدير المالي', 'المدير الرياضي (عضو مجلس)', 'عضو مجلس مستقل'];
+        const PERSONALITIES = [
+            { key:'conservative', label:'محافظ مالياً' }, { key:'risk', label:'مغامر' }, { key:'ambitious', label:'طموح' },
+            { key:'youth', label:'يهتم بالشباب' }, { key:'profit', label:'يهتم بالأرباح' }, { key:'trophy', label:'يهتم بالبطولات' },
+            { key:'patient', label:'صبور' }, { key:'shorttemper', label:'سريع الغضب' }
+        ];
+        const FIRST_NAMES = ["عبدالله","محمد","سلطان","فيصل","خالد","تركي","سعود","نواف","Carlos","Marco","Klaus","Antoine","Ricardo","Henrik"];
+        const LAST_NAMES = ["العتيبي","القحطاني","الدوسري","الشهري","Rossi","Fernandez","Müller","Dubois","Silva","Andersen"];
+        function generateBoard() {
+            const stored = localStorage.getItem('board_members_' + activeClub);
+            if (stored) return JSON.parse(stored);
+            const members = BOARD_POSITIONS.map((pos, i) => {
+                const seed = seedHash(activeClub + pos);
+                const personality = PERSONALITIES[Math.floor(seed/13) % PERSONALITIES.length];
+                return { id:i, position:pos, age:42+(seed%28), personality:personality.key, personalityLabel:personality.label,
+                    votingWeight:0, loyalty:40+(seed%50), ambition:30+(Math.floor(seed/3)%60), patience:30+(Math.floor(seed/5)%60) };
+            });
+            const rawWeights = [30, 20, 15, 15, 12, 8];
+            members.forEach((m,i) => m.votingWeight = rawWeights[i]);
+            localStorage.setItem('board_members_' + activeClub, JSON.stringify(members));
+            return members;
+        }
+        function getConfidence() { return parseFloat(localStorage.getItem('board_confidence_' + activeClub)) || 60; }
+        function addMessageToSystem(sender, text, category) {
+            let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+            inbox.unshift({ id: Date.now(), sender, text, time: new Date().toLocaleTimeString('en-US', { hour12:false }), read:false, category: category || 'finance' });
+            localStorage.setItem('gameInbox', JSON.stringify(inbox));
+            localStorage.setItem('hasNewMessage', 'true');
+        }
+        function logBoardMeeting(entry) {
+            const log = JSON.parse(localStorage.getItem('board_meetings_' + activeClub)) || [];
+            log.unshift({ ...entry, when: { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 } });
+            localStorage.setItem('board_meetings_' + activeClub, JSON.stringify(log.slice(0,30)));
+        }
+
+        // ============================================================
+        // الميزانيات المستقلة — تُخصَّص مرة واحدة عند بداية إدارتك، بنسبة حقيقية من سمعة/ميزانية ناديك
+        // ============================================================
+        const BUDGET_POOLS = [
+            { key:'academy', label:'ميزانية الأكاديمية', icon:'fa-graduation-cap', pct:0.06 },
+            { key:'scouting', label:'ميزانية الكشافين', icon:'fa-binoculars', pct:0.04 },
+            { key:'facilities', label:'ميزانية المنشآت ومركز التدريب', icon:'fa-building', pct:0.08 },
+            { key:'marketing', label:'ميزانية التسويق', icon:'fa-bullhorn', pct:0.03 },
+            { key:'emergency', label:'احتياطي الطوارئ', icon:'fa-triangle-exclamation', pct:0.05 }
+        ];
+        function initPools() {
+            BUDGET_POOLS.forEach(p => {
+                const key = 'pool_' + p.key + '_' + activeClub;
+                if (localStorage.getItem(key) === null) {
+                    const base = getClubBudget();
+                    localStorage.setItem(key, (base * p.pct).toFixed(2));
+                }
+            });
+        }
+        function getPool(key) { return parseFloat(localStorage.getItem('pool_' + key + '_' + activeClub)) || 0; }
+        function setPool(key, v) { localStorage.setItem('pool_' + key + '_' + activeClub, Math.max(0,v).toFixed(2)); }
+
+        function renderPools() {
+            document.getElementById('poolsContainer').innerHTML = BUDGET_POOLS.map(p => `
+                <div class="pool-row">
+                    <div class="pool-icon"><i class="fas ${p.icon}"></i></div>
+                    <div class="pool-info"><div class="pool-name">${p.label}</div><div class="pool-amount">${fmtM(getPool(p.key))}</div></div>
+                    <button class="pool-btn" onclick="requestPoolIncrease('${p.key}')">طلب زيادة</button>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================
+        // طلب زيادة أي ميزانية فرعية — يمر عبر تصويت حقيقي لمجلس الإدارة (لا يمكنك زيادتها بنفسك مباشرة)
+        // ============================================================
+        // ============================================================
+        // نظام طلب مبلغ عام قابل للتعديل يدوياً بالكامل — نفس النظام المستخدم في board_room.html بالضبط
+        // ============================================================
+        let activeAmountRequest = null;
+        function openAmountRequestModal(config) {
+            activeAmountRequest = config;
+            document.getElementById('voteModalTitle').innerText = config.title;
+            document.getElementById('voteModalBody').innerHTML = '';
+            document.getElementById('voteModalAmountSection').style.display = 'block';
+            document.getElementById('voteAmountInput').value = config.defaultAmount;
+            updateVotePreview();
+            document.getElementById('voteModal').classList.add('active');
+        }
+        function updateVotePreview() {
+            if (!activeAmountRequest) return;
+            const amount = Math.max(0, parseFloat(document.getElementById('voteAmountInput').value) || 0);
+            const chance = activeAmountRequest.computeChance(amount);
+            document.getElementById('voteChanceLabel').innerText = chance + '%';
+            document.getElementById('voteChanceBar').style.width = chance + '%';
+            document.getElementById('voteChanceBar').style.background = chance >= 60 ? 'var(--green)' : chance >= 30 ? 'var(--gold)' : 'var(--red)';
+            document.getElementById('voteConfirmBtn').disabled = amount <= 0;
+        }
+        function submitAmountVote() {
+            const amount = Math.max(0, parseFloat(document.getElementById('voteAmountInput').value) || 0);
+            if (amount <= 0 || !activeAmountRequest) return;
+            const config = activeAmountRequest;
+            const members = generateBoard();
+            const chance = config.computeChance(amount);
+            let yesWeight = 0, votes = [];
+            members.forEach(m => {
+                const seed = seedHash(activeClub + config.title + m.position + Math.round(amount));
+                const memberRoll = (seed % 100);
+                const yes = memberRoll < chance + (config.personalityBias ? config.personalityBias(m) : 0);
+                if (yes) yesWeight += m.votingWeight;
+                votes.push({ member: m, yes });
+            });
+            const approved = yesWeight >= 50;
+            document.getElementById('voteModalAmountSection').style.display = 'none';
+            document.getElementById('voteModalBody').innerHTML = `
+                <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">المبلغ المطلوب: <b style="color:var(--gold);">${fmtM(amount)}</b> · فرصة محسوبة: <b style="color:var(--gold);">${chance}%</b></div>
+                ${votes.map(v => `<div class="vote-row"><i class="fas ${v.yes?'fa-check-circle vote-yes':'fa-times-circle vote-no'}"></i> ${v.member.position} — ${v.yes?'موافق':'معارض'} <span style="color:var(--muted); margin-right:auto;">${v.member.votingWeight}%</span></div>`).join('')}
+                <div style="margin-top:10px; padding:10px; border-radius:8px; background:${approved?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; font-size:12.5px; font-weight:700; color:${approved?'var(--green)':'var(--red)'};">
+                    ${approved ? config.onApproveMsg(amount, yesWeight) : config.onRejectMsg(amount, 100-yesWeight)}
+                </div>
+            `;
+            if (approved && config.onApprove) config.onApprove(amount);
+            logBoardMeeting({ title: config.title, verdict: approved ? `وافق المجلس (${yesWeight}%) على ${fmtM(amount)}.` : `رفض المجلس (${100-yesWeight}%) طلب ${fmtM(amount)}.`, deltaConfidence: 0 });
+            renderPools();
+        }
+
+        function requestPoolIncrease(poolKey) {
+            const poolDef = BUDGET_POOLS.find(p => p.key === poolKey);
+            const budget = getClubBudget();
+            const rep = getClubReputation();
+            const defaultAmount = Math.max(1, Math.round(getPool(poolKey) * 0.3 + 1));
+            openAmountRequestModal({
+                title: 'طلب: ' + poolDef.label,
+                defaultAmount,
+                computeChance: (amount) => {
+                    if (amount > budget) return 2; // السيولة لا تكفي أصلاً — شبه مستحيل
+                    const ratio = amount / Math.max(0.5, defaultAmount);
+                    let chance = 65 - (ratio - 1) * 28 + (rep - 50) * 0.25;
+                    if (budget < amount * 2) chance -= 15; // السيولة العامة الضعيفة تجعل المجلس أكثر تحفظاً
+                    return Math.max(2, Math.min(95, Math.round(chance)));
+                },
+                personalityBias: (m) => {
+                    let b = 0;
+                    if (m.personality === 'risk' || m.personality === 'ambitious') b += 15;
+                    if ((poolKey === 'academy') && m.personality === 'youth') b += 25;
+                    if (poolKey === 'marketing' && m.personality === 'profit') b += 15;
+                    if (poolKey === 'emergency' && m.personality === 'conservative') b += 20;
+                    if (m.personality === 'conservative' || m.personality === 'profit') b -= 12;
+                    return b;
+                },
+                onApprove: (amount) => {
+                    setClubBudget(budget - amount);
+                    setPool(poolKey, getPool(poolKey) + amount);
+                    addMessageToSystem('مجلس الإدارة', `✅ وافق المجلس على تحويل ${fmtM(amount)} إلى ${poolDef.label}.`, 'finance');
+                },
+                onApproveMsg: (amount, w) => `✅ وافق المجلس (${w}%) — تم تحويل ${fmtM(amount)} من ميزانية الانتقالات إلى ${poolDef.label}.`,
+                onRejectMsg: (amount, w) => amount > budget ? '❌ السيولة العامة لا تكفي لتغطية هذا الطلب أصلاً.' : `❌ رفض المجلس طلب ${fmtM(amount)} (${w}% معارضون).`
+            });
+        }
+        function closeVoteModal() { document.getElementById('voteModal').classList.remove('active'); document.getElementById('voteModalAmountSection').style.display='none'; }
+
+        // ============================================================
+        // التقرير المالي الكامل
+        // ============================================================
+        function fedGetRules() {
+            return JSON.parse(localStorage.getItem('federationRules')) || { tier:1, squadMax:25, foreignMax:7, wageCapPct:70, tierLabel:'الدرجة الأولى' };
+        }
+        function renderFFPGauge(budget, annualWage) {
+            const rules = fedGetRules();
+            const ffp = budget > 0 ? Math.round(annualWage / budget * 100) : 0;
+            const cap = rules.wageCapPct;
+            document.getElementById('ffpCapText').innerText = cap;
+            document.getElementById('ffpPercentageText').innerText = ffp + '%';
+            const bar = document.getElementById('ffpBar');
+            bar.style.width = Math.min(100, ffp) + '%';
+            const status = document.getElementById('ffpStatus');
+            const note = document.getElementById('ffpNote');
+            if (ffp > cap) {
+                bar.style.background = 'var(--red)'; status.innerText = 'تجاوز الحد ⛔'; status.style.color = 'var(--red)';
+                note.innerText = 'تحذير: تجاوزك للسقف يعرّضك لغرامة مالية فعلية من الاتحاد (راجع finance.html).';
+            } else if (ffp > cap - 15) {
+                bar.style.background = 'var(--gold)'; status.innerText = 'تحت الرقابة ⏳'; status.style.color = 'var(--gold)';
+                note.innerText = 'اقتربت من السقف المسموح — أي تعاقد جديد قد يجاوزه.';
+            } else {
+                bar.style.background = 'var(--green)'; status.innerText = 'ضمن الحدود ✅'; status.style.color = 'var(--green)';
+                note.innerText = 'وضعك المالي متوافق تماماً مع لوائح الاتحاد.';
+            }
+        }
+
+        // نفس دالة جمع عقود الرعاة الحقيقية النشطة المستخدمة في sponsors.html وfinance.html بالضبط —
+        // بدل الاعتماد على مفتاح راعٍ واحد قديم لم يعد يعكس نظام الرعاية الكامل بـ9 فئات
+        function getRealSponsorIncomeTotal() {
+            try {
+                const contracts = JSON.parse(localStorage.getItem('sponsorContracts_v1')) || {};
+                const today = getGameDate();
+                const todayAbs = Math.floor(new Date(today.year, today.month-1, today.day).getTime()/86400000);
+                return Object.values(contracts)
+                    .filter(c => c && c.status === 'active' && c.endAbsDay >= todayAbs)
+                    .reduce((s,c) => s + (c.annualValue||0), 0);
+            } catch(e) { return 0; }
+        }
+
+        function renderReport() {
+            const budget = getClubBudget();
+            const weeklyWage = getTotalWeeklyWage();
+            const annualWage = weeklyWage * 52 / 1000000;
+            const transferSales = parseFloat(localStorage.getItem('transferSales')) || 0;
+            const transferPurchases = parseFloat(localStorage.getItem('transferPurchases')) || 0;
+            const sponsorValue = getRealSponsorIncomeTotal();
+            const broadcastValue = parseFloat(localStorage.getItem('broadcastIncomeTotal')) || 0;
+            const ticketRevenue = parseFloat(localStorage.getItem('ticketRevenueTotal_' + activeClub)) || 0;
+            const shopRevenue = parseFloat(localStorage.getItem('shopRevenue')) || 0;
+            const prizeMoney = parseFloat(localStorage.getItem('prizeMoney')) || 0;
+            const friendlyIncome = parseFloat(localStorage.getItem('friendlyIncome')) || 0;
+            const friendlyExpenses = parseFloat(localStorage.getItem('friendlyExpenses')) || 0;
+            const facilityUpgrade = parseFloat(localStorage.getItem('facilityUpgradeCost')) || 0;
+            const penalties = parseFloat(localStorage.getItem('penaltiesCost')) || 0;
+            const loans = getActiveLoans();
+            const totalDebt = loans.reduce((s,l) => s + (l.remainingAmount || l.principal || 0), 0);
+            const loanAnnualPayment = loans.reduce((s,l) => s + (l.monthlyPayment||0)*12, 0);
+
+            const totalIncome = sponsorValue + broadcastValue + ticketRevenue + shopRevenue + transferSales + prizeMoney + friendlyIncome;
+            const totalExpense = annualWage + transferPurchases + facilityUpgrade + penalties + friendlyExpenses + loanAnnualPayment;
+            const netProfit = totalIncome - totalExpense;
+
+            const round = parseInt(localStorage.getItem('database_current_round')) || 0;
+            let totalRounds = 34;
+            try { const t = JSON.parse(localStorage.getItem('current_league_teams')||'[]').filter(x=>x!=='إستراحة'&&x.trim()!==''); if (t.length>1) totalRounds=(t.length-1)*2; } catch(e){}
+            const seasonProgress = Math.min(1, round / Math.max(1,totalRounds));
+            const startBudgetKey = 'season_start_budget_' + activeClub;
+            if (localStorage.getItem(startBudgetKey) === null) localStorage.setItem(startBudgetKey, budget.toFixed(2));
+            const startBudget = parseFloat(localStorage.getItem(startBudgetKey));
+            const consumed = Math.max(0, startBudget - budget);
+            const consumptionPct = startBudget > 0 ? Math.min(100, Math.round((consumed/startBudget)*100)) : 0;
+
+            // توقع نهاية الموسم: إسقاط بسيط لمعدل الصرف/الدخل الحالي على باقي الموسم
+            const runRate = seasonProgress > 0.05 ? (netProfit * seasonProgress) : 0;
+            const forecast = budget + (seasonProgress > 0.05 ? (netProfit - runRate) * (1 - seasonProgress) / seasonProgress * seasonProgress : 0);
+            const simpleForecast = budget + netProfit * (1 - seasonProgress);
+
+            renderFFPGauge(budget, annualWage);
+
+            document.getElementById('reportGrid').innerHTML = `
+                <div class="report-box"><div class="lbl">الرصيد الحالي</div><div class="val">${fmtM(budget)}</div></div>
+                <div class="report-box"><div class="lbl">صافي الأرباح/الخسائر (سنوي)</div><div class="val ${netProfit>=0?'pos':'neg'}">${netProfit>=0?'+':''}${fmtM(netProfit)}</div></div>
+                <div class="report-box"><div class="lbl">دخل الرعاة (كل العقود النشطة)</div><div class="val pos">${fmtM(sponsorValue)}</div></div>
+                <div class="report-box"><div class="lbl">دخل حقوق البث</div><div class="val pos">${fmtM(broadcastValue)}</div></div>
+                <div class="report-box"><div class="lbl">دخل المتجر الرسمي</div><div class="val pos">${fmtM(shopRevenue)}</div></div>
+                <div class="report-box"><div class="lbl">إجمالي الدخل</div><div class="val pos">${fmtM(totalIncome)}</div></div>
+                <div class="report-box"><div class="lbl">إجمالي المصروفات</div><div class="val neg">${fmtM(totalExpense)}</div></div>
+                <div class="report-box"><div class="lbl">قيمة الرواتب السنوية</div><div class="val">${fmtM(annualWage)}</div></div>
+                <div class="report-box"><div class="lbl">الديون النشطة</div><div class="val ${totalDebt>0?'neg':''}">${fmtM(totalDebt)}</div></div>
+                <div class="report-box"><div class="lbl">أقساط القروض السنوية</div><div class="val">${fmtM(loanAnnualPayment)}</div></div>
+                <div class="report-box"><div class="lbl">توقّع الرصيد نهاية الموسم</div><div class="val ${simpleForecast>=0?'pos':'neg'}">${fmtM(simpleForecast)}</div></div>
+            `;
+            document.getElementById('consumptionPct').innerText = consumptionPct + '%';
+            document.getElementById('consumptionFill').style.width = consumptionPct + '%';
+            document.getElementById('consumptionFill').style.background = consumptionPct > 85 ? 'var(--red)' : consumptionPct > 60 ? 'var(--gold)' : 'var(--green)';
+
+            const warnEl = document.getElementById('crisisWarning');
+            if (budget < 0 || simpleForecast < 0) {
+                warnEl.innerHTML = `<div class="warn-banner"><i class="fas fa-triangle-exclamation"></i> أزمة مالية حقيقية: ${budget<0?'رصيدك الحالي بالسالب':'التوقعات تشير لعجز نهاية الموسم'}. مجلس الإدارة قد يفرض بيع لاعبين أو تخفيض الرواتب إن استمر الوضع (راجع مجلس الإدارة).</div>`;
+            } else { warnEl.innerHTML = ''; }
+        }
+
+        window.onload = function() {
+            initPools();
+            renderReport();
+            renderPools();
+        };
+    </script>
+</body>
+</html>

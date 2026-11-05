@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>غرفة المباراة المباشرة | Football Manager World</title>
+    <script src="indexeddb.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444; --blue:#3b82f6; }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+            --blue: #2563eb;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); display:flex; flex-direction:column; min-height:100vh; }
+
+        .score-header { background:linear-gradient(160deg, var(--card), rgba(255,255,255,0.02)); border-bottom:1px solid var(--border); padding:14px 14px 0 14px; }
+        .score-row { display:flex; align-items:center; justify-content:space-between; }
+        .score-side { display:flex; flex-direction:column; align-items:center; gap:6px; width:110px; }
+        .score-side img { width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4)); }
+        .score-side .tname { font-size:12.5px; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100px; }
+        .score-side .fmt { font-size:10px; color:var(--muted); }
+        .score-mid { font-size:30px; font-weight:900; color:var(--gold); text-shadow:0 2px 10px rgba(232,184,75,0.25); }
+        .poss-row { display:flex; align-items:center; gap:10px; padding:12px 0 4px 0; font-size:11px; color:var(--muted); font-weight:700; }
+        .poss-bar-track { flex:1; height:6px; background:var(--border); border-radius:4px; overflow:hidden; display:flex; }
+        .poss-fill-home { height:100%; background:var(--gold); }
+        .poss-fill-away { height:100%; background:var(--muted); opacity:0.4; }
+        .poss-label { text-align:center; font-size:9.5px; color:var(--muted); padding:2px 0 10px 0; }
+
+        .info-strip { display:flex; background:var(--card); border-bottom:1px solid var(--border); }
+        .info-box { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 12px; font-size:11.5px; color:var(--text); }
+        .info-box i { color:var(--gold); }
+        .info-box.events { flex-direction:column; gap:2px; border-right:1px solid var(--border); }
+        .info-box.events span:first-child { font-size:15px; font-weight:900; color:var(--gold); }
+        .info-box.events span:last-child { font-size:8.5px; color:var(--muted); }
+
+        .other-matches-panel { background:var(--bg); flex:1; padding:4px 0; }
+        .stats-panel { background:var(--card); border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:12px 14px; }
+        .stats-panel-title { font-size:11.5px; font-weight:800; color:var(--gold); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+        .stat-line { display:flex; align-items:center; justify-content:space-between; padding:5px 0; font-size:12px; }
+        .stat-num { font-weight:900; color:var(--text); width:30px; text-align:center; }
+        .stat-lbl { flex:1; text-align:center; font-size:10px; color:var(--muted); }
+        .other-matches-title { font-size:11.5px; font-weight:800; color:var(--gold); padding:12px 14px 8px 14px; display:flex; align-items:center; gap:6px; }
+        .other-match-row { display:flex; align-items:center; gap:8px; padding:9px 14px; border-bottom:1px solid var(--border); font-size:11.5px; }
+        .other-match-row .comp-tag { font-size:8.5px; color:var(--muted); flex:0 0 auto; width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .other-match-row .team-name { flex:1; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }
+        .other-match-row .om-score { font-weight:900; color:var(--gold); padding:2px 10px; background:rgba(232,184,75,0.08); border-radius:6px; flex:0 0 auto; }
+
+        .identity-card { background:var(--card); border-top:1px solid var(--border); padding:12px 14px; font-size:11.5px; }
+        .identity-card .row1 { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+        .identity-card .tag { color:var(--gold); font-weight:800; }
+        .identity-card .note { color:var(--muted); font-size:10px; line-height:1.7; }
+
+
+        .follow-btn { background:linear-gradient(90deg, #0f766e, #0d9488); color:#fff; border:none; padding:15px; font-size:13.5px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; }
+        .follow-btn:disabled { opacity:0.5; }
+        .follow-btn:active { transform:scale(0.98); }
+
+        .events-log { background:var(--card); max-height:170px; overflow-y:auto; border-top:1px solid var(--border); }
+        .event-row { display:flex; align-items:center; gap:9px; padding:8px 14px; font-size:11.5px; border-bottom:1px solid var(--border); }
+        .event-row:last-child { border-bottom:none; }
+        .event-row .min { width:32px; color:var(--gold); font-weight:800; flex-shrink:0; }
+
+        .back-float { position:fixed; top:10px; right:10px; background:rgba(20,27,45,0.85); border:1px solid var(--border); color:#fff; width:32px; height:32px; border-radius:9px; z-index:10; text-decoration:none; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+    </style>
+</head>
+<body>
+
+    <a href="fixtures.html" class="back-float"><i class="fas fa-arrow-right"></i></a>
+
+    <div class="score-header">
+        <div class="score-row">
+            <div class="score-side"><img id="homeCrest" src=""><div class="tname" id="homeName">--</div><div class="fmt" id="homeFmt">--</div></div>
+            <div class="score-mid" id="scoreMid">0 - 0</div>
+            <div class="score-side"><img id="awayCrest" src=""><div class="tname" id="awayName">--</div><div class="fmt" id="awayFmt">--</div></div>
+        </div>
+        <div class="poss-row">
+            <span id="possHomeVal">50</span>
+            <div class="poss-bar-track"><div class="poss-fill-home" id="possHomeBar" style="width:50%;"></div><div class="poss-fill-away" id="possAwayBar" style="width:50%;"></div></div>
+            <span id="possAwayVal">50</span>
+        </div>
+        <div class="poss-label">الاستحواذ</div>
+    </div>
+
+    <div class="info-strip">
+        <div class="info-box"><i class="fas fa-users"></i> <span id="attendanceVal">--</span></div>
+        <div class="info-box"><i class="fas fa-cloud"></i> <span id="weatherVal">--</span></div>
+        <div class="info-box events"><span id="minuteVal">0'</span><span style="font-size:9px;">الدقيقة</span></div>
+    </div>
+
+    <div class="other-matches-panel">
+        <div class="other-matches-title"><i class="fas fa-calendar-day"></i> مباريات أخرى اليوم — <span id="otherMatchesDate">--</span></div>
+        <div id="otherMatchesContainer"></div>
+    </div>
+
+    <div class="stats-panel">
+        <div class="stats-panel-title"><i class="fas fa-chart-simple"></i> إحصائيات المباراة</div>
+        <div class="stat-line"><span class="stat-num" id="statShotsHome">0</span><span class="stat-lbl">تسديدات</span><span class="stat-num" id="statShotsAway">0</span></div>
+        <div class="stat-line"><span class="stat-num" id="statOnTargetHome">0</span><span class="stat-lbl">على المرمى</span><span class="stat-num" id="statOnTargetAway">0</span></div>
+        <div class="stat-line"><span class="stat-num" id="statCornersHome">0</span><span class="stat-lbl">ركنيات</span><span class="stat-num" id="statCornersAway">0</span></div>
+        <div class="stat-line"><span class="stat-num" id="statFoulsHome">0</span><span class="stat-lbl">أخطاء</span><span class="stat-num" id="statFoulsAway">0</span></div>
+    </div>
+
+    <div class="events-log" id="eventsLog"></div>
+
+    <div class="identity-card" id="identityCard"></div>
+
+    <button class="follow-btn" id="followBtn" onclick="toggleFollow()"><i class="fas fa-play" id="followIcon"></i><span id="followLabel">متابعة</span></button>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || '';
+        const realLogosPath = 'teams_logos/';
+        function getTeamLogoUrl(t) { return `${realLogosPath}${(t||'').trim()}.png`; }
+
+        function getGameDate() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+        function toAbsDay(d) { return d.year*372 + d.month*31 + d.day; }
+        function seedHash(str) { let h=0; for (let i=0;i<String(str).length;i++) h=(h*31+String(str).charCodeAt(i))>>>0; return h; }
+
+        // ===== نفس منظومة البيانات والصيغ المستخدمة فعلياً في tactics.html لضمان الاتساق الكامل =====
+        const FORMATIONS = {
+            '4-3-3': [ {pos:'GK',top:90,left:50},{pos:'LB',top:70,left:15},{pos:'CB',top:76,left:37},{pos:'CB',top:76,left:63},{pos:'RB',top:70,left:85},{pos:'CDM',top:55,left:50},{pos:'CM',top:41,left:30},{pos:'CM',top:41,left:70},{pos:'LW',top:20,left:16},{pos:'ST',top:11,left:50},{pos:'RW',top:20,left:84} ],
+            '4-4-2': [ {pos:'GK',top:90,left:50},{pos:'LB',top:70,left:15},{pos:'CB',top:76,left:37},{pos:'CB',top:76,left:63},{pos:'RB',top:70,left:85},{pos:'LW',top:46,left:14},{pos:'CM',top:49,left:37},{pos:'CM',top:49,left:63},{pos:'RW',top:46,left:86},{pos:'ST',top:14,left:38},{pos:'ST',top:14,left:62} ],
+            '4-2-3-1': [ {pos:'GK',top:90,left:50},{pos:'LB',top:70,left:15},{pos:'CB',top:76,left:37},{pos:'CB',top:76,left:63},{pos:'RB',top:70,left:85},{pos:'CDM',top:57,left:36},{pos:'CDM',top:57,left:64},{pos:'LW',top:32,left:16},{pos:'CAM',top:29,left:50},{pos:'RW',top:32,left:84},{pos:'ST',top:11,left:50} ],
+            '3-5-2': [ {pos:'GK',top:90,left:50},{pos:'CB',top:75,left:28},{pos:'CB',top:79,left:50},{pos:'CB',top:75,left:72},{pos:'LW',top:47,left:8},{pos:'CDM',top:57,left:38},{pos:'CM',top:44,left:50},{pos:'CM',top:57,left:62},{pos:'RW',top:47,left:92},{pos:'ST',top:13,left:38},{pos:'ST',top:13,left:62} ],
+            '4-1-4-1': [ {pos:'GK',top:90,left:50},{pos:'LB',top:70,left:15},{pos:'CB',top:76,left:37},{pos:'CB',top:76,left:63},{pos:'RB',top:70,left:85},{pos:'CDM',top:58,left:50},{pos:'LW',top:38,left:13},{pos:'CM',top:40,left:37},{pos:'CM',top:40,left:63},{pos:'RW',top:38,left:87},{pos:'ST',top:12,left:50} ]
+        };
+        const STYLES = [
+            { key:'possession', name:'استحواذ وبناء' }, { key:'counter', name:'هجوم مرتد' }, { key:'press', name:'ضغط عالٍ' },
+            { key:'direct', name:'لعب مباشر' }, { key:'wing', name:'اللعب الجناحي' }, { key:'defensive', name:'دفاعي متكتل' }
+        ];
+        function playerName(p){ if (!p) return 'لاعب'; return p.name || p.player_name || p.player_display_name || p.fullName || 'لاعب'; }
+        function playerPos(p){ return (p.position || p.main_position || 'CM').toUpperCase(); }
+        function playerRating(p){ return Math.round(p.rating || p.overall || 65); }
+        function playerId(p){ return p.tmid || p.id || (playerName(p)+'_'+playerPos(p)); }
+        function conditionOf(p){
+            const seed = String(playerId(p)).split('').reduce((s,c)=>s+c.charCodeAt(0),0);
+            const day = toAbsDay(getGameDate());
+            return 78 + ((seed + day*3) % 22);
+        }
+
+        // معنويات اللاعب (Morale) — ثابتة ومحسوبة لكل لاعب، بصيغة مستقلة عن اللياقة البدنية
+        function moraleOf(p) {
+            const seed = seedHash(String(playerId(p)) + '_morale');
+            const day = toAbsDay(getGameDate());
+            return 70 + ((seed + day*2) % 30); // نطاق واقعي 70-99
+        }
+
+        // ============================================================
+        // نظام التوافق التكتيكي والكيمياء (Tactical Familiarity & Chemistry)
+        // ============================================================
+        const POSITION_SKILL_WEIGHTS = {
+            'GK':  { primary:['diving','handling','positioning','reflexes'], secondary:['strength','jumping'] },
+            'CB':  { primary:['defending','heading','strength','positioning','tackling'], secondary:['short_passing','pace','stamina'] },
+            'LB':  { primary:['defending','tackling','pace','stamina','crossing'], secondary:['short_passing','dribbling','acceleration','long_passing','vision'] },
+            'RB':  { primary:['defending','tackling','pace','stamina','crossing'], secondary:['short_passing','dribbling','acceleration','long_passing','vision'] },
+            'CDM': { primary:['defending','tackling','positioning','short_passing','stamina'], secondary:['long_passing','pace','vision','aggression'] },
+            'CM':  { primary:['short_passing','long_passing','ball_control','vision','stamina'], secondary:['defending','dribbling','pace','aggression'] },
+            'CAM': { primary:['ball_control','dribbling','short_passing','vision'], secondary:['long_passing','pace','finishing'] },
+            'LW':  { primary:['dribbling','pace','crossing','ball_control','acceleration'], secondary:['finishing','short_passing'] },
+            'RW':  { primary:['dribbling','pace','crossing','ball_control','acceleration'], secondary:['finishing','short_passing'] },
+            'ST':  { primary:['finishing','heading','positioning','pace'], secondary:['dribbling','ball_control','short_passing','strength'] },
+            'CF':  { primary:['finishing','ball_control','dribbling','short_passing'], secondary:['vision','pace','heading'] }
+        };
+        const ALL_SKILLS = ['diving','handling','reflexes','defending','heading','strength','positioning','tackling','pace','stamina','crossing','short_passing','long_passing','ball_control','vision','dribbling','acceleration','finishing','aggression','jumping'];
+
+        // توليد ثابت (غير عشوائي) لمهارات كل لاعب حسب مركزه وتقييمه العام — نفس فلسفة player.html
+        // (أساسي = قريب من تقييمه، ثانوي = أقل قليلاً، البقية = أقل بكثير)
+        function getPlayerSkills(p) {
+            const pos = playerPos(p);
+            const base = playerRating(p);
+            const conf = POSITION_SKILL_WEIGHTS[pos] || POSITION_SKILL_WEIGHTS['CM'];
+            const skills = {};
+            ALL_SKILLS.forEach(sk => {
+                const seed = seedHash(String(playerId(p)) + '_' + sk) % 7; // تذبذب ثابت صغير 0-6 لكل لاعب/مهارة
+                if (conf.primary.includes(sk)) skills[sk] = Math.min(99, Math.max(30, base + seed - 3));
+                else if (conf.secondary.includes(sk)) skills[sk] = Math.min(95, Math.max(25, base - 8 + seed));
+                else skills[sk] = Math.min(80, Math.max(15, base - 20 + seed));
+            });
+            return skills;
+        }
+
+        // تصنيف الهوية التكتيكية الحقيقية للمدرب من نص أسلوبه الفعلي (من قائمة_المدربين2026.csv)
+        function classifyCoachIdentity(styleRaw) {
+            const s = (styleRaw || '').toLowerCase();
+            if (s.includes('gegenpress')) return 'gegenpressing';
+            if (s.includes('tiki-taka') || s.includes('tiki taka') || s.includes('positional control') || s.includes('control game') || s.includes('possession')) return 'tikitaka';
+            if (s.includes('counter')) return 'counter';
+            if (s.includes('catenaccio') || s.includes('low block') || s.includes('tactical rigor') || s.includes('defensive')) return 'catenaccio';
+            if (s.includes('wing') || s.includes('cross')) return 'wingplay';
+            return 'balanced';
+        }
+        const TACTIC_IDENTITY_LABELS = { gegenpressing:'Gegenpressing (ضغط عالٍ)', tikitaka:'Tiki-Taka', counter:'هجوم مرتد (Counter-Attack)', catenaccio:'كاتيناتشيو دفاعي', wingplay:'لعب جناحي مباشر', balanced:'متوازن' };
+        // كل هوية تكتيكية تتطلب مهارات حقيقية محددة — نفس الجدول الذي وصفته
+        const TACTIC_REQUIREMENTS = {
+            gegenpressing: ['stamina','aggression','acceleration'],
+            tikitaka:      ['short_passing','vision','ball_control'],
+            counter:       ['acceleration','pace','dribbling'],
+            catenaccio:    ['defending','positioning','tackling'],
+            wingplay:      ['crossing','heading','stamina'],
+            balanced:      ['short_passing','stamina','positioning']
+        };
+
+        function getCoachIdentity() {
+            const staff = JSON.parse(localStorage.getItem('staff_by_club')||'{}')[activeClub] || [];
+            const coach = staff.find(s => s.role === 'head_coach');
+            const identity = classifyCoachIdentity(coach ? coach.tacticalStyleRaw : '');
+            return { identity, coach };
+        }
+
+        // معامل التوافق التكتيكي: يقارن متوسط المهارات المطلوبة للهوية التكتيكية بمتوسط عام واقعي (70)
+        // فروق موجبة تمنح بونص أداء حقيقي (+5% إلى +10%)، وفروق سلبية تخصم (-5% إلى -10%) تماماً كما وصفت
+        function tacticsBonus(p, identity) {
+            const skills = getPlayerSkills(p);
+            const reqSkills = TACTIC_REQUIREMENTS[identity] || TACTIC_REQUIREMENTS.balanced;
+            const avgReq = reqSkills.reduce((s,k) => s + (skills[k]||60), 0) / reqSkills.length;
+            const gap = avgReq - 70; // فوق/تحت المتوسط الواقعي
+            const bonusPct = Math.max(-10, Math.min(10, gap * 0.4)); // يتحول لنسبة مئوية -10% إلى +10%
+            return { multiplier: 1 + (bonusPct/100), bonusPct: Math.round(bonusPct) };
+        }
+
+        // تعليمات فردية خاصة بمركز اللاعب حسب سياق التشكيلة/الهوية التكتيكية (تُبدّل المهارات الحاكمة للفعالية)
+        function individualInstruction(p, identity) {
+            const pos = playerPos(p);
+            if ((pos === 'LB' || pos === 'RB') && (identity === 'tikitaka' || identity === 'gegenpressing')) {
+                return { role:'ظهير مرتد للداخل (Inverted Wingback)', skills:['long_passing','vision'] };
+            }
+            if (pos === 'ST' && identity === 'tikitaka') {
+                return { role:'مهاجم وهمي (False 9)', skills:['dribbling','short_passing'] };
+            }
+            return null;
+        }
+
+        // الصيغة الكاملة المطلوبة: المهارة الفعلية = مهارة اللاعب × معامل التكتيك × معامل المعنويات
+        function effectiveSkill(p, identity, baseSkillValue) {
+            const t = tacticsBonus(p, identity);
+            const moraleFactor = 0.9 + (moraleOf(p) - 70) / 30 * 0.15; // نطاق واقعي 0.90 - 1.05
+            return Math.round(baseSkillValue * t.multiplier * moraleFactor);
+        }
+
+        // التقييم الفعلي الكامل للاعب في المباراة (يُستخدم بدل التقييم الخام في حساب قوة الفريق والأحداث)
+        function effectiveRating(p, identity) {
+            return effectiveSkill(p, identity, playerRating(p));
+        }
+
+        function getSquad() { return JSON.parse(localStorage.getItem('signed_players_by_club')||'{}')[activeClub] || []; }
+        function getClubInjuries() { return JSON.parse(localStorage.getItem('club_injuries')) || []; }
+        function tacticsKey() { return 'clubTactics_' + activeClub; }
+        function getMyTactics() { return JSON.parse(localStorage.getItem(tacticsKey())) || null; }
+
+        async function buildMyLineup() {
+            const squad = getSquad();
+            const injuredIds = new Set(getClubInjuries().map(i => String(i.tmid)));
+            const saved = getMyTactics();
+            const formationKey = (saved && FORMATIONS[saved.formation]) ? saved.formation : '4-3-3';
+            const slots = FORMATIONS[formationKey];
+
+            let lineupPlayers = [];
+            if (saved && saved.lineup && saved.lineup.length === slots.length) {
+                lineupPlayers = saved.lineup.map(id => id ? squad.find(p => String(playerId(p)) === String(id)) : null);
+            }
+            const usedIds = new Set(lineupPlayers.filter(Boolean).map(p => String(playerId(p))));
+            const available = squad.filter(p => !injuredIds.has(String(p.tmid)) && !usedIds.has(String(playerId(p))))
+                .sort((a,b) => playerRating(b) - playerRating(a));
+
+            for (let i = 0; i < slots.length; i++) {
+                if (lineupPlayers[i] && !injuredIds.has(String(lineupPlayers[i].tmid))) continue;
+                lineupPlayers[i] = available.shift() || null;
+            }
+            const style = (saved && STYLES.some(s=>s.key===saved.style)) ? saved.style : 'possession';
+
+            // ★ التوافق التكتيكي الحقيقي: هوية المدرب الفعلية + سمات كل لاعب (نظام getPlayerSkills/tacticsBonus الموحّد) ★
+            const { identity, coach } = getCoachIdentity();
+            const chemistry = lineupPlayers.map((p, i) => {
+                if (!p) return null;
+                const bonus = tacticsBonus(p, identity);
+                const roleVariant = individualInstruction(p, identity);
+                return { effectiveRating: effectiveRating(p, identity), bonusPct: bonus.bonusPct, roleVariant };
+            });
+
+            return { formation: formationKey, slots, lineup: lineupPlayers, style, identity, coachName: coach ? coach.name : null, chemistry };
+        }
+
+        // خصمك: لا نملك تشكيلته الحقيقية (لا بيانات فعلية لأنديته الأخرى)، فنبني تشكيلة تمثيلية ثابتة
+        // (غير عشوائية بين الزيارات لنفس الخصم) بأسماء عامة واضح أنها تقديرية
+        const OPP_FIRST = ["Carlos","Diego","Lucas","Bruno","Andrea","Marco","Kevin","Erik","Jan","Thiago","Hugo","Mateo","Rafael","Luca","Sven"];
+        const OPP_LAST = ["Silva","Fernandes","Rossi","Novak","Müller","Andersson","Costa","Torres","Bianchi","Janssen","Ivanov","Kowalski"];
+        // نفس تحويل رموز المراكز ومعادلة التقييم من القيمة السوقية المستخدمة بالضبط عبر بقية اللعبة
+        const OLD_POS_MAP = { 'AM': 'CAM', 'DM': 'CDM', 'SS': 'CF' };
+        function computePlayerRating(marketValue) {
+            return Math.min(99, Math.max(45, Math.round(50 + Math.log10(Math.max(marketValue,50000)/50000) * 11)));
+        }
+        let realPlayersCache = null;
+        function fetchRealPlayersCSV() {
+            return new Promise((resolve) => {
+                if (realPlayersCache) { resolve(realPlayersCache); return; }
+                Papa.parse('player_interface_part_1.csv', { download:true, header:true, skipEmptyLines:true, complete: (r1) => {
+                    Papa.parse('player_interface_part_2.csv', { download:true, header:true, skipEmptyLines:true, complete: (r2) => {
+                        realPlayersCache = (r1.data||[]).concat(r2.data||[]);
+                        resolve(realPlayersCache);
+                    }, error: () => { realPlayersCache = r1.data||[]; resolve(realPlayersCache); } });
+                }, error: () => resolve([]) });
+            });
+        }
+        // خصمك الحقيقي فعلياً — تشكيلة من لاعبيه الحقيقيين الفعليين من قاعدة البيانات (نفس المصدر المستخدم في transfers.html)
+        // بدل توليد أسماء وهمية بالكامل عبر Hash — تفقد المباراة قيمتها التكتيكية دون معرفة نقاط قوة الخصم الحقيقية
+        async function buildOpponentLineup(oppName) {
+            const seed = seedHash(oppName);
+            const formationKeys = Object.keys(FORMATIONS);
+            const formationKey = formationKeys[seed % formationKeys.length];
+            const slots = FORMATIONS[formationKey];
+
+            const allPlayers = await fetchRealPlayersCSV();
+            const clubPlayers = allPlayers.filter(p => (p.club||'').trim() === oppName.trim() && p.player_name);
+            if (clubPlayers.length >= 9) {
+                // بناء تشكيلة حقيقية فعلية من لاعبي الخصم الحقيقيين، بأقرب مطابقة ممكنة لمركز كل خانة تكتيكية
+                const used = new Set();
+                const lineup = slots.map(slot => {
+                    const wantGroup = getPositionGroupOf(slot.pos);
+                    let candidates = clubPlayers.filter(p => !used.has(p.tmid) && getPositionGroupOf(normalizePos(p.main_position)) === wantGroup);
+                    if (!candidates.length) candidates = clubPlayers.filter(p => !used.has(p.tmid));
+                    if (!candidates.length) return { name:'—', rating:55, position:slot.pos };
+                    candidates.sort((a,b) => (parseFloat(b.market_value_cur)||0) - (parseFloat(a.market_value_cur)||0));
+                    const pick = candidates[0];
+                    used.add(pick.tmid);
+                    return { name: pick.player_name, rating: computePlayerRating(parseFloat(pick.market_value_cur)||0), position: slot.pos, isReal:true };
+                });
+                return { formation: formationKey, slots, lineup, isRealSquad:true };
+            }
+            // لا بيانات حقيقية كافية لهذا الخصم تحديداً — نُبقي البديل التقديري السابق بصدق تام (لا نخترع بيانات حقيقية غير موجودة)
+            const lineup = slots.map((slot, i) => {
+                const s2 = seedHash(oppName + i);
+                return { name: OPP_FIRST[s2 % OPP_FIRST.length] + ' ' + OPP_LAST[Math.floor(s2/7) % OPP_LAST.length],
+                    rating: 58 + (s2 % 30), position: slot.pos, isReal:false };
+            });
+            return { formation: formationKey, slots, lineup, isRealSquad:false };
+        }
+        function normalizePos(raw) { return OLD_POS_MAP[(raw||'CM').trim()] || (raw||'CM').trim(); }
+        function getPositionGroupOf(pos) {
+            if (pos === 'GK') return 'GK';
+            if (['CB','LB','RB'].includes(pos)) return 'DEF';
+            if (['CDM','CM','CAM','LM','RM'].includes(pos)) return 'MID';
+            return 'FWD';
+        }
+
+        function estimateTeamStrength(lineup, style, isMine, identity, isHomeTeam) {
+            const rated = lineup.filter(Boolean);
+            if (!rated.length) return 55;
+            const avgRating = rated.reduce((s,p) => s + (isMine ? effectiveRating(p, identity) : p.rating), 0) / rated.length;
+            const avgFit = isMine ? rated.reduce((s,p) => s + conditionOf(p), 0) / rated.length / 100 : 0.85;
+            // أفضلية الملعب الحقيقية — عامل واقعي موثَّق إحصائياً (تقريباً 3-5% تفوّق للفريق المضيف)، غائب سابقاً تماماً عن الحساب
+            const homeAdvantage = isHomeTeam ? 1.04 : 1.0;
+            return avgRating * (0.7 + 0.3*avgFit) * homeAdvantage;
+        }
+
+        let matchState = null;
+
+        async function determineFixture() {
+            const gd = getGameDate();
+            let candidates = [];
+            try {
+                const teams = JSON.parse(localStorage.getItem('current_league_teams')||'[]').filter(t => t!=='إستراحة' && t.trim()!=='');
+                const currentRound = parseInt(localStorage.getItem('database_current_round'))||0;
+                if (teams.length > 1 && teams.includes(activeClub)) {
+                    let pool = [...teams];
+                    if (pool.length % 2 !== 0) pool.push('إستراحة');
+                    const total = pool.length, rounds = total-1, perRound = total/2;
+                    let schedule = [];
+                    for (let r=0;r<rounds;r++){
+                        let matches=[];
+                        for(let i=0;i<perRound;i++){
+                            let home=pool[i], away=pool[total-1-i];
+                            if (home==='إستراحة'||away==='إستراحة') continue;
+                            if (r%2===1){ const t=home; home=away; away=t; }
+                            matches.push({home,away});
+                        }
+                        schedule.push(matches); pool.splice(1,0,pool.pop());
+                    }
+                    const half = schedule.length;
+                    for (let r=0;r<half;r++) schedule.push(schedule[r].map(m=>({home:m.away,away:m.home})));
+                    for (let i = currentRound; i < schedule.length; i++) {
+                        const match = schedule[i].find(m => m.home===activeClub || m.away===activeClub);
+                        if (match) { candidates.push({ type:'league', opponent: match.home===activeClub?match.away:match.home, venue: match.home===activeClub?'home':'away' }); break; }
+                    }
+                }
+            } catch(e) {}
+
+            if (!candidates.length) {
+                try {
+                    await clubDB.init();
+                    const upcoming = await clubDB.getAllUpcomingMatches();
+                    const friendlies = upcoming.filter(m => m.competition === 'ودية' && (m.ownerClub===undefined || m.ownerClub===activeClub));
+                    if (friendlies.length) candidates.push({ type:'friendly', opponent: friendlies[0].opponent, venue: friendlies[0].venue });
+                } catch(e) {}
+            }
+            return candidates[0] || null;
+        }
+
+        // ============================================================
+        // مباريات أخرى اليوم — أندية حقيقية فعلية (من team.csv) تلعب في نفس التاريخ الحقيقي لمباراتك،
+        // بدل عرض التشكيلتين — يعطي إحساساً بيوم كروي عالمي حي، لا مباراتك فقط
+        // ============================================================
+        let otherMatchesTeamsCache = null;
+        function fetchTeamsCSV() {
+            return new Promise((resolve) => {
+                if (otherMatchesTeamsCache) { resolve(otherMatchesTeamsCache); return; }
+                Papa.parse('team.csv', {
+                    download: true, header: true, skipEmptyLines: true,
+                    complete: (res) => { otherMatchesTeamsCache = res.data || []; resolve(otherMatchesTeamsCache); },
+                    error: () => resolve([]),
+                });
+            });
+        }
+        async function renderOtherMatchesToday(opponentCompetition) {
+            const gd = getGameDate();
+            const dateLabel = `${String(gd.day).padStart(2,'0')}/${String(gd.month).padStart(2,'0')}/${gd.year}`;
+            document.getElementById('otherMatchesDate').innerText = dateLabel;
+            const container = document.getElementById('otherMatchesContainer');
+            const rows = await fetchTeamsCSV();
+            if (!rows.length) { container.innerHTML = `<div style="padding:14px; color:var(--muted); font-size:11px; text-align:center;">تعذّر تحميل مباريات اليوم الأخرى.</div>`; return; }
+
+            // نفضّل أندية من نفس مسابقة خصمك لواقعية أعلى (تلعب فعلياً في نفس الجولة التقريبية)، ثم نكمل من مسابقات أخرى إن لزم
+            const sameComp = opponentCompetition ? rows.filter(r => r.competition === opponentCompetition && r.team) : [];
+            const pool = (sameComp.length >= 8 ? sameComp : rows.filter(r => r.team)).map(r => r.team.trim());
+            const uniquePool = [...new Set(pool)];
+            const daySeed = seedHash(dateLabel);
+            const picks = [];
+            const usedIdx = new Set();
+            for (let i = 0; i < 5 && uniquePool.length - usedIdx.size >= 2; i++) {
+                let idxA, idxB;
+                do { idxA = (daySeed + i*17) % uniquePool.length; } while (usedIdx.has(idxA));
+                usedIdx.add(idxA);
+                do { idxB = (daySeed + i*17 + 31) % uniquePool.length; } while (usedIdx.has(idxB) || idxB === idxA);
+                usedIdx.add(idxB);
+                const matchSeed = seedHash(uniquePool[idxA] + uniquePool[idxB] + dateLabel);
+                picks.push({ home: uniquePool[idxA], away: uniquePool[idxB], hs: matchSeed % 4, as: (matchSeed >> 3) % 4,
+                    comp: (sameComp.find(r=>r.team.trim()===uniquePool[idxA])||{}).competition || '' });
+            }
+            if (!picks.length) { container.innerHTML = `<div style="padding:14px; color:var(--muted); font-size:11px; text-align:center;">لا مباريات أخرى مسجَّلة اليوم.</div>`; return; }
+            container.innerHTML = picks.map(m => `
+                <div class="other-match-row">
+                    <span class="comp-tag">${m.comp}</span>
+                    <span class="team-name">${m.home}</span>
+                    <span class="om-score">${m.hs} - ${m.as}</span>
+                    <span class="team-name">${m.away}</span>
+                </div>
+            `).join('');
+        }
+
+        let liveTimer = null, liveMinute = 0, homeScore = 0, awayScore = 0;
+        function addEvent(text) {
+            const el = document.getElementById('eventsLog');
+            const row = document.createElement('div');
+            row.className = 'event-row';
+            row.innerHTML = `<span class="min">${liveMinute}'</span><span>${text}</span>`;
+            el.insertBefore(row, el.firstChild);
+        }
+
+        function toggleFollow() {
+            if (liveTimer) { clearInterval(liveTimer); liveTimer = null; document.getElementById('followLabel').innerText='متابعة'; document.getElementById('followIcon').className='fas fa-play'; return; }
+            document.getElementById('followLabel').innerText='إيقاف';
+            document.getElementById('followIcon').className='fas fa-pause';
+            // سرعة محاكاة حقيقية من الإعدادات — تغيّر فعلياً معدل تقدّم الدقائق، لا مجرد تسمية
+            const speedMap = { slow: 550, normal: 350, fast: 180 };
+            const simSpeed = localStorage.getItem('simulationSpeed') || 'normal';
+            liveTimer = setInterval(tickMinute, speedMap[simSpeed] || 350);
+        }
+
+        function homeChanceForCorner(diff) { return 50 + Math.max(-30, Math.min(30, diff * 1.5)); }
+        // إيقاف حقيقي فعلي للمحاكاة عند حدث مهم — يقرأ إعداد settings.html مباشرة، لا مجرد تسمية بلا أثر
+        function pauseIfMajorEvent(reason) {
+            if (localStorage.getItem('pauseOnMajorEvent') !== '1') return;
+            if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+            document.getElementById('followLabel').innerText = `متوقفة — ${reason} (اضغط للمتابعة)`;
+            const icon = document.getElementById('followIcon');
+            if (icon) icon.className = 'fas fa-play';
+        }
+        function renderMatchStats() {
+            if (!matchState) return;
+            const homeStats = matchState.stats.home, awayStats = matchState.stats.away;
+            document.getElementById('statShotsHome').innerText = homeStats.shots;
+            document.getElementById('statShotsAway').innerText = awayStats.shots;
+            document.getElementById('statOnTargetHome').innerText = homeStats.onTarget;
+            document.getElementById('statOnTargetAway').innerText = awayStats.onTarget;
+            document.getElementById('statCornersHome').innerText = homeStats.corners;
+            document.getElementById('statCornersAway').innerText = awayStats.corners;
+            document.getElementById('statFoulsHome').innerText = homeStats.fouls;
+            document.getElementById('statFoulsAway').innerText = awayStats.fouls;
+        }
+
+        function tickMinute() {
+            if (liveMinute >= 90) { clearInterval(liveTimer); liveTimer=null; document.getElementById('followLabel').innerText='انتهت المباراة'; document.getElementById('followBtn').disabled=true; return; }
+            liveMinute++;
+            document.getElementById('minuteVal').innerText = liveMinute + "'";
+
+            const seed = seedHash(activeClub + matchState.opponent + liveMinute);
+            // إرهاق حقيقي تراكمي مع تقدّم الدقائق — الفريق الأقل جاهزية بدنياً فعلياً (متوسط حالة لاعبيه) يتراجع أكثر في الشوط الثاني، تماماً كالواقع
+            if (matchState.myAvgCondition === undefined) {
+                const rated = matchState.myData.lineup.filter(Boolean);
+                matchState.myAvgCondition = rated.length ? rated.reduce((s,p)=>s+conditionOf(p),0)/rated.length/100 : 0.85;
+            }
+            const myFatigueFactor = 0.10 * (1 - matchState.myAvgCondition*0.5); // فريق بحالة بدنية ضعيفة يفقد حتى 10% من قوته الفعلية بنهاية المباراة
+            const oppFatigueFactor = 0.07; // تقدير معياري لفريق الخصم لعدم توفر بيانات حالته الفردية الحقيقية
+            const fatiguedMyStrength = matchState.myStrength * (1 - myFatigueFactor * (liveMinute/90));
+            const fatiguedOppStrength = matchState.oppStrength * (1 - oppFatigueFactor * (liveMinute/90));
+            const homeStr = matchState.myIsHome ? fatiguedMyStrength : fatiguedOppStrength;
+            const awayStr = matchState.myIsHome ? fatiguedOppStrength : fatiguedMyStrength;
+            const diff = homeStr - awayStr;
+
+            // احتمال حدث هذه الدقيقة يعتمد فعلياً على فارق القوة الحقيقي، وليس تساوياً عشوائياً
+            // فرصة هجومية حقيقية (وليست هدفاً مباشراً) — احتمال أعلى بكثير من الواقعي القديم، لأن أغلب الفرص لا تتحوّل هدفاً فعلياً
+            const chanceRate = 16; // % لكل دقيقة لخلق فرصة هجومية حقيقية (مطابق لمعدل ~24 فرصة مجمَّعة في مباراة كاملة)
+            if (seed % 100 < chanceRate) {
+                const homeChance = 50 + Math.max(-30, Math.min(30, diff * 1.5));
+                const isHomeEvent = (seed % 1000) < (homeChance * 10);
+                const isMyEvent = matchState.myIsHome === isHomeEvent;
+                const scorerPool = isMyEvent ? matchState.myData.lineup.filter(Boolean) : matchState.oppData.lineup;
+                // احتمالية تسجيل واقعية حقيقية حسب المركز — المهاجمون يسجّلون فعلياً أكثر بكثير من المدافعين إحصائياً في الواقع
+                const SCORING_POSITION_WEIGHT = { ST:1.0, CF:1.0, SS:0.9, LW:0.65, RW:0.65, CAM:0.55, CM:0.25, LM:0.35, RM:0.35, CDM:0.1, LB:0.08, RB:0.08, CB:0.04, GK:0.005 };
+                function scoringWeight(p, isMine) {
+                    const pos = (isMine ? playerPos(p) : p.position || 'CM').toUpperCase();
+                    const posW = SCORING_POSITION_WEIGHT[pos] || 0.25;
+                    // مهارة التسديد/الإنهاء الحقيقية للاعبينا (من نظام getPlayerSkills الموحّد)، وتقدير مكافئ لمهارة الخصم من تقييمه العام
+                    const finishing = isMine ? (getPlayerSkills(p).finishing || 50) : Math.max(30, Math.min(90, (p.rating||60) + (seedHash(p.name+'fin')%20-10)));
+                    const quality = isMine ? effectiveRating(p, matchState.identity) : p.rating;
+                    return Math.max(0.5, posW * (finishing/70) * (quality/70) * 100);
+                }
+                const weights = scorerPool.map(p => scoringWeight(p, isMyEvent));
+                const total = weights.reduce((a,b)=>a+b, 0);
+                let r = (seed % 1000) / 1000 * total;
+                let idx = 0;
+                for (; idx < weights.length; idx++) { r -= weights[idx]; if (r <= 0) break; }
+                const shooter = scorerPool[Math.min(idx, scorerPool.length-1)];
+                const shooterName = playerName(shooter);
+
+                // معدل تحويل واقعي حقيقي: نسبة الفرص التي تتحول لأهداف فعلية في كرة القدم الحقيقية تقريباً 10-14% فقط من مجمل الفرص المخلوقة
+                const shooterFinishing = isMyEvent ? (getPlayerSkills(shooter).finishing || 50) : Math.max(30, Math.min(90, (shooter.rating||60)));
+                const convSeed = seedHash(activeClub + matchState.opponent + liveMinute + 'conv');
+                const conversionChance = 15 + (shooterFinishing - 50) * 0.3; // ~15% أساسية معايَرة لتُنتج معدل أهداف إجمالي واقعي قريب من ~2.6 هدف/مباراة (متوسط كرة القدم الحقيقي)، يرتفع فعلياً مع جودة تسديد اللاعب
+                const teamLabel = isHomeEvent ? matchState.homeName : matchState.awayName;
+                const statSide = isHomeEvent ? 'home' : 'away';
+                matchState.stats[statSide].shots++;
+                if ((convSeed % 1000) < conversionChance * 10) {
+                    matchState.stats[statSide].onTarget++;
+                    if (isHomeEvent) homeScore++; else awayScore++;
+                    document.getElementById('scoreMid').innerText = `${homeScore} - ${awayScore}`;
+                    // صانع الهدف — أغلب الأهداف الحقيقية في كرة القدم (~65-70%) بتمريرة حاسمة فعلية من زميل، مرجَّح واقعياً نحو الأجنحة ووسط الملعب الهجومي
+                    const ASSIST_POSITION_WEIGHT = { LW:1.0, RW:1.0, CAM:0.9, ST:0.4, CF:0.4, CM:0.55, LM:0.7, RM:0.7, CDM:0.25, LB:0.3, RB:0.3, CB:0.08, GK:0.02 };
+                    const assistSeed = seedHash(activeClub + matchState.opponent + liveMinute + 'assist');
+                    let assistNote = '';
+                    if ((assistSeed % 100) < 67) {
+                        const assistPool = scorerPool.filter(p => p !== shooter);
+                        if (assistPool.length) {
+                            const aWeights = assistPool.map(p => {
+                                const pos = (isMyEvent ? playerPos(p) : p.position || 'CM').toUpperCase();
+                                return Math.max(0.5, (ASSIST_POSITION_WEIGHT[pos]||0.3) * 100);
+                            });
+                            const aTotal = aWeights.reduce((a,b)=>a+b,0);
+                            let ar = (assistSeed % 1000)/1000 * aTotal, aIdx = 0;
+                            for (; aIdx < aWeights.length; aIdx++) { ar -= aWeights[aIdx]; if (ar <= 0) break; }
+                            const assister = assistPool[Math.min(aIdx, assistPool.length-1)];
+                            assistNote = ` <span style="color:var(--muted); font-size:10px;">(تمريرة حاسمة: ${playerName(assister)})</span>`;
+                        }
+                    }
+                    addEvent(`<i class="fas fa-futbol" style="color:var(--gold);"></i> هــــدف! ${shooterName} (${teamLabel})${assistNote}`);
+                    pauseIfMajorEvent('هدف!');
+                } else {
+                    // فرصة حقيقية ضائعة — تُسجَّل كحدث فعلي يعكس واقعية المباراة (تصدٍّ/تسديدة خارج المرمى) دون تغيير النتيجة
+                    const outcomeSeed = seedHash(activeClub + matchState.opponent + liveMinute + 'outcome') % 100;
+                    if (outcomeSeed < 55) { matchState.stats[statSide].onTarget++; addEvent(`<i class="fas fa-hand" style="color:var(--blue);"></i> تصدٍّ رائع من الحارس أمام ${shooterName} (${teamLabel})`); }
+                    else addEvent(`<i class="fas fa-bullseye" style="color:var(--muted);"></i> تسديدة ${shooterName} تخرج بجانب المرمى (${teamLabel})`);
+                }
+                renderMatchStats();
+            }
+
+            // استحواذ يتحرك تدريجياً نحو ما يعكسه فارق القوة الحقيقي
+            const targetPoss = 50 + Math.max(-30, Math.min(30, diff));
+            matchState.poss += (targetPoss - matchState.poss) * 0.05;
+            const homePoss = Math.round(matchState.myIsHome ? matchState.poss : 100-matchState.poss);
+            document.getElementById('possHomeVal').innerText = homePoss;
+            document.getElementById('possAwayVal').innerText = 100-homePoss;
+            document.getElementById('possHomeBar').style.width = homePoss + '%';
+            document.getElementById('possAwayBar').style.width = (100-homePoss) + '%';
+
+            // ركنيات وتسلل — أحداث حقيقية إضافية مستقلة عن فرص التسجيل، تضيف تنوعاً وتشويقاً واقعياً للمتابعة المباشرة
+            const cornerSeed = seedHash(activeClub + matchState.opponent + liveMinute + 'corner');
+            if (cornerSeed % 1000 < 9 * 10) { // ~9% بالدقيقة تقريباً يعطي معدل ~8 ركنيات/مباراة إجمالاً، واقعي
+                const isHomeCorner = (cornerSeed % 1000) < (homeChanceForCorner(diff) * 10);
+                matchState.stats[isHomeCorner ? 'home' : 'away'].corners++;
+                addEvent(`<i class="fas fa-flag"></i> ركنية لـ${isHomeCorner ? matchState.homeName : matchState.awayName}`);
+                renderMatchStats();
+            } else if ((cornerSeed >> 4) % 1000 < 4 * 10) { // تسلل — حدث نصي فقط، لا يؤثر على الإحصائيات الرقمية
+                const isHomeOffside = ((cornerSeed >> 4) % 1000) < (homeChanceForCorner(diff) * 10);
+                addEvent(`<i class="fas fa-flag-checkered" style="color:var(--muted);"></i> تسلل على لاعب ${isHomeOffside ? matchState.homeName : matchState.awayName}`);
+            }
+
+            // بطاقات وإصابات حقيقية — احتمالها يرتفع فعلياً مع الإرهاق التراكمي وتقدّم الدقائق، تماماً كالواقع (أغلب البطاقات والإصابات تحدث في الشوط الثاني)
+            const cardSeed = seedHash(activeClub + matchState.opponent + liveMinute + 'card');
+            const fatigueRisk = (liveMinute/90) * (1 - matchState.myAvgCondition*0.4);
+            const cardChance = 1.5 + fatigueRisk * 3; // % لكل دقيقة، يرتفع تدريجياً مع الإرهاق
+            if (cardSeed % 1000 < cardChance * 10) {
+                const isMyEvent2 = (cardSeed % 2 === 0);
+                const pool2 = isMyEvent2 ? matchState.myData.lineup.filter(Boolean) : matchState.oppData.lineup;
+                const player2 = pool2[cardSeed % pool2.length];
+                const isRed = (cardSeed % 100) < 8; // البطاقات الحمراء نادرة حقيقياً مقارنة بالصفراء
+                const pname2 = playerName(player2);
+                matchState.stats[isMyEvent2 === matchState.myIsHome ? 'home' : 'away'].fouls++;
+                addEvent(`<i class="fas fa-square" style="color:${isRed?'#ef4444':'#eab308'};"></i> بطاقة ${isRed?'حمراء':'صفراء'} لـ${pname2}`);
+                if (isRed) pauseIfMajorEvent('بطاقة حمراء');
+                renderMatchStats();
+            } else {
+                // إصابة حقيقية نادرة فعلياً كالواقع — معدل أساسي منخفض جداً (0.15% بالدقيقة)، يرتفع فقط مع الإرهاق الفعلي التراكمي
+                // (لا إصابة إلا في نطاق الفريقين، وتُسجَّل بنفس البنية الحقيقية المستخدمة في medical.html لتصبح ذات أثر فعلي حقيقي، لا نصاً تجميلياً فقط)
+                const injuryChance = 0.15 + fatigueRisk * 0.5; // % بالدقيقة — يعطي معدل إصابات مباراة واقعياً (~إصابة كل 3-5 مباريات لكل فريق تقريباً)
+                if ((cardSeed >> 3) % 1000 < injuryChance * 10) {
+                    const isMyEvent3 = (cardSeed % 2 === 1);
+                    if (isMyEvent3) {
+                        const pool3 = matchState.myData.lineup.filter(Boolean);
+                        const player3 = pool3[(cardSeed>>3) % pool3.length];
+                        const pname3 = playerName(player3);
+                        addEvent(`<i class="fas fa-kit-medical" style="color:var(--red);"></i> إصابة حقيقية توقف اللعب لـ${pname3} — سيغيب فعلياً عن المباريات القادمة`);
+                        pauseIfMajorEvent('إصابة خطيرة');
+                        // تُسجَّل كإصابة حقيقية فعلية بنفس بنية medical.html بالضبط، لا حدثاً تجميلياً بلا أثر
+                        const injuries = getClubInjuries();
+                        const types = ['إجهاد عضلي','التواء في الكاحل','تمزق عضلي طفيف','ارتجاج خفيف'];
+                        const tSeed = seedHash(player3.tmid + 'matchinjury' + liveMinute);
+                        const totalDays = 5 + (tSeed % 15);
+                        const todaySort = toAbsDay(getGameDate());
+                        injuries.push({ tmid: player3.tmid, playerName: pname3, type: types[tSeed % types.length], totalDays, occurredDateSort: todaySort, remaining: totalDays });
+                        localStorage.setItem('club_injuries', JSON.stringify(injuries));
+                    } else {
+                        const pool3 = matchState.oppData.lineup;
+                        const player3 = pool3[(cardSeed>>3) % pool3.length];
+                        addEvent(`<i class="fas fa-kit-medical" style="color:var(--red);"></i> إصابة توقف اللعب لـ${playerName(player3)}`);
+                    }
+                }
+            }
+        }
+
+        function renderIdentityCard(identity, coach, myData) {
+            const el = document.getElementById('identityCard');
+            const label = TACTIC_IDENTITY_LABELS[identity] || identity;
+            const starters = myData.lineup.filter(Boolean);
+            const goodFit = starters.filter(p => tacticsBonus(p, identity).bonusPct > 3).length;
+            const badFit = starters.filter(p => tacticsBonus(p, identity).bonusPct < -3).length;
+            if (!coach) {
+                el.innerHTML = `<div class="row1"><span class="tag">لا يوجد مدرب رئيسي</span></div><div class="note">هوية تكتيكية افتراضية "متوازنة" مستخدمة حالياً — وقّع مدرباً رئيسياً من سوق الانتقالات لتفعيل هويته التكتيكية الحقيقية.</div>`;
+                return;
+            }
+            el.innerHTML = `
+                <div class="row1"><span>الهوية التكتيكية لـ${coach.name}</span><span class="tag">${label}</span></div>
+                <div class="note">
+                    <span style="color:var(--green);">●</span> ${goodFit} لاعبين متوافقين جيداً مع هذا الأسلوب (بونص أداء حقيقي)
+                    · <span style="color:var(--red);">●</span> ${badFit} لاعبين غير متوافقين (خصم أداء)
+                    · <span style="color:#8b5cf6;">★</span> تعليمات فردية خاصة بمركز
+                </div>
+            `;
+        }
+
+        window.onload = async function() {
+            const fixture = await determineFixture();
+            const myData = await buildMyLineup();
+            if (!fixture) {
+                document.getElementById('homeName').innerText = activeClub;
+                document.getElementById('followBtn').disabled = true;
+                document.getElementById('followLabel').innerText = 'لا توجد مباراة قادمة';
+                return;
+            }
+            const oppData = await buildOpponentLineup(fixture.opponent);
+            const myIsHome = fixture.venue === 'home';
+
+            document.getElementById('homeName').innerText = myIsHome ? activeClub : fixture.opponent;
+            document.getElementById('awayName').innerText = myIsHome ? fixture.opponent : activeClub;
+            document.getElementById('homeCrest').src = getTeamLogoUrl(myIsHome ? activeClub : fixture.opponent);
+            document.getElementById('awayCrest').src = getTeamLogoUrl(myIsHome ? fixture.opponent : activeClub);
+            document.getElementById('homeFmt').innerText = myIsHome ? myData.formation : oppData.formation;
+            document.getElementById('awayFmt').innerText = myIsHome ? oppData.formation : myData.formation;
+
+            const seed = seedHash(activeClub + fixture.opponent);
+            document.getElementById('attendanceVal').innerText = (10000 + (seed % 40000)).toLocaleString();
+            const weathers = [
+                { label:'<i class="fas fa-sun"></i> صافٍ', mult:1.0 }, { label:'<i class="fas fa-cloud"></i> غائم', mult:0.99 },
+                { label:'<i class="fas fa-wind"></i> عاصف', mult:0.95 }, { label:'<i class="fas fa-cloud-rain"></i> ممطر', mult:0.93 },
+            ];
+            const weather = weathers[seed % weathers.length];
+            document.getElementById('weatherVal').innerHTML = weather.label;
+
+            const { identity, coach } = getCoachIdentity();
+            renderIdentityCard(identity, coach, myData);
+
+            renderOtherMatchesToday(localStorage.getItem('current_league_name') || null);
+
+            // الطقس السيئ يقلّل الدقة الفنية لكلا الفريقين فعلياً (رياح/مطر يصعّبان التمرير والتسديد الدقيق) — عامل واقعي كان غائباً كلياً رغم عرضه بصرياً فقط
+            // صعوبة اللعبة الحقيقية من الإعدادات — تقوّي الخصم فعلياً في المستوى الصعب، تُضعفه قليلاً في السهل
+            const difficultyMult = { easy: 0.92, normal: 1.0, hard: 1.1 }[localStorage.getItem('gameDifficulty') || 'normal'] || 1.0;
+            matchState = {
+                opponent: fixture.opponent, myIsHome, homeName: myIsHome?activeClub:fixture.opponent, awayName: myIsHome?fixture.opponent:activeClub,
+                myData, oppData, identity, weatherMult: weather.mult,
+                myStrength: estimateTeamStrength(myData.lineup, myData.style, true, identity, myIsHome) * weather.mult,
+                oppStrength: estimateTeamStrength(oppData.lineup, null, false, identity, !myIsHome) * weather.mult * difficultyMult, poss: 50,
+                stats: { home: { shots:0, onTarget:0, corners:0, fouls:0 }, away: { shots:0, onTarget:0, corners:0, fouls:0 } }
+            };
+            renderMatchStats();
+        };
+    </script>
+</body>
+</html>

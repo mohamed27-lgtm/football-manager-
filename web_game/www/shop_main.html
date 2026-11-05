@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المتجر الرسمي للنادي | نظام الإدارة المتكامل</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #05070a;
+            --card: #0d1117;
+            --card-hover: #1a2332;
+            --accent: #00f2ff;
+            --success: #00ff88;
+            --danger: #ff3366;
+            --warning: #ffcc00;
+            --gold: #c5a059;
+            --text: #ffffff;
+            --dim: #8b949e;
+            --border: #1e293b;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            padding: 12px;
+            padding-bottom: 80px;
+        }
+
+        .header-store {
+            background: linear-gradient(145deg, #0f172a, #020617);
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(6px);
+        }
+        .header-store .title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        .header-store .title i {
+            margin-left: 8px;
+        }
+        .header-stats {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .header-stats .stat {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            color: var(--dim);
+            text-align: center;
+        }
+        .header-stats .stat b {
+            display: block;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        .header-stats .stat b.gold {
+            color: var(--gold);
+        }
+        .header-stats .stat b.green {
+            color: var(--success);
+        }
+        .header-stats .stat b.red {
+            color: var(--danger);
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 6px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 5px;
+            margin-bottom: 14px;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            position: sticky;
+            top: 72px;
+            z-index: 40;
+        }
+        .tab-btn {
+            flex: 0 0 auto;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: var(--dim);
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+            background: transparent;
+            border: none;
+        }
+        .tab-btn.active {
+            background: var(--gold);
+            color: #0a0b10;
+        }
+        .tab-btn i {
+            margin-left: 5px;
+        }
+
+        .tab-page {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+        .tab-page.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            color: var(--gold);
+            font-weight: bold;
+            margin: 16px 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        .product-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px;
+            transition: 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .product-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-3px);
+            background: var(--card-hover);
+        }
+        .product-card .prod-img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #1a2332;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: var(--dim);
+            margin-bottom: 8px;
+        }
+        .product-card .prod-name {
+            font-size: 0.78rem;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .product-card .prod-price {
+            font-size: 0.7rem;
+            color: var(--success);
+            margin-top: 3px;
+        }
+        .product-card .prod-stock {
+            font-size: 0.6rem;
+            color: var(--dim);
+        }
+        .product-card .prod-stock.low {
+            color: var(--danger);
+        }
+        .product-card .prod-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--gold);
+            color: #0a0b10;
+            font-size: 0.5rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+        .product-card .prod-badge.sale {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .stats-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .stats-dashboard .stat-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 8px;
+            text-align: center;
+        }
+        .stats-dashboard .stat-box .num {
+            font-size: 1.1rem;
+            font-weight: 900;
+        }
+        .stats-dashboard .stat-box .lbl {
+            font-size: 0.55rem;
+            color: var(--dim);
+            margin-top: 3px;
+        }
+
+        .order-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .order-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .order-item .order-info {
+            font-size: 0.75rem;
+        }
+        .order-item .order-info b {
+            color: var(--gold);
+        }
+        .order-item .order-status {
+            font-size: 0.65rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .order-item .order-status.pending {
+            background: rgba(255, 204, 0, 0.15);
+            color: var(--warning);
+        }
+        .order-item .order-status.shipped {
+            background: rgba(0, 242, 255, 0.15);
+            color: var(--accent);
+        }
+        .order-item .order-status.delivered {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--success);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal-sheet {
+            background: var(--bg);
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            animation: slideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .modal-handle {
+            width: 40px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 3px;
+            margin: 0 auto 14px;
+        }
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .modal-head h2 {
+            font-size: 1rem;
+        }
+        .modal-close {
+            color: var(--dim);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .field {
+            margin-bottom: 12px;
+        }
+        .field label {
+            font-size: 0.7rem;
+            color: var(--dim);
+            display: block;
+            margin-bottom: 4px;
+        }
+        .field input,
+        .field select {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.8rem;
+        }
+        .field input:focus,
+        .field select:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .btn-group .btn {
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.7rem;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-group .btn:active {
+            transform: scale(0.96);
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+        }
+        .btn-success {
+            background: var(--success);
+            color: #000;
+        }
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+        .btn-warning {
+            background: var(--warning);
+            color: #000;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border) !important;
+            color: var(--text);
+        }
+        .btn-gold {
+            background: var(--gold);
+            color: #0a0b10;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.6rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--success);
+            color: #0a0b10;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: 0.3s;
+            pointer-events: none;
+            z-index: 999;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show {
+            opacity: 1;
+            bottom: 30px;
+        }
+        .toast.error {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .empty-note {
+            text-align: center;
+            color: var(--dim);
+            padding: 30px 10px;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 500px) {
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .stats-dashboard {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .header-store .title {
+                font-size: 0.9rem;
+            }
+            .header-stats .stat {
+                font-size: 0.6rem;
+                padding: 2px 10px;
+            }
+            .header-stats .stat b {
+                font-size: 0.75rem;
+            }
+            .tab-btn {
+                font-size: 0.6rem;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-store">
+        <div class="title"><i class="fas fa-store"></i> المتجر الرسمي</div>
+        <div class="header-stats">
+            <div class="stat"><b id="dailySales">0.0M</b> اليوم</div>
+            <div class="stat"><b id="monthlySales">0.0M</b> الشهر</div>
+            <div class="stat"><b class="gold" id="totalProfit">0.0M</b> الأرباح</div>
+        </div>
+    </div>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')"><i class="fas fa-chart-pie"></i> لوحة القيادة</button>
+        <button class="tab-btn" data-tab="products" onclick="switchTab('products')"><i class="fas fa-boxes"></i> المنتجات</button>
+        <button class="tab-btn" data-tab="orders" onclick="switchTab('orders')"><i class="fas fa-truck"></i> الطلبات</button>
+        <button class="tab-btn" data-tab="inventory" onclick="switchTab('inventory')"><i class="fas fa-warehouse"></i> المخزون</button>
+        <button class="tab-btn" data-tab="pricing" onclick="switchTab('pricing')"><i class="fas fa-tag"></i> إدارة الأسعار</button>
+    </div>
+
+    <!-- ========== DASHBOARD ========== -->
+    <div class="tab-page active" id="tab-dashboard">
+        <div class="stats-dashboard" id="dashStats"></div>
+        <div class="section-title"><i class="fas fa-fire"></i> المنتجات الأكثر مبيعاً</div>
+        <div id="bestSellers" class="product-grid"></div>
+        <div class="section-title"><i class="fas fa-star"></i> رضا الجماهير</div>
+        <div id="fanSatisfaction" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:0.85rem;"></div>
+    </div>
+
+    <!-- ========== PRODUCTS ========== -->
+    <div class="tab-page" id="tab-products">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <select id="catFilter" onchange="renderProducts()" style="background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 12px;font-size:0.7rem;">
+                <option value="all">جميع الفئات</option>
+                <option value="ملابس">ملابس</option>
+                <option value="إكسسوارات">إكسسوارات</option>
+                <option value="رقمية">رقمية</option>
+            </select>
+            <select id="stockFilter" onchange="renderProducts()" style="background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 12px;font-size:0.7rem;">
+                <option value="all">كل المخزون</option>
+                <option value="in">متوفر</option>
+                <option value="out">نافد</option>
+                <option value="low">منخفض</option>
+            </select>
+            <input type="text" id="searchProd" placeholder="🔍 بحث..." oninput="renderProducts()" style="flex:1;min-width:120px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 12px;font-size:0.7rem;">
+        </div>
+        <div id="productList" class="product-grid"></div>
+    </div>
+
+    <!-- ========== ORDERS ========== -->
+    <div class="tab-page" id="tab-orders">
+        <div class="section-title"><i class="fas fa-clipboard-list"></i> الطلبات الجديدة</div>
+        <div id="ordersList" class="order-list"></div>
+    </div>
+
+    <!-- ========== INVENTORY ========== -->
+    <div class="tab-page" id="tab-inventory">
+        <div class="section-title"><i class="fas fa-arrows-rotate"></i> إدارة المخزون</div>
+        <div id="inventoryList"></div>
+    </div>
+
+    <!-- ========== PRICING ========== -->
+    <div class="tab-page" id="tab-pricing">
+        <div class="section-title"><i class="fas fa-percent"></i> العروض والخصومات</div>
+        <div id="pricingControls"></div>
+        <div id="productPriceList" style="margin-top:14px;"></div>
+    </div>
+
+    <!-- ===== MODAL: Product Detail ===== -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div class="modal-head">
+                <h2 id="pm-name">المنتج</h2>
+                <i class="fas fa-xmark modal-close" onclick="closeModal('productModal')"></i>
+            </div>
+            <div id="pm-body"></div>
+            <div class="btn-group">
+                <button class="btn btn-warning" onclick="adjustPrice(1)"><i class="fas fa-plus"></i> رفع السعر</button>
+                <button class="btn btn-primary" onclick="adjustPrice(-1)"><i class="fas fa-minus"></i> تخفيض السعر</button>
+                <button class="btn btn-success" onclick="toggleSale()"><i class="fas fa-tag"></i> تبديل العرض</button>
+                <button class="btn btn-danger" onclick="restockProduct()"><i class="fas fa-box"></i> طلب تصنيع</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================================
+        //  البيانات الأساسية
+        // ============================================================
+        const SUPPLIERS = ['Nike', 'Adidas', 'Puma', 'Macron', 'Joma', 'New Balance', 'Umbro'];
+
+        const CATEGORIES = {
+            'ملابس': ['قميص أساسي', 'قميص احتياطي', 'قميص ثالث', 'قميص حارس المرمى', 'طقم تدريب', 'سترة', 'معطف', 'سروال', 'قبعة', 'وشاح', 'جوارب', 'حقيبة'],
+            'إكسسوارات': ['كرة', 'كوب', 'ساعة', 'محفظة', 'ميدالية', 'ملصق', 'دفتر', 'قلم'],
+            'رقمية': ['خلفية هاتف', 'بطاقة رقمية', 'عضوية', 'محتوى حصري', 'تذكرة رقمية']
+        };
+
+        const CONTINENTS = ['أوروبا', 'آسيا', 'أفريقيا', 'أمريكا الشمالية', 'أمريكا الجنوبية', 'أوقيانوسيا'];
+
+        // ============================================================
+        //  دوال اللعبة المشتركة
+        // ============================================================
+        function getClubName() { return localStorage.getItem('presidentialClub') || 'نادي المستقبل'; }
+
+        function getBudget() { return parseFloat(localStorage.getItem('clubBudget')) || 150; }
+
+        function setBudget(v) { localStorage.setItem('clubBudget', v.toFixed(2)); }
+
+        function getReputation() { return parseFloat(localStorage.getItem('clubReputation')) || 50; }
+
+        function getKitSponsor() {
+            return localStorage.getItem('clubKitSponsorName') || localStorage.getItem('clubSponsorName') || 'Nike';
+        }
+
+        function fedGetRules() {
+            return JSON.parse(localStorage.getItem('federationRules')) || { tier: 1, tierLabel: 'الدرجة الأولى (الممتاز)',
+                confederation: 'AFC' };
+        }
+
+        function getLeagueContext() {
+            const teams = JSON.parse(localStorage.getItem('current_league_teams')) || [];
+            const club = getClubName();
+            const pos = teams.indexOf(club);
+            return { position: pos === -1 ? null : pos + 1, total: teams.length || 0 };
+        }
+
+        function getStarPlayers() {
+            const squad = JSON.parse(localStorage.getItem('signed_players_by_club')) || {};
+            const list = squad[getClubName()] || [];
+            return list.filter(p => (p.rating || 0) >= 85).map(p => p.name);
+        }
+
+        function sendInbox(sender, text) {
+            let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+            inbox.unshift({ sender, text, time: new Date().toLocaleTimeString('ar-EG'), read: false });
+            localStorage.setItem('gameInbox', JSON.stringify(inbox.slice(0, 200)));
+            localStorage.setItem('hasNewMessage', 'true');
+        }
+
+        function fmtMoney(v) {
+            v = Math.round(v || 0);
+            if (v >= 1e9) return (v / 1e9).toFixed(v % 1e9 === 0 ? 0 : 1).replace(/\.0$/, '') + 'B';
+            if (v >= 1e6) return (v / 1e6).toFixed(v % 1e6 === 0 ? 0 : 1).replace(/\.0$/, '') + 'M';
+            if (v >= 1e3) return Math.round(v / 1e3) + 'k';
+            return v;
+        }
+
+        function rand(min, max) { return Math.round((Math.random() * (max - min) + min) * 100) / 100; }
+
+        function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+        // ============================================================
+        //  توليد المنتجات الافتراضية
+        // ============================================================
+        let products = [];
+        let orders = [];
+        let saleItems = {};
+        let priceMultipliers = {};
+
+        function generateProductId() { return 'P' + Date.now().toString(36) + randInt(100, 999).toString(36); }
+
+        function generateProducts() {
+            const club = getClubName();
+            const supplier = getKitSponsor();
+            const rep = getReputation();
+            const tier = fedGetRules().tier;
+
+            const basePrice = (tier === 1) ? 80 : (tier === 2) ? 55 : 35;
+            const qualityBase = 70 + (rep / 100) * 15;
+
+            const newProducts = [];
+            let idCounter = 0;
+
+            for (const [cat, items] of Object.entries(CATEGORIES)) {
+                items.forEach(name => {
+                    const quality = Math.min(99, qualityBase + randInt(-8, 8));
+                    const popularity = Math.min(99, 40 + (rep / 100) * 40 + randInt(-12, 12));
+                    const cost = Math.round((basePrice * (0.4 + rand(0, 0.2))) * 100) / 100;
+                    const price = Math.round((cost * (1.8 + rand(0, 0.6))) * 100) / 100;
+                    const stock = randInt(50, 400);
+                    const minStock = randInt(10, 60);
+
+                    newProducts.push({
+                        id: generateProductId(),
+                        name: name,
+                        category: cat,
+                        price: price,
+                        cost: cost,
+                        supplier: supplier,
+                        stock: stock,
+                        minStock: minStock,
+                        sold: 0,
+                        reserved: 0,
+                        quality: quality,
+                        popularity: popularity,
+                        releaseDate: `2026-${randInt(1,12)}-${randInt(1,28)}`,
+                        image: getProductIcon(name),
+                        onSale: false,
+                        salePrice: price,
+                        continentDemand: CONTINENTS.reduce((acc, c) => {
+                            acc[c] = randInt(30, 100);
+                            return acc;
+                        }, {}),
+                        lastRestock: Date.now(),
+                        nextRestock: Date.now() + randInt(7, 30) * 86400000,
+                    });
+                    idCounter++;
+                });
+            }
+            return newProducts;
+        }
+
+        function getProductIcon(name) {
+            const icons = {
+                'قميص أساسي': 'fa-shirt',
+                'قميص احتياطي': 'fa-shirt',
+                'قميص ثالث': 'fa-shirt',
+                'قميص حارس المرمى': 'fa-shirt',
+                'طقم تدريب': 'fa-vest',
+                'سترة': 'fa-jacket',
+                'معطف': 'fa-coat',
+                'سروال': 'fa-pants',
+                'قبعة': 'fa-hat-cowboy',
+                'وشاح': 'fa-scroll',
+                'جوارب': 'fa-socks',
+                'حقيبة': 'fa-bag-shopping',
+                'كرة': 'fa-futbol',
+                'كوب': 'fa-mug-saucer',
+                'ساعة': 'fa-clock',
+                'محفظة': 'fa-wallet',
+                'ميدالية': 'fa-medal',
+                'ملصق': 'fa-sticker',
+                'دفتر': 'fa-book',
+                'قلم': 'fa-pen',
+                'خلفية هاتف': 'fa-mobile-screen',
+                'بطاقة رقمية': 'fa-id-card',
+                'عضوية': 'fa-user-plus',
+                'محتوى حصري': 'fa-lock',
+                'تذكرة رقمية': 'fa-ticket',
+            };
+            return icons[name] || 'fa-cube';
+        }
+
+        // ============================================================
+        //  تخزين واسترجاع
+        // ============================================================
+        function getStoreData() {
+            const raw = localStorage.getItem('clubStoreData');
+            if (raw) return JSON.parse(raw);
+            const prods = generateProducts();
+            const data = {
+                products: prods,
+                orders: [],
+                saleItems: {},
+                priceMultipliers: {},
+                dailySales: 0,
+                monthlySales: 0,
+                totalProfit: 0,
+                daySalesHistory: [],
+                monthSalesHistory: [],
+            };
+            localStorage.setItem('clubStoreData', JSON.stringify(data));
+            return data;
+        }
+
+        function saveStoreData(data) {
+            localStorage.setItem('clubStoreData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const data = getStoreData();
+            products = data.products;
+            orders = data.orders;
+            saleItems = data.saleItems || {};
+            priceMultipliers = data.priceMultipliers || {};
+            // إضافة حقول مفقودة
+            products.forEach(p => {
+                if (p.continentDemand === undefined) {
+                    p.continentDemand = CONTINENTS.reduce((acc, c) => { acc[c] = randInt(30, 100); return acc; }, {});
+                }
+                if (p.nextRestock === undefined) p.nextRestock = Date.now() + randInt(7, 30) * 86400000;
+                if (p.lastRestock === undefined) p.lastRestock = Date.now();
+                if (p.reserved === undefined) p.reserved = 0;
+                if (p.sold === undefined) p.sold = 0;
+                if (p.onSale === undefined) p.onSale = false;
+                if (p.salePrice === undefined) p.salePrice = p.price;
+                if (p.supplier === undefined) p.supplier = getKitSponsor();
+                if (p.quality === undefined) p.quality = 70 + randInt(0, 20);
+                if (p.popularity === undefined) p.popularity = 50 + randInt(0, 30);
+                if (p.releaseDate === undefined) p.releaseDate = `2026-${randInt(1,12)}-${randInt(1,28)}`;
+            });
+            saveStoreData(data);
+            return data;
+        }
+
+        // ============================================================
+        //  محرك المبيعات – محاكاة الطلب اليومي بناءً على عوامل حقيقية
+        // ============================================================
+        function calculateDemand(product) {
+            const rep = getReputation();
+            const league = getLeagueContext();
+            const starPlayers = getStarPlayers();
+            const kitSponsor = getKitSponsor();
+
+            let demandFactor = 1;
+
+            // 1. شعبية النادي (السمعة)
+            demandFactor *= (0.6 + (rep / 100) * 0.4);
+
+            // 2. ترتيب الدوري
+            if (league.position && league.total) {
+                const top = league.position <= Math.ceil(league.total / 3);
+                const mid = league.position <= Math.ceil(league.total * 2 / 3);
+                if (top) demandFactor *= 1.25;
+                else if (mid) demandFactor *= 1.0;
+                else demandFactor *= 0.7;
+            }
+
+            // 3. جودة المنتج وشعبيته
+            demandFactor *= (0.5 + (product.quality / 100) * 0.3);
+            demandFactor *= (0.5 + (product.popularity / 100) * 0.3);
+
+            // 4. وجود نجوم
+            if (starPlayers.length > 0) {
+                demandFactor *= (1 + starPlayers.length * 0.08);
+            }
+
+            // 5. الراعي (المورد)
+            if (product.supplier === kitSponsor) {
+                demandFactor *= 1.15;
+            }
+
+            // 6. السعر (المرونة السعرية)
+            const basePrice = product.price / (priceMultipliers[product.id] || 1);
+            const currentPrice = product.onSale ? product.salePrice : product.price;
+            const priceRatio = currentPrice / basePrice;
+            if (priceRatio > 1.3) demandFactor *= 0.7;
+            else if (priceRatio > 1.1) demandFactor *= 0.9;
+            else if (priceRatio < 0.85) demandFactor *= 1.15;
+            else if (priceRatio < 0.7) demandFactor *= 1.3;
+
+            // 7. الطلب حسب القارة (يوزع المبيعات عالمياً)
+            const continentAvg = Object.values(product.continentDemand).reduce((a, b) => a + b, 0) / CONTINENTS.length;
+            demandFactor *= (0.7 + (continentAvg / 100) * 0.3);
+
+            // 8. المخزون (ندرة)
+            if (product.stock < product.minStock) demandFactor *= 0.6;
+            if (product.stock === 0) demandFactor = 0;
+
+            return Math.max(0, demandFactor);
+        }
+
+        function processDailySales() {
+            const data = getStoreData();
+            let totalSalesValue = 0;
+            let totalCost = 0;
+
+            products.forEach(p => {
+                if (p.stock <= 0) return;
+                const demand = calculateDemand(p);
+                // عدد المبيعات اليومية = طلب * (عدد جماهيري تقديري) * عوامل عشوائية صغيرة
+                const fanBase = Math.round(500 + getReputation() * 8);
+                const dailyQty = Math.floor(demand * (fanBase / 3000) * (0.8 + Math.random() * 0.4));
+                const qty = Math.min(dailyQty, p.stock);
+
+                if (qty > 0) {
+                    const price = p.onSale ? p.salePrice : p.price;
+                    const revenue = qty * price;
+                    const cost = qty * p.cost;
+                    totalSalesValue += revenue;
+                    totalCost += cost;
+                    p.stock -= qty;
+                    p.sold += qty;
+                    // تحديث الطلب القاري (توزيع عشوائي)
+                    const cont = CONTINENTS[randInt(0, CONTINENTS.length - 1)];
+                    p.continentDemand[cont] = Math.min(100, p.continentDemand[cont] + randInt(1, 5));
+                    // إنشاء طلبات
+                    if (qty > 0) {
+                        orders.push({
+                            id: 'ORD' + Date.now().toString(36) + randInt(100, 999),
+                            productName: p.name,
+                            category: p.category,
+                            qty: qty,
+                            total: Math.round(revenue * 100) / 100,
+                            status: ['pending', 'shipped', 'delivered'][randInt(0, 2)],
+                            date: new Date().toLocaleDateString('ar-EG'),
+                            continent: cont,
+                        });
+                    }
+                }
+            });
+
+            // تحديث الإحصائيات
+            const profit = totalSalesValue - totalCost;
+            data.dailySales = Math.round(totalSalesValue * 100) / 100;
+            data.monthlySales = (data.monthlySales || 0) + data.dailySales;
+            data.totalProfit = (data.totalProfit || 0) + profit;
+            data.daySalesHistory = data.daySalesHistory || [];
+            data.daySalesHistory.push(data.dailySales);
+            if (data.daySalesHistory.length > 30) data.daySalesHistory.shift();
+
+            // تحديث الميزانية
+            setBudget(getBudget() + (profit / 1000000));
+
+            // رسالة في حالة المبيعات العالية
+            if (data.dailySales > 500000) {
+                sendInbox('المتجر الرسمي', `📈 يوم مبيعات استثنائي! حقق المتجر ${fmtMoney(data.dailySales)} € اليوم.`);
+            }
+
+            saveStoreData(data);
+            return data;
+        }
+
+        // ============================================================
+        //  معالجة إعادة التخزين التلقائية
+        // ============================================================
+        function processRestocks() {
+            const data = getStoreData();
+            products.forEach(p => {
+                if (p.stock < p.minStock && Date.now() > p.nextRestock) {
+                    const restockQty = randInt(p.minStock * 2, p.minStock * 5);
+                    p.stock += restockQty;
+                    p.nextRestock = Date.now() + randInt(10, 30) * 86400000;
+                    p.lastRestock = Date.now();
+                    sendInbox('المتجر', `🔄 تم استلام شحنة جديدة من ${p.name} (${restockQty} وحدة).`);
+                }
+            });
+            saveStoreData(data);
+        }
+
+        // ============================================================
+        //  تأثير الأحداث الخارجية (نتائج المباريات، انتقالات، رعاة)
+        // ============================================================
+        function applyExternalEvents() {
+            // يتم استدعاؤها من game_main.html أو بشكل دوري
+            const data = getStoreData();
+            const rep = getReputation();
+            // زيادة الشعبية مع السمعة
+            products.forEach(p => {
+                const targetPop = 40 + (rep / 100) * 40;
+                p.popularity = p.popularity * 0.95 + targetPop * 0.05;
+                p.popularity = Math.min(99, Math.max(10, p.popularity));
+            });
+            saveStoreData(data);
+        }
+
+        // ============================================================
+        //  واجهة المستخدم
+        // ============================================================
+        function renderDashboard() {
+            const data = getStoreData();
+            const totalRevenue = products.reduce((s, p) => s + (p.sold * (p.onSale ? p.salePrice : p.price)), 0);
+            const totalCost = products.reduce((s, p) => s + (p.sold * p.cost), 0);
+            const profit = totalRevenue - totalCost;
+            const totalSold = products.reduce((s, p) => s + p.sold, 0);
+
+            document.getElementById('dashStats').innerHTML = `
+                <div class="stat-box"><div class="num gold">${fmtMoney(data.dailySales)}</div><div class="lbl">مبيعات اليوم</div></div>
+                <div class="stat-box"><div class="num" style="color:var(--accent)">${fmtMoney(data.monthlySales)}</div><div class="lbl">مبيعات الشهر</div></div>
+                <div class="stat-box"><div class="num green">${fmtMoney(profit)}</div><div class="lbl">الأرباح الإجمالية</div></div>
+                <div class="stat-box"><div class="num">${totalSold}</div><div class="lbl">إجمالي القطع المباعة</div></div>
+                <div class="stat-box"><div class="num">${products.length}</div><div class="lbl">المنتجات</div></div>
+                <div class="stat-box"><div class="num" style="color:${getReputation()>70?'var(--success)':'var(--warning)'}">${Math.round(getReputation())}</div><div class="lbl">شعبية النادي</div></div>
+            `;
+
+            // أفضل المنتجات مبيعاً
+            const sorted = [...products].sort((a, b) => b.sold - a.sold).slice(0, 6);
+            document.getElementById('bestSellers').innerHTML = sorted.map(p => `
+                <div class="product-card" onclick="openProduct('${p.id}')">
+                    <div class="prod-img"><i class="fas ${p.image}"></i></div>
+                    <div class="prod-name">${p.name}</div>
+                    <div class="prod-price">${fmtMoney(p.onSale ? p.salePrice : p.price)} €</div>
+                    <div class="prod-stock">${p.sold} مباع</div>
+                </div>
+            `).join('');
+
+            // رضا الجماهير
+            const avgQuality = products.reduce((s, p) => s + p.quality, 0) / products.length || 0;
+            const avgPopularity = products.reduce((s, p) => s + p.popularity, 0) / products.length || 0;
+            const satisfaction = Math.min(100, (avgQuality * 0.5 + avgPopularity * 0.5) * 0.8 + 10);
+            const starText = satisfaction >= 80 ? '🌟 ممتاز' : satisfaction >= 60 ? '👍 جيد' : '😐 يحتاج تحسين';
+            document.getElementById('fanSatisfaction').innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                    <span>${starText}</span>
+                    <span style="color:var(--gold);font-weight:bold;">${Math.round(satisfaction)}%</span>
+                </div>
+                <div style="width:100%;height:6px;background:var(--border);border-radius:4px;margin-top:8px;overflow:hidden;">
+                    <div style="width:${satisfaction}%;height:100%;background:${satisfaction>=80?'var(--success)':satisfaction>=60?'var(--warning)':'var(--danger)'};border-radius:4px;"></div>
+                </div>
+            `;
+        }
+
+        function renderProducts() {
+            const cat = document.getElementById('catFilter').value;
+            const stock = document.getElementById('stockFilter').value;
+            const search = document.getElementById('searchProd').value.toLowerCase();
+
+            let filtered = products.filter(p => {
+                if (cat !== 'all' && p.category !== cat) return false;
+                if (stock === 'in' && p.stock <= 0) return false;
+                if (stock === 'out' && p.stock > 0) return false;
+                if (stock === 'low' && p.stock > p.minStock) return false;
+                if (search && !p.name.includes(search)) return false;
+                return true;
+            });
+
+            document.getElementById('productList').innerHTML = filtered.map(p => `
+                <div class="product-card" onclick="openProduct('${p.id}')">
+                    ${p.onSale ? `<div class="prod-badge sale">خصم</div>` : ''}
+                    <div class="prod-img"><i class="fas ${p.image}"></i></div>
+                    <div class="prod-name">${p.name}</div>
+                    <div class="prod-price">${fmtMoney(p.onSale ? p.salePrice : p.price)} €</div>
+                    <div class="prod-stock ${p.stock < p.minStock ? 'low' : ''}">المخزون: ${p.stock}</div>
+                </div>
+            `).join('') || '<div class="empty-note">لا توجد منتجات تطابق البحث.</div>';
+        }
+
+        function renderOrders() {
+            const sorted = [...orders].reverse().slice(0, 20);
+            document.getElementById('ordersList').innerHTML = sorted.map(o => `
+                <div class="order-item">
+                    <div class="order-info">
+                        <b>${o.productName}</b> × ${o.qty}<br>
+                        <span style="color:var(--dim);font-size:0.65rem;">${o.date} · ${o.continent}</span>
+                    </div>
+                    <span style="font-weight:bold;color:var(--gold);">${fmtMoney(o.total)} €</span>
+                    <span class="order-status ${o.status}">${o.status === 'pending' ? 'قيد المعالجة' : o.status === 'shipped' ? 'تم الشحن' : 'تم التسليم'}</span>
+                </div>
+            `).join('') || '<div class="empty-note">لا توجد طلبات بعد.</div>';
+        }
+
+        function renderInventory() {
+            const lowStock = products.filter(p => p.stock < p.minStock);
+            const outStock = products.filter(p => p.stock === 0);
+
+            let html = `
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                    <span style="background:var(--card);padding:6px 14px;border-radius:20px;font-size:0.7rem;">⚠️ منخفض: ${lowStock.length}</span>
+                    <span style="background:var(--card);padding:6px 14px;border-radius:20px;font-size:0.7rem;">🚫 نافد: ${outStock.length}</span>
+                </div>
+            `;
+
+            products.slice(0, 30).forEach(p => {
+                const restockIn = Math.max(0, Math.ceil((p.nextRestock - Date.now()) / 86400000));
+                html += `
+                    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                        <div>
+                            <span style="font-weight:bold;font-size:0.8rem;">${p.name}</span>
+                            <span style="color:var(--dim);font-size:0.6rem;margin-right:8px;">${p.category}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;font-size:0.7rem;">
+                            <span style="color:${p.stock < p.minStock ? 'var(--danger)' : 'var(--success)'};">${p.stock} / ${p.minStock}</span>
+                            <span style="color:var(--dim);">${p.sold} مباع</span>
+                            <span style="color:var(--dim);">${restockIn} يوم</span>
+                            <button class="btn btn-sm btn-gold" onclick="restockProduct('${p.id}')">طلب تصنيع</button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('inventoryList').innerHTML = html || '<div class="empty-note">لا توجد منتجات.</div>';
+        }
+
+        function renderPricing() {
+            let html = `
+                <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;">
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                        <label style="font-size:0.7rem;color:var(--dim);">خصم شامل (عرض موسمي)</label>
+                        <input type="range" min="0" max="40" value="${saleItems.globalDiscount || 0}" oninput="setGlobalDiscount(this.value)" style="flex:1;min-width:100px;">
+                        <span style="font-size:0.8rem;font-weight:bold;color:var(--gold);">${saleItems.globalDiscount || 0}%</span>
+                        <button class="btn btn-sm btn-success" onclick="applyGlobalSale()">تطبيق العرض</button>
+                    </div>
+                </div>
+                <div style="font-size:0.7rem;color:var(--dim);margin-bottom:10px;">انقر على منتج لتعديل سعره أو إضافة خصم فردي.</div>
+            `;
+
+            products.slice(0, 20).forEach(p => {
+                const multiplier = priceMultipliers[p.id] || 1;
+                const base = p.price / multiplier;
+                const current = p.onSale ? p.salePrice : p.price;
+                html += `
+                    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;cursor:pointer;" onclick="openProduct('${p.id}')">
+                        <div>
+                            <span style="font-weight:bold;font-size:0.8rem;">${p.name}</span>
+                            <span style="color:var(--dim);font-size:0.6rem;margin-right:8px;">${p.category}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;font-size:0.7rem;">
+                            <span style="color:var(--dim);">الأساس: ${fmtMoney(base)}</span>
+                            <span style="color:${p.onSale ? 'var(--danger)' : 'var(--success)'};">${fmtMoney(current)}</span>
+                            ${p.onSale ? '<span style="color:var(--danger);font-weight:bold;">خصم!</span>' : ''}
+                            <span style="color:var(--dim);">×${multiplier.toFixed(1)}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('productPriceList').innerHTML = html;
+            document.getElementById('pricingControls').innerHTML = '';
+        }
+
+        // ============================================================
+        //  إدارة المنتجات (مودال)
+        // ============================================================
+        let currentProductId = null;
+
+        function openProduct(id) {
+            currentProductId = id;
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+            const modal = document.getElementById('productModal');
+            document.getElementById('pm-name').textContent = p.name;
+            const demand = calculateDemand(p);
+            const starPlayers = getStarPlayers();
+            document.getElementById('pm-body').innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.75rem;">
+                    <div><span style="color:var(--dim);">الفئة</span><br><b>${p.category}</b></div>
+                    <div><span style="color:var(--dim);">المورد</span><br><b>${p.supplier}</b></div>
+                    <div><span style="color:var(--dim);">السعر</span><br><b style="color:${p.onSale?'var(--danger)':'var(--success)'}">${fmtMoney(p.onSale?p.salePrice:p.price)} €</b></div>
+                    <div><span style="color:var(--dim);">التكلفة</span><br><b>${fmtMoney(p.cost)} €</b></div>
+                    <div><span style="color:var(--dim);">المخزون</span><br><b style="color:${p.stock<p.minStock?'var(--danger)':'var(--success)'}">${p.stock}</b></div>
+                    <div><span style="color:var(--dim);">الحد الأدنى</span><br><b>${p.minStock}</b></div>
+                    <div><span style="color:var(--dim);">الجودة</span><br><b>${Math.round(p.quality)}/100</b></div>
+                    <div><span style="color:var(--dim);">الشعبية</span><br><b>${Math.round(p.popularity)}/100</b></div>
+                    <div><span style="color:var(--dim);">الطلب اليومي</span><br><b>${(demand*100).toFixed(0)}%</b></div>
+                    <div><span style="color:var(--dim);">مباع</span><br><b>${p.sold}</b></div>
+                </div>
+                <div style="margin-top:10px;font-size:0.7rem;color:var(--dim);">
+                    <b>الطلب القاري:</b> ${CONTINENTS.map(c => `${c}: ${Math.round(p.continentDemand[c]||50)}%`).join(' · ')}
+                </div>
+                <div style="margin-top:8px;font-size:0.7rem;color:var(--dim);">
+                    ${starPlayers.length ? `⭐ نجوم النادي يؤثرون إيجاباً على مبيعات هذا المنتج.` : ''}
+                </div>
+            `;
+            modal.classList.add('show');
+        }
+
+        function adjustPrice(direction) {
+            if (!currentProductId) return;
+            const p = products.find(x => x.id === currentProductId);
+            if (!p) return;
+            const multiplier = priceMultipliers[p.id] || 1;
+            const newMult = Math.max(0.5, Math.min(2.0, multiplier + direction * 0.1));
+            priceMultipliers[p.id] = Math.round(newMult * 10) / 10;
+            p.price = Math.round((p.price / multiplier) * newMult * 100) / 100;
+            if (p.onSale) {
+                p.salePrice = Math.round(p.price * 0.7 * 100) / 100;
+            }
+            saveStoreData(getStoreData());
+            renderPricing();
+            showToast(`تم ${direction > 0 ? 'رفع' : 'تخفيض'} سعر ${p.name}`);
+        }
+
+        function toggleSale() {
+            if (!currentProductId) return;
+            const p = products.find(x => x.id === currentProductId);
+            if (!p) return;
+            p.onSale = !p.onSale;
+            if (p.onSale) {
+                p.salePrice = Math.round(p.price * 0.7 * 100) / 100;
+            }
+            saveStoreData(getStoreData());
+            renderPricing();
+            showToast(p.onSale ? `تم تفعيل عرض خاص لـ ${p.name}` : `تم إلغاء العرض الخاص لـ ${p.name}`);
+            closeModal('productModal');
+        }
+
+        function restockProduct(id) {
+            const pid = id || currentProductId;
+            if (!pid) return;
+            const p = products.find(x => x.id === pid);
+            if (!p) return;
+            const cost = p.cost * p.minStock * 2;
+            const budget = getBudget();
+            if (budget < cost / 1000000) {
+                showToast('⚠️ الميزانية غير كافية لطلب تصنيع جديد.', true);
+                return;
+            }
+            setBudget(budget - cost / 1000000);
+            const qty = randInt(p.minStock * 2, p.minStock * 5);
+            p.stock += qty;
+            p.nextRestock = Date.now() + randInt(10, 30) * 86400000;
+            saveStoreData(getStoreData());
+            showToast(`✅ تم طلب تصنيع ${qty} وحدة من ${p.name}`);
+            renderInventory();
+            renderProducts();
+            closeModal('productModal');
+        }
+
+        function setGlobalDiscount(val) {
+            if (!saleItems) saleItems = {};
+            saleItems.globalDiscount = parseInt(val);
+            saveStoreData(getStoreData());
+        }
+
+        function applyGlobalSale() {
+            const disc = saleItems.globalDiscount || 0;
+            products.forEach(p => {
+                if (disc > 0) {
+                    p.onSale = true;
+                    p.salePrice = Math.round(p.price * (1 - disc / 100) * 100) / 100;
+                } else {
+                    p.onSale = false;
+                }
+            });
+            saveStoreData(getStoreData());
+            renderPricing();
+            showToast(`✅ تم تطبيق خصم ${disc}% على جميع المنتجات`);
+        }
+
+        // ============================================================
+        //  دوال عامة
+        // ============================================================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+            document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            if (tab === 'dashboard') renderDashboard();
+            if (tab === 'products') renderProducts();
+            if (tab === 'orders') renderOrders();
+            if (tab === 'inventory') renderInventory();
+            if (tab === 'pricing') renderPricing();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        function showToast(msg, isErr) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isErr ? ' error' : '');
+            setTimeout(() => t.classList.add('show'), 10);
+            setTimeout(() => t.classList.remove('show'), 2600);
+        }
+
+        // ============================================================
+        //  التهيئة والدورة اليومية
+        // ============================================================
+        function initStore() {
+            loadData();
+            // معالجة المبيعات اليومية (محاكاة)
+            processDailySales();
+            processRestocks();
+            applyExternalEvents();
+            renderDashboard();
+            renderProducts();
+            renderOrders();
+            renderInventory();
+            renderPricing();
+
+            // تحديث إحصائيات الرأس
+            const data = getStoreData();
+            document.getElementById('dailySales').textContent = fmtMoney(data.dailySales || 0);
+            document.getElementById('monthlySales').textContent = fmtMoney(data.monthlySales || 0);
+            const totalRevenue = products.reduce((s, p) => s + (p.sold * (p.onSale ? p.salePrice : p.price)), 0);
+            const totalCost = products.reduce((s, p) => s + (p.sold * p.cost), 0);
+            document.getElementById('totalProfit').textContent = fmtMoney(totalRevenue - totalCost);
+
+            // جدولة التحديث التلقائي (كل 30 ثانية)
+            if (window.storeInterval) clearInterval(window.storeInterval);
+            window.storeInterval = setInterval(() => {
+                processDailySales();
+                processRestocks();
+                applyExternalEvents();
+                const data = getStoreData();
+                document.getElementById('dailySales').textContent = fmtMoney(data.dailySales || 0);
+                document.getElementById('monthlySales').textContent = fmtMoney(data.monthlySales || 0);
+                const totalRevenue = products.reduce((s, p) => s + (p.sold * (p.onSale ? p.salePrice : p.price)), 0);
+                const totalCost = products.reduce((s, p) => s + (p.sold * p.cost), 0);
+                document.getElementById('totalProfit').textContent = fmtMoney(totalRevenue - totalCost);
+                if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+                if (document.getElementById('tab-products').classList.contains('active')) renderProducts();
+                if (document.getElementById('tab-orders').classList.contains('active')) renderOrders();
+                if (document.getElementById('tab-inventory').classList.contains('active')) renderInventory();
+                if (document.getElementById('tab-pricing').classList.contains('active')) renderPricing();
+            }, 30000);
+
+            // تغيير المورد إذا تغير راعي الملابس
+            const currentSupplier = getKitSponsor();
+            products.forEach(p => {
+                if (p.supplier !== currentSupplier) {
+                    p.supplier = currentSupplier;
+                    p.quality = Math.min(99, p.quality + randInt(-3, 5));
+                }
+            });
+            saveStoreData(getStoreData());
+        }
+
+        // بدء التطبيق
+        document.addEventListener('DOMContentLoaded', initStore);
+
+        // ربط النافذة للاستدعاء من صفحات أخرى
+        window.processDailySales = processDailySales;
+        window.applyExternalEvents = applyExternalEvents;
+        window.getStoreData = getStoreData;
+    </script>
+</body>
+</html>
+<!-- نظام التهيئة المركزي -->
+<script src="init.js"></script>

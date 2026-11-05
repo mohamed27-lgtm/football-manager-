@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+<!-- skill:chrome -->
+<style>
+.design-ui-credit { position: fixed; bottom: 12px; right: 12px; font: 11px/1 system-ui, sans-serif; color: rgba(128,128,128,0.5); pointer-events: none; z-index: 2147483647; transition: opacity 0.4s ease; user-select: none; letter-spacing: 0.02em; }
+@media (hover: none) { .design-ui-credit { display: none; } }
+@media print { * { transition: none !important; animation: none !important; box-shadow: none !important; } body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } .design-ui-credit { display: none !important; } }
+</style>
+<script>
+(function () {
+    function markEditable() { document.body.classList.add('artifact-editable'); }
+    function initChromeUI() {
+        if (!matchMedia('(hover: hover)').matches) return;
+        var credit = document.createElement('div');
+        credit.className = 'design-ui-credit';
+        credit.setAttribute('aria-hidden', 'true');
+        credit.innerHTML = '\u{1F49C} by ClickUp Brain';
+        document.body.appendChild(credit);
+    }
+    function init() { markEditable(); initChromeUI(); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+})();
+</script>
+<!-- /skill:chrome -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>غرفة التكتيكات | نظام الإدارة المتكامل</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --bg:#020617; --card:#0f172a; --card2:#111c33; --accent:#3b82f6; --header:#1e293b; --border:#334155;
+  --success:#10b981; --danger:#ef4444; --warning:#f59e0b; --gold:#c5a059; --dim:#94a3b8; --text:#f1f5f9;
+  --gk:#eab308; --df:#3b82f6; --mf:#10b981; --fw:#ef4444;
+}
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #f4f5f9;
+            --card2: #ffffff;
+            --accent: #2563eb;
+            --header: #e2e5ec;
+            --border: #e2e5ec;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #a16207;
+            --gold: #8a6b28;
+            --dim: #6b7385;
+            --text: #151a24;
+            --gk: #a16207;
+            --df: #2563eb;
+            --mf: #16a34a;
+            --fw: #dc2626;
+        }
+        
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; }
+body { background:var(--bg); color:var(--text); padding-bottom:30px; }
+
+.fed-header { background:linear-gradient(145deg, #1e293b, #020617); padding:20px 18px 14px; border-bottom:3px solid var(--accent); text-align:center; position:relative; }
+.fed-header .crest { font-size:1.8rem; color:var(--gold); margin-bottom:4px; }
+.fed-header h1 { font-size:1.1rem; }
+.fed-header p { font-size:0.7rem; color:var(--dim); margin-top:3px; }
+.back-btn { position:absolute; top:18px; right:16px; color:var(--accent); font-size:1.1rem; cursor:pointer; }
+.save-btn-top { position:absolute; top:18px; left:16px; background:var(--success); color:#04120b; border:none; padding:7px 14px; border-radius:16px; font-size:0.72rem; font-weight:800; cursor:pointer; }
+
+.wrap { padding:12px; max-width:640px; margin:0 auto; }
+
+/* ===== شرائح اختيار التشكيلة ===== */
+.section-label { font-size:0.72rem; color:var(--gold); font-weight:800; margin:14px 0 8px; display:flex; align-items:center; gap:6px; }
+.chips-row { display:flex; gap:7px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
+.chips-row::-webkit-scrollbar{ display:none; }
+.fchip { flex-shrink:0; padding:8px 14px; border-radius:20px; font-size:0.75rem; font-weight:800; background:var(--card); border:1px solid var(--border); color:var(--dim); cursor:pointer; white-space:nowrap; transition:.15s; }
+.fchip.active { background:var(--accent); color:#fff; border-color:transparent; box-shadow:0 3px 10px rgba(59,130,246,.35); }
+
+/* ===== بطاقات أسلوب اللعب ===== */
+.style-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.style-card { background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:10px; cursor:pointer; transition:.15s; }
+.style-card.active { border-color:var(--gold); background:linear-gradient(145deg, rgba(197,160,89,.12), var(--card)); }
+.style-card .si { font-size:1.1rem; }
+.style-card .sn { font-size:0.74rem; font-weight:800; margin-top:3px; }
+.style-card .sd { font-size:0.6rem; color:var(--dim); margin-top:3px; line-height:1.5; }
+
+/* ===== الملعب — تصميم مميز بإضاءة استاد ===== */
+.pitch-wrap { position:relative; border-radius:18px; overflow:hidden; margin-top:6px; border:1px solid var(--border); box-shadow:0 12px 30px rgba(0,0,0,.5); }
+.pitch {
+  position:relative; width:100%; aspect-ratio:3/4;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(59,130,246,.25), transparent 55%),
+    repeating-linear-gradient(0deg, #163a1f 0, #163a1f 40px, #12351b 40px, #12351b 80px);
+}
+.pitch::before {
+  content:''; position:absolute; inset:8px; border:2px solid rgba(255,255,255,.35); border-radius:6px;
+}
+.pitch::after {
+  content:''; position:absolute; top:50%; left:50%; width:26%; aspect-ratio:1; border:2px solid rgba(255,255,255,.35);
+  border-radius:50%; transform:translate(-50%,-50%);
+}
+.pitch .midline { position:absolute; top:50%; left:8px; right:8px; height:2px; background:rgba(255,255,255,.35); }
+.pitch .boxA, .pitch .boxB { position:absolute; left:50%; width:46%; height:11%; border:2px solid rgba(255,255,255,.32); transform:translateX(-50%); }
+.pitch .boxA { top:8px; border-top:none; }
+.pitch .boxB { bottom:8px; border-bottom:none; }
+.pitch .glow-spot { position:absolute; width:60%; height:35%; top:-10%; left:20%; background:radial-gradient(ellipse, rgba(255,255,255,.08), transparent 70%); pointer-events:none; }
+
+.slot { position:absolute; transform:translate(-50%,-50%); text-align:center; cursor:pointer; z-index:2; animation:popIn .35s cubic-bezier(.22,1,.36,1) backwards; }
+@keyframes popIn { from{ opacity:0; transform:translate(-50%,-50%) scale(.5);} to{ opacity:1; transform:translate(-50%,-50%) scale(1);} }
+.slot .chip {
+  width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-weight:900; font-size:1rem; color:#fff; position:relative;
+  box-shadow:0 4px 14px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.25);
+  border:2px solid rgba(255,255,255,.5);
+}
+.slot.empty .chip { background:rgba(255,255,255,.08) !important; border:2px dashed rgba(255,255,255,.4); box-shadow:none; }
+.slot.empty .chip i { color:rgba(255,255,255,.5); font-size:1rem; }
+.slot .chip.gk { background:radial-gradient(circle at 35% 30%, #fde68a, var(--gk)); }
+.slot .chip.df { background:radial-gradient(circle at 35% 30%, #93c5fd, var(--df)); }
+.slot .chip.mf { background:radial-gradient(circle at 35% 30%, #6ee7b7, var(--mf)); }
+.slot .chip.fw { background:radial-gradient(circle at 35% 30%, #fca5a5, var(--fw)); }
+.slot .cap-badge { position:absolute; top:-4px; left:-4px; background:var(--gold); color:#1a1303; font-size:0.5rem; font-weight:900; width:14px; height:14px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1px solid #1a1303; }
+.slot .fit-badge { position:absolute; top:-4px; right:-4px; color:#fff; font-size:0.55rem; font-weight:900; width:14px; height:14px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1px solid rgba(0,0,0,0.4); }
+.slot .role-tag { font-size:0.5rem; color:var(--gold); background:rgba(0,0,0,0.5); padding:1px 4px; border-radius:4px; margin-top:2px; white-space:nowrap; }
+.slot .cond-ring { position:absolute; inset:-3px; border-radius:50%; }
+.slot .pname { font-size:0.56rem; font-weight:800; color:#fff; margin-top:3px; background:rgba(0,0,0,.55); padding:1px 5px; border-radius:5px; white-space:nowrap; max-width:70px; overflow:hidden; text-overflow:ellipsis; }
+.slot .ppos { font-size:0.42rem; color:rgba(255,255,255,.7); }
+
+/* ===== بطاقة قوة التشكيلة ===== */
+.strength-card { background:linear-gradient(145deg, var(--card2), var(--card)); border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-top:12px; display:flex; justify-content:space-around; text-align:center; }
+.strength-card .sv { font-size:1.15rem; font-weight:900; }
+.strength-card .sl { font-size:0.6rem; color:var(--dim); margin-top:2px; }
+
+/* ===== قوائم أساسيين / احتياط ===== */
+.list-header { background:linear-gradient(90deg, rgba(16,185,129,.15), transparent); padding:9px 14px; border-radius:10px 10px 0 0; font-size:0.78rem; font-weight:800; display:flex; justify-content:space-between; border:1px solid var(--border); border-bottom:none; }
+.list-header.bench { background:linear-gradient(90deg, rgba(148,163,184,.15), transparent); }
+.plist { border:1px solid var(--border); border-radius:0 0 10px 10px; overflow:hidden; margin-bottom:14px; }
+.prow { display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--card); border-top:1px solid rgba(255,255,255,.04); cursor:pointer; }
+.prow:first-child{ border-top:none; }
+.prow:active{ background:var(--card2); }
+.prow .pn { width:20px; font-weight:900; color:var(--dim); font-size:0.78rem; text-align:center; }
+.prow .ppill { width:34px; height:22px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:900; color:#fff; flex-shrink:0; }
+.prow .pname2 { flex:1; font-size:0.82rem; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.prow .page2 { font-size:0.65rem; color:var(--dim); width:26px; text-align:center; }
+.prow .pcond { width:56px; height:8px; border-radius:5px; background:#1e293b; overflow:hidden; flex-shrink:0; }
+.prow .pcond i { display:block; height:100%; }
+.prow .prat { width:28px; text-align:center; font-weight:800; font-size:0.8rem; }
+.prow .pcap { color:var(--gold); font-size:0.65rem; }
+.empty-list-note { padding:16px; text-align:center; color:var(--dim); font-size:0.75rem; background:var(--card); border:1px solid var(--border); border-radius:0 0 10px 10px; }
+
+.action-row { display:flex; gap:8px; margin-top:14px; }
+.action-row button { flex:1; padding:11px; border-radius:20px; font-size:0.75rem; font-weight:800; border:none; cursor:pointer; }
+.btn-auto { background:var(--accent); color:#fff; }
+.btn-clear { background:transparent; border:1px solid var(--danger) !important; color:var(--danger); }
+
+/* ===== مودال اختيار لاعب ===== */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(3px); z-index:200; display:none; align-items:flex-end; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal-sheet { background:var(--bg); width:100%; max-width:640px; max-height:82vh; overflow-y:auto; border-radius:22px 22px 0 0; border:1px solid var(--border); border-bottom:none; padding:16px; }
+.modal-handle { width:40px; height:4px; background:var(--border); border-radius:3px; margin:0 auto 12px; }
+.modal-head { display:flex; align-items:center; margin-bottom:12px; }
+.modal-head h2 { font-size:0.95rem; }
+.modal-head span { font-size:0.68rem; color:var(--dim); display:block; margin-top:2px; }
+.modal-close { margin-inline-start:auto; color:var(--dim); font-size:1.3rem; cursor:pointer; }
+.pick-note { font-size:0.68rem; color:var(--dim); background:rgba(255,255,255,.03); border-radius:8px; padding:8px 10px; margin-bottom:10px; line-height:1.6; }
+
+.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--success); color:#04120b; padding:10px 20px; border-radius:30px; font-size:0.8rem; font-weight:bold; opacity:0; transition:.3s; pointer-events:none; z-index:999; max-width:90%; text-align:center; }
+.toast.show { opacity:1; bottom:30px; }
+.toast.err { background:var(--danger); color:#fff; }
+</style>
+</head>
+<body>
+
+<div class="fed-header">
+    <i class="fas fa-arrow-right back-btn" onclick="location.href='game_main.html'"></i>
+    <button class="save-btn-top" onclick="saveTactics(true)"><i class="fas fa-check"></i> حفظ</button>
+    <div class="crest"><i class="fas fa-chess-board"></i></div>
+    <h1>غرفة التكتيكات</h1>
+    <p id="headerSub">جاري تحميل بيانات الفريق...</p>
+</div>
+
+<div class="wrap">
+
+    <div class="section-label"><i class="fas fa-shapes"></i> نظام التشكيل</div>
+    <div class="chips-row" id="formationChips"></div>
+
+    <div class="section-label"><i class="fas fa-brain"></i> أسلوب اللعب</div>
+    <div class="style-grid" id="styleGrid"></div>
+
+    <div class="section-label"><i class="fas fa-futbol"></i> الملعب <span style="color:var(--dim); font-weight:400; font-size:0.65rem;">(انقر أي مركز لتبديل اللاعب)</span></div>
+    <div class="pitch-wrap">
+        <div class="pitch" id="pitch">
+            <div class="glow-spot"></div>
+            <div class="boxA"></div>
+            <div class="boxB"></div>
+            <div class="midline"></div>
+        </div>
+    </div>
+
+    <div class="strength-card">
+        <div><div class="sv" id="strAvg" style="color:var(--gold);">--</div><div class="sl">متوسط المستوى</div></div>
+        <div><div class="sv" id="strFit" style="color:var(--success);">--</div><div class="sl">توافق المراكز</div></div>
+        <div><div class="sv" id="strStyle" style="color:var(--accent);">--</div><div class="sl">توافق الأسلوب</div></div>
+        <div><div class="sv" id="strOverall" style="color:#fff;">--</div><div class="sl">قوة التشكيلة</div></div>
+    </div>
+    <div style="text-align:center; font-size:0.72rem; color:var(--dim); padding:2px 0 8px 0;" id="strTactic">--</div>
+
+    <div class="action-row">
+        <button class="btn-auto" onclick="autoFillBest()"><i class="fas fa-wand-magic-sparkles"></i> أفضل تشكيلة تلقائياً</button>
+        <button class="btn-clear" onclick="clearLineup()"><i class="fas fa-eraser"></i> تفريغ الملعب</button>
+    </div>
+
+    <div class="list-header"><span><i class="fas fa-star" style="color:var(--gold);"></i> الأساسيون (<span id="startersCount">0</span>/11)</span><span>اللياقة</span></div>
+    <div class="plist" id="startersList"></div>
+
+    <div class="list-header bench"><span><i class="fas fa-people-group" style="color:var(--dim);"></i> الاحتياط والبدلاء</span><span>اللياقة</span></div>
+    <div class="plist" id="benchList"></div>
+
+</div>
+
+<!-- ===================== MODAL: اختيار لاعب للمركز ===================== -->
+<div class="modal-overlay" id="pickModal">
+    <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-head">
+            <div>
+                <h2 id="pickTitle">اختر لاعباً للمركز</h2>
+                <span id="pickSub">--</span>
+            </div>
+            <i class="fas fa-xmark modal-close" onclick="closeModal('pickModal')"></i>
+        </div>
+        <div class="pick-note" id="pickNote"></div>
+        <div class="plist" id="pickList"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+/* ============================================================
+   بيانات مشتركة مع بقية اللعبة
+   ============================================================ */
+function getClubName(){ return localStorage.getItem('presidentialClub') || 'نادي المستقبل'; }
+function getSignedPlayersByClub(){ return JSON.parse(localStorage.getItem('signed_players_by_club')) || {}; }
+function getSquad(){ return getSignedPlayersByClub()[getClubName()] || []; }
+
+/* ============================================================
+   ★★★ نظام التوافق التكتيكي والكيمياء (Tactical Familiarity & Chemistry) ★★★
+   كل هوية تكتيكية حقيقية (مأخوذة من الأسلوب الفعلي للمدرب المتعاقَد معه)
+   تحتاج مهارات لاعب حقيقية مختلفة — وليس كل اللاعبين يناسبونها بنفس القدر.
+   ============================================================ */
+const TACTIC_PROFILES = {
+    gegenpressing: { name: 'الضغط العكسي (Gegenpressing)', skills: ['stamina','acceleration','physical','tackling'] },
+    tikitaka:      { name: 'تيكي تاكا (Tiki-Taka)',          skills: ['short_passing','vision','ball_control'] },
+    counter:       { name: 'الهجوم المرتد (Counter-Attack)', skills: ['pace','acceleration','sprint_speed','finishing'] },
+    catenaccio:    { name: 'الكاتيناتشيو (Catenaccio)',       skills: ['defending','tackling','positioning','physical'] }
+};
+
+// يحدد الهوية التكتيكية الحقيقية من نص "الأسلوب التكتيكي" الفعلي للمدرب (من قائمة_المدربين2026.csv)
+function detectCoachTacticIdentity(styleText) {
+    const s = (styleText || '').toLowerCase();
+    if (s.includes('gegenpress')) return 'gegenpressing';
+    if (s.includes('tiki-taka') || s.includes('tiki taka') || s.includes('positional control') || s.includes('possession') || s.includes('juego de posici')) return 'tikitaka';
+    if (s.includes('catenaccio') || s.includes('low block') || s.includes('defensive block') || s.includes('tactical rigor') || s.includes('compact defensive')) return 'catenaccio';
+    if (s.includes('counter-attack') || s.includes('counter attack') || s.includes('explosive') || s.includes('direct') || s.includes('fast break') || s.includes('rapid counter')) return 'counter';
+    return null; // أسلوب غير مصنَّف ضمن الأربع الهويات الرئيسية => محايد بلا بونص أو خصم
+}
+
+function getHeadCoach() {
+    const staff = JSON.parse(localStorage.getItem('staff_by_club')||'{}')[getClubName()] || [];
+    return staff.find(s => s.role === 'head_coach') || null;
+}
+function getCoachTacticIdentity() {
+    const coach = getHeadCoach();
+    return coach ? detectCoachTacticIdentity(coach.tacticalStyleRaw || coach.style || '') : null;
+}
+
+// نسبة توافق مهارات لاعب معيّن مع الهوية التكتيكية الحالية (1.0 = محايد، >1 = يناسبها، <1 = لا يناسبها)
+function playerTacticFit(p, tacticKey) {
+    if (!tacticKey || !p.skills) return 1.0;
+    const profile = TACTIC_PROFILES[tacticKey];
+    const relevant = profile.skills.map(sk => p.skills[sk]).filter(v => v != null && !isNaN(v));
+    if (!relevant.length) return 1.0;
+    const avgRelevant = relevant.reduce((a,b)=>a+b,0) / relevant.length;
+    const overall = playerRating(p);
+    const gap = avgRelevant - overall; // موجب = اللاعب أقوى في هذه المهارات تحديداً من مستواه العام
+    if (gap >= 6) return 1.08;
+    if (gap >= 3) return 1.04;
+    if (gap <= -10) return 0.90;
+    if (gap <= -5) return 0.95;
+    return 1.0;
+}
+
+// معامل المعنويات الحقيقي (من نفس نظام السمعة/الروح المعنوية للنادي، بدل رقم ثابت)
+function moraleFactorOf(p) {
+    const morale = parseFloat(localStorage.getItem('clubMorale')) || 70;
+    return 0.85 + (morale/100) * 0.3; // نطاق واقعي 0.85 - 1.15
+}
+
+// المهارة الفعلية أثناء المباراة = المهارة الأساسية × بونص/خصم التكتيك × معامل المعنويات
+function effectiveSkill(baseSkillValue, tacticMultiplier, morale) {
+    return baseSkillValue * tacticMultiplier * morale;
+}
+
+/* ============================================================
+   تعليمات المراكز الفردية (Individual Player Instructions)
+   تُغيّر أي المهارات يُحتكم إليها فعلياً لهذا اللاعب في هذا المركز
+   ============================================================ */
+const INDIVIDUAL_ROLES = {
+    inverted_wingback: { appliesTo: ['LB','RB'], name:'ظهير هجومي مقلوب', skills: ['long_passing','vision','short_passing'] },
+    false_nine:        { appliesTo: ['ST','CF'], name:'مهاجم وهمي (False 9)', skills: ['dribbling','short_passing','vision'] }
+};
+function getIndividualRoleSkills(basePos, roleKey) {
+    const role = INDIVIDUAL_ROLES[roleKey];
+    if (role && role.appliesTo.includes(basePos)) return role.skills;
+    return null;
+}
+// يقترح تلقائياً دوراً فردياً للاعب إن كانت مهاراته المرتبطة بذلك الدور أعلى وضوحاً من مهاراته العامة
+function suggestIndividualRole(p, basePos) {
+    if (!p.skills) return null;
+    for (const roleKey in INDIVIDUAL_ROLES) {
+        const role = INDIVIDUAL_ROLES[roleKey];
+        if (!role.appliesTo.includes(basePos)) continue;
+        const relevant = role.skills.map(sk => p.skills[sk]).filter(v => v != null && !isNaN(v));
+        if (!relevant.length) continue;
+        const avgRelevant = relevant.reduce((a,b)=>a+b,0) / relevant.length;
+        if (avgRelevant - playerRating(p) >= 5) return roleKey; // يتفوق فعلياً في مهارات هذا الدور تحديداً
+    }
+    return null;
+}
+// تقييم اللاعب الفعّال في مركزه (يأخذ بعين الاعتبار الدور الفردي إن اختير، وإلا مهاراته الأساسية حسب مركزه)
+function effectiveRatingInRole(p, basePos, roleKey, tacticKey) {
+    const roleSkills = roleKey ? getIndividualRoleSkills(basePos, roleKey) : null;
+    const base = roleSkills && p.skills
+        ? roleSkills.map(sk => p.skills[sk]).filter(v=>v!=null).reduce((a,b,_,arr)=>a+b/arr.length,0)
+        : playerRating(p);
+    const tacticMult = playerTacticFit(p, tacticKey);
+    const morale = moraleFactorOf(p);
+    return Math.round(effectiveSkill(base, tacticMult, morale));
+}
+
+function getGameDate(){
+    return { day: parseInt(localStorage.getItem('game_day')||'1'),
+             month: parseInt(localStorage.getItem('game_month')||'6'),
+             year: parseInt(localStorage.getItem('game_year')||'2026') };
+}
+function toAbsDay(d){ return Math.floor(new Date(d.year, d.month-1, d.day).getTime()/86400000); }
+function showToast(msg, isErr){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.toggle('err', !!isErr); t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2400);
+}
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+
+/* ============================================================
+   ★ التشكيلات — إحداثيات واقعية لكل نظام لعب معروف فعلياً ★
+   ============================================================ */
+const FORMATIONS = {
+ '4-3-3': [
+   {pos:'GK', top:90, left:50}, {pos:'LB', top:70, left:15}, {pos:'CB', top:76, left:37},
+   {pos:'CB', top:76, left:63}, {pos:'RB', top:70, left:85}, {pos:'CDM', top:55, left:50},
+   {pos:'CM', top:41, left:30}, {pos:'CM', top:41, left:70}, {pos:'LW', top:20, left:16},
+   {pos:'ST', top:11, left:50}, {pos:'RW', top:20, left:84}
+ ],
+ '4-4-2': [
+   {pos:'GK', top:90, left:50}, {pos:'LB', top:70, left:15}, {pos:'CB', top:76, left:37},
+   {pos:'CB', top:76, left:63}, {pos:'RB', top:70, left:85}, {pos:'LW', top:46, left:14},
+   {pos:'CM', top:49, left:37}, {pos:'CM', top:49, left:63}, {pos:'RW', top:46, left:86},
+   {pos:'ST', top:14, left:38}, {pos:'ST', top:14, left:62}
+ ],
+ '4-2-3-1': [
+   {pos:'GK', top:90, left:50}, {pos:'LB', top:70, left:15}, {pos:'CB', top:76, left:37},
+   {pos:'CB', top:76, left:63}, {pos:'RB', top:70, left:85}, {pos:'CDM', top:57, left:36},
+   {pos:'CDM', top:57, left:64}, {pos:'LW', top:32, left:16}, {pos:'CAM', top:29, left:50},
+   {pos:'RW', top:32, left:84}, {pos:'ST', top:11, left:50}
+ ],
+ '3-5-2': [
+   {pos:'GK', top:90, left:50}, {pos:'CB', top:75, left:28}, {pos:'CB', top:79, left:50},
+   {pos:'CB', top:75, left:72}, {pos:'LW', top:47, left:8}, {pos:'CDM', top:57, left:38},
+   {pos:'CM', top:44, left:50}, {pos:'CM', top:57, left:62}, {pos:'RW', top:47, left:92},
+   {pos:'ST', top:13, left:38}, {pos:'ST', top:13, left:62}
+ ],
+ '4-1-4-1': [
+   {pos:'GK', top:90, left:50}, {pos:'LB', top:70, left:15}, {pos:'CB', top:76, left:37},
+   {pos:'CB', top:76, left:63}, {pos:'RB', top:70, left:85}, {pos:'CDM', top:58, left:50},
+   {pos:'LW', top:38, left:13}, {pos:'CM', top:40, left:37}, {pos:'CM', top:40, left:63},
+   {pos:'RW', top:38, left:87}, {pos:'ST', top:12, left:50}
+ ],
+ '5-3-2': [
+   {pos:'GK', top:90, left:50}, {pos:'LB', top:64, left:8}, {pos:'CB', top:76, left:31},
+   {pos:'CB', top:79, left:50}, {pos:'CB', top:76, left:69}, {pos:'RB', top:64, left:92},
+   {pos:'CM', top:49, left:26}, {pos:'CM', top:44, left:50}, {pos:'CM', top:49, left:74},
+   {pos:'ST', top:13, left:38}, {pos:'ST', top:13, left:62}
+ ],
+};
+const FORMATION_LABELS = { 'GK':'ح.مرمى','LB':'ظ.أيسر','RB':'ظ.أيمن','CB':'ق.دفاع','CDM':'ارتكاز','CM':'وسط','CAM':'صانع ألعاب','LW':'ج.أيسر','RW':'ج.أيمن','ST':'مهاجم','CF':'مهاجم صريح' };
+
+/* ============================================================
+   ★ توافق المراكز — لتقييم مدى ملاءمة لاعب لمركز معيّن واقعياً ★
+   لاعب هجومي لا يُمكن أن يلعب حارساً، ومدافع الوسط يقترب أكثر من
+   الظهير مقارنة بالمهاجم — نفس منطق كشافة الانتقالات الواقعي.
+   ============================================================ */
+const POSITION_COMPAT = {
+ GK:  { GK:1.0 },
+ CB:  { CB:1.0, LB:0.55, RB:0.55, CDM:0.5 },
+ LB:  { LB:1.0, CB:0.55, LW:0.4, RB:0.3 },
+ RB:  { RB:1.0, CB:0.55, RW:0.4, LB:0.3 },
+ CDM: { CDM:1.0, CM:0.7, CB:0.45 },
+ CM:  { CM:1.0, CDM:0.7, CAM:0.7 },
+ CAM: { CAM:1.0, CM:0.7, LW:0.5, RW:0.5 },
+ LW:  { LW:1.0, RW:0.55, CAM:0.5, LB:0.35, ST:0.4, CF:0.35 },
+ RW:  { RW:1.0, LW:0.55, CAM:0.5, RB:0.35, ST:0.4, CF:0.35 },
+ ST:  { ST:1.0, CF:1.0, CAM:0.4, LW:0.4, RW:0.4 },
+ CF:  { CF:1.0, ST:1.0, CAM:0.5 },
+};
+function fitScore(slotPos, playerPos){
+    if (!playerPos) return 0;
+    if (slotPos === playerPos) return 1.0;
+    const table = POSITION_COMPAT[slotPos];
+    if (table && table[playerPos] != null) return table[playerPos];
+    return 0.2; // مركز بعيد تماماً عن طبيعته
+}
+
+/* ============================================================
+   ★ أساليب اللعب ★ — لكل أسلوب مراكز تستفيد منه أكثر من غيرها
+   ============================================================ */
+const STYLES = [
+ { key:'possession', name:'استحواذ وبناء', realName:'Tiki-Taka', icon:'⚽', desc:'تمرير قصير والحفاظ على الكرة، يحتاج مهارة تمرير عالية بالوسط.', bestWith:['CM','CAM','CB'], keyAttrs:['short_passing','vision','ball_control'] },
+ { key:'counter', name:'هجوم مرتد', realName:'Counter-Attack', icon:'⚡', desc:'دفاع مكثّف ثم انطلاقة سريعة عبر لاعبين سريعين.', bestWith:['ST','LW','RW'], keyAttrs:['acceleration','dribbling','finishing'] },
+ { key:'press', name:'ضغط عالٍ', realName:'Gegenpressing', icon:'🔥', desc:'استرجاع الكرة بسرعة في نصف ملعب الخصم، يتطلب لياقة عالية.', bestWith:['CDM','CM','ST'], keyAttrs:['stamina','aggression','acceleration'] },
+ { key:'direct', name:'لعب مباشر', realName:'Direct Crossing', icon:'🎯', desc:'تمريرات طويلة سريعة نحو المهاجمين مباشرة.', bestWith:['ST','CF','CB'], keyAttrs:['long_passing','heading','finishing'] },
+ { key:'wing', name:'اللعب الجناحي', realName:'Wing Play', icon:'🏹', desc:'التركيز على الأطراف والعرضيات المتكررة.', bestWith:['LW','RW','LB','RB'], keyAttrs:['acceleration','dribbling','long_passing'] },
+ { key:'defensive', name:'دفاعي متكتل', realName:'Catenaccio', icon:'🛡️', desc:'أولوية الصلابة الدفاعية وتقليل المخاطرة.', bestWith:['CB','CDM','GK'], keyAttrs:['tackling','heading','aggression'] },
+];
+
+/* ============================================================
+   ★ الصفات الفرعية الحقيقية لكل لاعب ★
+   لا توجد صفات فرعية (تمرير/رؤية/تحمّل...) في قاعدة بيانات اللاعبين الحقيقية —
+   فقط تقييم عام (rating) ومركز. لذلك نُشتق هذه الصفات بدالة ثابتة غير عشوائية
+   (نفس المدخلات = نفس الناتج دائماً)، مبنية على تقييم اللاعب الفعلي + انحياز
+   واقعي حسب مركزه (المدافع أعلى في القوة البدنية، الجناح أعلى في التسارع...).
+   ============================================================ */
+const POSITION_ATTR_BIAS = {
+    GK:  {},
+    CB:  { heading:12, tackling:14, aggression:6,  acceleration:-10, finishing:-18, dribbling:-8,  short_passing:-4, vision:-4,  long_passing:2,  ball_control:-4, stamina:0 },
+    LB:  { acceleration:9,  stamina:8,  long_passing:4,  tackling:6,  heading:-6, finishing:-12, dribbling:2,  vision:0,  short_passing:2,  ball_control:2, aggression:2 },
+    RB:  { acceleration:9,  stamina:8,  long_passing:4,  tackling:6,  heading:-6, finishing:-12, dribbling:2,  vision:0,  short_passing:2,  ball_control:2, aggression:2 },
+    CDM: { tackling:11, aggression:8,  stamina:7,  vision:-2, short_passing:4, long_passing:4, finishing:-10, heading:2, acceleration:-4, dribbling:-2, ball_control:2 },
+    CM:  { short_passing:9,  vision:8,  ball_control:6,  aggression:-3, stamina:4, long_passing:5, finishing:-6, heading:-6, acceleration:-2, dribbling:3, tackling:2 },
+    CAM: { vision:11, short_passing:8, ball_control:9, dribbling:6, finishing:2, aggression:-6, tackling:-8, heading:-8, acceleration:2, stamina:-2, long_passing:3 },
+    LW:  { acceleration:12, dribbling:11, finishing:5, tackling:-10, heading:-8, stamina:2, short_passing:2, vision:2, ball_control:6, aggression:-4, long_passing:0 },
+    RW:  { acceleration:12, dribbling:11, finishing:5, tackling:-10, heading:-8, stamina:2, short_passing:2, vision:2, ball_control:6, aggression:-4, long_passing:0 },
+    ST:  { finishing:13, heading:9,  dribbling:5,  stamina:-3, vision:-6, tackling:-14, short_passing:-2, ball_control:3, acceleration:4, aggression:2, long_passing:-4 },
+    CF:  { finishing:11, dribbling:8,  short_passing:4, vision:2,  tackling:-12, heading:2, stamina:-2, ball_control:5, acceleration:3, aggression:0, long_passing:-2 }
+};
+const SUB_ATTRS = ['stamina','aggression','acceleration','short_passing','vision','ball_control','finishing','heading','long_passing','dribbling','tackling'];
+
+function getPlayerAttribute(p, attrName) {
+    const base = playerRating(p);
+    const seed = seedHash(String(playerId(p)) + '|' + attrName);
+    const bias = (POSITION_ATTR_BIAS[playerPos(p)] || {})[attrName] || 0;
+    const variance = (seed % 15) - 7; // ثابت لكل لاعب/صفة (-7..+7)، وليس عشوائياً بين كل تحديث
+    return Math.max(25, Math.min(99, Math.round(base + bias + variance)));
+}
+
+/* ============================================================
+   ★ تعليمات المراكز الفردية ★ — تُغيّر الصفات المعتمدة لحساب توافق لاعب معيّن
+   مع الهوية التكتيكية، بغض النظر عن مركزه الافتراضي
+   ============================================================ */
+const INDIVIDUAL_INSTRUCTIONS = {
+    inverted_wingback: { label:'ظهير مقلوب (Inverted Wingback)', appliesTo:['LB','RB'], overrideAttrs:['long_passing','vision'] },
+    false_nine:        { label:'مهاجم وهمي (False 9)',           appliesTo:['ST','CF'], overrideAttrs:['dribbling','short_passing'] }
+};
+function getPlayerInstructionsMap() {
+    const saved = getMyTacticsRaw();
+    return (saved && saved.instructions) || {};
+}
+function getMyTacticsRaw() { return JSON.parse(localStorage.getItem(tacticsKey())) || null; }
+
+// نسبة توافق لاعب واحد مع الهوية التكتيكية الحالية (0.90 - 1.10 تقريباً، أي ±10%)
+function playerTacticalFit(p, slotIndex, style) {
+    const instrKey = getPlayerInstructionsMap()[slotIndex];
+    const instr = instrKey ? INDIVIDUAL_INSTRUCTIONS[instrKey] : null;
+    const attrsToUse = instr ? instr.overrideAttrs : style.keyAttrs;
+    const avg = attrsToUse.reduce((s,a) => s + getPlayerAttribute(p, a), 0) / attrsToUse.length;
+    return 0.90 + (avg / 99) * 0.20; // كل نقطة أعلى في الصفات المطلوبة = أداء فعلي أعلى، والعكس صحيح
+}
+
+/* ============================================================
+   الحالة العامة
+   ============================================================ */
+let squad = [];
+let currentFormation = '4-3-3';
+let currentStyle = 'possession';
+let lineup = []; // مصفوفة بطول 11 موازية لخانات FORMATIONS[currentFormation] — كل عنصر id لاعب أو null
+let pickingSlotIndex = null;
+
+function playerName(p){ return p.name || p.player_name || 'لاعب'; }
+function playerPos(p){ return (p.position || p.main_position || 'CM').toUpperCase(); }
+function playerRating(p){ return Math.round(p.rating || p.overall || 65); }
+function playerId(p){ return p.id || (playerName(p)+'_'+playerPos(p)); }
+function posGroup(pos){
+    if (pos==='GK') return 'gk';
+    if (['CB','LB','RB'].includes(pos)) return 'df';
+    if (['CDM','CM','CAM'].includes(pos)) return 'mf';
+    return 'fw';
+}
+
+/* ★ لياقة/حالة اللاعب اليوم — قيمة حتمية تتغيّر مع تقدّم أيام اللعبة (لا رقم عشوائي بحت) */
+function conditionOf(p){
+    const seed = String(playerId(p)).split('').reduce((s,c)=>s+c.charCodeAt(0),0);
+    const day = toAbsDay(getGameDate());
+    return 78 + ((seed + day*3) % 22); // نطاق واقعي 78-99
+}
+function conditionColor(c){ return c>=90?'var(--success)':c>=75?'var(--warning)':'var(--danger)'; }
+
+/* ============================================================
+   الحفظ والاستعادة
+   ============================================================ */
+// ===== نفس نظام توليد المهارات التفصيلية الحتمي المستخدم في player.html بالضبط، لضمان اتساق كامل =====
+const POSITION_SKILL_WEIGHTS = {
+    'GK':  { primary:['diving','handling','kicking','positioning','reflexes'], secondary:['agility','strength','jumping'], ignore:['shooting','finishing','heading','volleys','crossing','dribbling','dribbling_skill'] },
+    'CB':  { primary:['defending','heading','strength','positioning','tackling'], secondary:['short_passing','pace','jumping','stamina'], ignore:['shooting','finishing','dribbling','dribbling_skill','crossing'] },
+    'LB':  { primary:['defending','tackling','pace','stamina','crossing'], secondary:['short_passing','dribbling','positioning','acceleration'], ignore:['shooting','finishing','heading','volleys'] },
+    'RB':  { primary:['defending','tackling','pace','stamina','crossing'], secondary:['short_passing','dribbling','positioning','acceleration'], ignore:['shooting','finishing','heading','volleys'] },
+    'CDM': { primary:['defending','tackling','positioning','short_passing','stamina'], secondary:['strength','long_passing','pace','vision'], ignore:['shooting','finishing','dribbling','dribbling_skill'] },
+    'CM':  { primary:['short_passing','long_passing','ball_control','vision','stamina'], secondary:['defending','shooting','dribbling','pace','strength'], ignore:['heading','crossing','tackling'] },
+    'CAM': { primary:['ball_control','dribbling','short_passing','vision','shooting'], secondary:['long_passing','pace','agility','dribbling_skill'], ignore:['defending','heading','tackling','strength'] },
+    'LW':  { primary:['dribbling','pace','crossing','ball_control','agility'], secondary:['shooting','short_passing','acceleration','dribbling_skill'], ignore:['defending','heading','strength','tackling'] },
+    'RW':  { primary:['dribbling','pace','crossing','ball_control','agility'], secondary:['shooting','short_passing','acceleration','dribbling_skill'], ignore:['defending','heading','strength','tackling'] },
+    'ST':  { primary:['finishing','shooting','heading','positioning','pace'], secondary:['dribbling','strength','ball_control','volleys'], ignore:['defending','tackling','crossing','long_passing'] },
+    'CF':  { primary:['finishing','shooting','ball_control','dribbling','short_passing'], secondary:['vision','pace','heading','dribbling_skill'], ignore:['defending','tackling','crossing'] }
+};
+POSITION_SKILL_WEIGHTS['LM'] = POSITION_SKILL_WEIGHTS['LW'];
+POSITION_SKILL_WEIGHTS['RM'] = POSITION_SKILL_WEIGHTS['RW'];
+POSITION_SKILL_WEIGHTS['LWB'] = POSITION_SKILL_WEIGHTS['LB'];
+POSITION_SKILL_WEIGHTS['RWB'] = POSITION_SKILL_WEIGHTS['RB'];
+const ALL_SKILLS_LOCAL = ['pace','shooting','passing','dribbling','defending','physical','crossing','finishing','heading',
+    'short_passing','volleys','dribbling_skill','curve','fk_accuracy','long_passing','ball_control','acceleration',
+    'sprint_speed','agility','reactions','balance','shot_power','jumping','stamina','strength','tackling','positioning',
+    'vision','diving','handling','kicking','reflexes'];
+function skillSeedRandom(playerKey, skillKey) {
+    let h = 0;
+    const s = String(playerKey) + '|' + skillKey;
+    for (let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
+    return (h % 1000) / 1000;
+}
+function generateSkillFromPosition(skill, position, baseRating, playerKey) {
+    const posConfig = POSITION_SKILL_WEIGHTS[position] || POSITION_SKILL_WEIGHTS['CM'];
+    const rnd = skillSeedRandom(playerKey || (position+'_'+baseRating), skill);
+    if (posConfig.primary && posConfig.primary.includes(skill)) return Math.min(99, Math.max(30, baseRating + Math.floor(rnd*8) - 2));
+    if (posConfig.secondary && posConfig.secondary.includes(skill)) return Math.min(95, Math.max(25, baseRating - 4 + Math.floor(rnd*6)));
+    if (posConfig.ignore && posConfig.ignore.includes(skill)) return Math.min(70, Math.max(15, baseRating - 18 + Math.floor(rnd*10)));
+    return Math.min(85, Math.max(20, baseRating - 10 + Math.floor(rnd*12)));
+}
+function attachSkillsToSquad(list) {
+    list.forEach(p => {
+        if (p.skills) return;
+        const pos = playerPos(p), rating = playerRating(p), key = playerId(p);
+        const skills = {};
+        ALL_SKILLS_LOCAL.forEach(sk => { skills[sk] = generateSkillFromPosition(sk, pos, rating, key); });
+        p.skills = skills;
+    });
+    return list;
+}
+
+function tacticsKey(){ return 'clubTactics_'+getClubName(); }
+function loadTactics(){
+    squad = attachSkillsToSquad(getSquad());
+    const saved = JSON.parse(localStorage.getItem(tacticsKey())) || null;
+    if (saved && FORMATIONS[saved.formation]){
+        currentFormation = saved.formation;
+        currentStyle = STYLES.some(s=>s.key===saved.style) ? saved.style : 'possession';
+        const slots = FORMATIONS[currentFormation];
+        lineup = slots.map((slot, i) => {
+            const savedId = saved.lineup ? saved.lineup[i] : null;
+            if (savedId && squad.some(p=>playerId(p)===savedId)) return savedId;
+            return null;
+        });
+    } else {
+        lineup = new Array(FORMATIONS[currentFormation].length).fill(null);
+        autoFillBest(true);
+    }
+}
+function saveTactics(showMsg){
+    const data = { formation: currentFormation, style: currentStyle, lineup: lineup };
+    localStorage.setItem(tacticsKey(), JSON.stringify(data));
+    if (showMsg) showToast('✅ تم حفظ التشكيلة وأسلوب اللعب بنجاح.');
+}
+
+/* ============================================================
+   العرض: شرائح التشكيل
+   ============================================================ */
+function renderFormationChips(){
+    const html = Object.keys(FORMATIONS).map(f =>
+        `<div class="fchip ${f===currentFormation?'active':''}" onclick="selectFormation('${f}')">${f}</div>`
+    ).join('');
+    document.getElementById('formationChips').innerHTML = html;
+}
+function selectFormation(f){
+    if (f === currentFormation) return;
+    // نحافظ على اللاعبين الذين تسمح مراكزهم بالبقاء قدر الإمكان بدل تفريغ التشكيلة بالكامل
+    const oldSlots = FORMATIONS[currentFormation];
+    const oldAssigned = lineup.map((id,i)=> id ? {id, pos:oldSlots[i].pos} : null).filter(Boolean);
+    currentFormation = f;
+    const newSlots = FORMATIONS[f];
+    lineup = new Array(newSlots.length).fill(null);
+    const used = new Set();
+    newSlots.forEach((slot, i) => {
+        let best = null, bestScore = 0;
+        oldAssigned.forEach(entry => {
+            if (used.has(entry.id)) return;
+            const p = squad.find(pl => playerId(pl)===entry.id);
+            if (!p) return;
+            const score = fitScore(slot.pos, playerPos(p));
+            if (score > bestScore) { bestScore = score; best = entry.id; }
+        });
+        if (best && bestScore >= 0.4){ lineup[i] = best; used.add(best); }
+    });
+    renderFormationChips();
+    renderPitch();
+    renderLists();
+    renderStrength();
+}
+
+/* ============================================================
+   العرض: أساليب اللعب
+   ============================================================ */
+function renderStyleGrid(){
+    document.getElementById('styleGrid').innerHTML = STYLES.map(s => `
+        <div class="style-card ${s.key===currentStyle?'active':''}" onclick="selectStyle('${s.key}')">
+            <div class="si">${s.icon}</div>
+            <div class="sn">${s.name}</div>
+            <div class="sd">${s.desc}</div>
+        </div>`).join('');
+}
+function selectStyle(key){
+    currentStyle = key;
+    renderStyleGrid();
+    renderStrength();
+}
+
+/* ============================================================
+   العرض: الملعب
+   ============================================================ */
+function renderPitch(){
+    const pitch = document.getElementById('pitch');
+    // إزالة الخانات القديمة فقط (نُبقي خطوط الملعب الثابتة)
+    pitch.querySelectorAll('.slot').forEach(el => el.remove());
+    const slots = FORMATIONS[currentFormation];
+    slots.forEach((slot, i) => {
+        const pid = lineup[i];
+        const p = pid ? squad.find(pl => playerId(pl)===pid) : null;
+        const el = document.createElement('div');
+        el.className = 'slot' + (p ? '' : ' empty');
+        el.style.top = slot.top + '%';
+        el.style.left = slot.left + '%';
+        el.style.animationDelay = (i*0.03)+'s';
+        el.onclick = () => openPickModal(i);
+        if (p){
+            const cond = conditionOf(p);
+            const grp = posGroup(playerPos(p));
+            const tacticKey = getCoachTacticIdentity();
+            const fit = playerTacticFit(p, tacticKey);
+            const fitBadge = tacticKey ? `<div class="fit-badge" style="background:${fit>=1.04?'var(--success)':fit<=0.95?'var(--danger)':'#555'};" title="التوافق التكتيكي">${fit>=1.04?'+':fit<=0.95?'-':'•'}</div>` : '';
+            const roleKey = suggestIndividualRole(p, slot.pos);
+            const roleTag = roleKey ? `<div class="role-tag">${INDIVIDUAL_ROLES[roleKey].name}</div>` : '';
+            el.innerHTML = `
+                <div class="chip ${grp}">
+                    ${p.is_captain ? '<div class="cap-badge">C</div>' : ''}
+                    ${fitBadge}
+                    ${playerRating(p)}
+                </div>
+                <div class="pname">${playerName(p)}</div>
+                <div class="ppos">${slot.pos} · <span style="color:${conditionColor(cond)}">${cond}%</span></div>
+                ${roleTag}`;
+        } else {
+            el.innerHTML = `<div class="chip"><i class="fas fa-plus"></i></div><div class="pname">فارغ</div><div class="ppos">${slot.pos}</div>`;
+        }
+        pitch.appendChild(el);
+    });
+}
+
+/* ============================================================
+   العرض: قوائم الأساسيين والاحتياط
+   ============================================================ */
+function rowHtml(p, num, posLabel){
+    const cond = conditionOf(p);
+    const grp = posGroup(playerPos(p));
+    const tacticKey = getCoachTacticIdentity();
+    const fit = playerTacticFit(p, tacticKey);
+    const fitDot = tacticKey ? `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${fit>=1.04?'var(--success)':fit<=0.95?'var(--danger)':'#666'};margin-left:4px;" title="التوافق مع أسلوب المدرب"></span>` : '';
+    return `<div class="prow" onclick="openPlayerCard('${playerId(p)}')">
+        <div class="pn">${num||''}</div>
+        <div class="ppill ${grp==='gk'?'':''}" style="background:var(--${grp});">${posLabel||playerPos(p)}</div>
+        <div class="pname2">${playerName(p)} ${p.is_captain?'<span class="pcap">(C)</span>':''}${fitDot}</div>
+        <div class="page2">${p.age||'-'}</div>
+        <div class="pcond"><i style="width:${cond}%; background:${conditionColor(cond)};"></i></div>
+        <div class="prat">${playerRating(p)}</div>
+    </div>`;
+}
+function renderLists(){
+    const slots = FORMATIONS[currentFormation];
+    const starterIds = lineup.filter(Boolean);
+    document.getElementById('startersCount').textContent = starterIds.length;
+
+    let startersHtml = '';
+    slots.forEach((slot, i) => {
+        const pid = lineup[i];
+        const p = pid ? squad.find(pl => playerId(pl)===pid) : null;
+        if (p) startersHtml += rowHtml(p, i+1, slot.pos);
+    });
+    document.getElementById('startersList').innerHTML = startersHtml || `<div class="empty-list-note">لم يتم اختيار أي أساسي بعد — انقر على الملعب أعلاه لتعيين اللاعبين.</div>`;
+
+    const benchPlayers = squad.filter(p => !starterIds.includes(playerId(p)));
+    document.getElementById('benchList').innerHTML = benchPlayers.length
+        ? benchPlayers.sort((a,b)=>playerRating(b)-playerRating(a)).map(p => rowHtml(p, '', playerPos(p))).join('')
+        : `<div class="empty-list-note">لا يوجد لاعبون إضافيون في القائمة حالياً.</div>`;
+}
+function openPlayerCard(id){
+    const p = squad.find(pl => playerId(pl)===id);
+    if (!p) return;
+    showToast(`${playerName(p)} · ${playerPos(p)} · تقييم ${playerRating(p)} · لياقة ${conditionOf(p)}%`);
+}
+
+/* ============================================================
+   العرض: بطاقة قوة التشكيلة
+   ============================================================ */
+function renderStrength(){
+    const slots = FORMATIONS[currentFormation];
+    const starters = lineup.map((id,i) => id ? {p: squad.find(pl=>playerId(pl)===id), slot: slots[i]} : null).filter(Boolean);
+    if (starters.length === 0){
+        document.getElementById('strAvg').textContent='--';
+        document.getElementById('strFit').textContent='--';
+        document.getElementById('strStyle').textContent='--';
+        document.getElementById('strOverall').textContent='--';
+        return;
+    }
+    const tacticKey = getCoachTacticIdentity();
+    const avgRating = starters.reduce((s,x)=>s+playerRating(x.p),0)/starters.length;
+    const avgFit = starters.reduce((s,x)=>s+fitScore(x.slot.pos, playerPos(x.p)),0)/starters.length;
+    const style = STYLES.find(s=>s.key===currentStyle);
+    const styleMatches = starters.filter(x => style.bestWith.includes(playerPos(x.p))).length;
+    const styleSynergy = styleMatches / 11;
+    // متوسط توافق كل لاعب أساسي مع الهوية التكتيكية الحقيقية للمدرب الرئيسي (إن وُجد)
+    const avgTacticFit = starters.reduce((s,x)=>s+playerTacticFit(x.p, tacticKey),0)/starters.length;
+    const morale = 0.85 + ((parseFloat(localStorage.getItem('clubMorale'))||70)/100)*0.3;
+    const overall = avgRating * (0.65 + 0.35*avgFit) * (0.92 + 0.08*styleSynergy) * avgTacticFit * morale * (starters.length/11);
+
+    document.getElementById('strAvg').textContent = avgRating.toFixed(1);
+    document.getElementById('strFit').textContent = Math.round(avgFit*100)+'%';
+    document.getElementById('strStyle').textContent = Math.round(styleSynergy*100)+'%';
+    document.getElementById('strOverall').textContent = Math.round(overall);
+
+    const tacticEl = document.getElementById('strTactic');
+    if (tacticEl) {
+        if (!tacticKey) { tacticEl.textContent = 'بدون مدرب رئيسي بهوية واضحة'; }
+        else {
+            const pct = Math.round(avgTacticFit*100);
+            tacticEl.textContent = `${TACTIC_PROFILES[tacticKey].name} — توافق الفريق ${pct}%`;
+            tacticEl.style.color = pct >= 102 ? 'var(--success)' : pct <= 96 ? 'var(--danger)' : 'var(--dim)';
+        }
+    }
+}
+
+function renderHeader(){
+    document.getElementById('headerSub').textContent = `${getClubName()} — ${squad.length} لاعباً في القائمة`;
+}
+
+function renderAll(){
+    renderHeader();
+    renderFormationChips();
+    renderStyleGrid();
+    renderPitch();
+    renderLists();
+    renderStrength();
+}
+
+/* ============================================================
+   مودال اختيار لاعب لمركز معيّن (نقر خانة بالملعب)
+   ============================================================ */
+function openPickModal(slotIndex){
+    pickingSlotIndex = slotIndex;
+    const slot = FORMATIONS[currentFormation][slotIndex];
+    document.getElementById('pickTitle').textContent = `اختر لاعباً لمركز ${slot.pos}`;
+    document.getElementById('pickSub').textContent = FORMATION_LABELS[slot.pos] || '';
+
+    const currentId = lineup[slotIndex];
+    const currentP = currentId ? squad.find(p=>playerId(p)===currentId) : null;
+    document.getElementById('pickNote').innerHTML = currentP
+        ? `اللاعب الحالي: <b>${playerName(currentP)}</b>. اختر لاعباً آخر لتبديله معه، أو انقر عليه أدناه لإزالته من الملعب.`
+        : `هذه الخانة فارغة — اختر لاعباً من القائمة لوضعه هنا.`;
+
+    // نرتّب اللاعبين حسب مدى ملاءمتهم الفعلية لهذا المركز تحديداً (الأنسب أولاً)
+    const ranked = squad.slice().sort((a,b) => {
+        const fa = fitScore(slot.pos, playerPos(a)), fb = fitScore(slot.pos, playerPos(b));
+        if (fb !== fa) return fb - fa;
+        return playerRating(b) - playerRating(a);
+    });
+
+    document.getElementById('pickList').innerHTML = ranked.map(p => {
+        const pid = playerId(p);
+        const inLineupAt = lineup.indexOf(pid);
+        const fit = fitScore(slot.pos, playerPos(p));
+        const fitLabel = fit>=0.9 ? '<span style="color:var(--success);font-size:0.62rem;">مثالي</span>'
+                        : fit>=0.5 ? '<span style="color:var(--warning);font-size:0.62rem;">مقبول</span>'
+                        : '<span style="color:var(--danger);font-size:0.62rem;">غير مناسب</span>';
+        const statusTag = inLineupAt === slotIndex ? ' <span style="color:var(--gold);font-size:0.62rem;">(هنا حالياً)</span>'
+                         : inLineupAt !== -1 ? ' <span style="color:var(--dim);font-size:0.62rem;">(أساسي آخر)</span>' : '';
+        return `<div class="prow" onclick="assignPlayerToSlot('${pid}')">
+            <div class="ppill" style="background:var(--${posGroup(playerPos(p))});">${playerPos(p)}</div>
+            <div class="pname2">${playerName(p)}${statusTag}</div>
+            <div class="page2">${p.age||'-'}</div>
+            <div class="prat">${playerRating(p)}</div>
+            <div style="width:52px; text-align:center;">${fitLabel}</div>
+        </div>`;
+    }).join('');
+
+    openModal('pickModal');
+}
+
+function assignPlayerToSlot(pid){
+    if (pickingSlotIndex == null) return;
+    const targetSlot = pickingSlotIndex;
+    const existingAt = lineup.indexOf(pid);
+    const wasAtTarget = lineup[targetSlot];
+
+    if (existingAt === targetSlot){
+        // نقر اللاعب الحالي نفسه: إزالته من الملعب
+        lineup[targetSlot] = null;
+    } else if (existingAt !== -1){
+        // اللاعب أساسي في خانة أخرى بالفعل: تبديل مكانه مع صاحب هذه الخانة (Swap)
+        lineup[existingAt] = wasAtTarget || null;
+        lineup[targetSlot] = pid;
+    } else {
+        lineup[targetSlot] = pid;
+    }
+
+    closeModal('pickModal');
+    renderPitch();
+    renderLists();
+    renderStrength();
+}
+
+/* ============================================================
+   أفضل تشكيلة تلقائياً — اختيار جشع (Greedy) حسب الأنسب فعلياً
+   ============================================================ */
+function autoFillBest(silent){
+    const slots = FORMATIONS[currentFormation];
+    const order = slots.map((s,i)=>i).sort((a,b) => {
+        // نملأ المراكز الأكثر تخصصاً أولاً (حارس المرمى، ثم الدفاع...) لتفادي حجز الأنسب لمركز عام لاحقاً
+        const specificity = { GK:0, CB:1, LB:1, RB:1, CDM:2, CM:3, CAM:3, LW:4, RW:4, ST:5, CF:5 };
+        return (specificity[slots[a].pos]??3) - (specificity[slots[b].pos]??3);
+    });
+    const used = new Set();
+    const newLineup = new Array(slots.length).fill(null);
+    order.forEach(i => {
+        const slot = slots[i];
+        let best = null, bestScore = -1;
+        squad.forEach(p => {
+            const pid = playerId(p);
+            if (used.has(pid)) return;
+            const score = fitScore(slot.pos, playerPos(p)) * playerRating(p);
+            if (score > bestScore){ bestScore = score; best = pid; }
+        });
+        if (best){ newLineup[i] = best; used.add(best); }
+    });
+    lineup = newLineup;
+    renderPitch();
+    renderLists();
+    renderStrength();
+    if (!silent) showToast('✅ تم اختيار أفضل تشكيلة متاحة تلقائياً حسب مستوى ومراكز لاعبيك.');
+}
+
+function clearLineup(){
+    if (!confirm('تفريغ كل الملعب من اللاعبين الحاليين؟')) return;
+    lineup = new Array(FORMATIONS[currentFormation].length).fill(null);
+    renderPitch();
+    renderLists();
+    renderStrength();
+}
+
+/* ============================================================
+   التهيئة
+   ============================================================ */
+function init(){
+    loadTactics();
+    renderAll();
+}
+document.getElementById('pickModal').addEventListener('click', function(e){ if (e.target === this) closeModal('pickModal'); });
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

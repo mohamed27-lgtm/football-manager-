@@ -1,0 +1,27 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+DY,Dynamo Kyiv,دينامو كييف,أوكرانيا,198,UEFA,15,UPL,Ukrainian Premier League,First Tier,16,"1993,1994,1995,1996,1997,1998,1999,2000,2001,2003,2004,2007,2009,2015,2016,2021"
+DY,Dynamo Kyiv,دينامو كييف,أوكرانيا,198,UEFA,15,UC,Ukrainian Cup,Domestic Cup,13,"1993,1996,1998,1999,2000,2003,2005,2006,2007,2014,2015,2020,2021"
+DY,Dynamo Kyiv,دينامو كييف,أوكرانيا,198,UEFA,15,USC,Ukrainian Super Cup,Domestic Super Cup,9,"2004,2006,2007,2009,2011,2016,2018,2019,2020"
+DY,Dynamo Kyiv,دينامو كييف,أوكرانيا,198,UEFA,15,UCWC,UEFA Cup Winners' Cup,Continental,2,"1975,1986"
+DY,Dynamo Kyiv,دينامو كييف,أوكرانيا,198,UEFA,15,USC,UEFA Super Cup,Continental,1,1975
+SA,Shakhtar Donetsk,شاختار دونيتسك,أوكرانيا,198,UEFA,15,UPL,Ukrainian Premier League,First Tier,15,"2002,2005,2006,2008,2010,2011,2012,2013,2014,2017,2018,2019,2020,2023,2024"
+SA,Shakhtar Donetsk,شاختار دونيتسك,أوكرانيا,198,UEFA,15,UC,Ukrainian Cup,Domestic Cup,14,"1995,1997,2001,2002,2004,2008,2011,2012,2013,2016,2017,2018,2019,2024"
+SA,Shakhtar Donetsk,شاختار دونيتسك,أوكرانيا,198,UEFA,15,USC,Ukrainian Super Cup,Domestic Super Cup,9,"2005,2008,2010,2012,2013,2014,2015,2017,2021"
+SA,Shakhtar Donetsk,شاختار دونيتسك,أوكرانيا,198,UEFA,15,UEL,UEFA Europa League,Continental,1,2009
+SA,Shakhtar Donetsk,شاختار دونيتسك,أوكرانيا,198,UEFA,15,USC,UEFA Super Cup,Continental,0,·
+DK,Dnipro Dnipropetrovsk,دنيبرو دنيبروبتروفسك,أوكرانيا,198,UEFA,15,UPL,Ukrainian Premier League,First Tier,0,·
+DK,Dnipro Dnipropetrovsk,دنيبرو دنيبروبتروفسك,أوكرانيا,198,UEFA,15,UC,Ukrainian Cup,Domestic Cup,1,1989
+TAV,Tavriya Simferopol,تافريا سيمفيروبول,أوكرانيا,198,UEFA,15,UPL,Ukrainian Premier League,First Tier,1,1992
+ZOR,Zorya Luhansk,زوريا لوهانسك,أوكرانيا,198,UEFA,15,UPL,Ukrainian Premier League,First Tier,1,1972
+VOR,Vorskla Poltava,فورسكلا بولتافا,أوكرانيا,198,UEFA,15,UC,Ukrainian Cup,Domestic Cup,1,2009
+MET,Metalist Kharkiv,ميتاليست خاركيف,أوكرانيا,198,UEFA,15,·,·,·,0,·
+ODE,Chornomorets Odesa,تشورنوموريتس أوديسا,أوكرانيا,198,UEFA,15,UC,Ukrainian Cup,Domestic Cup,2,"1992,1994"
+KYV,Kryvbas Kryvyi Rih,كريفباس كريفي ريه,أوكرانيا,198,UEFA,15,·,·,·,0,·
+OLE,Oleksandriya,أوليكساندريا,أوكرانيا,198,UEFA,15,·,·,·,0,·
+KOL,Kolos Kovalivka,كولوس كوفاليفكا,أوكرانيا,198,UEFA,15,·,·,·,0,·
+MIN,Minaj,ميناي,أوكرانيا,198,UEFA,15,·,·,·,0,·
+OBO,Obolon Kyiv,أوبولون كييف,أوكرانيا,198,UEFA,15,·,·,·,0,·
+LIV,Lviv,لفيف,أوكرانيا,198,UEFA,15,·,·,·,0,·
+RUCH,Rukh Lviv,روه لفيف,أوكرانيا,198,UEFA,15,·,·,·,0,·
+POL,Polissya Zhytomyr,بوليسيا جيتومير,أوكرانيا,198,UEFA,15,·,·,·,0,·
+VER,Veres Rivne,فيريس ريفني,أوكرانيا,198,UEFA,15,·,·,·,0,·

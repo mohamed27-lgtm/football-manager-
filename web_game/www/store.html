@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>المتجر الرسمي | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444;
+            --md-elevation-1: 0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.5);
+            --md-elevation-2: 0 3px 8px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.5);
+            --md-shape-sm:12px; --md-shape-md:16px; --md-shape-lg:20px; --md-shape-full:999px;
+        }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:12px 14px; border-radius:var(--md-shape-md); box-shadow:var(--md-elevation-1); }
+        .back-btn { background:var(--md-surface-container-high, #1a2236); color:white; border:none; padding:9px 13px; font-size:12px; border-radius:var(--md-shape-full); text-decoration:none; }
+        .page-title { font-size:14px; font-weight:800; color:var(--gold); }
+
+        .card { background:var(--card); border:1px solid rgba(255,255,255,0.06); border-radius:var(--md-shape-lg); box-shadow:var(--md-elevation-1); overflow:hidden; }
+        .card-title { font-size:12px; font-weight:800; color:var(--gold); padding:12px 14px 8px 14px; display:flex; align-items:center; gap:6px; justify-content:space-between; }
+
+        /* ===== قميص واقعي بمواضع شعارات حقيقية ===== */
+        .jersey-stage { background:linear-gradient(180deg, #1a2338, #0d1220); padding:24px 14px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+        .jersey-wrap { position:relative; width:230px; height:260px; }
+        .jersey-svg { width:100%; height:100%; }
+        .logo-slot-inner { width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+        .logo-slot-inner img { max-width:100%; max-height:100%; object-fit:contain; }
+        .logo-slot-inner .fallback-text { font-size:8px; font-weight:800; color:#111; text-align:center; line-height:1.1; width:100%; height:100%; display:flex; align-items:center; justify-content:center; border-radius:4px; }
+        /* شارة الكم الدائرية — نفس شكل رعاة الأكمام الحقيقيين في قمصان كرة القدم الفعلية: دائرة بيضاء بحدّ رفيع */
+        .logo-slot-circle { background:#fff; border-radius:50%; border:1px solid rgba(0,0,0,0.15); box-shadow:0 1px 3px rgba(0,0,0,0.25); padding:2px; }
+        .logo-slot-circle img { max-width:82%; max-height:82%; }
+
+        .legend { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; font-size:9.5px; color:var(--muted); }
+        .legend span { display:flex; align-items:center; gap:4px; }
+        .legend i { width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+        .price-tag { text-align:center; }
+        .price-tag .amount { font-size:24px; font-weight:900; color:var(--gold); }
+        .price-tag .lbl { font-size:10px; color:var(--muted); }
+
+        .sponsor-list { padding:4px 0; }
+        .sponsor-row { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
+        .sponsor-row:last-child { border-bottom:none; }
+        .sponsor-row .dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
+        .sponsor-row .info { flex:1; }
+        .sponsor-row .sname { font-size:12.5px; font-weight:700; }
+        .sponsor-row .sslot { font-size:10.5px; color:var(--muted); margin-top:2px; }
+        .sponsor-row .empty-slot { color:var(--muted); font-style:italic; font-size:11px; }
+
+        .report-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:10px 14px 14px 14px; }
+        .report-box { background:var(--bg); border-radius:10px; padding:10px; }
+        .report-box .lbl { font-size:10px; color:var(--muted); }
+        .report-box .val { font-size:15px; font-weight:800; margin-top:3px; color:var(--gold); }
+
+        .btn { width:100%; border:none; padding:14px; border-radius:var(--md-shape-full); font-size:13px; font-weight:800; cursor:pointer; background:var(--gold); color:#06090f; box-shadow:var(--md-elevation-1); }
+        .btn:disabled { opacity:0.5; }
+
+        .merch-card { background:var(--bg); border-radius:10px; padding:10px; text-align:center; }
+        .merch-card i { font-size:20px; color:var(--gold); }
+        .merch-card.out-of-stock { opacity:0.55; }
+        .merch-card .mname { font-size:11px; font-weight:700; margin-top:6px; }
+        .merch-card .mprice { font-size:13px; font-weight:800; color:var(--gold); margin-top:2px; }
+        .merch-card .mstock { font-size:9.5px; color:var(--muted); margin-top:2px; }
+        .produce-btn { margin-top:6px; width:100%; background:var(--border); color:var(--text); border:none; padding:6px; border-radius:7px; font-size:9.5px; font-weight:700; cursor:pointer; }
+
+        .cat-tabs { display:flex; gap:6px; overflow-x:auto; padding:0 14px 10px 14px; }
+        .cat-tabs::-webkit-scrollbar { display:none; }
+        .cat-chip { flex:0 0 auto; padding:7px 12px; border-radius:999px; background:var(--bg); border:1px solid var(--border); font-size:10.5px; font-weight:700; color:var(--muted); cursor:pointer; white-space:nowrap; }
+        .cat-chip.active { background:var(--gold); color:#06090f; border-color:var(--gold); }
+
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:50; align-items:flex-end; justify-content:center; }
+        .modal-overlay.active { display:flex; }
+        .modal-sheet { background:var(--card); width:100%; max-width:480px; border-radius:16px 16px 0 0; padding:16px; display:flex; flex-direction:column; gap:10px; }
+        .close-modal { margin-right:auto; background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; }
+
+        .pricing-row { display:flex; align-items:center; gap:8px; padding:9px 14px; border-bottom:1px solid var(--border); }
+        .pricing-row:last-child { border-bottom:none; }
+        .pricing-row .pr-name { flex:1; font-size:11.5px; font-weight:700; }
+        .pricing-row .pr-price { font-size:12px; font-weight:800; color:var(--gold); width:56px; text-align:center; }
+        .pr-step-btn { width:24px; height:24px; border-radius:10px; background:var(--bg); border:1px solid var(--border); color:var(--text); font-size:12px; font-weight:800; cursor:pointer; flex:0 0 auto; }
+        .pr-adj-label { font-size:9.5px; color:var(--muted); width:34px; text-align:center; flex:0 0 auto; }
+
+        .kit-type-row { display:flex; gap:6px; }
+        .locked-note { display:flex; align-items:center; gap:6px; background:rgba(232,184,75,0.08); border:1px solid rgba(232,184,75,0.25); color:var(--gold); font-size:10.5px; padding:8px 10px; border-radius:12px; line-height:1.6; }
+        .kit-type-chip { flex:1; text-align:center; padding:9px 4px; border-radius:9px; background:var(--bg); border:1px solid var(--border); font-size:11px; font-weight:700; cursor:pointer; }
+        .kit-type-chip.active { background:var(--gold); color:#06090f; border-color:var(--gold); }
+
+        .color-row { display:flex; gap:8px; flex-wrap:wrap; }
+        .color-chip { width:30px; height:30px; border-radius:50%; border:2px solid var(--border); cursor:pointer; flex:0 0 auto; }
+        .color-chip.active { border-color:var(--gold); box-shadow:0 0 0 2px rgba(232,184,75,0.3); }
+
+        .factor-row { display:flex; justify-content:space-between; align-items:center; font-size:11.5px; padding:8px 0; border-bottom:1px solid var(--border); }
+        .factor-row:last-child { border-bottom:none; }
+        .factor-row b { color:var(--gold); font-weight:700; }
+
+        .promo-btns { display:flex; flex-direction:column; gap:6px; }
+        .btn-outline2 { background:var(--bg); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:9px; font-size:11.5px; font-weight:700; cursor:pointer; }
+
+        .player-jersey-row { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--border); font-size:12px; }
+        .player-jersey-row:last-child { border-bottom:none; }
+        .player-jersey-row .rank { width:20px; color:var(--muted); font-weight:800; text-align:center; }
+        .player-jersey-row .pname { flex:1; font-weight:700; }
+        .player-jersey-row .pshare { color:var(--gold); font-weight:800; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="finance.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title"><i class="fas fa-bag-shopping"></i> المتجر الرسمي</div>
+        <div style="width:34px;"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-shirt"></i> القميص الرسمي الحالي</div>
+        <div class="jersey-stage">
+            <div class="jersey-wrap">
+                <svg class="jersey-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <clipPath id="jerseyClip">
+                            <path d="M70 8
+                                     C 78 2, 90 0, 100 0
+                                     C 110 0, 122 2, 130 8
+                                     L 132 4
+                                     L 158 18
+                                     C 168 24, 178 34, 182 46
+                                     L 168 66
+                                     C 164 60, 158 54, 152 50
+                                     L 152 60
+                                     L 152 212
+                                     C 152 216, 148 218, 144 218
+                                     L 56 218
+                                     C 52 218, 48 216, 48 212
+                                     L 48 60
+                                     L 48 50
+                                     C 42 54, 36 60, 32 66
+                                     L 18 46
+                                     C 22 34, 32 24, 42 18
+                                     L 68 4
+                                     Z"/>
+                        </clipPath>
+                    </defs>
+                    <!-- قميص كرة قدم واقعي: ياقة V، أكمام محددة، خط جانبي -->
+                    <path d="M70 8
+                             C 78 2, 90 0, 100 0
+                             C 110 0, 122 2, 130 8
+                             L 132 4
+                             L 158 18
+                             C 168 24, 178 34, 182 46
+                             L 168 66
+                             C 164 60, 158 54, 152 50
+                             L 152 60
+                             L 152 212
+                             C 152 216, 148 218, 144 218
+                             L 56 218
+                             C 52 218, 48 216, 48 212
+                             L 48 60
+                             L 48 50
+                             C 42 54, 36 60, 32 66
+                             L 18 46
+                             C 22 34, 32 24, 42 18
+                             L 68 4
+                             Z"
+                          id="jerseyBody" fill="#ffffff" stroke="#c9ccd1" stroke-width="2" stroke-linejoin="round"/>
+                    <!-- طبقة النمط (خطوط رأسية/نصفين) — مُقصوصة بدقة على شكل القميص نفسه، تظهر فقط إن كان النمط غير sولid -->
+                    <g id="patternLayer" clip-path="url(#jerseyClip)"></g>
+                    <!-- إعادة رسم الحدود فوق النمط حتى تبقى واضحة -->
+                    <path d="M70 8
+                             C 78 2, 90 0, 100 0
+                             C 110 0, 122 2, 130 8
+                             L 132 4
+                             L 158 18
+                             C 168 24, 178 34, 182 46
+                             L 168 66
+                             C 164 60, 158 54, 152 50
+                             L 152 60
+                             L 152 212
+                             C 152 216, 148 218, 144 218
+                             L 56 218
+                             C 52 218, 48 216, 48 212
+                             L 48 60
+                             L 48 50
+                             C 42 54, 36 60, 32 66
+                             L 18 46
+                             C 22 34, 32 24, 42 18
+                             L 68 4
+                             Z"
+                          fill="none" stroke="#c9ccd1" stroke-width="2" stroke-linejoin="round"/>
+                    <!-- كفّات الأكمام بلون ثانوي لواقعية أكبر -->
+                    <path d="M18 46 L32 66 L26 76 L12 54 Z" id="cuffLeft" fill="none"/>
+                    <path d="M182 46 L168 66 L174 76 L188 54 Z" id="cuffRight" fill="none"/>
+                    <!-- الياقة -->
+                    <path d="M82 6 C 88 14, 112 14, 118 6" fill="none" stroke="#c9ccd1" stroke-width="2"/>
+                    <path id="collarTrim" d="M80 8 C 87 15, 113 15, 120 8" fill="none" stroke-width="3" stroke-linecap="round"/>
+                    <!-- خط جانبي خفيف لواقعية أكثر -->
+                    <line x1="52" y1="60" x2="52" y2="210" stroke="#e5e7eb" stroke-width="1.5"/>
+                    <line x1="148" y1="60" x2="148" y2="210" stroke="#e5e7eb" stroke-width="1.5"/>
+                    <!-- خياطة الكتفين — تفصيل حقيقي مميَّز في أي قميص كرة قدم فعلي -->
+                    <path d="M42 18 C 58 10, 72 6, 82 6" fill="none" stroke="#e5e7eb" stroke-width="1.5" stroke-dasharray="2,2"/>
+                    <path d="M158 18 C 142 10, 128 6, 118 6" fill="none" stroke="#e5e7eb" stroke-width="1.5" stroke-dasharray="2,2"/>
+
+                    <!-- الشعارات مرسومة داخل نظام إحداثيات القميص نفسه (وليست طبقة CSS منفصلة فوقه) —
+                         هذا يضمن بقاءها فعلياً فوق مواضعها الصحيحة على القماش دائماً، مهما تغيّر حجم الشاشة -->
+                    <foreignObject id="slotCrest" x="112" y="68" width="26" height="26"></foreignObject>
+                    <foreignObject id="slotSponsor" x="62" y="88" width="76" height="34"></foreignObject>
+                    <foreignObject id="slotKit" x="62" y="68" width="24" height="24"></foreignObject>
+                    <foreignObject id="slotSleeve" x="24" y="38" width="20" height="20"></foreignObject>
+                </svg>
+            </div>
+            <div class="legend">
+                <span><i style="background:#3b82f6;"></i>شعار النادي</span>
+                <span><i style="background:var(--gold);"></i>الراعي الرئيسي</span>
+                <span><i style="background:#06b6d4;"></i>الشركة المصنّعة</span>
+                <span><i style="background:#a855f7;"></i>راعي الكم</span>
+            </div>
+            <div class="price-tag">
+                <div class="amount" id="jerseyPrice">--</div>
+                <div class="lbl">سعر القميص الرسمي الحالي</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-sliders"></i> قرارات الرئيس على القميص</div>
+        <div style="padding:10px 14px;">
+            <div style="font-size:11px; color:var(--muted); margin-bottom:6px;">نوع الطقم</div>
+            <div class="kit-type-row" id="kitTypeRow"></div>
+        </div>
+        <div style="padding:0 14px 10px 14px;">
+            <div style="font-size:11px; color:var(--muted); margin-bottom:6px;">نمط القميص</div>
+            <div class="kit-type-row" id="patternRow"></div>
+        </div>
+        <div style="padding:0 14px 10px 14px;">
+            <div style="font-size:11px; color:var(--muted); margin-bottom:6px;">اللون الأساسي</div>
+            <div class="color-row" id="colorRow"></div>
+        </div>
+        <div style="padding:0 14px 14px 14px;" id="secondaryColorSection">
+            <div style="font-size:11px; color:var(--muted); margin-bottom:6px;">اللون الثانوي</div>
+            <div class="color-row" id="secondaryColorRow"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-boxes-stacked"></i> كل منتجات المتجر</div>
+        <div class="cat-tabs" id="merchCatTabs"></div>
+        <div id="merchGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:10px 14px 14px 14px;"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-handshake"></i> الرعاة الظاهرون على القميص</div>
+        <div class="sponsor-list" id="sponsorListContainer"></div>
+        <div style="padding:0 14px 12px 14px;"><a href="sponsors.html" style="font-size:11px; color:var(--gold); text-decoration:none;">إدارة عقود الرعاية ←</a></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-tags"></i> العروض والتخفيضات</div>
+        <div id="promoBox" style="padding:4px 14px 14px 14px;"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-sliders"></i> إعدادات التسعير الواقعية لكل منتج</div>
+        <div id="pricingSettingsBox"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-ranking-star"></i> الأكثر مبيعاً بين قمصان اللاعبين</div>
+        <div id="playerJerseyBox" style="padding:4px 0 8px 0;"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-chart-simple"></i> تقرير المتجر</div>
+        <div class="report-grid" id="reportGrid"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-bolt"></i> عوامل الطلب الحقيقية الحالية</div>
+        <div id="demandFactorsBox" style="padding:4px 14px 14px 14px;"></div>
+    </div>
+
+    <div class="card" style="padding:14px; text-align:center;">
+        <div style="font-size:11px; color:var(--green); font-weight:700;"><i class="fas fa-circle" style="font-size:8px; color:var(--green);"></i> المتجر مفتوح ويبيع تلقائياً باستمرار</div>
+        <div style="font-size:10px; color:var(--muted); margin-top:4px;">كل عائد مبيعات يُضاف مباشرة لميزانيتك فور حدوثه فعلياً مع مرور الوقت الحقيقي في تقويم موسمك — بدون أي إجراء يدوي منك، تماماً كمتجر حقيقي.</div>
+    </div>
+
+    <div id="toast" style="position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--gold); color:var(--text); padding:10px 16px; border-radius:10px; font-size:12px; display:none; z-index:99; max-width:90%; text-align:center;"></div>
+
+    <div class="modal-overlay" id="productionModal">
+        <div class="modal-sheet">
+            <div style="display:flex; align-items:center;">
+                <div style="font-size:14px; font-weight:800; color:var(--gold);" id="prodModalTitle">طلب دفعة إنتاج</div>
+                <button class="close-modal" onclick="closeProductionModal()"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div style="font-size:11px; color:var(--muted);">كمية أكبر = تكلفة تخزين أعلى وخطر مخزون راكد إن لم يُباع؛ كمية أقل = خطر نفاد سريع وضياع مبيعات.</div>
+            <input type="number" id="prodQtyInput" min="100" step="100" value="1000" style="width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:12px; font-size:13px; text-align:center;" oninput="updateProdPreview()">
+            <div class="factor-row"><span>تكلفة الإنتاج التقديرية</span><b id="prodCostPreview">--</b></div>
+            <button class="btn" onclick="confirmProduction()">تأكيد طلب الإنتاج</button>
+        </div>
+    </div>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || '';
+        function showToast(msg) { const t=document.getElementById('toast'); t.innerHTML=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 3200); }
+        function getClubBudget() { return parseFloat(localStorage.getItem('clubBudget')) || 150.0; }
+        function setClubBudget(v) { localStorage.setItem('clubBudget', v.toFixed(2)); }
+        function getClubReputation() { return parseFloat(localStorage.getItem('clubReputation')) || 50; }
+        function getClubTrophyCount() { try { return (JSON.parse(localStorage.getItem('club_trophies'))||[]).length; } catch(e){ return 0; } }
+        const realLogosPath = 'teams_logos/';
+        function getTeamLogoUrl(t) { return `${realLogosPath}${(t||'').trim()}.png`; }
+        const companyLogosPath = 'company_logos/';
+        function companyLogoUrl(name){ return `${companyLogosPath}${(name||'').trim()}.png`; }
+        function companyInitials(name){ return (name||'').replace(/[^A-Za-z\u0600-\u06FF ]/g,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase() || (name||'?')[0]; }
+
+        function addMessageToSystem(sender, text, category) {
+            let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+            inbox.unshift({ id: Date.now(), sender, text, time: new Date().toLocaleTimeString('en-US', { hour12:false }), read:false, category: category || 'finance' });
+            localStorage.setItem('gameInbox', JSON.stringify(inbox));
+            localStorage.setItem('hasNewMessage', 'true');
+        }
+
+        // ============================================================
+        // مواضع حقيقية واضحة على القميص: الشعار (أعلى يسار)، الراعي الرئيسي (وسط الصدر)،
+        // الشركة المصنّعة (أعلى يمين)، راعي الكم (على الكم) — نفس تصميم أي قميص كرة قدم حقيقي
+        // ============================================================
+        function fillSlot(elId, imgUrl, fallbackText, bg, shape) {
+            const el = document.getElementById(elId);
+            const isCircle = shape === 'circle';
+            el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" class="logo-slot-inner ${isCircle?'logo-slot-circle':''}">
+                <img src="${imgUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="fallback-text" style="display:none; background:${bg}; ${isCircle?'border-radius:50%;':''}">${fallbackText}</div>
+            </div>`;
+        }
+        function clearSlot(elId) { document.getElementById(elId).innerHTML = ''; }
+
+        // ============================================================
+        // كتالوج شامل لمنتجات المتجر — كل منتج بسعر وطلب واقعيين مبنيين على سمعة ناديك ومستوى المتجر
+        // ============================================================
+        const MERCH_CATALOG = [
+            // ===== الملابس =====
+            { key:'jersey', name:'القميص الأساسي', icon:'fa-shirt', basePrice:45, priceFactor:1.0, stockKey:'jerseyStock', demandWeight:1.0, cat:'clothing' },
+            { key:'awayJersey', name:'القميص الاحتياطي', icon:'fa-shirt', basePrice:42, priceFactor:0.95, stockKey:'awayJerseyStock', demandWeight:0.55, cat:'clothing' },
+            { key:'thirdJersey', name:'القميص الثالث', icon:'fa-shirt', basePrice:42, priceFactor:0.9, stockKey:'thirdJerseyStock', demandWeight:0.3, cat:'clothing' },
+            { key:'gkJersey', name:'قميص الحارس', icon:'fa-shirt', basePrice:44, priceFactor:0.9, stockKey:'gkJerseyStock', demandWeight:0.1, cat:'clothing' },
+            { key:'jacket', name:'جاكيت النادي', icon:'fa-vest', basePrice:75, priceFactor:1.3, stockKey:'jacketStock', demandWeight:0.2, cat:'clothing' },
+            { key:'hoodie', name:'هودي النادي', icon:'fa-user-tie', basePrice:60, priceFactor:1.1, stockKey:'hoodieStock', demandWeight:0.3, cat:'clothing' },
+            { key:'polo', name:'قميص بولو', icon:'fa-shirt', basePrice:38, priceFactor:0.8, stockKey:'poloStock', demandWeight:0.25, cat:'clothing' },
+            { key:'shorts', name:'شورت رياضي', icon:'fa-socks', basePrice:22, priceFactor:0.5, stockKey:'shortsStock', demandWeight:0.35, cat:'clothing' },
+            { key:'socks', name:'جوارب النادي', icon:'fa-socks', basePrice:9, priceFactor:0.2, stockKey:'socksStock', demandWeight:0.3, cat:'clothing' },
+            // ===== الإكسسوارات =====
+            { key:'scarf', name:'الوشاح الرسمي', icon:'fa-scarf', basePrice:12, priceFactor:0.3, stockKey:'scarfStock', demandWeight:0.6, cat:'accessories' },
+            { key:'cap', name:'القبعة الرسمية', icon:'fa-hat-cowboy', basePrice:18, priceFactor:0.45, stockKey:'capStock', demandWeight:0.4, cat:'accessories' },
+            { key:'gloves', name:'قفازات مشجعين', icon:'fa-mitten', basePrice:14, priceFactor:0.3, stockKey:'glovesStock', demandWeight:0.2, cat:'accessories' },
+            { key:'bag', name:'حقيبة يد رسمية', icon:'fa-bag-shopping', basePrice:32, priceFactor:0.7, stockKey:'bagStock', demandWeight:0.2, cat:'accessories' },
+            { key:'wallet', name:'محفظة رسمية', icon:'fa-wallet', basePrice:20, priceFactor:0.45, stockKey:'walletStock', demandWeight:0.2, cat:'accessories' },
+            { key:'keychain', name:'ميدالية المفاتيح', icon:'fa-key', basePrice:6, priceFactor:0.15, stockKey:'keychainStock', demandWeight:0.45, cat:'accessories' },
+            // ===== الأطفال =====
+            { key:'kidsJersey', name:'قميص أطفال', icon:'fa-child', basePrice:32, priceFactor:0.7, stockKey:'kidsJerseyStock', demandWeight:0.35, cat:'kids' },
+            { key:'mascotDoll', name:'دمية التميمة', icon:'fa-teddy-bear', basePrice:15, priceFactor:0.35, stockKey:'mascotDollStock', demandWeight:0.25, cat:'kids' },
+            { key:'kidsBall', name:'كرة صغيرة للأطفال', icon:'fa-futbol', basePrice:10, priceFactor:0.25, stockKey:'kidsBallStock', demandWeight:0.2, cat:'kids' },
+            // ===== المنزل =====
+            { key:'mug', name:'الكوب الرسمي', icon:'fa-mug-hot', basePrice:10, priceFactor:0.25, stockKey:'mugStock', demandWeight:0.35, cat:'home' },
+            { key:'bottle', name:'زجاجة ماء رسمية', icon:'fa-bottle-water', basePrice:8, priceFactor:0.2, stockKey:'bottleStock', demandWeight:0.3, cat:'home' },
+            { key:'blanket', name:'بطانية النادي', icon:'fa-mug-saucer', basePrice:25, priceFactor:0.55, stockKey:'blanketStock', demandWeight:0.15, cat:'home' },
+            { key:'towel', name:'منشفة رسمية', icon:'fa-suitcase-medical', basePrice:14, priceFactor:0.3, stockKey:'towelStock', demandWeight:0.2, cat:'home' },
+            { key:'phoneCase', name:'غطاء هاتف', icon:'fa-mobile', basePrice:9, priceFactor:0.2, stockKey:'phoneCaseStock', demandWeight:0.3, cat:'home' },
+            { key:'calendar', name:'تقويم النادي', icon:'fa-calendar', basePrice:7, priceFactor:0.15, stockKey:'calendarStock', demandWeight:0.15, cat:'home' },
+            // ===== المنتجات الرياضية =====
+            { key:'ball', name:'الكرة الرسمية', icon:'fa-futbol', basePrice:35, priceFactor:0.7, stockKey:'ballStock', demandWeight:0.3, cat:'sports' },
+            { key:'tracksuit', name:'البدلة الرياضية', icon:'fa-vest', basePrice:55, priceFactor:1.1, stockKey:'tracksuitStock', demandWeight:0.25, cat:'sports' },
+            { key:'backpack', name:'حقيبة ظهر رياضية', icon:'fa-backpack', basePrice:30, priceFactor:0.65, stockKey:'backpackStock', demandWeight:0.2, cat:'sports' },
+            { key:'trainingGloves', name:'قفازات تدريب', icon:'fa-mitten', basePrice:16, priceFactor:0.35, stockKey:'trainingGlovesStock', demandWeight:0.1, cat:'sports' },
+        ];
+        const CATEGORY_LABELS = { clothing:'الملابس', accessories:'الإكسسوارات', kids:'الأطفال', home:'المنزل', sports:'المنتجات الرياضية', special:'إصدارات خاصة' };
+        let activeCategory = 'clothing';
+        function getStock(key) {
+            const raw = localStorage.getItem(key);
+            if (raw === null) return 1000; // أول مرة فقط: مخزون ابتدائي افتراضي
+            return parseInt(raw) || 0;
+        }
+        function setStock(key, v) { localStorage.setItem(key, String(Math.max(0, v))); }
+        function getItemFairPrice(item) {
+            const rep = getClubReputation();
+            const trophies = getClubTrophyCount();
+            const storeLevel = parseInt(localStorage.getItem('clubStoreLevel')) || 1;
+            const base = item.basePrice + (rep/100)*item.basePrice*item.priceFactor*2 + trophies*item.priceFactor + storeLevel*item.priceFactor*2;
+            return Math.round(base);
+        }
+        function getItemPrice(item) {
+            const fair = getItemFairPrice(item);
+            return Math.round(fair * (1 + getPriceAdjustmentPct(item.key)/100));
+        }
+        function setActiveCategory(cat) { activeCategory = cat; renderMerchGrid(); }
+        function renderMerchGrid() {
+            const cats = [...new Set(MERCH_CATALOG.map(i=>i.cat))];
+            if (getSeasonalProducts().length) cats.push('special');
+            document.getElementById('merchCatTabs').innerHTML = cats.map(c =>
+                `<div class="cat-chip ${c===activeCategory?'active':''}" onclick="setActiveCategory('${c}')">${CATEGORY_LABELS[c]}</div>`
+            ).join('');
+
+            const items = activeCategory === 'special' ? getSeasonalProducts() : MERCH_CATALOG.filter(i => i.cat === activeCategory);
+            document.getElementById('merchGrid').innerHTML = items.map(item => {
+                const stock = getStock(item.stockKey);
+                const outOfStock = stock <= 0;
+                return `
+                <div class="merch-card ${outOfStock?'out-of-stock':''}">
+                    <i class="fas ${item.icon}"></i>
+                    <div class="mname">${item.name}</div>
+                    <div class="mprice">${getItemPrice(item)} €</div>
+                    <div class="mstock">${outOfStock ? '<i class="fas fa-ban"></i> نفد المخزون' : 'مخزون: ' + stock.toLocaleString()}</div>
+                    <button class="produce-btn" onclick="openProductionModal('${item.key}')">طلب إنتاج</button>
+                </div>`;
+            }).join('');
+        }
+
+        // ============================================================
+        // قرارات الرئيس الحقيقية على القميص: نوع الطقم، اللون الأساسي، وتعديل السعر يدوياً
+        // ============================================================
+        const KIT_TYPES = [ {key:'home', label:'أساسي', defaultColor:'#ffffff'}, {key:'away', label:'احتياطي', defaultColor:'#0f2a5c'}, {key:'third', label:'ثالث', defaultColor:'#111111'} ];
+
+        // ألوان وأنماط حقيقية فعلية لأشهر الأندية العالمية — هوية القميص الحقيقية لكل نادٍ، وليست ألواناً عشوائية
+        const REAL_CLUB_KITS = {
+            'Barcelona': { primary:'#a50044', secondary:'#004d98', pattern:'stripes' },
+            'FC Barcelona': { primary:'#a50044', secondary:'#004d98', pattern:'stripes' },
+            'Real Madrid': { primary:'#ffffff', secondary:'#feb72b', pattern:'solid' },
+            'Manchester City': { primary:'#6cabdd', secondary:'#1c2c5b', pattern:'solid' },
+            'Manchester United': { primary:'#da291c', secondary:'#ffe500', pattern:'solid' },
+            'Liverpool FC': { primary:'#c8102e', secondary:'#00b2a9', pattern:'solid' },
+            'Chelsea FC': { primary:'#034694', secondary:'#ffffff', pattern:'solid' },
+            'Arsenal FC': { primary:'#ef0107', secondary:'#ffffff', pattern:'solid' },
+            'Bayern Munich': { primary:'#dc052d', secondary:'#0066b2', pattern:'solid' },
+            'Paris Saint-Germain': { primary:'#004170', secondary:'#da291c', pattern:'stripes' },
+            'Juventus FC': { primary:'#ffffff', secondary:'#000000', pattern:'stripes' },
+            'AC Milan': { primary:'#fb090b', secondary:'#000000', pattern:'stripes' },
+            'Inter Milan': { primary:'#0068a8', secondary:'#000000', pattern:'stripes' },
+            'Atletico Madrid': { primary:'#ce3524', secondary:'#ffffff', pattern:'stripes' },
+            'Borussia Dortmund': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Tottenham Hotspur': { primary:'#ffffff', secondary:'#132257', pattern:'solid' },
+            'Al Hilal': { primary:'#003da5', secondary:'#ffffff', pattern:'solid' },
+            'Al Nassr': { primary:'#fde100', secondary:'#00205b', pattern:'solid' },
+            'Al Ittihad': { primary:'#000000', secondary:'#fde100', pattern:'stripes' },
+            'Al Ahli': { primary:'#00a651', secondary:'#ffffff', pattern:'solid' },
+            'Boca Juniors': { primary:'#0a2b5c', secondary:'#fde100', pattern:'stripes' },
+            'River Plate': { primary:'#ffffff', secondary:'#e60023', pattern:'stripes' },
+            'AS Roma': { primary:'#8e1f2f', secondary:'#f0bc42', pattern:'solid' },
+            'Napoli': { primary:'#12a0d7', secondary:'#ffffff', pattern:'solid' },
+            'Ajax': { primary:'#d2122e', secondary:'#ffffff', pattern:'stripes' },
+            'Newcastle United': { primary:'#241f20', secondary:'#ffffff', pattern:'stripes' },
+            'Everton FC': { primary:'#003399', secondary:'#ffffff', pattern:'solid' },
+            'West Ham United': { primary:'#7a263a', secondary:'#1bb1e7', pattern:'solid' },
+            'Aston Villa': { primary:'#95bfe5', secondary:'#670e36', pattern:'solid' },
+            'Leicester City': { primary:'#003090', secondary:'#ffffff', pattern:'solid' },
+
+            // ===== الأندية من الصور المرسلة تحديداً =====
+            'Inter Miami CF': { primary:'#f7b5cd', secondary:'#000000', pattern:'solid' },
+            'Palermo FC': { primary:'#ff69b4', secondary:'#000000', pattern:'stripes' },
+            'Cerezo Osaka': { primary:'#e4007f', secondary:'#000080', pattern:'solid' },
+            'St. Louis CITY SC': { primary:'#dc143c', secondary:'#001e62', pattern:'halves' },
+            'Atlético de Madrid': { primary:'#ce3524', secondary:'#ffffff', pattern:'stripes' },
+            'Athletic Bilbao': { primary:'#ee2523', secondary:'#ffffff', pattern:'stripes' },
+            'Sunderland AFC': { primary:'#eb172b', secondary:'#ffffff', pattern:'stripes' },
+            'PSV Eindhoven': { primary:'#ed1c24', secondary:'#ffffff', pattern:'solid' },
+            'Olympiacos Piraeus': { primary:'#c8102e', secondary:'#ffffff', pattern:'solid' },
+            'Southampton FC': { primary:'#d71920', secondary:'#ffffff', pattern:'stripes' },
+            'Stoke City': { primary:'#e03a3e', secondary:'#ffffff', pattern:'stripes' },
+            'Girona FC': { primary:'#cd2534', secondary:'#ffffff', pattern:'stripes' },
+            'UD Almería': { primary:'#ed1c24', secondary:'#ffffff', pattern:'stripes' },
+            'Sporting Gijón': { primary:'#e2231a', secondary:'#ffffff', pattern:'stripes' },
+            'US Sassuolo': { primary:'#00843d', secondary:'#000000', pattern:'stripes' },
+            'Denizlispor': { primary:'#000000', secondary:'#00843d', pattern:'solid' },
+            'Austin FC': { primary:'#00b140', secondary:'#000000', pattern:'solid' },
+            'Europa FC': { primary:'#00843d', secondary:'#ffffff', pattern:'stripes' },
+
+            // ===== السعودية =====
+            'Al-Hilal SFC': { primary:'#003da5', secondary:'#ffffff', pattern:'solid' },
+            'Al-Nassr FC': { primary:'#fde100', secondary:'#00205b', pattern:'solid' },
+            'Al-Ittihad Club': { primary:'#000000', secondary:'#fde100', pattern:'stripes' },
+            'Al-Ahli Saudi FC': { primary:'#00a651', secondary:'#ffffff', pattern:'solid' },
+            'Al-Shabab': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'Al-Taawoun FC': { primary:'#fde100', secondary:'#000000', pattern:'stripes' },
+            'Al-Fateh SC': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Al-Ettifaq FC': { primary:'#000000', secondary:'#00843d', pattern:'stripes' },
+
+            // ===== مصر =====
+            'Al Ahly SC': { primary:'#dc143c', secondary:'#ffffff', pattern:'solid' },
+            'Zamalek SC': { primary:'#ffffff', secondary:'#c8102e', pattern:'solid' },
+
+            // ===== المغرب =====
+            'Raja Casablanca': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Wydad AC': { primary:'#dc143c', secondary:'#ffffff', pattern:'solid' },
+
+            // ===== إسبانيا (إضافات) =====
+            'Valencia CF': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'Real Sociedad': { primary:'#0067b1', secondary:'#ffffff', pattern:'stripes' },
+            'Real Betis Balompié': { primary:'#00954c', secondary:'#ffffff', pattern:'stripes' },
+            'Sevilla FC': { primary:'#ffffff', secondary:'#d2001c', pattern:'solid' },
+            'Villarreal CF': { primary:'#ffe667', secondary:'#004a93', pattern:'solid' },
+            'RCD Espanyol Barcelona': { primary:'#0a4c96', secondary:'#ffffff', pattern:'stripes' },
+            'Deportivo Alavés': { primary:'#0047ab', secondary:'#ffffff', pattern:'solid' },
+            'RC Celta de Vigo': { primary:'#8accdb', secondary:'#ffffff', pattern:'solid' },
+            'CA Osasuna': { primary:'#d2001c', secondary:'#001e62', pattern:'solid' },
+            'RCD Mallorca': { primary:'#d2001c', secondary:'#000000', pattern:'solid' },
+
+            // ===== إنجلترا (إضافات) =====
+            'Wolverhampton Wanderers': { primary:'#fdb913', secondary:'#231f20', pattern:'solid' },
+            'Crystal Palace': { primary:'#1b458f', secondary:'#c4122e', pattern:'stripes' },
+            'Brighton & Hove Albion': { primary:'#0057b8', secondary:'#ffffff', pattern:'stripes' },
+            'Fulham FC': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'Brentford FC': { primary:'#e30613', secondary:'#ffffff', pattern:'stripes' },
+            'Nottingham Forest': { primary:'#dd0000', secondary:'#ffffff', pattern:'solid' },
+            'Burnley FC': { primary:'#6c1d45', secondary:'#99d6ea', pattern:'solid' },
+            'Sheffield United': { primary:'#ee2737', secondary:'#000000', pattern:'stripes' },
+            'Leeds United': { primary:'#ffffff', secondary:'#1d428a', pattern:'solid' },
+            'Norwich City': { primary:'#00a650', secondary:'#fff200', pattern:'solid' },
+            'Portsmouth FC': { primary:'#001489', secondary:'#ffffff', pattern:'solid' },
+            'Birmingham City': { primary:'#0000ff', secondary:'#ffffff', pattern:'solid' },
+            'Derby County': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'Rangers FC': { primary:'#1d428a', secondary:'#ffffff', pattern:'solid' },
+
+            // ===== إيطاليا (إضافات) =====
+            'FC Internazionale Milano': { primary:'#0068a8', secondary:'#000000', pattern:'stripes' },
+            'AS Roma': { primary:'#8e1f2f', secondary:'#f0bc42', pattern:'solid' },
+            'SS Lazio': { primary:'#87d8f7', secondary:'#ffffff', pattern:'solid' },
+            'ACF Fiorentina': { primary:'#5b2d90', secondary:'#ffffff', pattern:'solid' },
+            'Atalanta BC': { primary:'#1e71b8', secondary:'#000000', pattern:'stripes' },
+            'Torino FC': { primary:'#881c1c', secondary:'#ffffff', pattern:'solid' },
+            'Bologna FC 1909': { primary:'#8e1b28', secondary:'#001355', pattern:'stripes' },
+            'Udinese Calcio': { primary:'#ffffff', secondary:'#000000', pattern:'stripes' },
+            'Genoa CFC': { primary:'#001e62', secondary:'#dc143c', pattern:'stripes' },
+            'US Salernitana 1919': { primary:'#7b2d26', secondary:'#ffffff', pattern:'solid' },
+            'Hellas Verona': { primary:'#003399', secondary:'#fde100', pattern:'solid' },
+            'Cagliari Calcio': { primary:'#c8102e', secondary:'#001e62', pattern:'stripes' },
+
+            // ===== ألمانيا (إضافات) =====
+            'Borussia Mönchengladbach': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'Bayer 04 Leverkusen': { primary:'#e32219', secondary:'#000000', pattern:'solid' },
+            'RB Leipzig': { primary:'#ffffff', secondary:'#dd0741', pattern:'solid' },
+            'VfL Wolfsburg': { primary:'#65b32e', secondary:'#ffffff', pattern:'solid' },
+            'Eintracht Frankfurt': { primary:'#e1000f', secondary:'#000000', pattern:'solid' },
+            'TSG 1899 Hoffenheim': { primary:'#1c63b7', secondary:'#ffffff', pattern:'solid' },
+            'SC Freiburg': { primary:'#ffffff', secondary:'#e2001a', pattern:'solid' },
+            'FC Schalke 04': { primary:'#004b9b', secondary:'#ffffff', pattern:'solid' },
+            'Hertha BSC': { primary:'#005ca9', secondary:'#ffffff', pattern:'solid' },
+            '1. FC Köln': { primary:'#ffffff', secondary:'#e2001a', pattern:'solid' },
+            'Werder Bremen': { primary:'#1d9053', secondary:'#ffffff', pattern:'solid' },
+            'VfB Stuttgart': { primary:'#ffffff', secondary:'#e2001a', pattern:'solid' },
+
+            // ===== فرنسا (إضافات) =====
+            'Olympique Marseille': { primary:'#2fa7df', secondary:'#ffffff', pattern:'solid' },
+            'Olympique Lyonnais': { primary:'#ffffff', secondary:'#1c2a5e', pattern:'solid' },
+            'AS Monaco': { primary:'#e02020', secondary:'#ffffff', pattern:'stripes' },
+            'LOSC Lille': { primary:'#e2001a', secondary:'#002664', pattern:'solid' },
+            'RC Lens': { primary:'#ffd100', secondary:'#e2001a', pattern:'stripes' },
+            'Stade Rennais FC': { primary:'#e2001a', secondary:'#000000', pattern:'stripes' },
+            'OGC Nice': { primary:'#e2001a', secondary:'#000000', pattern:'solid' },
+            'Stade de Reims': { primary:'#e2001a', secondary:'#ffffff', pattern:'solid' },
+            'Toulouse FC': { primary:'#762b8a', secondary:'#ffffff', pattern:'solid' },
+
+            // ===== هولندا =====
+            'AFC Ajax': { primary:'#d2122e', secondary:'#ffffff', pattern:'stripes' },
+            'Feyenoord Rotterdam': { primary:'#ee1c25', secondary:'#ffffff', pattern:'solid' },
+            'AZ Alkmaar': { primary:'#ee1c25', secondary:'#ffffff', pattern:'solid' },
+            'FC Twente Enschede': { primary:'#e2001a', secondary:'#ffffff', pattern:'solid' },
+
+            // ===== تركيا =====
+            'Galatasaray': { primary:'#a90432', secondary:'#fdb913', pattern:'stripes' },
+            'Fenerbahçe': { primary:'#fde100', secondary:'#001a4b', pattern:'stripes' },
+            'Beşiktaş': { primary:'#000000', secondary:'#ffffff', pattern:'stripes' },
+            'Trabzonspor': { primary:'#621244', secondary:'#96beeb', pattern:'stripes' },
+
+            // ===== البرازيل =====
+            'CR Flamengo': { primary:'#e2001a', secondary:'#000000', pattern:'stripes' },
+            'SE Palmeiras': { primary:'#006437', secondary:'#ffffff', pattern:'solid' },
+            'SC Corinthians Paulista': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'São Paulo FC': { primary:'#ffffff', secondary:'#e2001a', pattern:'stripes' },
+            'Santos FC': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'Grêmio Porto Alegre': { primary:'#0067b1', secondary:'#000000', pattern:'stripes' },
+            'SC Internacional': { primary:'#e2001a', secondary:'#ffffff', pattern:'solid' },
+            'Cruzeiro EC': { primary:'#003399', secondary:'#ffffff', pattern:'solid' },
+            'Vasco da Gama': { primary:'#ffffff', secondary:'#000000', pattern:'halves' },
+            'Botafogo FR': { primary:'#000000', secondary:'#ffffff', pattern:'stripes' },
+            'Fluminense FC': { primary:'#8b0000', secondary:'#006437', pattern:'stripes' },
+            'Atlético Mineiro': { primary:'#000000', secondary:'#ffffff', pattern:'stripes' },
+
+            // ===== الأرجنتين =====
+            'CA Boca Juniors': { primary:'#0a2b5c', secondary:'#fde100', pattern:'stripes' },
+            'CA River Plate': { primary:'#ffffff', secondary:'#e60023', pattern:'stripes' },
+            'CA Independiente': { primary:'#e2001a', secondary:'#ffffff', pattern:'solid' },
+            'Racing Club': { primary:'#87d8f7', secondary:'#ffffff', pattern:'stripes' },
+            'San Lorenzo de Almagro': { primary:'#0067b1', secondary:'#e2001a', pattern:'stripes' },
+
+            // ===== دول أخرى مدعومة في اللعبة (أعلام/أندية رمزية) =====
+            'FC Basel 1893': { primary:'#dd0000', secondary:'#001a4b', pattern:'solid' },
+            'BSC Young Boys': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Shamrock Rovers': { primary:'#00843d', secondary:'#ffffff', pattern:'stripes' },
+            'The New Saints FC': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Shakhtar Donetsk': { primary:'#ee6c00', secondary:'#000000', pattern:'stripes' },
+            'Dynamo Kyiv': { primary:'#ffffff', secondary:'#001a4b', pattern:'solid' },
+            'RSC Anderlecht': { primary:'#7b0d2e', secondary:'#feca1a', pattern:'solid' },
+            'Club Brugge KV': { primary:'#0057a8', secondary:'#000000', pattern:'stripes' },
+            'FC Red Bull Salzburg': { primary:'#e2001a', secondary:'#ffffff', pattern:'stripes' },
+            'Rapid Wien': { primary:'#006633', secondary:'#ffffff', pattern:'solid' },
+            'SL Benfica': { primary:'#e2001a', secondary:'#ffffff', pattern:'solid' },
+            'FC Porto': { primary:'#0057a8', secondary:'#ffffff', pattern:'stripes' },
+            'Sporting CP': { primary:'#00843d', secondary:'#ffffff', pattern:'stripes' },
+            'Kashima Antlers': { primary:'#a2231d', secondary:'#000000', pattern:'solid' },
+            'Urawa Red Diamonds': { primary:'#e2001a', secondary:'#000000', pattern:'solid' },
+            'Rosenborg BK': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+
+            // ===== دفعة توسعة إضافية: أندية حقيقية موثَّقة أخرى ضمن الدول المدعومة =====
+            'West Bromwich Albion': { primary:'#122f67', secondary:'#ffffff', pattern:'stripes' },
+            'Middlesbrough FC': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Cardiff City': { primary:'#0070b5', secondary:'#ffffff', pattern:'solid' },
+            'Swansea City': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'Preston North End': { primary:'#ffffff', secondary:'#001e62', pattern:'solid' },
+            'Blackburn Rovers': { primary:'#009ee0', secondary:'#ffffff', pattern:'halves' },
+            'Watford FC': { primary:'#fbee23', secondary:'#000000', pattern:'solid' },
+            'Bristol City': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Millwall FC': { primary:'#001e62', secondary:'#ffffff', pattern:'solid' },
+            'Queens Park Rangers': { primary:'#005daa', secondary:'#ffffff', pattern:'stripes' },
+            'Hull City': { primary:'#f18a00', secondary:'#000000', pattern:'stripes' },
+            'Reading FC': { primary:'#004b9b', secondary:'#ffffff', pattern:'stripes' },
+            'Charlton Athletic': { primary:'#d2001c', secondary:'#ffffff', pattern:'solid' },
+            'Coventry City': { primary:'#78d0f7', secondary:'#000000', pattern:'solid' },
+            'Luton Town': { primary:'#f78f1e', secondary:'#001e62', pattern:'solid' },
+            'Plymouth Argyle': { primary:'#004b32', secondary:'#ffffff', pattern:'solid' },
+            'Ipswich Town': { primary:'#0044a9', secondary:'#ffffff', pattern:'solid' },
+            'Sheffield Wednesday': { primary:'#0057a8', secondary:'#f5d130', pattern:'stripes' },
+            'Wigan Athletic': { primary:'#1c3f94', secondary:'#ffffff', pattern:'solid' },
+            'Oxford United': { primary:'#fde100', secondary:'#001e62', pattern:'solid' },
+
+            'Levante UD': { primary:'#00205b', secondary:'#c8102e', pattern:'stripes' },
+            'Deportivo de La Coruña': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Real Zaragoza': { primary:'#ffffff', secondary:'#0057a8', pattern:'solid' },
+            'Elche CF': { primary:'#00843d', secondary:'#ffffff', pattern:'stripes' },
+            'CD Leganés': { primary:'#001e62', secondary:'#ffffff', pattern:'solid' },
+            'SD Eibar': { primary:'#c8102e', secondary:'#001e62', pattern:'stripes' },
+            'Cádiz CF': { primary:'#fde100', secondary:'#001e62', pattern:'solid' },
+            'Real Racing Club': { primary:'#ffffff', secondary:'#00843d', pattern:'stripes' },
+            'CD Tenerife': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Real Oviedo': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+
+            'US Lecce': { primary:'#fde100', secondary:'#e2231a', pattern:'stripes' },
+            'Empoli FC': { primary:'#005cab', secondary:'#ffffff', pattern:'solid' },
+            'Parma Calcio 1913': { primary:'#fde100', secondary:'#001e62', pattern:'stripes' },
+            'AC Monza': { primary:'#d2001c', secondary:'#ffffff', pattern:'solid' },
+            'Como 1907': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Venezia FC': { primary:'#f47216', secondary:'#000000', pattern:'solid' },
+            'Cremonese': { primary:'#a90432', secondary:'#95c3e8', pattern:'stripes' },
+            'Pisa Sporting Club': { primary:'#001e62', secondary:'#ffffff', pattern:'solid' },
+            'Spezia Calcio': { primary:'#ffffff', secondary:'#000000', pattern:'stripes' },
+            'US Cremonese': { primary:'#a90432', secondary:'#95c3e8', pattern:'stripes' },
+
+            'Union Berlin': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'FC Augsburg': { primary:'#ba3733', secondary:'#00843d', pattern:'solid' },
+            'FSV Mainz 05': { primary:'#c8102e', secondary:'#ffffff', pattern:'solid' },
+            'FC St. Pauli': { primary:'#8b4513', secondary:'#ffffff', pattern:'solid' },
+            'Holstein Kiel': { primary:'#0057a8', secondary:'#ffffff', pattern:'stripes' },
+            '1. FC Heidenheim': { primary:'#e2231a', secondary:'#001e62', pattern:'solid' },
+            'Hamburger SV': { primary:'#0057a8', secondary:'#000000', pattern:'solid' },
+            'Fortuna Düsseldorf': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Hannover 96': { primary:'#00843d', secondary:'#000000', pattern:'solid' },
+            'Karlsruher SC': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+
+            'FC Nantes': { primary:'#fde100', secondary:'#004b9b', pattern:'solid' },
+            'RC Strasbourg Alsace': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Montpellier HSC': { primary:'#ff6600', secondary:'#001e62', pattern:'solid' },
+            'FC Metz': { primary:'#7b0d2e', secondary:'#fde100', pattern:'solid' },
+            'Le Havre AC': { primary:'#0057a8', secondary:'#ffffff', pattern:'stripes' },
+            'AJ Auxerre': { primary:'#ffffff', secondary:'#001e62', pattern:'solid' },
+            'Angers SCO': { primary:'#000000', secondary:'#ffffff', pattern:'solid' },
+            'Clermont Foot 63': { primary:'#94153e', secondary:'#0057a8', pattern:'solid' },
+
+            'PAOK Thessaloniki': { primary:'#000000', secondary:'#ffffff', pattern:'solid' },
+            'Panathinaikos': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'AEK Athens': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Aris Thessaloniki': { primary:'#fde100', secondary:'#001e62', pattern:'solid' },
+        
+            // ===== دفعة تغطية كاملة: كل الأندية الـ22 دولة المدعومة فعلياً في اختيار النادي (choose_club.html) =====
+            'Al-Ahli SFC': { primary:'#00a651', secondary:'#ffffff', pattern:'solid' },
+            'Al-Fayha FC': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Al-Hazem SC': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Al-Khaleej FC': { primary:'#000000', secondary:'#fde100', pattern:'stripes' },
+            'Al-Kholood Club': { primary:'#7b0d2e', secondary:'#ffffff', pattern:'solid' },
+            'Al-Najma SC': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Al-Okhdood Club': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Al-Qadsiah FC': { primary:'#8dc63f', secondary:'#000000', pattern:'stripes' },
+            'Al-Riyadh SC': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Al-Shabab FC': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'Damac FC': { primary:'#fde100', secondary:'#000000', pattern:'stripes' },
+            'NEOM SC': { primary:'#00c2cb', secondary:'#000000', pattern:'solid' },
+            'Al Ahly FC': { primary:'#dc143c', secondary:'#ffffff', pattern:'solid' },
+            'Bank El Ahly': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Cleopatra FC': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'El Gouna FC': { primary:'#f7941e', secondary:'#000000', pattern:'solid' },
+            'El Masry SC': { primary:'#00843d', secondary:'#ffffff', pattern:'stripes' },
+            'El Mokawloon SC': { primary:'#ffffff', secondary:'#00843d', pattern:'solid' },
+            'Enppi SC': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Ghazl El Mahalla': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Harras El Hodoud': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Ismaily SC': { primary:'#f7941e', secondary:'#000000', pattern:'stripes' },
+            'Ittihad Alexandria SC': { primary:'#ffffff', secondary:'#e2231a', pattern:'stripes' },
+            'Kahraba Ismailia': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Modern Sport Club': { primary:'#7b0d2e', secondary:'#ffffff', pattern:'solid' },
+            'Petrojet': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Pharco FC': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Pyramids FC': { primary:'#7b0d2e', secondary:'#fde100', pattern:'solid' },
+            'Smouha SC': { primary:'#fde100', secondary:'#000000', pattern:'stripes' },
+            'Tala\'ea El Gaish': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Wadi Degla FC': { primary:'#f7941e', secondary:'#000000', pattern:'solid' },
+            'Zed FC': { primary:'#001e62', secondary:'#ffffff', pattern:'solid' },
+            'AS FAR Rabat': { primary:'#00843d', secondary:'#000000', pattern:'solid' },
+            'COD Meknès': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Difaâ El Jadida': { primary:'#e2231a', secondary:'#000000', pattern:'stripes' },
+            'FUS Rabat': { primary:'#fde100', secondary:'#000000', pattern:'stripes' },
+            'Hassania d\'Agadir': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Ittihad Tanger': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'KACM Marrakech': { primary:'#e2231a', secondary:'#fde100', pattern:'stripes' },
+            'MAS Fès': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Olympique Dcheira': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Olympique Safi': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'Raja Club Athletic': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Renaissance Zemamra': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Renaissance de Berkane': { primary:'#f7941e', secondary:'#00843d', pattern:'solid' },
+            'Union Touarga Sportif': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Union Yacoub El-Mansour': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Wydad Casablanca': { primary:'#dc143c', secondary:'#ffffff', pattern:'solid' },
+            'Celta de Vigo': { primary:'#8accdb', secondary:'#ffffff', pattern:'solid' },
+            'Getafe CF': { primary:'#005ca9', secondary:'#ffffff', pattern:'solid' },
+            'Rayo Vallecano': { primary:'#e2231a', secondary:'#ffffff', pattern:'stripes' },
+            'AFC Bournemouth': { primary:'#da291c', secondary:'#000000', pattern:'stripes' },
+            'FC Lorient': { primary:'#ff6600', secondary:'#000000', pattern:'solid' },
+            'FC Toulouse': { primary:'#762b8a', secondary:'#ffffff', pattern:'solid' },
+            'Olympique Lyon': { primary:'#ffffff', secondary:'#1c2a5e', pattern:'solid' },
+            'Paris FC': { primary:'#0057a8', secondary:'#e2231a', pattern:'solid' },
+            'Stade Brestois 29': { primary:'#e2231a', secondary:'#ffffff', pattern:'stripes' },
+            'SSC Napoli': { primary:'#12a0d7', secondary:'#ffffff', pattern:'solid' },
+            '1.FC Heidenheim 1846': { primary:'#e2231a', secondary:'#001e62', pattern:'solid' },
+            '1.FC Köln': { primary:'#ffffff', secondary:'#e2001a', pattern:'solid' },
+            '1.FC Union Berlin': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            '1.FSV Mainz 05': { primary:'#c8102e', secondary:'#ffffff', pattern:'solid' },
+            'SV Werder Bremen': { primary:'#1d9053', secondary:'#ffffff', pattern:'solid' },
+            'Associação Chapecoense de Futebol': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Botafogo de Futebol e Regatas': { primary:'#000000', secondary:'#ffffff', pattern:'stripes' },
+            'Club Athletico Paranaense': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Clube Atlético Mineiro': { primary:'#000000', secondary:'#ffffff', pattern:'stripes' },
+            'Clube de Regatas Vasco da Gama': { primary:'#ffffff', secondary:'#000000', pattern:'halves' },
+            'Clube do Remo (PA)': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Coritiba Foot Ball Club': { primary:'#ffffff', secondary:'#00843d', pattern:'stripes' },
+            'Cruzeiro Esporte Clube': { primary:'#003399', secondary:'#ffffff', pattern:'solid' },
+            'Esporte Clube Bahia': { primary:'#0057a8', secondary:'#e2231a', pattern:'stripes' },
+            'Esporte Clube Vitória': { primary:'#e2231a', secondary:'#000000', pattern:'stripes' },
+            'Fluminense Football Club': { primary:'#8b0000', secondary:'#006437', pattern:'stripes' },
+            'Grêmio Foot-Ball Porto Alegrense': { primary:'#0067b1', secondary:'#000000', pattern:'stripes' },
+            'Mirassol Futebol Clube (SP)': { primary:'#fde100', secondary:'#00843d', pattern:'solid' },
+            'Red Bull Bragantino': { primary:'#ffffff', secondary:'#e2231a', pattern:'solid' },
+            'Sociedade Esportiva Palmeiras': { primary:'#006437', secondary:'#ffffff', pattern:'solid' },
+            'Sport Club Corinthians Paulista': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'Sport Club Internacional': { primary:'#e2001a', secondary:'#ffffff', pattern:'solid' },
+            'São Paulo Futebol Clube': { primary:'#ffffff', secondary:'#e2001a', pattern:'stripes' },
+            'Ajax Amsterdam': { primary:'#d2122e', secondary:'#ffffff', pattern:'stripes' },
+            'Excelsior Rotterdam': { primary:'#e2231a', secondary:'#000000', pattern:'stripes' },
+            'FC Groningen': { primary:'#ffffff', secondary:'#00843d', pattern:'solid' },
+            'FC Utrecht': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'FC Volendam': { primary:'#000000', secondary:'#e2231a', pattern:'stripes' },
+            'Fortuna Sittard': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Go Ahead Eagles': { primary:'#fde100', secondary:'#e2231a', pattern:'solid' },
+            'Heracles Almelo': { primary:'#000000', secondary:'#ffffff', pattern:'stripes' },
+            'NAC Breda': { primary:'#fde100', secondary:'#000000', pattern:'stripes' },
+            'NEC Nijmegen': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'PEC Zwolle': { primary:'#0057a8', secondary:'#000000', pattern:'solid' },
+            'SC Heerenveen': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'SC Telstar': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Sparta Rotterdam': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Alanyaspor': { primary:'#ff6600', secondary:'#00843d', pattern:'solid' },
+            'Antalyaspor': { primary:'#e2231a', secondary:'#ffffff', pattern:'stripes' },
+            'Basaksehir FK': { primary:'#ff6600', secondary:'#001e62', pattern:'solid' },
+            'Besiktas JK': { primary:'#000000', secondary:'#ffffff', pattern:'stripes' },
+            'Caykur Rizespor': { primary:'#00843d', secondary:'#0057a8', pattern:'stripes' },
+            'Eyüpspor': { primary:'#800020', secondary:'#fde100', pattern:'stripes' },
+            'Fatih Karagümrük': { primary:'#e2231a', secondary:'#fde100', pattern:'solid' },
+            'Fenerbahce': { primary:'#fde100', secondary:'#001a4b', pattern:'stripes' },
+            'Gaziantep FK': { primary:'#e2231a', secondary:'#000000', pattern:'stripes' },
+            'Genclerbirligi Ankara': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Göztepe': { primary:'#e2231a', secondary:'#fde100', pattern:'stripes' },
+            'Kasimpasa': { primary:'#001e62', secondary:'#ffffff', pattern:'solid' },
+            'Kayserispor': { primary:'#e2231a', secondary:'#fde100', pattern:'solid' },
+            'Kocaelispor': { primary:'#00843d', secondary:'#000000', pattern:'stripes' },
+            'Konyaspor': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Samsunspor': { primary:'#e2231a', secondary:'#001e62', pattern:'stripes' },
+            'Akhmat Grozny': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Akron Tolyatti': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'Baltika Kaliningrad': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'CSKA Moscow': { primary:'#dc143c', secondary:'#001e62', pattern:'solid' },
+            'Dinamo Makhachkala': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Dynamo Moscow': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'FC Krasnodar': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'FC Orenburg': { primary:'#fde100', secondary:'#000000', pattern:'stripes' },
+            'FC Pari Nizhniy Novgorod': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'FC Rostov': { primary:'#fde100', secondary:'#0057a8', pattern:'stripes' },
+            'FC Sochi': { primary:'#001e62', secondary:'#ffffff', pattern:'solid' },
+            'Krylya Sovetov Samara': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Lokomotiv Moscow': { primary:'#e2231a', secondary:'#001e62', pattern:'solid' },
+            'Rubin Kazan': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Spartak Moscow': { primary:'#e2231a', secondary:'#ffffff', pattern:'stripes' },
+            'Zenit St. Petersburg': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'FC Lausanne-Sport': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'FC Lugano': { primary:'#000000', secondary:'#ffffff', pattern:'solid' },
+            'FC Luzern': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'FC Sion': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'FC St. Gallen 1879': { primary:'#00843d', secondary:'#ffffff', pattern:'stripes' },
+            'FC Thun': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'FC Winterthur': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'FC ZüAlashkertrich': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Grasshopper Club Zurich': { primary:'#000000', secondary:'#0057a8', pattern:'solid' },
+            'Servette FC': { primary:'#8b0000', secondary:'#ffffff', pattern:'solid' },
+            'Bohemian Football Club': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Derry City': { primary:'#e2231a', secondary:'#ffffff', pattern:'stripes' },
+            'Drogheda United FC': { primary:'#00843d', secondary:'#fde100', pattern:'solid' },
+            'Dundalk FC': { primary:'#000000', secondary:'#ffffff', pattern:'stripes' },
+            'Galway United FC': { primary:'#801429', secondary:'#ffffff', pattern:'solid' },
+            'Shelbourne FC': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Sligo Rovers': { primary:'#000000', secondary:'#ffffff', pattern:'stripes' },
+            'St. Patrick\'s Athletic': { primary:'#e2231a', secondary:'#ffffff', pattern:'stripes' },
+            'Waterford FC': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Bala Town': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Barry Town United': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Briton Ferry Llansawel': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Caernarfon Town': { primary:'#fde100', secondary:'#000000', pattern:'stripes' },
+            'Cardiff Metropolitan University': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Colwyn Bay': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Connah\'s Quay Nomads': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Flint Town United': { primary:'#e2231a', secondary:'#000000', pattern:'stripes' },
+            'Haverfordwest County': { primary:'#0057a8', secondary:'#fde100', pattern:'solid' },
+            'Llanelli Town AFC': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Penybont FC': { primary:'#00843d', secondary:'#fde100', pattern:'solid' },
+            'The New Saints': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Epicentr Kamyanets-Podilskyi': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'FC Kudrivka': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'FC Oleksandriya': { primary:'#fde100', secondary:'#000000', pattern:'stripes' },
+            'Karpaty Lviv': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Kolos Kovalivka': { primary:'#fde100', secondary:'#00843d', pattern:'solid' },
+            'Kryvbas Kryvyi Rig': { primary:'#0057a8', secondary:'#fde100', pattern:'solid' },
+            'LNZ Cherkasy': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Metalist 1925 Kharkiv': { primary:'#001e62', secondary:'#fde100', pattern:'solid' },
+            'NK Veres Rivne': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Obolon Kyiv': { primary:'#fde100', secondary:'#000000', pattern:'stripes' },
+            'Polissya Zhytomyr': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Rukh Lviv': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'SC Poltava': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Zorya Lugansk': { primary:'#000000', secondary:'#fde100', pattern:'stripes' },
+            'Ajman Club': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Al-Ain FC': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Al-Bataeh CSC': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Al-Dhafra FC': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Al-Jazira Club': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Al-Nasr SC (UAE)': { primary:'#fde100', secondary:'#001e62', pattern:'solid' },
+            'Al-Wahda FC': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Al-Wasl SC': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Dibba SCC': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'FC Baniyas': { primary:'#001e62', secondary:'#ffffff', pattern:'solid' },
+            'Kalba FC': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Khor Fakkan SSC': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Shabab Al-Ahli Club': { primary:'#e2231a', secondary:'#001e62', pattern:'stripes' },
+            'Sharjah FC': { primary:'#fde100', secondary:'#001e62', pattern:'solid' },
+            'Cercle Brugge ': { primary:'#00843d', secondary:'#000000', pattern:'stripes' },
+            'FCV Dender EH': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'KAA Gent': { primary:'#00519e', secondary:'#ffffff', pattern:'solid' },
+            'KRC Genk': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'KV Mechelen': { primary:'#fde100', secondary:'#e2231a', pattern:'solid' },
+            'KVC Westerlo': { primary:'#fde100', secondary:'#000000', pattern:'stripes' },
+            'Oud-Heverlee Leuven': { primary:'#000000', secondary:'#fde100', pattern:'solid' },
+            'RAAL La Louvière': { primary:'#7b0d2e', secondary:'#ffffff', pattern:'solid' },
+            'Royal Antwerp FC': { primary:'#e2231a', secondary:'#000000', pattern:'stripes' },
+            'Royal Charleroi SC': { primary:'#000000', secondary:'#ffffff', pattern:'solid' },
+            'Sint-Truidense VV': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Standard Liège': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Union Saint-Gilloise': { primary:'#fde100', secondary:'#001e62', pattern:'stripes' },
+            'Zulte Waregem': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Austria Vienna': { primary:'#7b0d2e', secondary:'#ffffff', pattern:'solid' },
+            'FC Blau-Weiss Linz': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Grazer AK 1902': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'LASK': { primary:'#000000', secondary:'#ffffff', pattern:'solid' },
+            'Rapid Vienna': { primary:'#006633', secondary:'#ffffff', pattern:'solid' },
+            'Red Bull Salzburg': { primary:'#e2001a', secondary:'#ffffff', pattern:'stripes' },
+            'SCR Altach': { primary:'#000000', secondary:'#fde100', pattern:'solid' },
+            'SK Sturm Graz': { primary:'#000000', secondary:'#ffffff', pattern:'stripes' },
+            'SV Ried': { primary:'#000000', secondary:'#fde100', pattern:'solid' },
+            'TSV Hartberg': { primary:'#7b0d2e', secondary:'#ffffff', pattern:'solid' },
+            'WSG Tirol': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Wolfsberger AC': { primary:'#7b0d2e', secondary:'#ffffff', pattern:'solid' },
+            'Avs Futebol': { primary:'#000000', secondary:'#ffffff', pattern:'solid' },
+            'CD Nacional': { primary:'#000000', secondary:'#e2231a', pattern:'solid' },
+            'CD Santa Clara': { primary:'#fde100', secondary:'#00843d', pattern:'solid' },
+            'CD Tondela': { primary:'#000000', secondary:'#ffffff', pattern:'stripes' },
+            'CF Estrela Amadora': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Casa Pia AC': { primary:'#000000', secondary:'#00843d', pattern:'stripes' },
+            'FC Alverca': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'FC Arouca': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'FC Famalicão': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'GD Estoril Praia': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Gil Vicente FC': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Moreirense FC': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'Rio Ave FC': { primary:'#00843d', secondary:'#ffffff', pattern:'solid' },
+            'SC Braga': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Vitória Guimarães SC': { primary:'#ffffff', secondary:'#000000', pattern:'stripes' },
+            'Albirex Niigata': { primary:'#e2231a', secondary:'#ffffff', pattern:'stripes' },
+            'Avispa Fukuoka': { primary:'#0057a8', secondary:'#000000', pattern:'solid' },
+            'FC Tokyo': { primary:'#0057a8', secondary:'#e2231a', pattern:'solid' },
+            'Fagiano Okayama': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Gamba Osaka': { primary:'#001e62', secondary:'#ffffff', pattern:'solid' },
+            'Kashiwa Reysol': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Kawasaki Frontale': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Kyoto Sanga': { primary:'#7b0d2e', secondary:'#001e62', pattern:'solid' },
+            'Machida Zelvia': { primary:'#001e62', secondary:'#fde100', pattern:'solid' },
+            'Nagoya Grampus': { primary:'#e2231a', secondary:'#000000', pattern:'solid' },
+            'Sanfrecce Hiroshima': { primary:'#7b0d2e', secondary:'#ffffff', pattern:'solid' },
+            'Shimizu S-Pulse': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Shonan Bellmare': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Tokyo Verdy': { primary:'#00843d', secondary:'#fde100', pattern:'solid' },
+            'Vissel Kobe': { primary:'#7b0d2e', secondary:'#ffffff', pattern:'solid' },
+            'Yokohama F. Marinos': { primary:'#001e62', secondary:'#ffffff', pattern:'solid' },
+            'Yokohama FC': { primary:'#00b2e3', secondary:'#ffffff', pattern:'solid' },
+            'Aalesunds FK': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'FK Bodø/Glimt': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Fredrikstad FK': { primary:'#e2231a', secondary:'#ffffff', pattern:'stripes' },
+            'Hamarkameratene': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'IK Start': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'KFUM-Kameratene Oslo': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Kristiansund BK': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Lillestrøm SK': { primary:'#fde100', secondary:'#001e62', pattern:'solid' },
+            'Molde FK': { primary:'#001e62', secondary:'#ffffff', pattern:'solid' },
+            'Rosenborg BK': { primary:'#ffffff', secondary:'#000000', pattern:'solid' },
+            'SK Brann': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Sandefjord Fotball': { primary:'#0057a8', secondary:'#ffffff', pattern:'solid' },
+            'Sarpsborg 08 FF': { primary:'#fde100', secondary:'#000000', pattern:'solid' },
+            'Tromsø IL': { primary:'#e2231a', secondary:'#ffffff', pattern:'solid' },
+            'Viking FK': { primary:'#001e62', secondary:'#ffffff', pattern:'stripes' },
+            'Vålerenga Fotball Elite': { primary:'#001e62', secondary:'#ffffff', pattern:'solid' },
+};
+        function getRealClubKit() { return REAL_CLUB_KITS[activeClub] || null; }
+        function applyRealClubKitIfUnset() {
+            const real = getRealClubKit();
+            if (!real) return;
+            // الطقم الأساسي محمي بهويته الحقيقية دائماً — يُفرض في كل تحميل، ولا حاجة لاحترام أي تعديل يدوي قديم لأن التعديل لم يعد ممكناً أصلاً
+            localStorage.setItem('kitColor_' + activeClub + '_home', real.primary);
+            localStorage.setItem('kitSecondary_' + activeClub + '_home', real.secondary);
+            localStorage.setItem('kitPattern_' + activeClub + '_home', real.pattern);
+        }
+        function getKitPattern(kitType) { return localStorage.getItem('kitPattern_' + activeClub + '_' + kitType) || 'solid'; }
+        function setKitPattern(pattern) { localStorage.setItem('kitPattern_' + activeClub + '_' + getSelectedKitType(), pattern); renderKitControls(); renderJersey(); }
+        function getKitSecondary(kitType) { return localStorage.getItem('kitSecondary_' + activeClub + '_' + kitType) || '#000000'; }
+        function setKitSecondary(color) { localStorage.setItem('kitSecondary_' + activeClub + '_' + getSelectedKitType(), color); renderKitControls(); renderJersey(); }
+
+        function renderJerseyPattern(primary, secondary, pattern) {
+            const layer = document.getElementById('patternLayer');
+            if (pattern === 'stripes') {
+                let rects = '';
+                const stripeCount = 9, stripeWidth = 200/stripeCount;
+                for (let i=0;i<stripeCount;i++) {
+                    rects += `<rect x="${i*stripeWidth}" y="0" width="${stripeWidth}" height="220" fill="${i%2===0?primary:secondary}"/>`;
+                }
+                layer.innerHTML = rects;
+            } else if (pattern === 'halves') {
+                layer.innerHTML = `<rect x="0" y="0" width="100" height="220" fill="${primary}"/><rect x="100" y="0" width="100" height="220" fill="${secondary}"/>`;
+            } else {
+                layer.innerHTML = '';
+            }
+        }
+        const COLOR_PALETTE = ['#ffffff','#ef4444','#0f2a5c','#1d9bf0','#16a34a','#111111','#7c2d12','#eab308','#f97316','#7e22ce'];
+        function getSelectedKitType() { return localStorage.getItem('selectedKitType_' + activeClub) || 'home'; }
+        function setSelectedKitType(k) { localStorage.setItem('selectedKitType_' + activeClub, k); renderKitControls(); renderJersey(); }
+        function getKitColor(kitType) {
+            const stored = localStorage.getItem('kitColor_' + activeClub + '_' + kitType);
+            if (stored) return stored;
+            return (KIT_TYPES.find(k=>k.key===kitType) || KIT_TYPES[0]).defaultColor;
+        }
+        function setKitColor(color) { localStorage.setItem('kitColor_' + activeClub + '_' + getSelectedKitType(), color); renderKitControls(); renderJersey(); }
+        function contrastAccent(hex) {
+            const light = ['#ffffff','#eab308','#f97316'];
+            return light.includes(hex) ? '#0f2a5c' : '#e8b84b';
+        }
+
+        const PATTERNS = [ {key:'solid', label:'سادة'}, {key:'stripes', label:'مخطط'}, {key:'halves', label:'نصفين'} ];
+        function renderKitControls() {
+            const activeType = getSelectedKitType();
+            document.getElementById('kitTypeRow').innerHTML = KIT_TYPES.map(k =>
+                `<div class="kit-type-chip ${k.key===activeType?'active':''}" onclick="setSelectedKitType('${k.key}')">${k.label}</div>`
+            ).join('');
+
+            const isHomeLocked = activeType === 'home' && !!getRealClubKit();
+            const activePattern = getKitPattern(activeType);
+            const activeColor = getKitColor(activeType);
+            const activeSecondary = getKitSecondary(activeType);
+
+            if (isHomeLocked) {
+                // القميص الأساسي محمي بهويته الحقيقية الثابتة — لا يمكن للرئيس تغيير لون أو نمط النادي التاريخي، كالواقع تماماً
+                document.getElementById('patternRow').innerHTML = `<div class="locked-note"><i class="fas fa-lock"></i> النمط والألوان محمية بالهوية الرسمية الحقيقية للنادي — غير قابلة للتعديل للطقم الأساسي.</div>`;
+                document.getElementById('colorRow').innerHTML = `<div class="color-chip active" style="background:${activeColor}; cursor:default;"></div>`;
+                document.getElementById('secondaryColorSection').style.display = activePattern === 'solid' ? 'none' : 'block';
+                document.getElementById('secondaryColorRow').innerHTML = `<div class="color-chip active" style="background:${activeSecondary}; cursor:default;"></div>`;
+                return;
+            }
+
+            document.getElementById('patternRow').innerHTML = PATTERNS.map(p =>
+                `<div class="kit-type-chip ${p.key===activePattern?'active':''}" onclick="setKitPattern('${p.key}')">${p.label}</div>`
+            ).join('');
+            document.getElementById('colorRow').innerHTML = COLOR_PALETTE.map(c =>
+                `<div class="color-chip ${c===activeColor?'active':''}" style="background:${c};" onclick="setKitColor('${c}')"></div>`
+            ).join('');
+            document.getElementById('secondaryColorSection').style.display = activePattern === 'solid' ? 'none' : 'block';
+            document.getElementById('secondaryColorRow').innerHTML = COLOR_PALETTE.map(c =>
+                `<div class="color-chip ${c===activeSecondary?'active':''}" style="background:${c};" onclick="setKitSecondary('${c}')"></div>`
+            ).join('');
+        }
+
+        function adjustItemPrice(itemKey, delta) {
+            const current = getPriceAdjustmentPct(itemKey);
+            const next = Math.max(-20, Math.min(20, current + delta));
+            setPriceAdjustmentPct(itemKey, next);
+            renderPricingSettings();
+            renderMerchGrid();
+            renderReport();
+        }
+        function renderPricingSettings() {
+            const items = getAllActiveItems();
+            document.getElementById('pricingSettingsBox').innerHTML = items.map(item => {
+                const adj = getPriceAdjustmentPct(item.key);
+                const price = getItemPrice(item);
+                const adjLabel = (adj >= 0 ? '+' : '') + adj + '%';
+                return `
+                <div class="pricing-row">
+                    <button class="pr-step-btn" onclick="adjustItemPrice('${item.key}', -5)">−</button>
+                    <span class="pr-adj-label">${adjLabel}</span>
+                    <div class="pr-name">${item.name}</div>
+                    <div class="pr-price">${price} €</div>
+                    <button class="pr-step-btn" onclick="adjustItemPrice('${item.key}', 5)">+</button>
+                </div>`;
+            }).join('');
+        }
+
+        function renderJersey() {
+            const kitType = getSelectedKitType();
+            const color = getKitColor(kitType);
+            const pattern = getKitPattern(kitType);
+            const secondary = getKitSecondary(kitType);
+            const accent = contrastAccent(color);
+
+            if (pattern === 'solid') {
+                document.getElementById('jerseyBody').setAttribute('fill', color);
+                document.getElementById('patternLayer').innerHTML = '';
+            } else {
+                document.getElementById('jerseyBody').setAttribute('fill', color); // قاعدة احتياطية إن فشل النمط لأي سبب
+                renderJerseyPattern(color, secondary, pattern);
+            }
+            document.getElementById('cuffLeft').setAttribute('fill', accent);
+            document.getElementById('cuffRight').setAttribute('fill', accent);
+            document.getElementById('collarTrim').setAttribute('stroke', accent);
+
+            // شعار النادي — يظهر دائماً (حقيقي وثابت)
+            fillSlot('slotCrest', getTeamLogoUrl(activeClub), companyInitials(activeClub), 'rgba(59,130,246,0.15)');
+
+            // الراعي الرئيسي — فقط إن وُقِّع عقد فعلي
+            const mainSponsor = localStorage.getItem('clubSponsorName');
+            if (mainSponsor && mainSponsor !== 'لا يوجد') {
+                fillSlot('slotSponsor', companyLogoUrl(mainSponsor), mainSponsor, 'rgba(232,184,75,0.2)');
+            } else { clearSlot('slotSponsor'); }
+
+            // الشركة المصنّعة (الكيت) — فقط إن وُقِّع عقد فعلي
+            const kitSponsor = localStorage.getItem('clubKitSponsorName');
+            if (kitSponsor) fillSlot('slotKit', companyLogoUrl(kitSponsor), companyInitials(kitSponsor), 'rgba(6,182,212,0.2)');
+            else clearSlot('slotKit');
+
+            // راعي الكم — فقط إن وُقِّع عقد فعلي (الفئة الجديدة المستقلة)
+            const sleeveSponsor = localStorage.getItem('clubSleeveSponsorName');
+            if (sleeveSponsor) fillSlot('slotSleeve', companyLogoUrl(sleeveSponsor), companyInitials(sleeveSponsor), 'rgba(168,85,247,0.2)', 'circle');
+            else clearSlot('slotSleeve');
+        }
+
+        // ============================================================
+        // سعر القميص الحقيقي: يتأثر فعلياً بسمعة ناديك، ألقابه، ومستوى المتجر (من راعي المتجر الموقَّع)
+        // ============================================================
+        // كل منتج له إعداد تسعير مستقل خاص به (وليس إعداداً واحداً عاماً يؤثر على القميص فقط)
+        function getPriceAdjustmentPct(itemKey) { return parseFloat(localStorage.getItem('priceAdjustPct_' + activeClub + '_' + itemKey)) || 0; }
+        function setPriceAdjustmentPct(itemKey, v) { localStorage.setItem('priceAdjustPct_' + activeClub + '_' + itemKey, String(v)); }
+        function getJerseyPrice() { return getItemPrice(MERCH_CATALOG[0]); }
+
+        function renderSponsorList() {
+            const rows = [
+                { slot:'الراعي الرئيسي (وسط الصدر)', key:'clubSponsorName', valKey:'clubSponsorValue', color:'var(--gold)' },
+                { slot:'الشركة المصنّعة (أعلى يمين)', key:'clubKitSponsorName', valKey:'clubKitSponsorValue', color:'#06b6d4' },
+                { slot:'راعي الكم', key:'clubSleeveSponsorName', valKey:'clubSleeveSponsorValue', color:'#a855f7' },
+            ];
+            document.getElementById('sponsorListContainer').innerHTML = rows.map(r => {
+                const name = localStorage.getItem(r.key);
+                const val = parseFloat(localStorage.getItem(r.valKey)) || 0;
+                if (name && name !== 'لا يوجد') {
+                    return `<div class="sponsor-row"><div class="dot" style="background:${r.color};"></div><div class="info"><div class="sname">${name}</div><div class="sslot">${r.slot} · ${val.toFixed(1)}M €/سنة</div></div></div>`;
+                }
+                return `<div class="sponsor-row"><div class="dot" style="background:var(--border);"></div><div class="info"><div class="sname empty-slot">لا يوجد راعٍ موقَّع لهذا الموضع</div><div class="sslot">${r.slot}</div></div></div>`;
+            }).join('');
+        }
+
+        function renderReport() {
+            const price = getJerseyPrice();
+            document.getElementById('jerseyPrice').innerText = price + ' €';
+            const jerseyStock = parseInt(localStorage.getItem('jerseyStock')) || 2000;
+            const scarfStock = parseInt(localStorage.getItem('scarfStock')) || 1500;
+            const storeLevel = parseInt(localStorage.getItem('clubStoreLevel')) || 1;
+            const shopRevenue = parseFloat(localStorage.getItem('shopRevenue')) || 0;
+            const fanSat = getFanSatisfaction();
+            const kitSat = getKitCompanySatisfaction();
+            document.getElementById('reportGrid').innerHTML = `
+                <div class="report-box"><div class="lbl">مخزون القمصان</div><div class="val">${jerseyStock.toLocaleString()}</div></div>
+                <div class="report-box"><div class="lbl">مخزون الأوشحة</div><div class="val">${scarfStock.toLocaleString()}</div></div>
+                <div class="report-box"><div class="lbl">مستوى المتجر</div><div class="val">${storeLevel}</div></div>
+                <div class="report-box"><div class="lbl">إجمالي إيرادات المتجر</div><div class="val">${shopRevenue.toFixed(2)}M €</div></div>
+                <div class="report-box"><div class="lbl">رضا الجماهير عن الأسعار والجودة</div><div class="val">${fanSat}%</div></div>
+                <div class="report-box"><div class="lbl">رضا شركة الملابس</div><div class="val">${kitSat !== null ? kitSat+'%' : 'لا يوجد عقد'}</div></div>
+            `;
+
+            const formF = getRecentFormFactor();
+            const achF = getAchievementFactor();
+            const formLabel = formF >= 1.15 ? '<i class="fas fa-fire"></i> سلسلة انتصارات حقيقية — إقبال أعلى' : formF <= 0.85 ? '📉 نتائج أخيرة ضعيفة — إقبال أقل' : '➖ نتائج متوسطة';
+            const achLabel = achF > 1.05 ? `<i class="fas fa-trophy"></i> ${getClubTrophyCount()} لقب حقيقي محقَّق يرفع الإقبال` : 'لا ألقاب مؤثرة على الإقبال بعد';
+            document.getElementById('demandFactorsBox').innerHTML = `
+                <div class="factor-row"><span>أداء آخر 5 مباريات حقيقية</span><b>${formLabel}</b></div>
+                <div class="factor-row"><span>الألقاب والمكانة</span><b>${achLabel}</b></div>
+            `;
+        }
+
+        // ============================================================
+        // دورة مبيعات أسبوعية حقيقية: الطلب يعتمد فعلياً على سمعة ناديك وسعر القميص، وليس رقماً عشوائياً
+        // ============================================================
+        function getGameDate() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+        function dateSortKey(d) { return d.year*10000+d.month*100+d.day; }
+
+        // دورة بيع أسبوعية صامتة (تُستخدم تلقائياً) — نفس المنطق الحقيقي لكن بدون رسائل toast فورية
+        // ============================================================
+        // عامل الأداء الحقيقي: يقرأ نتائج مبارياتك الفعلية الأخيرة (وليس رقماً عاماً)
+        // فوز حديث = إقبال أعلى على الشراء، خسارة/سلسلة سيئة = إقبال أقل — كالواقع تماماً
+        // ============================================================
+        function getRecentFormFactor() {
+            try {
+                const scores = JSON.parse(localStorage.getItem('full_season_scores')) || [];
+                if (!scores.length) return 1.0;
+                const recent = scores.slice(-5); // آخر 5 مباريات حقيقية فعلياً لعبها ناديك
+                let winPoints = 0;
+                recent.forEach(s => {
+                    if (s.homeScore > s.awayScore) winPoints += 3;
+                    else if (s.homeScore === s.awayScore) winPoints += 1;
+                });
+                const maxPoints = recent.length * 3;
+                const formPct = maxPoints > 0 ? winPoints / maxPoints : 0.5;
+                return 0.75 + formPct * 0.5; // 0.75x (سلسلة خسائر) إلى 1.25x (سلسلة انتصارات)
+            } catch(e) { return 1.0; }
+        }
+        // مقعد قاري فعلي أو لقب حقيقي هذا الموسم يرفع الإقبال فعلياً (حدث حقيقي، وليس تخميناً)
+        function getAchievementFactor() {
+            const trophies = getClubTrophyCount();
+            const rules = (() => { try { return JSON.parse(localStorage.getItem('federationRules')); } catch(e){ return null; } })();
+            let factor = 1.0 + Math.min(0.3, trophies * 0.08);
+            if (rules && rules.tier === 1) factor += 0.05;
+            return factor;
+        }
+
+        function getSigned() { return JSON.parse(localStorage.getItem('signed_players_by_club')||'{}')[activeClub] || []; }
+
+        // ============================================================
+        // منتجات موسمية حقيقية — تُفتح فقط عند شرط حقيقي فعلي (لا اختلاق): لقب حقيقي هذا الموسم، أو شهر ديسمبر الفعلي
+        // ============================================================
+        function getSeasonalProducts() {
+            const products = [];
+            const gd = getGameDate();
+            const trophies = getClubTrophyCount();
+            if (trophies > 0) {
+                products.push({ key:'champJersey', name:'قميص الاحتفال بالبطولة', icon:'fa-trophy', basePrice:65, priceFactor:1.4, stockKey:'champJerseyStock', demandWeight:0.5, cat:'special' });
+            }
+            if (gd.month === 12) {
+                products.push({ key:'xmasProduct', name:'منتجات الكريسماس', icon:'fa-gift', basePrice:20, priceFactor:0.5, stockKey:'xmasProductStock', demandWeight:0.4, cat:'special' });
+            }
+            return products;
+        }
+        function getAllActiveItems() { return [...MERCH_CATALOG, ...getSeasonalProducts()]; }
+
+        // ============================================================
+        // رضا الجماهير عن السعر والجودة، ورضا شركة الملابس عن حجم المبيعات (إن وُجد عقد كيت حقيقي)
+        // ============================================================
+        function getFanSatisfaction() {
+            const items = getAllActiveItems();
+            const avgAdj = items.reduce((s,i) => s + getPriceAdjustmentPct(i.key), 0) / Math.max(1, items.length);
+            const storeLevel = parseInt(localStorage.getItem('clubStoreLevel')) || 1;
+            let sat = 70 - avgAdj * 1.2 + storeLevel * 4; // أسعار أعلى من العادل بالمتوسط تُنقص الرضا، جودة المتجر (المستوى) تزيده
+            return Math.max(10, Math.min(99, Math.round(sat)));
+        }
+        function getKitCompanySatisfaction() {
+            const kitSponsor = localStorage.getItem('clubKitSponsorName');
+            if (!kitSponsor) return null;
+            const jerseyStock = getStock('jerseyStock');
+            const soldRatio = 1 - Math.min(1, jerseyStock / 2000);
+            return Math.max(10, Math.min(99, Math.round(40 + soldRatio * 60)));
+        }
+
+        // ============================================================
+        // طلب دفعة إنتاج حقيقي: قرار استثماري من الرئيس، تكلفة فورية مقابل مخزون إضافي فوري
+        // ============================================================
+        let activeProductionItemKey = null;
+        function openProductionModal(itemKey) {
+            activeProductionItemKey = itemKey;
+            const item = getAllActiveItems().find(i => i.key === itemKey);
+            document.getElementById('prodModalTitle').innerText = 'طلب إنتاج: ' + item.name;
+            document.getElementById('prodQtyInput').value = 1000;
+            updateProdPreview();
+            document.getElementById('productionModal').classList.add('active');
+        }
+        function closeProductionModal() { document.getElementById('productionModal').classList.remove('active'); }
+        function updateProdPreview() {
+            const item = getAllActiveItems().find(i => i.key === activeProductionItemKey);
+            const qty = Math.max(0, parseInt(document.getElementById('prodQtyInput').value) || 0);
+            const unitCost = getItemPrice(item) * 0.4 / 1000000; // تكلفة الإنتاج ~40% من سعر البيع لكل قطعة
+            const totalCost = qty * unitCost;
+            document.getElementById('prodCostPreview').innerText = totalCost.toFixed(3) + 'M €';
+        }
+        function confirmProduction() {
+            const item = getAllActiveItems().find(i => i.key === activeProductionItemKey);
+            const qty = Math.max(0, parseInt(document.getElementById('prodQtyInput').value) || 0);
+            const unitCost = getItemPrice(item) * 0.4 / 1000000;
+            const totalCost = qty * unitCost;
+            if (totalCost > getClubBudget()) { showToast('الميزانية لا تكفي لهذه الدفعة الإنتاجية!'); return; }
+            setClubBudget(getClubBudget() - totalCost);
+            setStock(item.stockKey, getStock(item.stockKey) + qty);
+            addMessageToSystem('المتجر الرسمي', `<i class="fas fa-industry"></i> تم إنتاج ${qty.toLocaleString()} قطعة من "${item.name}" بتكلفة ${totalCost.toFixed(3)}M €.`, 'finance');
+            showToast(`<i class="fas fa-circle-check"></i> أُضيفت ${qty.toLocaleString()} قطعة للمخزون`);
+            closeProductionModal();
+            renderMerchGrid();
+            renderReport();
+        }
+
+        // ============================================================
+        // شعبية قمصان اللاعبين: كل لاعب موقَّع فعلياً يبيع نسخة من قميصه، بنسبة تعتمد
+        // على تقييمه الحقيقي (بديل واقعي لعدم توفر رقم "شعبية" منفصل لكل لاعب)
+        // ============================================================
+        function getPlayerJerseyShares() {
+            const squad = getSigned();
+            if (!squad.length) return [];
+            const totalRating = squad.reduce((s,p) => s + (parseFloat(p.rating)||60), 0);
+            return squad.map(p => ({ name: p.player_name, rating: parseFloat(p.rating)||60, share: (parseFloat(p.rating)||60) / totalRating }))
+                        .sort((a,b) => b.rating - a.rating);
+        }
+
+        // ============================================================
+        // دفعة مبيعات حقيقية عند تعاقد جديد: نقارن التشكيلة الحالية بلقطة سابقة محفوظة لاكتشاف
+        // وصول لاعب جديد فعلياً، ونمنحه فورة مبيعات أسبوع واحد فقط (كالواقع تماماً)
+        // ============================================================
+        function detectNewSigningBoost() {
+            const squad = getSigned();
+            const currentIds = squad.map(p => String(p.tmid)).sort();
+            const snapKey = 'storeSquadSnapshot_' + activeClub;
+            const prevSnapshotRaw = localStorage.getItem(snapKey);
+            const today = dateSortKey(getGameDate());
+            let boostUntil = parseInt(localStorage.getItem('storeSigningBoostUntil_' + activeClub)) || 0;
+            let boostPlayerName = localStorage.getItem('storeSigningBoostPlayer_' + activeClub) || '';
+
+            if (prevSnapshotRaw) {
+                const prevIds = new Set(JSON.parse(prevSnapshotRaw));
+                const newcomers = squad.filter(p => !prevIds.has(String(p.tmid)));
+                if (newcomers.length) {
+                    const star = newcomers.sort((a,b)=>(parseFloat(b.rating)||0)-(parseFloat(a.rating)||0))[0];
+                    if ((parseFloat(star.rating)||0) >= 75) {
+                        boostUntil = today + 7;
+                        boostPlayerName = star.player_name;
+                        localStorage.setItem('storeSigningBoostUntil_' + activeClub, String(boostUntil));
+                        localStorage.setItem('storeSigningBoostPlayer_' + activeClub, boostPlayerName);
+                        addMessageToSystem('المتجر الرسمي', `<i class="fas fa-chart-line"></i> توقّع إقبال كبير على قميص ${star.player_name} هذا الأسبوع بعد انضمامه الرسمي!`, 'finance');
+                    }
+                }
+            }
+            localStorage.setItem(snapKey, JSON.stringify(currentIds));
+
+            const active = today <= boostUntil;
+            return { active, playerName: boostPlayerName, factor: active ? 1.6 : 1.0 };
+        }
+
+        // ============================================================
+        // العروض والتخفيضات: قرار حقيقي من الرئيس — مبيعات أعلى مقابل هامش ربح أقل لكل قطعة
+        // ============================================================
+        function getActivePromo() {
+            const raw = localStorage.getItem('activePromo_' + activeClub);
+            if (!raw) return null;
+            const promo = JSON.parse(raw);
+            const today = dateSortKey(getGameDate());
+            if (today > promo.untilDateSort) { localStorage.removeItem('activePromo_' + activeClub); return null; }
+            return promo;
+        }
+        function addDaysToDate(base, days) {
+            let d = { ...base };
+            for (let i=0;i<days;i++){
+                d.day++; let dim=30;
+                if ([1,3,5,7,8,10,12].includes(d.month)) dim=31;
+                else if (d.month===2) dim=(d.year%4===0)?29:28;
+                if (d.day>dim){ d.day=1; d.month++; }
+                if (d.month>12){ d.month=1; d.year++; }
+            }
+            return d;
+        }
+        function launchPromo(discountPct, days, label) {
+            const today = getGameDate();
+            const until = dateSortKey(addDaysToDate(today, days));
+            localStorage.setItem('activePromo_' + activeClub, JSON.stringify({ discountPct, untilDateSort: until, label }));
+            addMessageToSystem('المتجر الرسمي', `<i class="fas fa-tag"></i> أُطلق عرض "${label}" (خصم ${discountPct}%) لمدة ${days} أيام — إقبال أعلى بربح أقل لكل قطعة.`, 'finance');
+            showToast(`<i class="fas fa-circle-check"></i> تم إطلاق عرض ${label}`);
+            renderPromoBox();
+        }
+        function renderPromoBox() {
+            const promo = getActivePromo();
+            const el = document.getElementById('promoBox');
+            if (promo) {
+                el.innerHTML = `<div class="factor-row"><span><i class="fas fa-tag"></i> عرض نشط: ${promo.label} (خصم ${promo.discountPct}%)</span><b>ساري</b></div>`;
+            } else {
+                el.innerHTML = `
+                    <div class="promo-btns">
+                        <button class="btn-outline2" onclick="launchPromo(20,7,'تخفيض 20%')">تخفيض 20% (أسبوع)</button>
+                        <button class="btn-outline2" onclick="launchPromo(30,3,'الجمعة السوداء')">الجمعة السوداء (3 أيام)</button>
+                        <button class="btn-outline2" onclick="launchPromo(15,14,'عروض نهاية الموسم')">نهاية الموسم (أسبوعين)</button>
+                    </div>`;
+            }
+        }
+
+        function runOneWeekOfSales() {
+            const rep = getClubReputation();
+            const storeLevel = parseInt(localStorage.getItem('clubStoreLevel')) || 1;
+            const formFactor = getRecentFormFactor();
+            const achievementFactor = getAchievementFactor();
+            const signingBoost = detectNewSigningBoost();
+            const promo = getActivePromo();
+            let totalRevenue = 0;
+            let summary = [];
+            getAllActiveItems().forEach(item => {
+                let price = getItemPrice(item);
+                if (promo) price = Math.round(price * (1 - promo.discountPct/100));
+                const stock = getStock(item.stockKey);
+                const baseDemand = (rep * 25 + storeLevel * 150) * item.demandWeight;
+                const jerseySpike = (item.key === 'jersey' || item.key === 'awayJersey') ? signingBoost.factor : 1.0;
+                const promoSpike = promo ? 1.35 : 1.0;
+                const demand = Math.round(baseDemand * formFactor * achievementFactor * jerseySpike * promoSpike * (1 - Math.min(0.3, price/300)));
+                const unitsSold = Math.min(stock, demand);
+                const revenue = (unitsSold * price) / 1000000;
+                setStock(item.stockKey, stock - unitsSold);
+                totalRevenue += revenue;
+                if (unitsSold > 0) summary.push(`${unitsSold.toLocaleString()} ${item.name}`);
+            });
+            const priorShop = parseFloat(localStorage.getItem('shopRevenue')) || 0;
+            localStorage.setItem('shopRevenue', (priorShop + totalRevenue).toFixed(3));
+            setClubBudget(getClubBudget() + totalRevenue);
+            return { totalRevenue, summary };
+        }
+
+        // المتجر "مفتوح" فعلياً: يبيع تلقائياً مع كل أسبوع حقيقي ينقضي في تقويم اللعبة، دون انتظار ضغطة زر
+        const STORE_RESTOCK_KEY = 'storeLastProcessedDateSort_' + (activeClub || 'default');
+        function processAutomaticSales() {
+            const today = dateSortKey(getGameDate());
+            let last = parseInt(localStorage.getItem(STORE_RESTOCK_KEY));
+            if (isNaN(last)) { localStorage.setItem(STORE_RESTOCK_KEY, String(today)); return; }
+            if (today <= last) return;
+
+            // أسبوع حقيقي واحد لكل 7 أيام فعلية منقضية، بحد أقصى 12 أسبوعاً دفعة واحدة (تفادي قفزة ضخمة بعد غياب طويل)
+            const roughWeeks = Math.min(12, Math.max(1, Math.round((today - last) / 7)));
+            let grandTotal = 0;
+            for (let i = 0; i < roughWeeks; i++) {
+                const { totalRevenue } = runOneWeekOfSales();
+                grandTotal += totalRevenue;
+            }
+            localStorage.setItem(STORE_RESTOCK_KEY, String(today));
+
+            if (grandTotal > 0.001) {
+                addMessageToSystem('المتجر الرسمي', `<i class="fas fa-bag-shopping"></i> مبيعات المتجر خلال الفترة الماضية (${roughWeeks} أسبوع تقريباً): عائد إجمالي ${grandTotal.toFixed(2)}M € أُضيف تلقائياً للميزانية.`, 'finance');
+            }
+        }
+
+
+
+        function renderPlayerJerseyBox() {
+            const shares = getPlayerJerseyShares().slice(0, 5);
+            const el = document.getElementById('playerJerseyBox');
+            if (!shares.length) { el.innerHTML = `<div style="padding:16px; text-align:center; color:var(--muted); font-size:12px;">لا يوجد لاعبون موقَّعون بعد.</div>`; return; }
+            el.innerHTML = shares.map((p,i) => `
+                <div class="player-jersey-row">
+                    <div class="rank">${i+1}</div>
+                    <div class="pname">${p.name}</div>
+                    <div class="pshare">${Math.round(p.share*100)}%</div>
+                </div>
+            `).join('');
+        }
+
+        window.onload = function() {
+            applyRealClubKitIfUnset();
+            processAutomaticSales();
+            renderKitControls();
+            renderJersey();
+            renderSponsorList();
+            renderReport();
+            renderMerchGrid();
+            renderPromoBox();
+            renderPlayerJerseyBox();
+            renderPricingSettings();
+        };
+    </script>
+</body>
+</html>

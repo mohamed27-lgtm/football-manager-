@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محرك المباريات الاحترافي</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --gold: #d4af37;
+            --accent: #38bdf8;
+            --win: #22c55e;
+            --loss: #ef4444;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0; padding: 20px;
+        }
+
+        .match-container {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        /* لوحة المعلومات العلوية */
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid var(--gold);
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .team-name { font-weight: bold; font-size: 1.2rem; }
+        .score { font-size: 4rem; font-weight: 900; color: var(--accent); }
+
+        .log-screen {
+            background: #020617;
+            height: 350px;
+            overflow-y: auto;
+            border-radius: 12px;
+            padding: 15px;
+            border-left: 4px solid var(--gold);
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        .log-entry {
+            padding: 8px;
+            border-bottom: 1px solid #1e293b;
+            animation: slide 0.4s ease;
+        }
+
+        @keyframes slide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .btn-play {
+            width: 100%;
+            padding: 20px;
+            background: var(--gold);
+            border: none;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="match-container">
+    <div class="info-bar">
+        <span>الفلسفة: <b id="ui-style">...</b></span>
+        <span>الخصم: <b id="ui-opp-level">صعب جداً</b></span>
+        <span>قوة فريقك: <b id="ui-my-level">80</b></span>
+    </div>
+
+    <div class="scoreboard">
+        <div class="team-name">ناديـك</div>
+        <div class="score" id="score-me">0</div>
+        <div id="minute-display" style="font-size: 1.5rem; color: var(--gold);">"0</div>
+        <div class="score" id="score-opp">0</div>
+        <div class="team-name">الخصـم</div>
+    </div>
+
+    <div class="log-screen" id="log"></div>
+
+    <button class="btn-play" id="play-btn" onclick="runMatch()">إطلاق الصافرة</button>
+</div>
+
+<script>
+    // ============================================================
+    //  محرك قوانين الاتحاد التأديبية (بطاقات، إيقافات، غرامات)
+    // ============================================================
+    function fedGetClub() { return localStorage.getItem('presidentialClub') || "نادي المستقبل"; }
+    function fedGetSquad() {
+        const allSigned = JSON.parse(localStorage.getItem('signed_players_by_club')) || {};
+        return allSigned[fedGetClub()] || [];
+    }
+    function fedLog(reason, amount, points) {
+        let log = JSON.parse(localStorage.getItem('clubDisciplinaryLog')) || [];
+        log.unshift({ reason, amount: amount || 0, points: points || 0, date: new Date().toLocaleDateString('ar-EG') });
+        localStorage.setItem('clubDisciplinaryLog', JSON.stringify(log.slice(0, 50)));
+    }
+    function fedFine(reason, amountEUR) {
+        let totalM = parseFloat(localStorage.getItem('penaltiesCost')) || 0;
+        totalM += (amountEUR / 1000000);
+        localStorage.setItem('penaltiesCost', totalM.toFixed(3));
+        let budget = parseFloat(localStorage.getItem('clubBudget')) || 0;
+        localStorage.setItem('clubBudget', (budget - (amountEUR / 1000000)).toFixed(2));
+        fedLog(reason, amountEUR, 0);
+    }
+    function fedGetSuspended() { return JSON.parse(localStorage.getItem('clubSuspendedPlayers')) || []; }
+    function fedSaveSuspended(list) { localStorage.setItem('clubSuspendedPlayers', JSON.stringify(list)); }
+    function fedGetYellowMap() { return JSON.parse(localStorage.getItem('clubYellowCards')) || {}; }
+    function fedSaveYellowMap(map) { localStorage.setItem('clubYellowCards', JSON.stringify(map)); }
+
+    function fedRandomEligiblePlayer() {
+        const squad = fedGetSquad();
+        const suspendedNames = fedGetSuspended().map(s => s.name);
+        const eligible = squad.filter(p => !suspendedNames.includes(p.player_name));
+        if (eligible.length === 0) return "لاعب النادي";
+        return eligible[Math.floor(Math.random() * eligible.length)].player_name;
+    }
+
+    // بطاقة صفراء: تراكم 5 بطاقات = إيقاف مباراة واحدة (لائحة الاتحاد)
+    function fedIssueYellowCard() {
+        const name = fedRandomEligiblePlayer();
+        const map = fedGetYellowMap();
+        map[name] = (map[name] || 0) + 1;
+        fedSaveYellowMap(map);
+        addLog(`🟨 بطاقة صفراء لـ ${name} (بطاقته رقم ${map[name]} هذا الموسم).`);
+        if (map[name] > 0 && map[name] % 5 === 0) {
+            const suspended = fedGetSuspended();
+            suspended.push({ name, matchesLeft: 1, reason: 'تراكم 5 بطاقات صفراء' });
+            fedSaveSuspended(suspended);
+            fedLog(`إيقاف ${name} مباراة واحدة (تراكم بطاقات صفراء) — وفق لائحة الاتحاد`, 0, 0);
+            addLog(`⛔ ${name} موقوف عن المباراة القادمة بسبب تراكم البطاقات، وفق لائحة الاتحاد.`);
+        }
+    }
+
+    // بطاقة حمراء: إيقاف مباشر 1-3 مباريات + احتمال غرامة على سوء السلوك الجسيم
+    function fedIssueRedCard() {
+        const name = fedRandomEligiblePlayer();
+        const matches = 1 + Math.floor(Math.random() * 3);
+        const suspended = fedGetSuspended();
+        suspended.push({ name, matchesLeft: matches, reason: 'طرد مباشر' });
+        fedSaveSuspended(suspended);
+        fedLog(`إيقاف ${name} ${matches} مباراة/مباريات (طرد مباشر) — وفق لائحة الاتحاد`, 0, 0);
+        addLog(`🟥 طرد مباشر لـ ${name}! سيغيب عن ${matches} مباراة/مباريات القادمة.`);
+        if (Math.random() < 0.4) {
+            fedFine(`سلوك عنيف أدى لطرد ${name}`, 40000 + Math.random() * 60000);
+            addLog(`⚖️ لجنة الانضباط فرضت غرامة مالية إضافية على النادي بسبب السلوك العنيف.`);
+        }
+    }
+
+    // بعد نهاية المباراة: إنقاص عداد الإيقاف مباراة واحدة لكل لاعب موقوف
+    function fedDecaySuspensions() {
+        let suspended = fedGetSuspended();
+        suspended = suspended.map(s => ({ ...s, matchesLeft: s.matchesLeft - 1 })).filter(s => s.matchesLeft > 0);
+        fedSaveSuspended(suspended);
+    }
+
+    // 1. استيراد قرارات الرئيس (التكتيكات)
+    const strategy = JSON.parse(localStorage.getItem('active_tactics')) || { style: 'balanced', forceYouth: false };
+
+    // 2. إعداد موازين القوى (المنطق الواقعي)
+    const matchData = {
+        myPower: 80,         // قوة فريقك
+        oppPower: 85,        // قوة الخصم (أقوى منك قليلاً)
+        coachStyle: 'defensive'
+    };
+
+    // تأثير الإيقافات الفعلية على قوة الفريق (اللائحة التأديبية للاتحاد)
+    const activeSuspensions = fedGetSuspended();
+    if (activeSuspensions.length > 0) {
+        matchData.myPower = Math.max(50, matchData.myPower - activeSuspensions.length * 3);
+    }
+
+    function runMatch() {
+        document.getElementById('play-btn').style.display = 'none';
+        document.getElementById('ui-style').innerText = strategy.style;
+
+        if (activeSuspensions.length > 0) {
+            addLog(`📋 غياب ${activeSuspensions.length} لاعب/لاعبين موقوفين وفق لائحة الاتحاد: ${activeSuspensions.map(s => s.name).join('، ')}`);
+        }
+
+        let min = 0;
+        let myGoals = 0;
+        let oppGoals = 0;
+
+        const interval = setInterval(() => {
+            min++;
+            document.getElementById('minute-display').innerText = min + "'";
+
+            // --- محرك الحسابات المنطقي ---
+            
+            // احتمالية التسجيل الأساسية بناءً على فرق القوة
+            let myChance = 0.01 + (matchData.myPower / 5000); 
+            let oppChance = 0.01 + (matchData.oppPower / 5000);
+
+            // تأثير التكتيك (الذي اخترته في الصفحة السابقة)
+            if (strategy.style === 'attacking') {
+                myChance += 0.02;     // تزيد هجومك
+                oppChance += 0.025;   // تفتح دفاعك للخصم القوي
+            } else if (strategy.style === 'defensive') {
+                myChance -= 0.005;
+                oppChance -= 0.015;   // تغلق اللعب
+            }
+
+            // تأثير "صدام الرئيس والمدرب"
+            if (strategy.style === 'attacking' && matchData.coachStyle === 'defensive') {
+                oppChance += 0.01; // عقوبة تكتيكية (الخصم يستغل الفوضى)
+            }
+
+            // --- المحاكاة ---
+            if (Math.random() < myChance) {
+                myGoals++;
+                document.getElementById('score-me').innerText = myGoals;
+                addLog("⚽ هدف! فريقك يخترق دفاع الخصم رغم الضغط.");
+            }
+
+            if (Math.random() < oppChance) {
+                oppGoals++;
+                document.getElementById('score-opp').innerText = oppGoals;
+                addLog("❌ هدف للخصم! القوة البدنية للخصم تصنع الفارق.");
+            }
+
+            // أحداث ديناميكية
+            if (min === 45) addLog("🏁 نهاية الشوط الأول.. تعليمات الرئيس تؤثر على الرتم.");
+
+            // أحداث تأديبية عشوائية (بطاقات) حسب لائحة الاتحاد
+            if (Math.random() < 0.012) fedIssueYellowCard();
+            if (Math.random() < 0.0025) fedIssueRedCard();
+
+            if (min >= 90) {
+                clearInterval(interval);
+                addLog("🔔 صافرة النهاية! انتهت المعركة التكتيكية.");
+                fedDecaySuspensions();
+            }
+        }, 150);
+    }
+
+    function addLog(txt) {
+        const log = document.getElementById('log');
+        log.innerHTML += `<div class="log-entry">${txt}</div>`;
+    }
+</script>
+
+</body>
+</html>

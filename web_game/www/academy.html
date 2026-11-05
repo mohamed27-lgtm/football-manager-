@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>أكاديمية الناشئين | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444; --blue:#3b82f6; }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+            --blue: #2563eb;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:10px 12px; border-radius:12px; border:1px solid var(--border); }
+        .back-btn { background:var(--border); color:white; border:none; padding:8px 12px; font-size:12px; border-radius:8px; text-decoration:none; }
+        .page-title { font-size:14px; font-weight:800; color:var(--gold); display:flex; align-items:center; gap:6px; }
+
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .card-title { font-size:12px; font-weight:800; color:var(--gold); padding:12px 14px 8px 14px; display:flex; align-items:center; gap:6px; }
+        .empty-state { text-align:center; padding:22px 16px; color:var(--muted); font-size:12px; line-height:1.8; }
+
+        .report-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:10px 14px 14px 14px; }
+        .report-box { background:var(--bg); border-radius:10px; padding:10px; text-align:center; }
+        .report-box .lbl { font-size:9.5px; color:var(--muted); }
+        .report-box .val { font-size:14px; font-weight:800; margin-top:3px; color:var(--gold); }
+
+        .facility-row { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
+        .facility-row:last-child { border-bottom:none; }
+        .facility-row .fname { flex:1; font-size:11.5px; font-weight:700; }
+        .facility-row .fdesc { font-size:9.5px; color:var(--muted); margin-top:2px; }
+        .btn-upgrade { background:var(--gold); color:#06090f; border:none; padding:7px 12px; border-radius:7px; font-size:9.5px; font-weight:800; cursor:pointer; flex-shrink:0; }
+
+        .prospect-card { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px; margin:8px 14px; }
+        .prospect-card .pname { font-size:12.5px; font-weight:800; color:var(--gold); }
+        .prospect-card .pmeta { font-size:10px; color:var(--muted); margin-top:4px; line-height:1.7; }
+        .btn { width:100%; border:none; padding:11px; border-radius:10px; font-size:12px; font-weight:800; cursor:pointer; background:var(--gold); color:#06090f; margin-top:8px; }
+
+        .youth-row { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
+        .youth-row:last-child { border-bottom:none; }
+        .rating-badge { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; border:2px solid var(--gold); color:var(--gold); flex-shrink:0; }
+        .youth-row .info { flex:1; min-width:0; }
+        .youth-row .yname { font-size:12px; font-weight:700; }
+        .youth-row .ysub { font-size:9.5px; color:var(--muted); margin-top:2px; }
+        .btn-sm { background:var(--gold); color:#06090f; border:none; padding:6px 10px; border-radius:7px; font-size:9.5px; font-weight:800; cursor:pointer; }
+        .btn-sm-outline { background:transparent; border:1px solid var(--red); color:var(--red); padding:6px 10px; border-radius:7px; font-size:9.5px; font-weight:700; cursor:pointer; margin-right:4px; }
+
+        .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--gold); color:var(--text); padding:10px 16px; border-radius:10px; font-size:12px; display:none; z-index:99; max-width:90%; text-align:center; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title"><i class="fas fa-graduation-cap"></i> أكاديمية الناشئين</div>
+        <div style="width:34px;"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-chart-simple"></i> نظرة عامة</div>
+        <div class="report-grid" id="overviewGrid"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-user-tie"></i> الجهاز الفني للأكاديمية</div>
+        <div id="staffContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-building-columns"></i> منشآت الأكاديمية</div>
+        <div id="facilitiesContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-diagram-project"></i> شبكة الاستقطاب</div>
+        <div id="networkContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-layer-group"></i> الفئات العمرية</div>
+        <div id="ageBandsContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-file-lines"></i> تقرير أكاديمية النادي — هذا الموسم</div>
+        <div id="seasonReportContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-star"></i> موهبة جديدة متاحة</div>
+        <div id="prospectContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-users-line"></i> فريق الناشئين الحالي</div>
+        <div id="youthSquadContainer"></div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || '';
+        function showToast(msg) { const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 3000); }
+        function seedHash(str) { let h=0; const s=String(str); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+        function getGameDate() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+        function dateSortKey(d) { return d.year*10000+d.month*100+d.day; }
+        function toAbsDay(d) { return Math.floor(new Date(d.year, d.month-1, d.day).getTime()/86400000); }
+        function addMessageToSystem(sender, text, category) {
+            let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+            inbox.unshift({ id: Date.now(), sender, text, time: new Date().toLocaleTimeString('en-US', { hour12:false }), read:false, category: category || 'system' });
+            localStorage.setItem('gameInbox', JSON.stringify(inbox));
+            localStorage.setItem('hasNewMessage', 'true');
+        }
+        function getClubBudget() { return parseFloat(localStorage.getItem('clubBudget')) || 0; }
+        function setClubBudget(v) { localStorage.setItem('clubBudget', v.toFixed(2)); }
+
+        // ============================================================
+        // جودة الأكاديمية الحقيقية — تُستهلَك هنا كعامل خارجي جاهز من staff.html (مصدر الحقيقة الوحيد)
+        // نفس getAcademyEffect() الحقيقية المستخدمة هناك بالضبط، لا إعادة حساب منفصلة هنا
+        // ============================================================
+        function getAcademyQualityFactor() {
+            const exported = localStorage.getItem('academyQualityFactor_' + activeClub);
+            return exported !== null ? parseFloat(exported) : 0.2;
+        }
+        function getAcademyStaff() {
+            try { return ((JSON.parse(localStorage.getItem('staff_by_club'))||{})[activeClub]||[]).filter(s => s.department === 'academy'); }
+            catch(e) { return []; }
+        }
+
+        // ============================================================
+        // شبكة استقطاب جغرافية حقيقية 5 مستويات — كل توسّع يحتاج تكلفة ووقت حقيقيين بالإضافة لكشاف مؤهَّل فعلياً (لا يكفي واحد فقط)
+        // ============================================================
+        const RECRUITMENT_TIERS = [
+            { key:'local', label:'منطقة النادي', icon:'fa-house', rarityMult:1.0, potentialCap:68, unlockCost:0, unlockDays:0 },
+            { key:'regional', label:'المناطق الوطنية', icon:'fa-map-location-dot', rarityMult:0.6, potentialCap:78, unlockCost:1.5, unlockDays:30 },
+            { key:'national', label:'الدول المجاورة', icon:'fa-flag', rarityMult:0.35, potentialCap:86, unlockCost:4, unlockDays:60 },
+            { key:'international', label:'القارة', icon:'fa-earth-africa', rarityMult:0.18, potentialCap:92, unlockCost:8, unlockDays:90 },
+            { key:'world', label:'العالم', icon:'fa-globe', rarityMult:0.08, potentialCap:97, unlockCost:15, unlockDays:150 },
+        ];
+        function getInfraStatus(tierKey) {
+            const t = RECRUITMENT_TIERS.find(x=>x.key===tierKey);
+            if (t.unlockCost === 0) return 'ready'; // منطقة النادي جاهزة دائماً بلا استثمار
+            const project = JSON.parse(localStorage.getItem(`recruitInfra_${activeClub}_${tierKey}`) || 'null');
+            if (localStorage.getItem(`recruitInfraDone_${activeClub}_${tierKey}`) === '1') return 'ready';
+            if (project) return toAbsDay(getGameDate()) >= project.completeAbsDay ? 'completing' : 'building';
+            return 'locked';
+        }
+        function startInfraProject(tierKey) {
+            const t = RECRUITMENT_TIERS.find(x=>x.key===tierKey);
+            const pool = getAcademyPool();
+            if (pool < t.unlockCost) { showToast(`ميزانية الأكاديمية لا تكفي (تحتاج ${t.unlockCost}M €).`); return; }
+            localStorage.setItem(`pool_academy_${activeClub}`, (pool-t.unlockCost).toFixed(2));
+            localStorage.setItem(`recruitInfra_${activeClub}_${tierKey}`, JSON.stringify({ completeAbsDay: toAbsDay(getGameDate()) + t.unlockDays }));
+            addMessageToSystem('شبكة الاستقطاب', `🌍 بدأ بناء بنية استقطاب حقيقية في نطاق "${t.label}" — تكلفة ${t.unlockCost}M €، تكتمل خلال ${t.unlockDays} يوماً.`, 'finance');
+            showToast('✅ بدأ توسيع الشبكة');
+            renderNetwork();
+        }
+        function processInfraCompletions() {
+            RECRUITMENT_TIERS.forEach(t => {
+                if (t.unlockCost === 0) return;
+                if (getInfraStatus(t.key) === 'completing') {
+                    localStorage.setItem(`recruitInfraDone_${activeClub}_${t.key}`, '1');
+                    localStorage.removeItem(`recruitInfra_${activeClub}_${t.key}`);
+                    addMessageToSystem('شبكة الاستقطاب', `✅ اكتمل بناء بنية الاستقطاب في نطاق "${t.label}" فعلياً — الشبكة جاهزة للعمل.`, 'system');
+                }
+            });
+        }
+        function getRealScouts() {
+            try { return ((JSON.parse(localStorage.getItem('staff_by_club'))||{})[activeClub]||[]).filter(s => s.role === 'scout' || s.role === 'chief_scout'); }
+            catch(e) { return []; }
+        }
+        // يوزَّع كل كشاف حقيقي فعلياً على مستوى شبكة واحد حسب مهاراته الفعلية (معرفة إقليمية عالية = نطاق أوسع)
+        function assignScoutTier(scout) {
+            const reach = ((scout.regional_knowledge||50) + (scout.judgement_ability||50)) / 2;
+            const seniorityBonus = scout.role === 'chief_scout' ? 15 : 0;
+            const score = reach + seniorityBonus;
+            if (score >= 90) return 'world';
+            if (score >= 80) return 'international';
+            if (score >= 68) return 'national';
+            if (score >= 55) return 'regional';
+            return 'local';
+        }
+        function getScoutForTier(tierKey) {
+            const scouts = getRealScouts();
+            const matching = scouts.filter(s => assignScoutTier(s) === tierKey);
+            if (matching.length) return matching.reduce((a,b) => (b.judgement_ability||0) > (a.judgement_ability||0) ? b : a);
+            return null; // لا كشاف حقيقي مسؤول عن هذا المستوى بعد — النطاق غير مغطى فعلياً
+        }
+        // التغطية الفعلية تحتاج الاثنين معاً: بنية تحتية جاهزة + كشاف مؤهَّل — أي منهما ناقص يعني نطاقاً غير مغطى فعلياً
+        function getNetworkCoverage() {
+            return RECRUITMENT_TIERS.map(t => ({ ...t, scout: getScoutForTier(t.key), infra: getInfraStatus(t.key) }));
+        }
+
+        // ============================================================
+        // فئات عمرية حقيقية (U9–U19) — تصنيف فعلي لكل ناشئ حسب عمره الحقيقي الحالي
+        // ============================================================
+        const AGE_BANDS = [
+            { key:'U9', min:6, max:9 }, { key:'U11', min:10, max:11 }, { key:'U13', min:12, max:13 },
+            { key:'U15', min:14, max:15 }, { key:'U17', min:16, max:17 }, { key:'U19', min:18, max:19 },
+        ];
+        function bandFor(age) { return (AGE_BANDS.find(b => age >= b.min && age <= b.max) || AGE_BANDS[AGE_BANDS.length-1]).key; }
+        const ROLE_LABELS = { academy_director: 'مدير الأكاديمية', youth_coach: 'مدرب الناشئين' };
+        function renderStaff() {
+            const staff = getAcademyStaff();
+            const el = document.getElementById('staffContainer');
+            if (!staff.length) {
+                el.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i>لا يوجد جهاز فني للأكاديمية حالياً — جودة الإنتاج ضعيفة جداً (20%).<br>وظّف مديراً أو مدرب ناشئين من <a href="staff.html" style="color:var(--gold);">صفحة الطاقم</a>.</div>`;
+                return;
+            }
+            el.innerHTML = staff.map(s => `
+                <div class="facility-row">
+                    <div class="rating-badge" style="width:34px;height:34px;"><i class="fas fa-user-graduate" style="font-size:12px;"></i></div>
+                    <div class="fname" style="flex:1;">${s.name}<div class="fdesc">${ROLE_LABELS[s.role]||s.role}</div></div>
+                    <div style="font-size:13px; font-weight:800; color:var(--gold);">${s.overall||'--'}</div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================
+        // ميزانية الأكاديمية الحقيقية (pool_academy) + خصم راعي الأكاديمية الحقيقي إن وُجد — لا ميزانية مُختلقة
+        // ============================================================
+        function getAcademyPool() { return parseFloat(localStorage.getItem(`pool_academy_${activeClub}`)) || 0; }
+        function getAcademySponsorDiscount() { return parseFloat(localStorage.getItem('clubAcademySponsorValue')) > 0 ? 0.7 : 1.0; }
+
+        const ACADEMY_FACILITIES = [
+            { key:'pitches', label:'ملاعب تدريب الناشئين', desc:'يرفع جودة تطوير المهارات الأساسية للفئات السنية.', costRange:[0.3,1.0] },
+            { key:'dorms', label:'سكن ومرافق الإقامة', desc:'يجذب مواهب من مناطق أبعد، ويرفع معدل الإنتاج.', costRange:[0.4,1.2] },
+            { key:'scouting_net', label:'شبكة كشافة الناشئين', desc:'يرفع سقف إمكانيات المواهب المكتشفة فعلياً.', costRange:[0.5,1.8] },
+            { key:'medical_youth', label:'مركز طبي للفئات السنية', desc:'يقلّل خطر إصابات النمو المبكرة لدى الناشئين.', costRange:[0.3,0.9] },
+        ];
+        function facilityCost(f) {
+            const seed = seedHash(activeClub + f.key + 'cost');
+            const [min,max] = f.costRange;
+            return Math.round((min + (seed%1000)/1000*(max-min)) * getAcademySponsorDiscount() * 20) / 20;
+        }
+        function hasFacility(key) { return localStorage.getItem(`academyFacility_${activeClub}_${key}`) === '1'; }
+        function investFacility(key) {
+            const f = ACADEMY_FACILITIES.find(x=>x.key===key);
+            const pool = getAcademyPool();
+            const cost = facilityCost(f);
+            if (pool < cost) { showToast(`ميزانية الأكاديمية لا تكفي (تحتاج ${cost.toFixed(2)}M €، المتاح ${pool.toFixed(2)}M €).`); return; }
+            localStorage.setItem(`pool_academy_${activeClub}`, (pool-cost).toFixed(2));
+            localStorage.setItem(`academyFacility_${activeClub}_${key}`, '1');
+            addMessageToSystem('أكاديمية الناشئين', `🏗️ اكتمل تطوير "${f.label}" بتكلفة ${cost.toFixed(2)}M € من ميزانية الأكاديمية.`, 'system');
+            showToast('✅ تم التطوير');
+            renderFacilities(); renderOverview();
+        }
+        function renderFacilities() {
+            const pool = getAcademyPool();
+            const el = document.getElementById('facilitiesContainer');
+            el.innerHTML = `<div style="padding:10px 14px; font-size:11px; color:var(--muted);">ميزانية الأكاديمية المتاحة: <b style="color:var(--gold);">${pool.toFixed(2)}M €</b>${getAcademySponsorDiscount()<1?' <span style="color:var(--green);">(خصم راعي الأكاديمية مفعَّل)</span>':''}</div>` +
+                ACADEMY_FACILITIES.map(f => {
+                    const owned = hasFacility(f.key);
+                    return `<div class="facility-row">
+                        <div><div class="fname">${f.label}</div><div class="fdesc">${f.desc}</div></div>
+                        ${owned ? `<span style="color:var(--green); font-size:11px; font-weight:800;">✓ مكتمل</span>` : `<button class="btn-upgrade" onclick="investFacility('${f.key}')">${facilityCost(f).toFixed(2)}M €</button>`}
+                    </div>`;
+                }).join('');
+        }
+
+        function renderOverview() {
+            const staff = getAcademyStaff();
+            const quality = getAcademyQualityFactor();
+            const facilitiesCount = ACADEMY_FACILITIES.filter(f=>hasFacility(f.key)).length;
+            const youth = getYouthSquad();
+            document.getElementById('overviewGrid').innerHTML = `
+                <div class="report-box"><div class="lbl">جودة الإنتاج الفعلية</div><div class="val">${Math.round(quality*100)}%</div></div>
+                <div class="report-box"><div class="lbl">منشآت مكتملة</div><div class="val">${facilitiesCount}/${ACADEMY_FACILITIES.length}</div></div>
+                <div class="report-box"><div class="lbl">ناشئون حالياً</div><div class="val">${youth.length}</div></div>
+            `;
+        }
+
+        // ============================================================
+        // إنتاج موهبة حقيقي — جودة ومدى الإمكانية مرتبطان فعلياً بجودة الجهاز الفني الحقيقية ومنشآت الكشافة الحقيقية
+        // ============================================================
+        function getYouthSquad() { try { return JSON.parse(localStorage.getItem(`academy_squad_${activeClub}`)) || []; } catch(e){ return []; } }
+        function saveYouthSquad(list) { localStorage.setItem(`academy_squad_${activeClub}`, JSON.stringify(list)); }
+
+        function getProductionScore() {
+            const staffQ = getAcademyQualityFactor(); // جودة الجهاز الفني الحقيقي
+            const facilitiesCount = ACADEMY_FACILITIES.filter(f=>hasFacility(f.key)).length;
+            const facilitiesFactor = facilitiesCount / ACADEMY_FACILITIES.length;
+            const reputation = parseFloat(localStorage.getItem('clubReputation')) || 50;
+            const rules = JSON.parse(localStorage.getItem('federationRules')) || { tier: 1 };
+            const tierFactor = rules.tier === 1 ? 1.0 : rules.tier === 2 ? 0.7 : 0.45; // مستوى الدوري يؤثر فعلياً على جذب المواهب
+            return (staffQ*0.4 + facilitiesFactor*0.3 + (reputation/100)*0.3) * tierFactor;
+        }
+
+        // كل "نافذة اختبارات" حقيقية تحاكي قمعاً احتمالياً حقيقياً (مُصغَّر بما يناسب نادياً واحداً): معظم النوافذ لا تنتج شيئاً أو موهبة عادية فقط
+        const PERSONALITIES = {
+            professional: { label:'محترف', growthMult:1.25, exitRisk:0 },
+            ambitious:    { label:'طموح', growthMult:1.1, exitRisk:0.15 },
+            loyal:        { label:'وفي', growthMult:1.0, exitRisk:0 },
+            lazy:         { label:'كسول', growthMult:0.7, exitRisk:0 },
+            fragile:      { label:'هش بدنياً', growthMult:0.9, exitRisk:0 },
+            leader:       { label:'قائد', growthMult:1.1, exitRisk:0 },
+            unstable:     { label:'متذبذب', growthMult:0.85, exitRisk:0 },
+        };
+        // ============================================================
+        // تقرير الموسم الحقيقي التراكمي — يُسجَّل فيه كل مرحلة فعلية تمر بها الأكاديمية طوال الموسم
+        // ============================================================
+        function getSeasonReport() {
+            const key = `academySeasonReport_${activeClub}`;
+            const stored = JSON.parse(localStorage.getItem(key) || '{}');
+            return { discovered:0, tested:0, accepted:0, exceptional:0, promoted:0, loaned:0, sold:0, revenue:0, promotedNames:[], departedNames:[], ...stored };
+        }
+        function updateSeasonReport(patch) {
+            const key = `academySeasonReport_${activeClub}`;
+            const report = getSeasonReport();
+            for (const k in patch) {
+                if (Array.isArray(patch[k])) report[k] = (report[k]||[]).concat(patch[k]);
+                else report[k] = (report[k]||0) + patch[k];
+            }
+            localStorage.setItem(key, JSON.stringify(report));
+        }
+        // أفضل موهبة وأكبر مفاجأة حقيقيتان — من قائمة الناشئين الحاليين فعلياً، لا اختلاق
+        function computeSeasonHighlights() {
+            const youth = getYouthSquad();
+            if (!youth.length) return null;
+            const bestTalent = youth.slice().sort((a,b)=>(b.actualCeiling||b.potentialMax||0)-(a.actualCeiling||a.potentialMax||0))[0];
+            // "أكبر مفاجأة" = أكبر فرق مطلق بين تقدير الكشاف الأصلي (متوسط النطاق) والمسار الفعلي الحالي للاعب
+            let biggestSurprise = null, maxDelta = -1;
+            youth.forEach(p => {
+                const originalEstimateMid = (p.potentialMin + p.potentialMax) / 2;
+                const actualMid = p.actualCeiling !== undefined ? p.actualCeiling : originalEstimateMid;
+                const delta = Math.abs(actualMid - originalEstimateMid);
+                if (delta > maxDelta) { maxDelta = delta; biggestSurprise = p; }
+            });
+            return { bestTalent, biggestSurprise: maxDelta > 3 ? biggestSurprise : null };
+        }
+
+        // ============================================================
+        // خط أنابيب استقطاب حقيقي زمني: اكتشاف → تقرير كشاف → دعوة → اختبار → تقييم → لجنة الأكاديمية → قبول/رفض
+        // كل مرحلة تستغرق أياماً حقيقية فعلية على تقويم اللعبة، وكل مرحلة لها خطر رفض حقيقي بعد المرحلة الأولى
+        // ============================================================
+        const PIPELINE_STAGES = [
+            { key:'scouted', label:'اكتشاف كشّاف', days:2, rejectChance:0 },
+            { key:'report', label:'تقرير الكشاف', days:2, rejectChance:0 },
+            { key:'invited', label:'دعوة للاختبار', days:3, rejectChance:0.35 },
+            { key:'trial', label:'فترة الاختبار', days:3, rejectChance:0 },
+            { key:'evaluated', label:'تقييم الأداء', days:2, rejectChance:0.30 },
+            { key:'committee', label:'مراجعة لجنة الأكاديمية', days:2, rejectChance:0.20 },
+            { key:'accepted', label:'قبول رسمي', days:0, rejectChance:0 },
+        ];
+        function getPendingCandidate() { try { return JSON.parse(localStorage.getItem(`academyCandidate_${activeClub}`)); } catch(e){ return null; } }
+        function savePendingCandidate(c) { localStorage.setItem(`academyCandidate_${activeClub}`, c ? JSON.stringify(c) : ''); if(!c) localStorage.removeItem(`academyCandidate_${activeClub}`); }
+
+        function canStartRecruitment() {
+            if (getPendingCandidate()) return false; // مرشح واحد قيد المعالجة فقط في كل مرة، واقعي تماماً
+            const today = dateSortKey(getGameDate());
+            const last = parseInt(localStorage.getItem(`lastRecruitDateSort_${activeClub}`)) || 0;
+            return today - last >= 20;
+        }
+        function startRecruitmentCycle() {
+            const coverage = getNetworkCoverage();
+            const covered = coverage.filter(t => t.scout && t.infra === 'ready');
+            if (!covered.length) { showToast('لا يوجد نطاق استقطاب جاهز فعلياً حالياً — يحتاج كشافاً مؤهَّلاً وبنية تحتية مكتملة معاً.'); return; }
+            const seed = seedHash(activeClub + 'recruit' + dateSortKey(getGameDate()));
+            // اختيار مستوى الشبكة فعلياً حسب ندرة كل مستوى (الدولي أندر بكثير من المحلي)
+            const totalWeight = covered.reduce((s,t)=>s+t.rarityMult,0);
+            let roll = (seed % 1000)/1000 * totalWeight, chosen = covered[0];
+            for (const t of covered) { if (roll < t.rarityMult) { chosen = t; break; } roll -= t.rarityMult; }
+
+            const production = getProductionScore();
+            const qualitySeed = (seed >> 6) % 1000;
+            let baseRating, potentialMin, potentialMax, tier;
+            if (qualitySeed < 750) { baseRating = 34 + Math.round(production*8); potentialMin = baseRating+6; potentialMax = Math.min(chosen.potentialCap, baseRating+16); tier = 'واعد'; }
+            else if (qualitySeed < 960) { baseRating = 41 + Math.round(production*11); potentialMin = baseRating+13; potentialMax = Math.min(chosen.potentialCap, baseRating+24); tier = 'موهبة قوية'; }
+            else { baseRating = 46 + Math.round(production*13); potentialMin = baseRating+20; potentialMax = Math.min(chosen.potentialCap, baseRating+34); tier = 'موهبة استثنائية'; }
+
+            const personalityKeys = Object.keys(PERSONALITIES);
+            const personality = personalityKeys[seed % personalityKeys.length];
+            const positions = ['GK','CB','LB','RB','CDM','CM','CAM','LW','RW','ST'];
+            const position = positions[(seed>>2) % positions.length];
+            const age = 16 + (seed % 3);
+            const homeCountry = localStorage.getItem('homeCountry') || 'Saudi Arabia';
+            const scoutErrorSeed = (seed >> 12) % 20 - 10; // دقة تقدير الكشاف غير كاملة، يتضح لاحقاً
+
+            const candidate = {
+                tmid: 'academy_' + seed, name: `مرشَّح الاستقطاب #${seed % 1000}`, tier, position, age, nationality: homeCountry, personality,
+                rating: baseRating, potentialMin: Math.max(baseRating, potentialMin+scoutErrorSeed), potentialMax: Math.min(96, potentialMax+scoutErrorSeed),
+                networkTier: chosen.key, scoutName: chosen.scout.name,
+                stageIdx: 0, stageStartAbs: toAbsDay(getGameDate()),
+            };
+            savePendingCandidate(candidate);
+            localStorage.setItem(`lastRecruitDateSort_${activeClub}`, String(dateSortKey(getGameDate())));
+            updateSeasonReport({ discovered: 1 });
+            addMessageToSystem('شبكة الاستقطاب', `🔎 اكتشف الكشاف ${chosen.scout.name} (نطاق ${chosen.label}) مرشَّحاً محتملاً: ${candidate.name}.`, 'system');
+            showToast('✅ بدأت دورة استقطاب جديدة');
+            renderProspect();
+        }
+        function progressPipeline() {
+            const c = getPendingCandidate();
+            if (!c) return;
+            const todayAbs = toAbsDay(getGameDate());
+            const stage = PIPELINE_STAGES[c.stageIdx];
+            const elapsed = todayAbs - c.stageStartAbs;
+            if (elapsed < stage.days) return; // المرحلة الحالية لم تكتمل زمنياً بعد
+
+            // خطر رفض حقيقي عند الانتقال من هذه المرحلة تحديداً
+            if (stage.rejectChance > 0) {
+                const seed = seedHash(activeClub + c.tmid + 'reject' + stage.key);
+                if ((seed % 1000)/1000 < stage.rejectChance) {
+                    addMessageToSystem('أكاديمية الناشئين', `❌ لم يجتز ${c.name} مرحلة "${stage.label}" — انتهت رحلته مع الأكاديمية عند هذه النقطة.`, 'system');
+                    savePendingCandidate(null);
+                    return;
+                }
+            }
+            if (stage.key === 'invited') updateSeasonReport({ tested: 1 });
+
+            if (c.stageIdx >= PIPELINE_STAGES.length - 1) {
+                // اكتمل القبول الرسمي فعلياً
+                const youth = getYouthSquad();
+                youth.push({ ...c, joinedDateSort: dateSortKey(getGameDate()), history: [{ event:'انضمام للأكاديمية', band: bandFor(c.age), dateSort: dateSortKey(getGameDate()) }] });
+                saveYouthSquad(youth);
+                updateSeasonReport({ accepted: 1 });
+                if (c.tier === 'موهبة استثنائية') updateSeasonReport({ exceptional: 1 });
+                addMessageToSystem('أكاديمية الناشئين', `🎓 وافقت لجنة الأكاديمية رسمياً على ضم ${c.name} (${c.position}) بعد رحلة استقطاب كاملة.`, 'system');
+                savePendingCandidate(null);
+                renderYouthSquad(); renderOverview();
+                return;
+            }
+            c.stageIdx++;
+            c.stageStartAbs = todayAbs;
+            savePendingCandidate(c);
+            addMessageToSystem('أكاديمية الناشئين', `📋 انتقل ${c.name} إلى مرحلة "${PIPELINE_STAGES[c.stageIdx].label}".`, 'system');
+        }
+
+        function renderProspect() {
+            const el = document.getElementById('prospectContainer');
+            const c = getPendingCandidate();
+            if (c) {
+                const stage = PIPELINE_STAGES[c.stageIdx];
+                const pers = PERSONALITIES[c.personality];
+                const tierColor = c.tier === 'موهبة استثنائية' ? 'var(--red)' : c.tier === 'موهبة قوية' ? 'var(--gold)' : 'var(--muted)';
+                const pct = Math.round((c.stageIdx / (PIPELINE_STAGES.length-1)) * 100);
+                el.innerHTML = `<div class="prospect-card">
+                    <div class="pname">${c.name} <span style="font-size:9.5px; font-weight:800; color:${tierColor};">(${c.tier})</span></div>
+                    <div class="pmeta">المركز: ${c.position} · العمر: ${c.age} · نطاق الاستقطاب: ${RECRUITMENT_TIERS.find(t=>t.key===c.networkTier).label} (${c.scoutName}) · الشخصية: ${pers.label}</div>
+                    <div style="height:6px; background:var(--border); border-radius:4px; overflow:hidden; margin:8px 0;"><div style="height:100%; width:${pct}%; background:var(--gold);"></div></div>
+                    <div class="pmeta" style="color:var(--gold); font-weight:700;">المرحلة الحالية: ${stage.label}</div>
+                </div>`;
+            } else if (canStartRecruitment()) {
+                el.innerHTML = `<div class="prospect-card" style="text-align:center;">
+                    <div class="pmeta" style="margin-bottom:8px;">شبكة الاستقطاب جاهزة لبدء دورة اكتشاف جديدة.</div>
+                    <button class="btn" onclick="startRecruitmentCycle()">بدء دورة استقطاب جديدة</button>
+                </div>`;
+            } else {
+                const today = dateSortKey(getGameDate());
+                const last = parseInt(localStorage.getItem(`lastRecruitDateSort_${activeClub}`)) || 0;
+                const daysLeft = 20 - (today-last);
+                el.innerHTML = `<div class="empty-state"><i class="fas fa-hourglass-half"></i>دورة الاستقطاب القادمة متاحة خلال ${daysLeft} يوماً تقريباً.</div>`;
+            }
+        }
+
+        // ============================================================
+        // ترقية للفريق الأول — تُدرَج بنفس بنية بيانات player.html الحقيقية بالضبط لضمان تكامل كامل
+        // ============================================================
+        function getFirstTeamSquad() { return (JSON.parse(localStorage.getItem('signed_players_by_club'))||{})[activeClub] || []; }
+        function saveFirstTeamSquad(list) {
+            const all = JSON.parse(localStorage.getItem('signed_players_by_club')) || {};
+            all[activeClub] = list;
+            localStorage.setItem('signed_players_by_club', JSON.stringify(all));
+        }
+        function pickAvailableJersey(squad) {
+            const taken = new Set(squad.map(p => parseInt(p.jersey)).filter(n => !isNaN(n)));
+            for (let n = 2; n <= 99; n++) if (!taken.has(n)) return n; // أول رقم متاح فعلياً غير مستخدَم في القائمة الحقيقية، لا رقم عشوائي
+            return 99;
+        }
+        function estimateYouthWage(p) {
+            // سلم رواتب ناشئ واقعي: يعتمد على مستواه الحالي وعمره، مطابقاً لمنطق الرواتب العادل المستخدم في بقية اللعبة
+            const base = 0.8 + Math.pow(1.09, p.rating - 40); // نمو تصاعدي واقعي مع التقييم
+            const ageFactor = p.age >= 18 ? 1.2 : 0.85; // لاعب تجاوز 18 يستحق راتب فريق أول فعلي أعلى
+            return Math.max(1, Math.round(base * ageFactor * 10) / 10);
+        }
+        function openPromotionDetail(tmid) {
+            const youth = getYouthSquad();
+            const p = youth.find(x => x.tmid === tmid);
+            if (!p) return;
+            const r = computePromotionReadiness(p);
+            const lines = r.factors.map(f => `${f.value>=0?'+':''}${f.value} — ${f.label}`).join('\n');
+            const proceed = confirm(`مراجعة ترقية ${p.name} إلى الفريق الأول\n\nجاهزية حقيقية إجمالية: ${r.score}%\n\n${lines}\n\nهذا تقييم استرشادي — القرار النهائي لك كرئيس. هل تريد المتابعة بالترقية الآن؟`);
+            if (proceed) promoteToFirstTeam(tmid);
+        }
+        function promoteToFirstTeam(tmid) {
+            const youth = getYouthSquad();
+            const idx = youth.findIndex(p => p.tmid === tmid);
+            if (idx === -1) return;
+            const p = youth[idx];
+            const history = (p.history || []).concat([{ event:'ترقية للفريق الأول', band: bandFor(p.age), rating: p.rating, dateSort: dateSortKey(getGameDate()) }]);
+            const firstTeam = getFirstTeamSquad();
+            firstTeam.push({
+                tmid: p.tmid, player_name: p.name, main_position: p.position, age: p.age,
+                rating: p.rating, potential: p.actualCeiling || p.potentialMax, weekly_wage: estimateYouthWage(p), nationality: p.nationality,
+                market_value_cur: p.rating * 15000, skills: {}, jersey: pickAvailableJersey(firstTeam),
+                contract_until: `${getGameDate().year + 3}-06-30`, release_clause: 0, academy_history: history,
+            });
+            saveFirstTeamSquad(firstTeam);
+            youth.splice(idx, 1);
+            saveYouthSquad(youth);
+            updateSeasonReport({ promoted: 1, promotedNames: [p.name] });
+            addMessageToSystem('أكاديمية الناشئين', `⬆️ تمت ترقية ${p.name} رسمياً إلى الفريق الأول!`, 'system');
+            showToast(`✅ تمت الترقية للفريق الأول`);
+            renderYouthSquad(); renderOverview();
+        }
+        function loanOutFromAcademy(tmid) {
+            const youth = getYouthSquad();
+            const p = youth.find(x => x.tmid === tmid);
+            if (!p) return;
+            if (!confirm(`إعارة ${p.name} لنادٍ آخر لاكتساب خبرة حقيقية؟ سيغيب عن الأكاديمية موسماً كاملاً.`)) return;
+            p.onLoan = true;
+            p.loanReturnDateSort = dateSortKey(getGameDate()) + 365;
+            // مستوى النادي المستضيف الحقيقي يتحدد عند الإعارة نفسها، لا عند العودة — نفس منطق أي قرار حقيقي يُتَّخذ لحظة وقوعه
+            const destSeed = seedHash(activeClub + tmid + 'loandest' + dateSortKey(getGameDate()));
+            p.loanDestTier = destSeed % 100 < 20 ? 'قوي' : destSeed % 100 < 65 ? 'متوسط' : 'ضعيف';
+            p.history = (p.history || []).concat([{ event:`إعارة (نادٍ ${p.loanDestTier})`, band: bandFor(p.age), rating: p.rating, dateSort: dateSortKey(getGameDate()) }]);
+            saveYouthSquad(youth);
+            updateSeasonReport({ loaned: 1 });
+            addMessageToSystem('أكاديمية الناشئين', `📋 أُعير ${p.name} لنادٍ (مستوى ${p.loanDestTier}) لاكتساب خبرة احترافية حقيقية.`, 'system');
+            showToast('✅ تمت الإعارة');
+            renderYouthSquad();
+        }
+        function estimateAcademySalePrice(p) {
+            const ceiling = p.actualCeiling || p.potentialMax;
+            const gap = Math.max(0, ceiling - p.rating); // فرق الإمكانية المتبقي = قيمة مستقبلية حقيقية يدفعها المشتري مقدَّماً
+            const ageFactor = p.age <= 17 ? 1.3 : p.age <= 19 ? 1.0 : 0.7; // كلما صغر السن زادت القيمة المستقبلية المقدَّرة
+            const posMultiplier = ['ST','CAM','CF'].includes(p.position) ? 1.25 : ['CB','GK'].includes(p.position) ? 0.85 : 1.0;
+            const reputation = parseFloat(localStorage.getItem('clubReputation')) || 50;
+            const repFactor = 0.7 + (reputation/100) * 0.6; // سمعة ناديك تؤثر على قوة تفاوضك الحقيقية
+            const base = (p.rating * 0.03 + gap * 0.025) * ageFactor * posMultiplier * repFactor;
+            return Math.max(0.15, Math.round(base * 20) / 20);
+        }
+        function sellFromAcademy(tmid) {
+            const youth = getYouthSquad();
+            const idx = youth.findIndex(p => p.tmid === tmid);
+            if (idx === -1) return;
+            const p = youth[idx];
+            const fee = estimateAcademySalePrice(p);
+            const sellOnPct = 15 + (seedHash(activeClub+tmid+'sellon') % 16); // نسبة إعادة بيع حقيقية 15-30%، مطابقة لبنود بيع الناشئين الحقيقية
+            if (!confirm(`بيع ${p.name} لنادٍ آخر مقابل ${fee.toFixed(2)}M € + ${sellOnPct}% من قيمة إعادة البيع مستقبلاً؟`)) return;
+            setClubBudget(getClubBudget() + fee);
+            youth.splice(idx, 1);
+            saveYouthSquad(youth);
+            updateSeasonReport({ sold: 1, revenue: fee });
+            addMessageToSystem('أكاديمية الناشئين', `💰 بيع ${p.name} لنادٍ آخر مقابل ${fee.toFixed(2)}M € + ${sellOnPct}% إعادة بيع مستقبلية.`, 'finance');
+            showToast(`✅ تم البيع — ${fee.toFixed(2)}M €`);
+            renderYouthSquad(); renderOverview();
+        }
+        function releaseFromAcademy(tmid) {
+            const youth = getYouthSquad();
+            const idx = youth.findIndex(p => p.tmid === tmid);
+            if (idx === -1) return;
+            const p = youth[idx];
+            if (!confirm(`إنهاء تعاقد ${p.name} مع الأكاديمية نهائياً؟`)) return;
+            youth.splice(idx, 1);
+            saveYouthSquad(youth);
+            updateSeasonReport({ departedNames: [p.name] });
+            addMessageToSystem('أكاديمية الناشئين', `📤 غادر ${p.name} الأكاديمية دون بلوغ المستوى المطلوب.`, 'system');
+            showToast('تم إنهاء التعاقد');
+            renderYouthSquad(); renderOverview();
+        }
+
+        // ============================================================
+        // تطوّر حقيقي أسبوعي لناشئي الأكاديمية — نفس فلسفة training.html: نتيجة فعلية محسوبة، لا رقم مُختلَق
+        // ============================================================
+        // النطاق المعروض يتقلّص تدريجياً نحو السقف الحقيقي الخفي مع مرور الوقت (كشاف يراقب اللاعب أكثر فأكثر)، لكن لا يُكشَف بدقة كاملة أبداً
+        function getDisplayedPotentialRange(p) {
+            if (p.actualCeiling === undefined) return { min: p.potentialMin, max: p.potentialMax };
+            const monthsTracked = Math.floor((dateSortKey(getGameDate()) - p.joinedDateSort) / 30);
+            const shrinkFactor = Math.min(0.85, monthsTracked * 0.03); // يتقلّص ببطء شديد وواقعي، لا يُكشَف كاملاً حتى بعد سنوات
+            const min = Math.round(p.potentialMin + (p.actualCeiling - p.potentialMin) * shrinkFactor * 0.5);
+            const max = Math.round(p.potentialMax - (p.potentialMax - p.actualCeiling) * shrinkFactor * 0.5);
+            return { min: Math.min(min, max-2), max: Math.max(max, min+2) };
+        }
+        function processWeeklyYouthDevelopment() {
+            const today = getGameDate();
+            const todaySort = dateSortKey(today);
+            const weekKey = `academyWeekProcessed_${activeClub}`;
+            if (todaySort - (parseInt(localStorage.getItem(weekKey))||0) < 7) return;
+            localStorage.setItem(weekKey, String(todaySort));
+
+            const youth = getYouthSquad();
+            if (!youth.length) return;
+            const quality = getAcademyQualityFactor();
+            let grown = 0;
+            const departures = [];
+            youth.forEach(p => {
+                // كل لاعب له سقف فعلي خاص به ضمن نطاق إمكانيته (غير مضمون الوصول إليه بالكامل أبداً) — يتحدد أول مرة فقط ويبقى ثابتاً لهذا اللاعب
+                if (p.actualCeiling === undefined) {
+                    const range = p.potentialMax - p.potentialMin;
+                    const ceilSeed = seedHash(activeClub + p.tmid + 'ceiling');
+                    p.actualCeiling = p.potentialMin + Math.round((ceilSeed % 100)/100 * range);
+                }
+                const pers = PERSONALITIES[p.personality] || PERSONALITIES.loyal;
+                if (p.rating < p.actualCeiling) {
+                    const seed = seedHash(activeClub + p.tmid + todaySort);
+                    // منحنى عمر حقيقي: ذروة النمو 15-17، يتباطأ تدريجياً حتى 20
+                    const ageFactor = p.age <= 17 ? 1.0 : p.age === 18 ? 0.8 : p.age === 19 ? 0.6 : 0.4;
+                    // فجوة الإمكانية المتبقية: كلما اقترب من سقفه الفعلي، تباطأ تطوّره (كالواقع تماماً)
+                    const gapRemaining = p.actualCeiling - p.rating;
+                    const gapFactor = Math.min(1, 0.3 + gapRemaining/20);
+                    const growthChance = 24 * quality * pers.growthMult * ageFactor * gapFactor;
+                    if ((seed % 100) < growthChance) { p.rating = Math.min(p.actualCeiling, p.rating + 1); grown++; }
+                }
+                if (todaySort % 365 < 7) p.age = (p.age || 16) + 1;
+
+                // أحداث حقيقية نادرة تغيّر مسار اللاعب فعلياً — قصص فشل ونجاح غير متوقَّعة، لا مسار سلس دائماً
+                if (todaySort % 30 < 7) { // فحص شهري تقريباً
+                    const eventSeed = seedHash(activeClub + p.tmid + 'event' + Math.floor(todaySort/30));
+                    const roll = eventSeed % 1000;
+                    if (roll < 12) { // إصابة نمو حقيقية تُضعف سقفه الفعلي نهائياً
+                        const loss = 3 + (eventSeed % 5);
+                        p.actualCeiling = Math.max(p.rating, p.actualCeiling - loss);
+                        p.history = (p.history || []).concat([{ event:`إصابة أثّرت على مستقبله فعلياً (-${loss} من سقفه الحقيقي)`, band: bandFor(p.age), rating: p.rating, dateSort: todaySort }]);
+                        addMessageToSystem('أكاديمية الناشئين', `🩹 تعرّض ${p.name} لإصابة أثّرت فعلياً على مستقبله الكروي.`, 'system');
+                    } else if (roll < 20) { // اختراق مفاجئ حقيقي — لاعب متوسط يتحوّل لموهبة فعلية
+                        const gain = 4 + (eventSeed % 6);
+                        p.actualCeiling = Math.min(96, p.actualCeiling + gain);
+                        p.history = (p.history || []).concat([{ event:`اختراق مفاجئ حقيقي رفع سقفه (+${gain})`, band: bandFor(p.age), rating: p.rating, dateSort: todaySort }]);
+                        addMessageToSystem('أكاديمية الناشئين', `⭐ أظهر ${p.name} اختراقاً حقيقياً غير متوقَّع في مستواه!`, 'system');
+                    }
+                }
+
+                // لاعب طموح عالق في الأكاديمية لفترة طويلة دون ترقية قد يطلب الرحيل فعلياً — واقعي تماماً
+                const monthsInAcademy = Math.floor((todaySort - p.joinedDateSort) / 30);
+                if (pers.exitRisk > 0 && p.age >= 19 && monthsInAcademy >= 18 && !p.exitRequested) {
+                    const exitSeed = seedHash(activeClub + p.tmid + 'exit' + todaySort);
+                    if ((exitSeed % 1000)/1000 < pers.exitRisk) {
+                        p.exitRequested = true;
+                        departures.push(p.name);
+                    }
+                }
+            });
+            if (grown > 0) addMessageToSystem('أكاديمية الناشئين', `📈 تطوّر ${grown} من ناشئي الأكاديمية فعلياً هذا الأسبوع.`, 'system');
+            departures.forEach(name => addMessageToSystem('أكاديمية الناشئين', `⚠️ طلب ${name} (شخصية طموحة) الانتقال لفريق آخر بعد طول الانتظار دون ترقية للفريق الأول.`, 'system'));
+            saveYouthSquad(youth);
+        }
+
+        function processLoanReturns() {
+            const youth = getYouthSquad();
+            const todaySort = dateSortKey(getGameDate());
+            let changed = false;
+            youth.forEach(p => {
+                if (p.onLoan && todaySort >= p.loanReturnDateSort) {
+                    p.onLoan = false;
+                    const pers = PERSONALITIES[p.personality] || PERSONALITIES.loyal;
+                    const destBonus = p.loanDestTier === 'قوي' ? 15 : p.loanDestTier === 'متوسط' ? 0 : -12;
+                    const seed = seedHash(activeClub + p.tmid + 'loanoutcome' + todaySort);
+                    const roll = (seed % 1000) + destBonus * 4 + Math.round((pers.growthMult-1) * 100);
+                    let outcomeMsg, delta;
+                    if (roll >= 780) { delta = 6; outcomeMsg = 'عاد بمستوى أفضل بكثير فعلياً — أداء لافت في الإعارة'; }
+                    else if (roll >= 550) { delta = 3; outcomeMsg = 'عاد بمستوى أفضل قليلاً'; }
+                    else if (roll >= 300) { delta = 0; outcomeMsg = 'عاد بنفس مستواه تقريباً — لم يحصل على دقائق كافية'; }
+                    else if (roll >= 120) { delta = -2; outcomeMsg = 'عاد بمستوى أضعف قليلاً بعد موسم صعب'; }
+                    else { delta = -4; outcomeMsg = 'أُصيب أثناء الإعارة وتأثر مستواه فعلياً'; }
+                    p.rating = Math.max(30, Math.min(p.actualCeiling || p.potentialMax, (p.rating||0) + delta));
+                    p.history = (p.history || []).concat([{ event:`عودة من الإعارة: ${outcomeMsg}`, band: bandFor(p.age), rating: p.rating, dateSort: todaySort }]);
+                    addMessageToSystem('أكاديمية الناشئين', `↩️ عاد ${p.name} من الإعارة — ${outcomeMsg}.`, 'system');
+                    changed = true;
+                }
+            });
+            if (changed) saveYouthSquad(youth);
+        }
+        function renderNetwork() {
+            const coverage = getNetworkCoverage();
+            document.getElementById('networkContainer').innerHTML = coverage.map(t => {
+                const infraLabel = { ready:'جاهزة', building:`قيد الإنشاء`, locked:'غير مُموَّلة', completing:'جاهزة' }[t.infra];
+                const infraColor = t.infra==='ready' ? 'var(--green)' : t.infra==='building' ? 'var(--gold)' : 'var(--red)';
+                return `
+                <div class="facility-row" style="flex-direction:column; align-items:stretch; gap:5px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div class="rating-badge" style="width:34px;height:34px;"><i class="fas ${t.icon}" style="font-size:12px;"></i></div>
+                        <div class="fname" style="flex:1;">
+                            ${t.label}
+                            <div class="fdesc">${t.scout ? `الكشاف المسؤول: ${t.scout.name} (تقييم ${t.scout.overall||'--'})` : 'لا يوجد كشاف حقيقي يغطي هذا النطاق حالياً'}</div>
+                        </div>
+                        <span style="font-size:10px; font-weight:800; color:${infraColor};">${infraLabel}</span>
+                    </div>
+                    ${t.infra==='locked' ? `<button class="btn-upgrade" style="width:100%;" onclick="startInfraProject('${t.key}')">بناء بنية استقطاب (${t.unlockCost}M € · ${t.unlockDays} يوماً)</button>` : ''}
+                </div>`;
+            }).join('');
+        }
+        function renderAgeBands() {
+            const youth = getYouthSquad();
+            const el = document.getElementById('ageBandsContainer');
+            el.innerHTML = AGE_BANDS.map(b => {
+                const players = youth.filter(p => bandFor(p.age) === b.key);
+                const avgRating = players.length ? Math.round(players.reduce((s,p)=>s+(p.rating||0),0)/players.length) : 0;
+                return `<div class="facility-row">
+                    <div class="fname" style="flex:1;">${b.key} <span style="color:var(--muted); font-weight:400;">(${b.min}-${b.max} سنة)</span></div>
+                    <div style="font-size:10px; color:var(--muted); margin-left:8px;">${players.length} لاعب${players.length?` · متوسط ${avgRating}`:''}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderSeasonReport() {
+            const r = getSeasonReport();
+            const youth = getYouthSquad();
+            const highlights = computeSeasonHighlights();
+            const el = document.getElementById('seasonReportContainer');
+            const rows = [
+                ['عدد اللاعبين الحاليين', youth.length],
+                ['تم اكتشافهم', r.discovered],
+                ['تم اختبارهم', r.tested],
+                ['تم قبولهم', r.accepted],
+                ['مواهب استثنائية', r.exceptional],
+                ['تمت ترقيتهم للفريق الأول', r.promoted],
+                ['تمت إعارتهم', r.loaned],
+                ['تم بيعهم', r.sold],
+                ['إجمالي إيرادات الأكاديمية', r.revenue.toFixed(2) + 'M €'],
+            ];
+            if (highlights && highlights.bestTalent) rows.push(['أفضل موهبة حالياً', highlights.bestTalent.name]);
+            if (highlights && highlights.biggestSurprise) rows.push(['أكبر مفاجأة (مسار غير متوقَّع)', highlights.biggestSurprise.name]);
+            if (r.promotedNames && r.promotedNames.length) rows.push(['أسماء المُرقَّين', r.promotedNames.join('، ')]);
+            if (r.departedNames && r.departedNames.length) rows.push(['أسماء المُغادرين', r.departedNames.join('، ')]);
+            el.innerHTML = rows.map(([label, val]) => `
+                <div class="facility-row"><div class="fname">${label}</div><div style="font-weight:800; color:var(--gold); text-align:left; max-width:55%;">${val}</div></div>
+            `).join('');
+        }
+
+        // ============================================================
+        // توصية ترقية حقيقية متعددة العوامل — لا تعتمد على العمر والتقييم فقط
+        // مركز اللاعب وحاجة الفريق الفعلية + جودة المدرب + مستوى المنافسة + الراتب + سعة التسجيل
+        // ============================================================
+        function getPositionGroup(pos) {
+            if (pos === 'GK') return 'GK';
+            if (['CB','LB','RB'].includes(pos)) return 'DEF';
+            if (['CDM','CM','CAM'].includes(pos)) return 'MID';
+            return 'FWD';
+        }
+        function computePromotionReadiness(p) {
+            const firstTeam = getFirstTeamSquad();
+            const factors = [];
+
+            // 1) حاجة الفريق الفعلية في نفس خط مركزه — عدد لاعبي نفس الخط الحقيقيين حالياً
+            const posGroup = getPositionGroup(p.position);
+            const sameGroupCount = firstTeam.filter(x => getPositionGroup(x.main_position) === posGroup).length;
+            const needFactor = sameGroupCount <= 3 ? 25 : sameGroupCount <= 5 ? 10 : -15;
+            factors.push({ label:'حاجة الفريق في مركزه', value: needFactor });
+
+            // 2) جودة المدرب الحقيقي — مدرب بارع بتطوير الشباب أكثر استعداداً لمنح الفرصة فعلياً
+            const staff = (JSON.parse(localStorage.getItem('staff_by_club'))||{})[activeClub] || [];
+            const coach = staff.find(s => s.role === 'head_coach');
+            const coachFactor = coach ? Math.round(((coach.overall||50)-50)/5) : -5;
+            factors.push({ label:'ثقة المدرب الحقيقية', value: coachFactor });
+
+            // 3) مستوى المنافسة الحقيقي — نادٍ درجة أولى كبير يتطلب مستوى أعلى بكثير من نادٍ صغير
+            const rules = JSON.parse(localStorage.getItem('federationRules')) || { tier:1 };
+            const reputation = parseFloat(localStorage.getItem('clubReputation')) || 50;
+            const competitionFactor = rules.tier === 1 ? -Math.round(reputation/10) : rules.tier === 2 ? 5 : 12;
+            factors.push({ label:'مستوى المنافسة في ناديك', value: competitionFactor });
+
+            // 4) الراتب — هل ميزانية النادي قادرة فعلياً على استيعاب راتب فريق أول جديد؟
+            const wage = estimateYouthWage(p);
+            const budget = getClubBudget();
+            const wageFactor = budget > wage * 20 ? 10 : budget > wage * 5 ? 0 : -20;
+            factors.push({ label:'القدرة المالية على راتبه', value: wageFactor });
+
+            // 5) سعة التسجيل الحقيقية — هل هناك مكان فعلي في القائمة المسجَّلة رسمياً؟
+            const squadMax = rules.squadMax || 25;
+            const registrationFactor = firstTeam.length < squadMax ? 10 : -25;
+            factors.push({ label:'سعة تسجيل القائمة', value: registrationFactor });
+
+            const base = Math.min(40, Math.max(0, (p.rating - 50) * 1.5)); // المستوى الفني الأساسي يبقى شرطاً حقيقياً أولياً
+            const total = Math.max(0, Math.min(100, base + factors.reduce((s,f)=>s+f.value,0)));
+            return { score: Math.round(total), factors };
+        }
+
+        function renderYouthSquad() {
+            const youth = getYouthSquad().slice().sort((a,b)=>(b.rating||0)-(a.rating||0));
+            const el = document.getElementById('youthSquadContainer');
+            if (!youth.length) { el.innerHTML = `<div class="empty-state"><i class="fas fa-user-group"></i>لا يوجد ناشئون في الأكاديمية حالياً.</div>`; return; }
+            el.innerHTML = youth.map(p => {
+                const eligibleForConsideration = !p.onLoan && p.age >= 16;
+                const readiness = eligibleForConsideration ? computePromotionReadiness(p) : null;
+                const readyColor = !readiness ? '' : readiness.score >= 65 ? 'var(--green)' : readiness.score >= 40 ? 'var(--gold)' : 'var(--red)';
+                const shouldRelease = !p.onLoan && p.age >= 21 && p.rating < 60;
+                const pers = PERSONALITIES[p.personality] || PERSONALITIES.loyal;
+                const displayRange = getDisplayedPotentialRange(p);
+                return `<div class="youth-row" style="flex-wrap:wrap;">
+                    <div class="rating-badge">${p.rating}</div>
+                    <div class="info">
+                        <div class="yname">${p.name} <span style="color:var(--muted); font-weight:400; font-size:10px;">(${bandFor(p.age)})</span> ${p.onLoan?'<span style="color:var(--blue); font-size:9px;">معار حالياً</span>':''} ${p.exitRequested?'<span style="color:var(--red); font-size:9px;">طلب الرحيل</span>':''} ${shouldRelease?'<span style="color:var(--red); font-size:9px;">تجاوز السن دون تطوّر كافٍ</span>':''}</div>
+                        <div class="ysub">${p.position} · العمر ${p.age} · تقدير الإمكانية الحالي ${displayRange.min}–${displayRange.max} · الشخصية: ${pers.label}</div>
+                        ${readiness ? `<div class="ysub" style="color:${readyColor}; margin-top:2px; font-weight:700;">جاهزية الترقية الحقيقية: ${readiness.score}%</div>` : ''}
+                        ${p.history && p.history.length ? `<div class="ysub" style="color:var(--gold); margin-top:2px;">📋 ${p.history.length} حدث مسجَّل في مسيرته: ${p.history[p.history.length-1].event}</div>` : ''}
+                    </div>
+                    ${!p.onLoan ? `
+                        ${eligibleForConsideration ? `<button class="btn-sm" onclick="openPromotionDetail('${p.tmid}')">مراجعة الترقية</button>` : ''}
+                        <button class="btn-sm-outline" style="border-color:var(--blue); color:var(--blue);" onclick="loanOutFromAcademy('${p.tmid}')">إعارة</button>
+                        <button class="btn-sm-outline" style="border-color:var(--gold); color:var(--gold);" onclick="sellFromAcademy('${p.tmid}')">بيع</button>
+                        <button class="btn-sm-outline" onclick="releaseFromAcademy('${p.tmid}')">إنهاء</button>
+                    ` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        window.onload = function() {
+            processInfraCompletions();
+            processLoanReturns();
+            processWeeklyYouthDevelopment();
+            progressPipeline();
+            renderOverview();
+            renderStaff();
+            renderNetwork();
+            renderFacilities();
+            renderAgeBands();
+            renderSeasonReport();
+            renderProspect();
+            renderYouthSquad();
+        };
+    </script>
+</body>
+</html>

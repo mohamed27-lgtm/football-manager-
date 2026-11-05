@@ -1,0 +1,48 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+AJ,Ajax Amsterdam,أياكس أمستردام,هولندا,194,UEFA,11,ED,Eredivisie,First Tier,36,"1918,1919,1931,1932,1934,1937,1939,1947,1957,1960,1966,1967,1968,1970,1972,1973,1977,1979,1980,1981,1982,1983,1985,1990,1994,1995,1996,1998,2002,2004,2011,2012,2013,2014,2019,2021,2022"
+AJ,Ajax Amsterdam,أياكس أمستردام,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,20,"1917,1943,1961,1967,1970,1971,1972,1979,1983,1986,1987,1993,1998,1999,2002,2006,2007,2010,2019,2021"
+AJ,Ajax Amsterdam,أياكس أمستردام,هولندا,194,UEFA,11,JCS,Johan Cruyff Shield,Domestic Super Cup,9,"1993,1994,1995,2002,2005,2006,2007,2013,2019"
+AJ,Ajax Amsterdam,أياكس أمستردام,هولندا,194,UEFA,11,UCL,UEFA Champions League,Continental,4,"1971,1972,1973,1995"
+AJ,Ajax Amsterdam,أياكس أمستردام,هولندا,194,UEFA,11,UCWC,UEFA Cup Winners' Cup,Continental,1,1987
+AJ,Ajax Amsterdam,أياكس أمستردام,هولندا,194,UEFA,11,UEL,UEFA Europa League,Continental,1,1992
+AJ,Ajax Amsterdam,أياكس أمستردام,هولندا,194,UEFA,11,USC,UEFA Super Cup,Continental,3,"1972,1973,1995"
+AJ,Ajax Amsterdam,أياكس أمستردام,هولندا,194,UEFA,11,IC,Intercontinental Cup,Global,2,"1972,1995"
+AJ,Ajax Amsterdam,أياكس أمستردام,هولندا,194,UEFA,11,FIFA-CWC,FIFA Club World Cup,Global,0,·
+PSV,PSV Eindhoven,بي إس في آيندهوفن,هولندا,194,UEFA,11,ED,Eredivisie,First Tier,25,"1929,1935,1951,1963,1975,1976,1978,1986,1987,1988,1989,1991,1992,1997,2000,2001,2003,2005,2006,2007,2008,2015,2016,2018,2024"
+PSV,PSV Eindhoven,بي إس في آيندهوفن,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,11,"1950,1974,1976,1988,1989,1990,1996,2005,2012,2022,2023"
+PSV,PSV Eindhoven,بي إس في آيندهوفن,هولندا,194,UEFA,11,JCS,Johan Cruyff Shield,Domestic Super Cup,14,"1992,1996,1997,1998,2000,2001,2003,2008,2012,2015,2016,2021,2022,2023"
+PSV,PSV Eindhoven,بي إس في آيندهوفن,هولندا,194,UEFA,11,UCL,UEFA Champions League,Continental,1,1988
+PSV,PSV Eindhoven,بي إس في آيندهوفن,هولندا,194,UEFA,11,UEL,UEFA Europa League,Continental,1,1978
+PSV,PSV Eindhoven,بي إس في آيندهوفن,هولندا,194,UEFA,11,USC,UEFA Super Cup,Continental,0,·
+PSV,PSV Eindhoven,بي إس في آيندهوفن,هولندا,194,UEFA,11,IC,Intercontinental Cup,Global,1,1988
+FEY,Feyenoord,فينورد,هولندا,194,UEFA,11,ED,Eredivisie,First Tier,16,"1924,1928,1936,1938,1940,1961,1962,1965,1969,1971,1974,1984,1993,1999,2017,2023"
+FEY,Feyenoord,فينورد,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,14,"1930,1935,1965,1969,1980,1984,1991,1992,1994,1995,2008,2016,2018,2024"
+FEY,Feyenoord,فينورد,هولندا,194,UEFA,11,JCS,Johan Cruyff Shield,Domestic Super Cup,5,"1991,1999,2017,2018,2024"
+FEY,Feyenoord,فينورد,هولندا,194,UEFA,11,UCL,UEFA Champions League,Continental,1,1970
+FEY,Feyenoord,فينورد,هولندا,194,UEFA,11,UCWC,UEFA Cup Winners' Cup,Continental,0,·
+FEY,Feyenoord,فينورد,هولندا,194,UEFA,11,UEL,UEFA Europa League,Continental,2,"1974,2002"
+FEY,Feyenoord,فينورد,هولندا,194,UEFA,11,USC,UEFA Super Cup,Continental,0,·
+FEY,Feyenoord,فينورد,هولندا,194,UEFA,11,IC,Intercontinental Cup,Global,1,1970
+UTR,FC Utrecht,أوترخت,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,3,"1985,2003,2004"
+UTR,FC Utrecht,أوترخت,هولندا,194,UEFA,11,JCS,Johan Cruyff Shield,Domestic Super Cup,1,2004
+AZ,AZ Alkmaar,إي زد ألكمار,هولندا,194,UEFA,11,ED,Eredivisie,First Tier,2,"1981,2009"
+AZ,AZ Alkmaar,إي زد ألكمار,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,4,"1978,1981,1982,2013"
+AZ,AZ Alkmaar,إي زد ألكمار,هولندا,194,UEFA,11,JCS,Johan Cruyff Shield,Domestic Super Cup,1,2009
+TWE,FC Twente,تفينتي,هولندا,194,UEFA,11,ED,Eredivisie,First Tier,1,2010
+TWE,FC Twente,تفينتي,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,3,"1977,2001,2011"
+TWE,FC Twente,تفينتي,هولندا,194,UEFA,11,JCS,Johan Cruyff Shield,Domestic Super Cup,2,"2010,2011"
+GRO,FC Groningen,خرونينغن,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,1,1989
+HEE,SC Heerenveen,هيرنفين,هولندا,194,UEFA,11,·,·,·,0,·
+SPA,Sparta Rotterdam,سبارتا روتردام,هولندا,194,UEFA,11,ED,Eredivisie,First Tier,6,"1909,1911,1912,1913,1915,1959"
+SPA,Sparta Rotterdam,سبارتا روتردام,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,3,"1958,1962,1966"
+NAK,NAC Breda,إن إيه سي بريدا,هولندا,194,UEFA,11,·,·,·,0,·
+GAE,Go Ahead Eagles,غو أهيد إيغلز,هولندا,194,UEFA,11,ED,Eredivisie,First Tier,4,"1917,1922,1930,1933"
+GAE,Go Ahead Eagles,غو أهيد إيغلز,هولندا,194,UEFA,11,·,·,·,0,·
+WIL,Willem II,فيليم الثاني,هولندا,194,UEFA,11,ED,Eredivisie,First Tier,3,"1916,1952,1955"
+WIL,Willem II,فيليم الثاني,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,2,"1944,1963"
+HER,Heracles Almelo,هيراكليس ألميلو,هولندا,194,UEFA,11,·,·,·,0,·
+FOR,Fortuna Sittard,فورتونا سيتارد,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,2,"1957,1964"
+NEC,NEC Nijmegen,إن إي سي نيميخن,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,1,1973
+PEC,PEC Zwolle,بي إي سي زفوله,هولندا,194,UEFA,11,KNVB,KNVB Cup,Domestic Cup,1,2014
+ALM,Almere City,ألمير سيتي,هولندا,194,UEFA,11,·,·,·,0,·
+RKC,RKC Waalwijk,آر كيه سي فالفايك,هولندا,194,UEFA,11,·,·,·,0,·

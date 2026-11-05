@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<!-- skill:chrome -->
+<style>
+/* Credit line — bottom-right */
+.design-ui-credit {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  font: 11px/1 system-ui, sans-serif;
+  color: rgba(128,128,128,0.5);
+  pointer-events: none;
+  z-index: 2147483647;
+  transition: opacity 0.4s ease;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* Hide chrome on touch devices */
+@media (hover: none) {
+  .design-ui-credit { display: none; }
+}
+
+/* Print fixes */
+@media print {
+  * {
+    transition: none !important;
+    animation: none !important;
+    box-shadow: none !important;
+  }
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .design-ui-credit { display: none !important; }
+}
+
+</style>
+<script>
+(function () {
+    // Design-ui pages are single compositions, so the whole body is editable.
+    function markEditable() {
+        document.body.classList.add('artifact-editable');
+    }
+
+    // Credit badge with idle-fade. Hover devices only.
+    function initChromeUI() {
+        if (!matchMedia('(hover: hover)').matches) return;
+
+        var credit = document.createElement('div');
+        credit.className = 'design-ui-credit';
+        credit.setAttribute('aria-hidden', 'true');
+        credit.innerHTML = '\u{1F49C} by ClickUp Brain';
+        document.body.appendChild(credit);
+
+        var timer = null;
+        var fade = function (out) { credit.style.opacity = out ? '0' : ''; };
+        fade(true);
+        var show = function () {
+            fade(false);
+            clearTimeout(timer);
+            timer = setTimeout(function () { fade(true); }, 3000);
+        };
+        document.addEventListener('mousemove', show);
+        show();
+    }
+
+    function init() {
+        markEditable();
+        initChromeUI();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+
+</script>
+<!-- /skill:chrome -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>TV Center | قناة النادي</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{
+    --bg:#090f1d; --card:#111a2e; --card-2:#15203a; --border:#1e293b;
+    --text:#f1f5f9; --muted:#94a3b8; --gold:#c5a059; --green:#10b981;
+    --blue:#3b82f6; --red:#ef4444; --purple:#8b5cf6; --amber:#f59e0b;
+    --ease:cubic-bezier(0.22,1,0.36,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px;}
+
+  /* شريط عاجل */
+  .breaking{position:sticky;top:0;z-index:50;background:#7f1d1d;border-bottom:2px solid var(--red);display:flex;align-items:center;height:34px;overflow:hidden;}
+  .breaking .lbl{background:var(--red);color:#fff;font-size:10.5px;font-weight:900;padding:0 11px;height:100%;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+  .breaking .lbl i{animation:blink 1s infinite;font-size:7px;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .tk-wrap{flex:1;overflow:hidden;}
+  .tk{display:inline-flex;white-space:nowrap;animation:scroll 30s linear infinite;padding-right:100%;}
+  .tk span{font-size:12px;color:#fee2e2;padding:0 24px;}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+
+  /* هيدر */
+  .head{display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:12px 16px;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap;}
+  .head .brand{display:flex;align-items:center;gap:11px;}
+  .logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--gold),#a8814a);display:flex;align-items:center;justify-content:center;font-size:17px;color:#1a1303;font-weight:900;}
+  .brand .nm{font-size:15px;font-weight:900;}
+  .brand .tag{font-size:10.5px;color:var(--muted);margin-top:1px;}
+  .head .date{font-size:12px;color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums;}
+  .head .back{display:block;margin-top:5px;font-size:10px;color:var(--muted);text-decoration:none;text-align:left;}
+
+  .wrap{padding:14px;display:flex;flex-direction:column;gap:16px;max-width:640px;margin:0 auto;}
+  .sec{font-size:13px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:8px;}
+
+  /* مباراة الأسبوع (بطاقة كبيرة) */
+  .feature{background:linear-gradient(160deg,#15203a,#0c1322);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .feature .top{padding:9px 14px;background:rgba(255,255,255,.03);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);}
+  .feature .tag{font-size:9.5px;font-weight:800;padding:2px 9px;border-radius:20px;background:rgba(239,68,68,.15);color:#fca5a5;display:flex;align-items:center;gap:5px;}
+  .feature .tag i{font-size:6px;animation:blink 1s infinite;}
+  .feature .tag.done{background:rgba(197,160,89,.15);color:var(--gold);}
+  .feature .face{display:flex;align-items:center;justify-content:space-between;padding:22px 16px 8px;gap:8px;}
+  .feature .tm{flex:1;text-align:center;}
+  .feature .tm .cr{width:50px;height:50px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 8px;}
+  .feature .tm .n{font-size:13px;font-weight:700;}
+  .feature .sc{font-size:32px;font-weight:900;font-variant-numeric:tabular-nums;padding:0 6px;}
+  .feature .sc .vs{font-size:15px;color:var(--muted);}
+  .feature .meta{text-align:center;font-size:11px;color:var(--muted);padding:0 14px 14px;}
+  .feature .meta b{color:var(--gold);}
+  /* نسبة الفوز */
+  .winbar{display:flex;height:26px;margin:0 14px 14px;border-radius:8px;overflow:hidden;font-size:10.5px;font-weight:800;}
+  .winbar .w{background:var(--green);color:#04120b;display:flex;align-items:center;justify-content:center;}
+  .winbar .d{background:var(--border);display:flex;align-items:center;justify-content:center;}
+  .winbar .l{background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;}
+
+  /* أخبار */
+  .news-list{display:flex;flex-direction:column;gap:9px;}
+  .news{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 13px;display:flex;gap:12px;align-items:center;}
+  .news .ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+  .ic.transfer{background:rgba(59,130,246,.14);color:#93c5fd;} .ic.injury{background:rgba(239,68,68,.14);color:#fca5a5;}
+  .ic.result{background:rgba(16,185,129,.14);color:#6ee7b7;} .ic.fed{background:rgba(139,92,246,.14);color:#c4b5fd;}
+  .ic.contract{background:rgba(245,158,11,.14);color:#fcd34d;} .ic.world{background:rgba(148,163,184,.12);color:var(--muted);}
+  .news .b{flex:1;min-width:0;}
+  .news .h{font-size:13px;font-weight:600;line-height:1.4;}
+  .news .m{font-size:10.5px;color:var(--muted);margin-top:3px;}
+
+  /* مؤتمر مبسّط */
+  .presser{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;}
+  .quote{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+  .quote:last-child{border:none;}
+  .quote .av{width:36px;height:36px;border-radius:50%;background:var(--card-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .quote .w{font-size:12px;font-style:italic;line-height:1.55;}
+  .quote .who{font-size:10px;color:var(--gold);font-weight:700;margin-top:4px;}
+
+  /* جماهير */
+  .fans{display:flex;flex-direction:column;gap:9px;}
+  .fan{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 13px;display:flex;gap:10px;}
+  .fan .av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;flex-shrink:0;}
+  .fan .b{flex:1;min-width:0;}
+  .fan .n{font-size:11px;font-weight:700;}
+  .fan .n .h{color:var(--muted);font-weight:400;}
+  .fan .w{font-size:12px;margin-top:3px;line-height:1.5;}
+
+  /* نتائج مصغّرة */
+  .world{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+  .ml{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;}
+  .ml:last-child{border:none;}
+  .ml .ht{flex:1;text-align:right;} .ml .at{flex:1;text-align:left;color:var(--muted);}
+  .ml .s{background:var(--card-2);border:1px solid var(--border);padding:2px 9px;border-radius:6px;font-weight:800;margin:0 8px;font-variant-numeric:tabular-nums;}
+</style>
+</head>
+<body>
+
+  <div class="breaking">
+    <div class="lbl"><i class="fas fa-circle"></i> عاجل</div>
+    <div class="tk-wrap"><div class="tk" id="tk"></div></div>
+  </div>
+
+  <div class="head">
+    <div class="brand">
+      <div class="logo">📺</div>
+      <div><div class="nm" id="chName">قناة النادي</div><div class="tag">بث مباشر • تغطية شاملة</div></div>
+    </div>
+    <div>
+      <div class="date" id="date">-- / -- / ----</div>
+      <a href="game_main.html" class="back"><i class="fas fa-arrow-right"></i> العودة للمقر</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- مباراة الأسبوع -->
+    <div class="sec"><i class="fas fa-tv"></i> مباراة الأسبوع</div>
+    <div class="feature" id="feature"></div>
+
+    <!-- نشرة الأخبار -->
+    <div class="sec"><i class="fas fa-newspaper"></i> نشرة أخبار النادي</div>
+    <div class="news-list" id="news"></div>
+
+    <!-- المؤتمر الصحفي -->
+    <div class="sec"><i class="fas fa-microphone"></i> المؤتمر الصحفي</div>
+    <div class="presser" id="presser"></div>
+
+    <!-- آراء الجماهير -->
+    <div class="sec"><i class="fas fa-comments"></i> آراء الجماهير</div>
+    <div class="fans" id="fans"></div>
+
+    <!-- نتائج الجولة -->
+    <div class="sec"><i class="fas fa-futbol"></i> نتائج الجولة</div>
+    <div class="world" id="world"></div>
+  </div>
+
+<script>
+/* ============================================================
+   قناة النادي — بسيطة وواقعية، تقرأ حالة اللعبة تلقائياً
+   ============================================================ */
+const CLUB = localStorage.getItem('presidentialClub') || 'نادي المستقبل';
+function LS(k,f){ const v=localStorage.getItem(k); return v===null?f:v; }
+function num(k,f){ return parseFloat(LS(k,f))||f; }
+function J(k,f){ try{ return JSON.parse(localStorage.getItem(k))||f; }catch(e){ return f; } }
+
+const D=parseInt(LS('game_day','1')), M=parseInt(LS('game_month','6')), Y=parseInt(LS('game_year','2026'));
+document.getElementById('date').innerText=`${String(D).padStart(2,'0')} / ${String(M).padStart(2,'0')} / ${Y}`;
+document.getElementById('chName').innerText='قناة '+CLUB;
+
+/* بذرة يومية: أخبار ثابتة داخل نفس اليوم، تتجدد مع الأيام */
+const SEED=Y*10000+M*100+D;
+function rng(s){ s=s%2147483647; if(s<=0)s+=2147483646; return ()=>((s=s*16807%2147483647)-1)/2147483646; }
+const rand=rng(SEED);
+const pick=a=>a[Math.floor(rand()*a.length)];
+const chance=p=>rand()<p;
+
+/* حالة اللعبة */
+const budget=num('clubBudget',150);
+const rep=num('clubReputation',50);
+const leagueName=LS('current_league_name','الدوري');
+let teams=J('current_league_teams',null);
+if(!Array.isArray(teams)||!teams.length) teams=[CLUB,'النصر','الاتحاد','الأهلي','الشباب','الاتفاق','التعاون','الفتح'];
+teams=teams.filter(t=>t&&t!=='إستراحة');
+const others=teams.filter(t=>t!==CLUB);
+const scores=J('full_season_scores',[]);
+const signed=(J('signed_players_by_club',{})[CLUB])||[];
+const pending=(J('pending_registration_by_club',{})[CLUB])||[];
+const disLog=J('clubDisciplinaryLog',[]);
+const round=parseInt(LS('database_current_round','0'));
+
+/* جدول الدوري */
+function gen(t){ let p=[...t]; if(p.length%2)p.push('bye'); const T=p.length,R=T-1,PP=T/2; let s=[]; for(let r=0;r<R;r++){let m=[];for(let i=0;i<PP;i++){let h=p[i],a=p[T-1-i];if(h==='bye'||a==='bye')continue;if(r%2){const x=h;h=a;a=x;}m.push({home:h,away:a,ri:r});}s.push(m);p.splice(1,0,p.pop());}const H=s.length;for(let r=0;r<H;r++){let m=[];s[r].forEach(x=>m.push({home:x.away,away:x.home,ri:r+H}));s.push(m);}return s; }
+const sched=gen(teams);
+const ri=Math.min(round,sched.length-1);
+const rMatches=sched[ri]||[];
+let mine=rMatches.find(m=>m.home===CLUB||m.away===CLUB)||{home:CLUB,away:others[0]||'الخصم'};
+const home=mine.home===CLUB;
+const opp=home?mine.away:mine.home;
+const sc=scores.find(s=>s.ri===ri||s.roundIdx===ri);
+const played=sc&&typeof (sc.homeScore)==='number';
+
+/* قوة الفريق */
+const strength = signed.length? Math.round(signed.reduce((s,p)=>s+(p.overall||75),0)/signed.length) : Math.round(62+rep*0.3);
+const oStr = 68+Math.floor(rng(opp.length*7)()*18);
+const won = played && ((home?sc.homeScore:sc.awayScore)>(home?sc.awayScore:sc.homeScore));
+const drew = played && sc.homeScore===sc.awayScore;
+const lost = played && !won && !drew;
+
+/* ============================================================
+   الأخبار
+   ============================================================ */
+const NEWS=[];
+function add(cat,ic,h,m){ NEWS.push({cat,ic,h,m}); }
+pending.forEach(p=>add('transfer','fa-handshake',`${CLUB} يضم ${p.name} من ${p.fromClub}${p.dealType==='loan'?' (إعارة)':''}`,`الصفقة ${p.fee}M € • بانتظار التسجيل`));
+if(played){ const g=home?sc.homeScore:sc.awayScore, o=home?sc.awayScore:sc.homeScore; add('result','fa-futbol',`${won?'فوز':drew?'تعادل':'خسارة'} ${CLUB} أمام ${opp} ${g}-${o}`,`${leagueName} • الجولة ${ri+1}`); }
+else add('result','fa-calendar-day',`${CLUB} يستعد لمواجهة ${opp}`,`${leagueName} • الجولة ${ri+1}`);
+if(signed.length&&chance(0.5)){ const p=pick(signed); add('injury','fa-kit-medical',`${p.name} يخضع لفحوصات طبية بعد شكوى بدنية`,'المركز الطبي'); }
+if(disLog.length) add('fed','fa-gavel',`الاتحاد: ${disLog[0].reason}`, disLog[0].amount?`غرامة ${(disLog[0].amount/1000000).toFixed(2)}M €`:'قرار مسجّل');
+else add('fed','fa-scale-balanced',`سجل ${CLUB} نظيف لدى لجنة الانضباط`,'بدون مخالفات');
+if(signed.length&&chance(0.5)){ const p=pick(signed); add('contract','fa-pen',`مفاوضات لتجديد عقد ${p.name}`,'قسم العقود'); }
+add('world','fa-globe', pick([`${pick(others)} يقيل مدربه بعد نتائج سلبية`,`${pick(others)} يقترب من صفقة جديدة`,`إصابة تغيّب أحد نجوم ${pick(others)}`]),'أخبار الدوري');
+
+/* شريط العاجل */
+const brk=NEWS.slice(0,6).map(n=>n.h);
+document.getElementById('tk').innerHTML=brk.concat(brk).map(t=>`<span>${t}</span>`).join('');
+
+/* نشرة الأخبار */
+const catAr={transfer:'انتقالات',injury:'إصابة',result:'مباريات',fed:'الاتحاد',contract:'عقود',world:'عالمي'};
+document.getElementById('news').innerHTML=NEWS.map(n=>`<div class="news"><div class="ic ${n.cat}"><i class="fas ${n.ic}"></i></div><div class="b"><div class="h">${n.h}</div><div class="m">${catAr[n.cat]} • ${n.m}</div></div></div>`).join('');
+
+/* ============================================================
+   مباراة الأسبوع
+   ============================================================ */
+function renderFeature(){
+  const box=document.getElementById('feature');
+  if(played){
+    const g=home?sc.homeScore:sc.awayScore, o=home?sc.awayScore:sc.homeScore;
+    box.innerHTML=`<div class="top"><span>${leagueName} • الجولة ${ri+1}</span><span class="tag done"><i class="fas fa-check"></i> انتهت</span></div>
+      <div class="face"><div class="tm"><div class="cr">🛡️</div><div class="n">${mine.home}</div></div>
+      <div class="sc">${sc.homeScore}<span class="vs"> - </span>${sc.awayScore}</div>
+      <div class="tm"><div class="cr">🛡️</div><div class="n">${mine.away}</div></div></div>
+      <div class="meta">${won?'فوز':drew?'تعادل':'خسارة'} • رجل المباراة: <b>${signed.length?pick(signed).name:CLUB}</b></div>`;
+    return;
+  }
+  const tot=strength+oStr; let w=Math.round(strength/tot*100), l=Math.round(oStr/tot*70); let d=100-w-l; if(d<10){d=10;w=Math.round((90)*strength/tot);l=90-w;}
+  box.innerHTML=`<div class="top"><span>${leagueName} • الجولة ${ri+1}</span><span class="tag"><i class="fas fa-circle"></i> بث مباشر</span></div>
+    <div class="face"><div class="tm"><div class="cr">🛡️</div><div class="n">${mine.home}</div></div>
+    <div class="sc"><span class="vs">VS</span></div>
+    <div class="tm"><div class="cr">🛡️</div><div class="n">${mine.away}</div></div></div>
+    <div class="meta">توقّع القناة لنتيجة المباراة</div>
+    <div class="winbar"><div class="w" style="width:${w}%">فوز ${w}%</div><div class="d" style="width:${d}%">${d}%</div><div class="l" style="width:${l}%">${l}%</div></div>`;
+}
+renderFeature();
+
+/* ============================================================
+   المؤتمر الصحفي
+   ============================================================ */
+const cap=signed.find(p=>p.is_captain)||signed[0];
+const coachSay = !played?`نحترم ${opp} ونلعب من أجل الفوز أمام جماهيرنا.`:won?`فخور برد فعل اللاعبين، هذه النتيجة تعزز موقعنا.`:drew?`نقطة مهمة لكننا كنا نطمح للفوز.`:`المسؤولية عليّ، سنصحّح الأخطاء ونعود أقوى.`;
+const capSay = !played?`جاهزون بدنياً وذهنياً وسنقاتل على كل كرة.`:won?`هذا الفوز لجماهيرنا التي ساندتنا.`:`نعتذر للجماهير ونعدهم بالأفضل.`;
+const presSay = budget>50?`المشروع يسير وفق الخطة وندعم الجهاز الفني بالكامل.`:`نطالب بالانضباط المالي والتركيز على النتائج.`;
+document.getElementById('presser').innerHTML=`
+  <div class="quote"><div class="av">👔</div><div><div class="w">"${coachSay}"</div><div class="who">المدير الفني</div></div></div>
+  <div class="quote"><div class="av">🎽</div><div><div class="w">"${capSay}"</div><div class="who">قائد الفريق${cap?' • '+cap.name:''}</div></div></div>
+  <div class="quote"><div class="av">👑</div><div><div class="w">"${presSay}"</div><div class="who">رئيس النادي</div></div></div>`;
+
+/* ============================================================
+   آراء الجماهير
+   ============================================================ */
+const cols=['#3b82f6','#10b981','#f59e0b','#8b5cf6'];
+const fnames=['أبو فهد','المشجع الوفي','عاشق النادي','كابتن المدرجات'];
+let posts = won?['فوز يستحق الاحتفال! 🎉 هذا هو فريقنا','المدرب أثبت نفسه، استمروا يا أبطال 💪','أداء رائع نطالب باستمراره 🔥']
+  : lost?['أداء مخيّب، نطالب بمراجعة شاملة 😤','نحتاج تدعيمات فورية!','ثقتنا تهتز، يجب التحرك سريعاً']
+  : played?['تعادل مقبول لكننا نطمح للأكثر 🤝','نقطة أفضل من لا شيء','يجب حسم مباريات بيتنا']
+  : [`متحمسون لمباراة ${opp}! كلنا خلف الفريق 💙`,'جاهزون لدعم الفريق في المدرجات','نثق بلاعبينا، الفوز قادم'];
+if(pending.length) posts.push(`صفقة ${pending[0].name} أسعدتنا كثيراً! 🙌`);
+if(budget<20) posts.push('الوضع المالي يقلقنا، نتمنى إدارة أفضل 💸');
+document.getElementById('fans').innerHTML=posts.slice(0,4).map((p,i)=>`<div class="fan"><div class="av" style="background:${cols[i%4]}">${['🧑','👨','🧔','👱'][i%4]}</div><div class="b"><div class="n">${fnames[i%4]} <span class="h">@fan${100+i}</span></div><div class="w">${p}</div></div></div>`).join('');
+
+/* ============================================================
+   نتائج الجولة
+   ============================================================ */
+const otherM=rMatches.filter(m=>m.home!==CLUB&&m.away!==CLUB);
+document.getElementById('world').innerHTML = otherM.length? otherM.map(m=>{ const r=rng(SEED+m.home.length*3+m.away.length); const hs=Math.floor(r()*4), as=Math.floor(r()*4); return `<div class="ml"><span class="ht">${m.home}</span><span class="s">${hs} - ${as}</span><span class="at">${m.away}</span></div>`; }).join('') : `<div class="ml"><span style="color:var(--muted);width:100%;text-align:center">لا مباريات أخرى في هذه الجولة.</span></div>`;
+</script>
+</body>
+</html>

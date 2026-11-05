@@ -1,0 +1,113 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+MUN,Manchester United,مانشستر يونايتد,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,20,"1908,1911,1952,1956,1957,1965,1967,1993,1994,1996,1997,1999,2000,2001,2003,2007,2008,2009,2011,2013"
+MUN,Manchester United,مانشستر يونايتد,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,13,"1909,1948,1963,1977,1983,1985,1990,1994,1996,1999,2004,2016,2024"
+MUN,Manchester United,مانشستر يونايتد,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,6,"1992,2006,2009,2010,2017,2023"
+MUN,Manchester United,مانشستر يونايتد,إنجلترا,189,UEFA,6,GBCS,Community Shield,Domestic Super Cup,21,"1908,1911,1952,1956,1957,1965,1967,1977,1983,1990,1993,1994,1996,1997,2003,2007,2008,2010,2011,2013,2016"
+MUN,Manchester United,مانشستر يونايتد,إنجلترا,189,UEFA,6,UCL,UEFA Champions League,Continental,3,"1968,1999,2008"
+MUN,Manchester United,مانشستر يونايتد,إنجلترا,189,UEFA,6,UEL,UEFA Europa League,Continental,1,2017
+MUN,Manchester United,مانشستر يونايتد,إنجلترا,189,UEFA,6,UCWC,UEFA Cup Winners' Cup,Continental,1,1991
+MUN,Manchester United,مانشستر يونايتد,إنجلترا,189,UEFA,6,USC,UEFA Super Cup,Continental,1,1991
+MUN,Manchester United,مانشستر يونايتد,إنجلترا,189,UEFA,6,IC,Intercontinental Cup,Global,1,1999
+MUN,Manchester United,مانشستر يونايتد,إنجلترا,189,UEFA,6,FIFA-CWC,FIFA Club World Cup,Global,1,2008
+LIV,Liverpool FC,ليفربول,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,19,"1964,1966,1973,1976,1977,1979,1980,1982,1983,1984,1986,1988,1990,2020"
+LIV,Liverpool FC,ليفربول,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,8,"1965,1974,1986,1989,1992,2001,2006,2022"
+LIV,Liverpool FC,ليفربول,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,10,"1981,1982,1983,1984,1995,2001,2003,2012,2022,2024"
+LIV,Liverpool FC,ليفربول,إنجلترا,189,UEFA,6,GBCS,Community Shield,Domestic Super Cup,16,"1964,1965,1966,1974,1976,1977,1979,1980,1982,1986,1988,1989,1990,2001,2006,2022"
+LIV,Liverpool FC,ليفربول,إنجلترا,189,UEFA,6,UCL,UEFA Champions League,Continental,6,"1977,1978,1981,1984,2005,2019"
+LIV,Liverpool FC,ليفربول,إنجلترا,189,UEFA,6,UEL,UEFA Europa League,Continental,3,"1973,1976,2001"
+LIV,Liverpool FC,ليفربول,إنجلترا,189,UEFA,6,USC,UEFA Super Cup,Continental,4,"1977,2001,2005,2019"
+LIV,Liverpool FC,ليفربول,إنجلترا,189,UEFA,6,FIFA-CWC,FIFA Club World Cup,Global,1,2019
+LIV,Liverpool FC,ليفربول,إنجلترا,189,UEFA,6,IC,Intercontinental Cup,Global,1,1984
+ARS,Arsenal FC,أرسنال,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,13,"1931,1933,1934,1935,1938,1948,1953,1971,1989,1991,1998,2002,2004"
+ARS,Arsenal FC,أرسنال,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,14,"1930,1936,1950,1971,1979,1993,1998,2002,2003,2005,2014,2015,2017,2020"
+ARS,Arsenal FC,أرسنال,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,2,"1987,1993"
+ARS,Arsenal FC,أرسنال,إنجلترا,189,UEFA,6,GBCS,Community Shield,Domestic Super Cup,17,"1930,1931,1933,1934,1938,1948,1953,1991,1998,1999,2002,2004,2014,2015,2017,2020,2023"
+ARS,Arsenal FC,أرسنال,إنجلترا,189,UEFA,6,UCWC,UEFA Cup Winners' Cup,Continental,1,1994
+ARS,Arsenal FC,أرسنال,إنجلترا,189,UEFA,6,ICFC,Inter-Cities Fairs Cup,Continental,1,1970
+CHE,Chelsea FC,تشيلسي,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,6,"1955,2005,2006,2010,2015,2017"
+CHE,Chelsea FC,تشيلسي,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,8,"1970,1997,2000,2007,2009,2010,2012,2018"
+CHE,Chelsea FC,تشيلسي,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,5,"1965,1998,2005,2007,2015"
+CHE,Chelsea FC,تشيلسي,إنجلترا,189,UEFA,6,GBCS,Community Shield,Domestic Super Cup,4,"1955,2000,2005,2009"
+CHE,Chelsea FC,تشيلسي,إنجلترا,189,UEFA,6,UCL,UEFA Champions League,Continental,2,"2012,2021"
+CHE,Chelsea FC,تشيلسي,إنجلترا,189,UEFA,6,UEL,UEFA Europa League,Continental,2,"2013,2019"
+CHE,Chelsea FC,تشيلسي,إنجلترا,189,UEFA,6,UCWC,UEFA Cup Winners' Cup,Continental,2,"1971,1998"
+CHE,Chelsea FC,تشيلسي,إنجلترا,189,UEFA,6,USC,UEFA Super Cup,Continental,2,"1998,2021"
+CHE,Chelsea FC,تشيلسي,إنجلترا,189,UEFA,6,FIFA-CWC,FIFA Club World Cup,Global,1,2021
+MCI,Manchester City,مانشستر سيتي,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,10,"1937,1968,2012,2014,2018,2019,2021,2022,2023,2024"
+MCI,Manchester City,مانشستر سيتي,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,7,"1904,1934,1956,1969,2011,2019,2023"
+MCI,Manchester City,مانشستر سيتي,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,8,"1970,1976,2014,2016,2018,2019,2020,2021"
+MCI,Manchester City,مانشستر سيتي,إنجلترا,189,UEFA,6,GBCS,Community Shield,Domestic Super Cup,6,"1937,1968,1972,2012,2018,2019"
+MCI,Manchester City,مانشستر سيتي,إنجلترا,189,UEFA,6,UCL,UEFA Champions League,Continental,1,2023
+MCI,Manchester City,مانشستر سيتي,إنجلترا,189,UEFA,6,UCWC,UEFA Cup Winners' Cup,Continental,1,1970
+MCI,Manchester City,مانشستر سيتي,إنجلترا,189,UEFA,6,USC,UEFA Super Cup,Continental,1,2023
+MCI,Manchester City,مانشستر سيتي,إنجلترا,189,UEFA,6,FIFA-CWC,FIFA Club World Cup,Global,1,2023
+TOT,Tottenham Hotspur,توتنهام,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,2,"1951,1961"
+TOT,Tottenham Hotspur,توتنهام,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,8,"1901,1921,1961,1962,1967,1981,1982,1991"
+TOT,Tottenham Hotspur,توتنهام,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,4,"1971,1973,1999,2008"
+TOT,Tottenham Hotspur,توتنهام,إنجلترا,189,UEFA,6,GBCS,Community Shield,Domestic Super Cup,7,"1921,1951,1961,1962,1967,1981,1991"
+TOT,Tottenham Hotspur,توتنهام,إنجلترا,189,UEFA,6,UEL,UEFA Europa League,Continental,2,"1972,1984"
+TOT,Tottenham Hotspur,توتنهام,إنجلترا,189,UEFA,6,UCWC,UEFA Cup Winners' Cup,Continental,1,1963
+EVE,Everton FC,إيفرتون,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,9,"1891,1915,1928,1932,1939,1963,1970,1985,1987"
+EVE,Everton FC,إيفرتون,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,5,"1906,1933,1966,1984,1995"
+EVE,Everton FC,إيفرتون,إنجلترا,189,UEFA,6,GBCS,Community Shield,Domestic Super Cup,9,"1928,1932,1933,1939,1963,1966,1970,1984,1987"
+AVL,Aston Villa,أستون فيلا,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,7,"1894,1896,1897,1899,1900,1910,1981"
+AVL,Aston Villa,أستون فيلا,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,7,"1887,1895,1897,1905,1913,1920,1957"
+AVL,Aston Villa,أستون فيلا,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,5,"1961,1975,1977,1994,1996"
+AVL,Aston Villa,أستون فيلا,إنجلترا,189,UEFA,6,GBCS,Community Shield,Domestic Super Cup,1,1981
+AVL,Aston Villa,أستون فيلا,إنجلترا,189,UEFA,6,UCL,UEFA Champions League,Continental,1,1982
+AVL,Aston Villa,أستون فيلا,إنجلترا,189,UEFA,6,USC,UEFA Super Cup,Continental,1,1982
+NEW,Newcastle United,نيوكاسل,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,4,"1905,1907,1909,1927"
+NEW,Newcastle United,نيوكاسل,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,6,"1910,1924,1932,1951,1952,1955"
+NEW,Newcastle United,نيوكاسل,إنجلترا,189,UEFA,6,ICFC,Inter-Cities Fairs Cup,Continental,1,1969
+WOL,Wolverhampton,ولفرهامبتون,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,3,"1954,1958,1959"
+WOL,Wolverhampton,ولفرهامبتون,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,4,"1893,1908,1949,1960"
+WOL,Wolverhampton,ولفرهامبتون,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,2,"1974,1980"
+LCFC,Leicester City,ليستر سيتي,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,1,2016
+LCFC,Leicester City,ليستر سيتي,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,1,2021
+LCFC,Leicester City,ليستر سيتي,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,3,"1964,1997,2000"
+NFO,Nottingham Forest,نوتنغهام فورست,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,1,1978
+NFO,Nottingham Forest,نوتنغهام فورست,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,2,"1898,1959"
+NFO,Nottingham Forest,نوتنغهام فورست,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,4,"1978,1979,1989,1990"
+NFO,Nottingham Forest,نوتنغهام فورست,إنجلترا,189,UEFA,6,UCL,UEFA Champions League,Continental,2,"1979,1980"
+NFO,Nottingham Forest,نوتنغهام فورست,إنجلترا,189,UEFA,6,USC,UEFA Super Cup,Continental,1,1979
+IPS,Ipswich Town,إيبسويتش,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,1,1962
+IPS,Ipswich Town,إيبسويتش,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,1,1978
+IPS,Ipswich Town,إيبسويتش,إنجلترا,189,UEFA,6,UEL,UEFA Europa League,Continental,1,1981
+BUR,Burnley FC,بيرنلي,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,2,"1921,1960"
+BUR,Burnley FC,بيرنلي,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,1,1914
+BLA,Blackburn Rovers,بلاكبيرن,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,3,"1912,1914,1995"
+BLA,Blackburn Rovers,بلاكبيرن,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,6,"1884,1885,1886,1890,1891,1928"
+BLA,Blackburn Rovers,بلاكبيرن,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,1,2002
+SHU,Sheffield United,شيفيلد يونايتد,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,1,1898
+SHU,Sheffield United,شيفيلد يونايتد,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,4,"1899,1902,1915,1925"
+SUN,Sunderland AFC,سندرلاند,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,6,"1892,1893,1895,1902,1913,1936"
+SUN,Sunderland AFC,سندرلاند,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,2,"1937,1973"
+HUD,Huddersfield Town,هدرسفيلد,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,3,"1924,1925,1926"
+HUD,Huddersfield Town,هدرسفيلد,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,1,1922
+LEE,Leeds United,ليدز يونايتد,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,3,"1969,1974,1992"
+LEE,Leeds United,ليدز يونايتد,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,1,1972
+LEE,Leeds United,ليدز يونايتد,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,1,1968
+LEE,Leeds United,ليدز يونايتد,إنجلترا,189,UEFA,6,GBCS,Community Shield,Domestic Super Cup,2,"1969,1992"
+LEE,Leeds United,ليدز يونايتد,إنجلترا,189,UEFA,6,ICFC,Inter-Cities Fairs Cup,Continental,2,"1968,1971"
+DER,Derby County,ديربي كاونتي,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,2,"1972,1975"
+DER,Derby County,ديربي كاونتي,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,1,1946
+WHU,West Ham United,وست هام,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,3,"1964,1975,1980"
+WHU,West Ham United,وست هام,إنجلترا,189,UEFA,6,UCWC,UEFA Cup Winners' Cup,Continental,1,1965
+WHU,West Ham United,وست هام,إنجلترا,189,UEFA,6,UECL,UEFA Europa Conference League,Continental,1,2023
+SOU,Southampton FC,ساوثهامبتون,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,1,1976
+WBA,West Bromwich,وست بروميتش,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,1,1920
+WBA,West Bromwich,وست بروميتش,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,5,"1888,1892,1931,1954,1968"
+WBA,West Bromwich,وست بروميتش,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,1,1966
+STK,Stoke City,ستوك سيتي,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,1,1972
+SWA,Swansea City,سوانزي,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,1,2013
+BIR,Birmingham City,برمنغهام سيتي,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,1,1963
+BOL,Bolton Wanderers,بولتون,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,4,"1923,1926,1929,1958"
+SHW,Sheffield Wednesday,شيفيلد وينزداي,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,4,"1903,1904,1929,1930"
+SHW,Sheffield Wednesday,شيفيلد وينزداي,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,3,"1896,1907,1935"
+SHW,Sheffield Wednesday,شيفيلد وينزداي,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,1,1991
+WIG,Wigan Athletic,ويغان,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,1,2013
+CAR,Cardiff City,كارديف سيتي,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,1,1927
+PRE,Preston North End,بريستون,إنجلترا,189,UEFA,6,GB1,Premier League,First Tier,2,"1889,1890"
+PRE,Preston North End,بريستون,إنجلترا,189,UEFA,6,FAC,FA Cup,Domestic Cup,2,"1889,1938"
+NOR,Norwich City,نورويتش,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,2,"1962,1985"
+MID,Middlesbrough,ميدلزبره,إنجلترا,189,UEFA,6,CGB,EFL Cup,League Cup,0,·

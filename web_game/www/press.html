@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Press & Media — الصحافة والإعلام</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444; --blue:#3b82f6; }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+            --blue: #2563eb;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; padding-bottom:70px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:10px 12px; border-radius:12px; border:1px solid var(--border); }
+        .back-btn { background:var(--border); color:white; border:none; padding:8px 12px; font-size:12px; border-radius:8px; text-decoration:none; }
+        .page-title { font-size:13px; font-weight:800; color:var(--gold); display:flex; align-items:center; gap:6px; }
+
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .card-title { font-size:12px; font-weight:800; color:var(--gold); padding:12px 14px 8px 14px; display:flex; align-items:center; gap:6px; }
+        .empty-state { text-align:center; padding:24px 16px; color:var(--muted); font-size:12px; line-height:1.8; }
+
+        .bottom-tabs { position:fixed; bottom:0; right:0; left:0; background:var(--card); border-top:1px solid var(--border); display:flex; padding:6px 4px; z-index:50; }
+        .bottom-tab { flex:1; text-align:center; padding:6px 2px; font-size:9px; color:var(--muted); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; }
+        .bottom-tab.active { color:var(--gold); }
+        .bottom-tab i { font-size:15px; }
+
+        .breaking { background:linear-gradient(90deg, rgba(239,68,68,0.15), transparent); border:1px solid rgba(239,68,68,0.4); border-radius:12px; padding:10px 14px; font-size:11.5px; display:flex; align-items:center; gap:8px; }
+        .breaking b { color:var(--red); }
+
+        .sentiment-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:10px 14px 14px 14px; }
+        .sentiment-box { background:var(--bg); border-radius:10px; padding:10px; text-align:center; }
+        .sentiment-box .lbl { font-size:9.5px; color:var(--muted); }
+        .sentiment-box .val { font-size:15px; font-weight:800; margin-top:4px; }
+
+        .filter-tabs { display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
+        .filter-tabs::-webkit-scrollbar { display:none; }
+        .filter-chip { flex:0 0 auto; padding:8px 14px; border-radius:999px; background:var(--card); border:1px solid var(--border); font-size:11px; font-weight:700; color:var(--muted); cursor:pointer; white-space:nowrap; }
+        .filter-chip.active { background:var(--gold); color:#06090f; border-color:var(--gold); }
+
+        .article { padding:14px; border-bottom:1px solid var(--border); }
+        .article:last-child { border-bottom:none; }
+        .article-head { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+        .journalist-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; flex:0 0 auto; }
+        .article-meta { flex:1; min-width:0; }
+        .journalist-name { font-size:11.5px; font-weight:800; }
+        .journalist-outlet { font-size:9.5px; color:var(--muted); margin-top:1px; }
+        .article-time { font-size:9px; color:var(--muted); flex:0 0 auto; text-align:left; }
+        .article-headline { font-size:13px; font-weight:800; color:var(--gold); margin-bottom:6px; line-height:1.5; }
+        .article-body { font-size:11.5px; color:#cbd5e1; line-height:1.9; }
+        .tone-badge { display:inline-block; font-size:8.5px; font-weight:800; padding:2px 8px; border-radius:999px; margin-top:8px; margin-left:4px; }
+        .stage-badge { display:inline-block; font-size:8.5px; font-weight:800; padding:2px 8px; border-radius:999px; margin-top:8px; }
+
+        .journalist-card { display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--border); }
+        .journalist-card:last-child { border-bottom:none; }
+        .journalist-card .info { flex:1; min-width:0; }
+        .journalist-card .stats-row { display:flex; gap:10px; margin-top:4px; }
+        .mini-stat { font-size:9px; color:var(--muted); }
+        .rel-bar { height:4px; background:var(--border); border-radius:3px; overflow:hidden; margin-top:5px; width:100%; }
+        .rel-fill { height:100%; }
+
+        .conf-question { padding:14px; }
+        .conf-q-text { font-size:12.5px; font-weight:700; line-height:1.7; margin-bottom:4px; }
+        .conf-asker { font-size:10px; color:var(--muted); margin-bottom:12px; }
+        .answer-btn { width:100%; text-align:right; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:11px; border-radius:10px; font-size:11.5px; margin-bottom:8px; cursor:pointer; }
+        .answer-btn .style-tag { display:block; font-size:9px; color:var(--gold); margin-bottom:3px; font-weight:800; }
+
+        .request-row { display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--border); }
+        .request-row:last-child { border-bottom:none; }
+        .request-row .info { flex:1; }
+        .btn-sm { background:var(--gold); color:#06090f; border:none; padding:7px 12px; border-radius:7px; font-size:10px; font-weight:800; cursor:pointer; }
+        .btn-sm-outline { background:transparent; border:1px solid var(--border); color:var(--muted); padding:7px 12px; border-radius:7px; font-size:10px; font-weight:700; cursor:pointer; }
+
+        .world-ticker { padding:10px 14px; font-size:11px; color:var(--muted); border-bottom:1px solid var(--border); display:flex; gap:8px; align-items:flex-start; }
+        .world-ticker:last-child { border-bottom:none; }
+        .world-ticker i { color:var(--blue); margin-top:2px; }
+
+        .toast { position:fixed; bottom:70px; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--gold); color:var(--text); padding:10px 16px; border-radius:10px; font-size:12px; display:none; z-index:99; max-width:90%; text-align:center; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title"><i class="fas fa-newspaper"></i> Press & Media — الصحافة والإعلام</div>
+        <div style="width:34px;"></div>
+    </div>
+
+    <div id="breakingBanner"></div>
+
+    <!-- ===== قسم: الأخبار ===== -->
+    <div id="tab-news">
+        <div class="filter-tabs" id="journalistFilterTabs" style="margin-bottom:10px;"></div>
+        <div class="card"><div id="feedContainer"></div></div>
+        <div class="card" style="margin-top:12px;">
+            <div class="card-title"><i class="fas fa-earth-europe"></i> كرة القدم العالمية</div>
+            <div id="worldNewsContainer"></div>
+        </div>
+    </div>
+
+    <!-- ===== قسم: الصحفيون ===== -->
+    <div id="tab-journalists" style="display:none;">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-user-group"></i> الصحفيون المتابعون لناديك</div>
+            <div id="journalistsListContainer"></div>
+        </div>
+    </div>
+
+    <!-- ===== قسم: المؤتمرات الصحفية ===== -->
+    <div id="tab-conference" style="display:none;">
+        <div class="card"><div id="conferenceContainer"></div></div>
+    </div>
+
+    <!-- ===== قسم: المقابلات والطلبات الإعلامية ===== -->
+    <div id="tab-requests" style="display:none;">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-envelope-open-text"></i> طلبات الصحفيين</div>
+            <div id="requestsContainer"></div>
+        </div>
+    </div>
+
+    <!-- ===== قسم: سمعة النادي والإعلام ===== -->
+    <div id="tab-reputation" style="display:none;">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-gauge-high"></i> الرأي العام الإعلامي</div>
+            <div class="sentiment-grid" id="sentimentGrid"></div>
+        </div>
+        <div class="card" style="margin-top:12px;">
+            <div class="card-title"><i class="fas fa-handshake"></i> علاقتك بالصحفيين</div>
+            <div id="relationshipsContainer"></div>
+        </div>
+    </div>
+
+    <!-- ===== قسم: الأرشيف الإعلامي ===== -->
+    <div id="tab-archive" style="display:none;">
+        <div class="card"><div id="archiveContainer"></div></div>
+    </div>
+
+    <div class="bottom-tabs">
+        <div class="bottom-tab active" data-tab="news" onclick="switchTab('news')"><i class="fas fa-newspaper"></i>الأخبار</div>
+        <div class="bottom-tab" data-tab="journalists" onclick="switchTab('journalists')"><i class="fas fa-user-group"></i>الصحفيون</div>
+        <div class="bottom-tab" data-tab="conference" onclick="switchTab('conference')"><i class="fas fa-microphone"></i>مؤتمرات</div>
+        <div class="bottom-tab" data-tab="requests" onclick="switchTab('requests')"><i class="fas fa-envelope-open-text"></i>طلبات</div>
+        <div class="bottom-tab" data-tab="reputation" onclick="switchTab('reputation')"><i class="fas fa-gauge-high"></i>السمعة</div>
+        <div class="bottom-tab" data-tab="archive" onclick="switchTab('archive')"><i class="fas fa-box-archive"></i>الأرشيف</div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || '';
+        function showToast(msg) { const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 3000); }
+        function seedHash(str) { let h=0; const s=String(str); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+        function getGameDate() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+        function dateSortKey(d) { return d.year*10000+d.month*100+d.day; }
+        function toAbsDay(d) { return Math.floor(new Date(d.year, d.month-1, d.day).getTime()/86400000); }
+        function getClubBudget() { return parseFloat(localStorage.getItem('clubBudget')) || 0; }
+        function getConfidence() { return parseFloat(localStorage.getItem('board_confidence_' + activeClub)) || 60; }
+        function setConfidence(v) { localStorage.setItem('board_confidence_' + activeClub, String(Math.max(0, Math.min(100, Math.round(v))))); }
+        function addMessageToSystem(sender, text, category) {
+            let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+            inbox.unshift({ id: Date.now(), sender, text, time: new Date().toLocaleTimeString('en-US', { hour12:false }), read:false, category: category || 'system' });
+            localStorage.setItem('gameInbox', JSON.stringify(inbox));
+            localStorage.setItem('hasNewMessage', 'true');
+        }
+
+        function switchTab(name) {
+            ['news','journalists','conference','requests','reputation','archive'].forEach(t => {
+                document.getElementById('tab-'+t).style.display = t===name ? 'block' : 'none';
+            });
+            document.querySelectorAll('.bottom-tab').forEach(b => b.classList.toggle('active', b.dataset.tab===name));
+            if (name === 'journalists') renderJournalistsList();
+            if (name === 'conference') renderConference();
+            if (name === 'requests') renderRequests();
+            if (name === 'reputation') { renderSentiment(); renderRelationships(); }
+            if (name === 'archive') renderArchive();
+        }
+
+        // ============================================================
+        // ملفات صحفيين حقيقية غنية — عرب وعالميون (شخصيات خيالية بأسلوب صحفي عالمي واقعي معروف، وليست أسماء أشخاص حقيقيين)
+        // كل صحفي: جنسية، مؤسسة، تخصص، أقدمية، مصداقية، إثارة، علاقة متطوّرة مع النادي — تحدد سلوكه الفعلي
+        // ============================================================
+        const JOURNALISTS = [
+            { id:'tariq', name:'طارق المنصوري', nat:'🇸🇦', outlet:'الرياضية اليوم', country:'السعودية', lang:'العربية', spec:['transfer'], seniority:14, credibility:88, sensationalism:15, icon:'fa-file-signature', color:'#3b82f6',
+              write:(ctx) => `أفادت مصادر مقربة من إدارة ${activeClub} بأن ${ctx.fact} في إطار خطة النادي لتعزيز صفوفه هذا الموسم.` },
+            { id:'nour', name:'نور الحمداني', nat:'🇸🇦', outlet:'صدى الملاعب', country:'السعودية', lang:'العربية', spec:['transfer','federation'], seniority:6, credibility:52, sensationalism:85, icon:'fa-fire', color:'#ef4444',
+              write:(ctx) => `مفاجأة من العيار الثقيل تهزّ أروقة ${activeClub}! ${ctx.fact} ومصادرنا تتحدث عن ردود فعل متباينة داخل الغرفة.` },
+            { id:'sami', name:'سامي القرني', nat:'🇸🇦', outlet:'تحليل تكتيكي', country:'السعودية', lang:'العربية', spec:['system'], seniority:11, credibility:80, sensationalism:10, icon:'fa-chart-line', color:'#22c55e',
+              write:(ctx) => `من الناحية الفنية البحتة، ${ctx.fact} وهو تطوّر يستحق المتابعة عن قرب من الناحية التكتيكية.` },
+            { id:'lina', name:'لينا العبدالله', nat:'🇪🇬', outlet:'اقتصاديات الكرة', country:'مصر', lang:'العربية', spec:['finance'], seniority:9, credibility:83, sensationalism:20, icon:'fa-sack-dollar', color:'#e8b84b',
+              write:(ctx) => `على الصعيد المالي، كشفت وثائق حصلت عليها "اقتصاديات الكرة" أن ${ctx.fact} رقم يعكس الوضع المالي الراهن لـ${activeClub}.` },
+            { id:'omar', name:'عمر الشهراني', nat:'🇸🇦', outlet:'صوت الجماهير', country:'السعودية', lang:'العربية', spec:['transfer','finance','federation','system'], seniority:5, credibility:60, sensationalism:55, icon:'fa-users', color:'#a78bfa',
+              write:(ctx) => `الجماهير تتحدث! بعد أن ${ctx.fact} انقسمت آراء المشجعين بين مؤيد ومتحفظ.` },
+            // ===== صحفيون عالميون (شخصيات خيالية بأسلوب معروف عالمياً) =====
+            { id:'jack', name:'Jack Whitmore', nat:'🇬🇧', outlet:'Here We Report', country:'إنجلترا', lang:'الإنجليزية', spec:['transfer'], seniority:8, credibility:90, sensationalism:25, icon:'fa-bolt', color:'#06b6d4',
+              write:(ctx) => `🟢 Here we go update: ${ctx.fact} — sources close to the deal confirm negotiations are progressing as expected. Here We Report understands more details will follow soon.` },
+            { id:'harriet', name:'Harriet Bloom', nat:'🇬🇧', outlet:'The Daily Kick', country:'إنجلترا', lang:'الإنجليزية', spec:['transfer','federation'], seniority:4, credibility:38, sensationalism:92, icon:'fa-bomb', color:'#f97316',
+              write:(ctx) => `EXCLUSIVE SHOCK: ${ctx.fact}! Sources inside the club are said to be stunned by the development, as fans demand answers from the board.` },
+            { id:'marco', name:'Marco Bellini', nat:'🇮🇹', outlet:'Calciomercato Diretta', country:'إيطاليا', lang:'الإيطالية', spec:['transfer','system'], seniority:12, credibility:82, sensationalism:35, icon:'fa-futbol', color:'#16a34a',
+              write:(ctx) => `Ultim'ora dal calciomercato: ${ctx.fact}. Le nostre fonti confermano che i dettagli dell'operazione sono ancora in fase di definizione tra le parti.` },
+            { id:'javier', name:'Javier Torres', nat:'🇪🇸', outlet:'Diario Balón', country:'إسبانيا', lang:'الإسبانية', spec:['transfer','finance'], seniority:10, credibility:75, sensationalism:45, icon:'fa-star', color:'#dc2626',
+              write:(ctx) => `Última hora: ${ctx.fact}. Fuentes cercanas a la operación aseguran que las negociaciones podrían resolverse en los próximos días.` },
+            { id:'lukas', name:'Lukas Bergmann', nat:'🇩🇪', outlet:'Bundesliga Direkt', country:'ألمانيا', lang:'الألمانية', spec:['finance','system'], seniority:15, credibility:91, sensationalism:12, icon:'fa-magnifying-glass-chart', color:'#eab308',
+              write:(ctx) => `Nüchterne Analyse: ${ctx.fact}. Unsere Quellen bestätigen, dass der Vorgang den finanziellen Rahmen des Vereins widerspiegelt.` },
+            { id:'rafael', name:'Rafael Costa', nat:'🇧🇷', outlet:'Globo Esporte Digital', country:'البرازيل', lang:'البرتغالية', spec:['transfer','system'], seniority:9, credibility:70, sensationalism:60, icon:'fa-music', color:'#22c55e',
+              write:(ctx) => `Repercussão total nas redes: ${ctx.fact}! A torcida já reage nas redes sociais e o clima é de expectativa total pela confirmação oficial.` },
+        ];
+        function getJournalistById(id) { return JOURNALISTS.find(j => j.id === id); }
+        function stripPrefix(text) {
+            return String(text||'').replace(/^[^\u0600-\u06FFa-zA-Z]+/, '').trim();
+        }
+        function getRelationship(jid) {
+            const stored = localStorage.getItem(`journoRel_${activeClub}_${jid}`);
+            return stored !== null ? parseFloat(stored) : 55;
+        }
+        function setRelationship(jid, v) { localStorage.setItem(`journoRel_${activeClub}_${jid}`, String(Math.max(0, Math.min(100, Math.round(v))))); }
+
+        // ============================================================
+        // ذاكرة صحفية حقيقية ومستمرة — ماذا كتب كل صحفي، وهل تحقق فعلياً أم لا؟
+        // سجل تراكمي حقيقي يُحدَّث تلقائياً عند تأكد مصير كل خبر، ويرفع أو يخفض مصداقيته الفعلية بمرور الوقت
+        // ============================================================
+        function getJournoMemory(jid) {
+            try { return JSON.parse(localStorage.getItem(`journoMemory_${activeClub}_${jid}`)) || { written: [], accurate: 0, inaccurate: 0 }; }
+            catch(e) { return { written: [], accurate: 0, inaccurate: 0 }; }
+        }
+        function saveJournoMemory(jid, mem) { localStorage.setItem(`journoMemory_${activeClub}_${jid}`, JSON.stringify(mem)); }
+        function recordArticle(jid, storyKey, claim, subject) {
+            const mem = getJournoMemory(jid);
+            if (mem.written.some(w => w.storyKey === storyKey && w.claim === claim)) return; // لا تكرار لنفس الخبر بنفس الصياغة
+            mem.written.push({ storyKey, claim, subject, dateSort: dateSortKey(getGameDate()), resolved:false });
+            if (mem.written.length > 60) mem.written.shift();
+            saveJournoMemory(jid, mem);
+        }
+        // يتحقق من مصير القصص القديمة (هل تحوّلت لتوقيع رسمي فعلاً أم اختفت؟) ويحدّث مصداقية الصحفي الفعلية تراكمياً
+        function resolveJournoMemories() {
+            const today = dateSortKey(getGameDate());
+            const activeStoryKeys = new Set(getRealTransferStories().map(s => s.id.split('_').slice(1).join('_')));
+            const signedNames = new Set(getSignedPlayerNames());
+            JOURNALISTS.forEach(j => {
+                const mem = getJournoMemory(j.id);
+                let changed = false;
+                mem.written.forEach(w => {
+                    if (w.resolved || today - w.dateSort < 5) return; // مهلة واقعية قبل الحكم على دقة الخبر
+                    w.resolved = true;
+                    changed = true;
+                    const cameTrue = signedNames.has(w.subject);
+                    const stillDeveloping = activeStoryKeys.has(w.storyKey);
+                    if (cameTrue || (stillDeveloping && w.claim !== 'exaggerated' && w.claim !== 'false')) mem.accurate++;
+                    else mem.inaccurate++;
+                });
+                if (changed) saveJournoMemory(j.id, mem);
+            });
+        }
+        function getJournalistTrackRecord(jid) {
+            const mem = getJournoMemory(jid);
+            const total = mem.accurate + mem.inaccurate;
+            if (total === 0) return null;
+            return Math.round((mem.accurate/total)*100);
+        }
+        function getSignedPlayerNames() {
+            try {
+                const signed = (JSON.parse(localStorage.getItem('signed_players_by_club'))||{})[activeClub] || [];
+                return signed.map(p => p.player_name || p.name);
+            } catch(e) { return []; }
+        }
+
+        // ============================================================
+        // درجات دقة حقيقية للخبر — ليست كل الأخبار صحيحة 100%، حسب مصداقية الصحفي وميله للإثارة فعلياً
+        // ============================================================
+        const ACCURACY_TIERS = ['true','partial','exaggerated','baseless'];
+        function pickAccuracyTier(j, seedKey) {
+            const seed = seedHash(seedKey + j.id);
+            const roll = seed % 100;
+            // كلما زادت المصداقية وقلّت الإثارة، زادت فرصة الدقة الكاملة فعلياً
+            const trueThreshold = j.credibility - j.sensationalism*0.4;
+            if (roll < trueThreshold) return 'true';
+            if (roll < trueThreshold + 25) return 'partial';
+            if (roll < trueThreshold + 25 + j.sensationalism*0.3) return 'exaggerated';
+            return 'baseless';
+        }
+        const ACCURACY_META = {
+            true:        { label:'مؤكَّد', color:'#22c55e' },
+            partial:     { label:'صحيح جزئياً', color:'#eab308' },
+            exaggerated: { label:'مبالَغ فيه', color:'#f97316' },
+            baseless:    { label:'شائعة بلا مصدر موثوق', color:'#ef4444' },
+        };
+        function applyAccuracyToFact(tier, fact, amount) {
+            if (tier === 'true') return fact;
+            if (tier === 'partial') return fact + ' (تفاصيل الصفقة الدقيقة لم تتأكد بعد)';
+            if (tier === 'exaggerated' && amount) return fact.replace(/\d+(\.\d+)?/, m => (parseFloat(m)*1.4).toFixed(1)) + ' — رقم لم يؤكده النادي رسمياً';
+            if (tier === 'baseless') return fact + ' — معلومة تحتاج تأكيداً إضافياً، ولم يصدر أي تعليق رسمي حتى الآن';
+            return fact;
+        }
+
+        // ============================================================
+        // محرك دورة حياة الأخبار الحقيقي — مبني مباشرة على المراحل الفعلية الحقيقية لصفقاتك
+        // (نفس البيانات الحقيقية المستخدمة في negotiations.html بالضبط: club_fee → personal_terms → medical → مكتمل)
+        // شائعة مبكرة → مفاوضات متقدمة → اتفاق قريب → فحص طبي → إعلان رسمي — تماماً كمثالك
+        // ============================================================
+        function getRealTransferStories() {
+            const stories = [];
+            try {
+                const clubFee = JSON.parse(localStorage.getItem('club_pending_negotiations')) || [];
+                clubFee.forEach(n => {
+                    const daysSince = toAbsDay(getGameDate()) - (n.submittedDateSort ? absFromSort(n.submittedDateSort) : toAbsDay(getGameDate()));
+                    stories.push({ id:'nego_'+n.id, name:n.name, club:n.club, stage: daysSince<=1?'rumor':'advancing', category:'transfer', detail:`مفاوضات جارية بشأن ${n.name}` });
+                });
+            } catch(e){}
+            try {
+                const personal = JSON.parse(localStorage.getItem('club_pending_negotiations')) || [];
+                personal.filter(n=>n.stage==='personal_terms').forEach(n => {
+                    stories.push({ id:'pt_'+n.id, name:n.name, club:n.club, stage:'close', category:'transfer', detail:`الاتفاق أصبح قريباً مع ${n.name} — التفاوض على الشروط الشخصية جارٍ` });
+                });
+            } catch(e){}
+            try {
+                const medicals = JSON.parse(localStorage.getItem('club_medical_pending')) || [];
+                medicals.forEach(m => {
+                    stories.push({ id:'med_'+m.id, name:m.name, club:m.club, stage:'medical', category:'transfer', detail:`${m.name} يخضع للفحص الطبي تمهيداً لاستكمال انتقاله` });
+                });
+            } catch(e){}
+            try {
+                const counters = JSON.parse(localStorage.getItem('club_counter_offers')) || [];
+                counters.filter(c => c.stage === 'club_fee').forEach(c => {
+                    stories.push({ id:'rej_'+c.id, name:c.name, club:c.club, stage:'advancing', category:'transfer',
+                        detail:`رفض ${c.club||'النادي البائع'} العرض الأول من ${activeClub} بشأن ${c.name} وطالب بمبلغ أعلى — الأندية تدرس تقديم عرض جديد` });
+                });
+            } catch(e){}
+            return stories;
+        }
+        function absFromSort(sortKey) {
+            const y = Math.floor(sortKey/10000), m = Math.floor((sortKey%10000)/100), d = sortKey%100;
+            return toAbsDay({year:y, month:m, day:d});
+        }
+        const STORY_STAGE_META = {
+            rumor:     { label:'شائعة أولية', color:'#8b96ab', confidence:0.35 },
+            advancing: { label:'مفاوضات متقدمة', color:'#3b82f6', confidence:0.6 },
+            close:     { label:'اتفاق قريب', color:'#eab308', confidence:0.8 },
+            medical:   { label:'فحص طبي', color:'#22c55e', confidence:0.95 },
+            official:  { label:'رسمي', color:'#e8b84b', confidence:1.0 },
+        };
+
+        // ============================================================
+        // الأخبار الحقيقية العامة — من نفس تيار gameInbox، بالإضافة لقصص الانتقالات المرحلية أعلاه
+        // ============================================================
+        function getRealEvents() {
+            try { return JSON.parse(localStorage.getItem('gameInbox')) || []; } catch(e) { return []; }
+        }
+        const CATEGORY_LABELS = { transfer:'انتقالات', finance:'مالية', federation:'اتحاد ولوائح', system:'شؤون فنية وتدريب' };
+
+        function getJournalistFor(category, seedKey) {
+            const eligible = JOURNALISTS.filter(j => j.spec.includes(category));
+            const pool = eligible.length ? eligible : JOURNALISTS;
+            return pool[seedHash(seedKey) % pool.length];
+        }
+
+        let activeFilter = 'all';
+        function renderJournalistFilterTabs() {
+            const tabs = [{id:'all', name:'الكل', icon:'fa-newspaper'}, ...JOURNALISTS];
+            document.getElementById('journalistFilterTabs').innerHTML = tabs.map(j => `
+                <div class="filter-chip ${activeFilter===j.id?'active':''}" onclick="setFilter('${j.id}')"><i class="fas ${j.icon||'fa-user'}"></i> ${j.name||j.id}</div>
+            `).join('');
+        }
+        function setFilter(id) { activeFilter = id; renderJournalistFilterTabs(); renderFeed(); }
+
+        function renderFeed() {
+            resolveJournoMemories();
+            const stories = getRealTransferStories();
+            const events = getRealEvents().filter(e => ['transfer','finance','federation','system'].includes(e.category)).slice(0, 20);
+            let articles = [];
+
+            // تنافس صحفي حقيقي على نفس القصة: الأول يكسر الخبر، الثاني يؤكده أو يشكك فيه، بأدوار مختلفة فعلياً
+            stories.forEach(s => {
+                const eligible = JOURNALISTS.filter(j => j.spec.includes('transfer'));
+                const breakerSeed = seedHash(activeClub + s.id + 'break');
+                const breaker = eligible[breakerSeed % eligible.length];
+                const stances = [{ role:'breaker', j:breaker }];
+                // صحفي ثانٍ من مؤسسة مختلفة يتفاعل مع نفس الخبر (تأكيد أو تشكيك) إن كانت القصة قد نضجت بما يكفي
+                if (STORY_STAGE_META[s.stage].confidence >= 0.6) {
+                    const others = eligible.filter(j => j.id !== breaker.id);
+                    if (others.length) {
+                        const secondSeed = seedHash(activeClub + s.id + 'second');
+                        const second = others[secondSeed % others.length];
+                        const role = second.credibility >= 75 ? 'confirmer' : (secondSeed % 100 < 30 ? 'skeptic' : 'confirmer');
+                        stances.push({ role, j: second });
+                    }
+                }
+                stances.forEach(({role, j}) => {
+                    const tier = role === 'skeptic' ? 'baseless' : pickAccuracyTier(j, activeClub + s.id + role);
+                    const rawFact = s.detail;
+                    const fact = role === 'skeptic'
+                        ? `مصادر أخرى تشكك في صحة أنباء اقتراب ${activeClub} من ${s.name}، وتصفها بأنها سابقة لأوانها`
+                        : applyAccuracyToFact(tier, rawFact, true);
+                    recordArticle(j.id, s.id.split('_').slice(1).join('_'), tier, s.name);
+                    const meta = STORY_STAGE_META[s.stage];
+                    const roleLabel = role==='breaker' ? 'كسر الخبر أولاً' : role==='confirmer' ? 'يؤكد الخبر' : 'يشكك في الخبر';
+                    articles.push({ j, stage:s.stage, meta, tier: role==='skeptic'?'baseless':tier, roleLabel,
+                        headline: buildStoryHeadline(s, j, role), body: j.write({fact}), time:'' });
+                });
+            });
+
+            events.forEach(ev => {
+                const j = getJournalistFor(ev.category, activeClub + ev.id);
+                const tier = 'true'; // أحداث gameInbox حقائق مؤكدة فعلياً من محرك اللعبة نفسه، لا تخضع لتدرّج الدقة
+                articles.push({ j, stage:'official', meta: STORY_STAGE_META.official, tier, roleLabel:'خبر رسمي',
+                    headline: generateHeadline(ev, j), body: j.write({fact: stripPrefix(ev.text)}), time: ev.time });
+            });
+
+            articles = articles.filter(a => activeFilter === 'all' || a.j.id === activeFilter);
+            const el = document.getElementById('feedContainer');
+            if (!articles.length) {
+                el.innerHTML = `<div class="empty-state"><i class="fas fa-newspaper"></i>لا توجد أخبار كافية بعد. مع تقدّم مسيرتك الرئاسية ستُغطّى هنا فوراً.</div>`;
+                return;
+            }
+            el.innerHTML = articles.map(a => {
+                const track = getJournalistTrackRecord(a.j.id);
+                const accMeta = ACCURACY_META[a.tier] || ACCURACY_META.true;
+                return `
+                <div class="article">
+                    <div class="article-head">
+                        <div class="journalist-avatar" style="background:${a.j.color}22; color:${a.j.color};"><i class="fas ${a.j.icon}"></i></div>
+                        <div class="article-meta">
+                            <div class="journalist-name">${a.j.nat} ${a.j.name} <span style="color:var(--muted); font-weight:400; font-size:9px;">${track!==null?`· سجل دقة ${track}%`:''}</span></div>
+                            <div class="journalist-outlet">${a.j.outlet} · ${a.roleLabel}</div>
+                        </div>
+                        <div class="article-time">${a.time}</div>
+                    </div>
+                    <div class="article-headline">${a.headline}</div>
+                    <div class="article-body">${a.body}</div>
+                    <span class="stage-badge" style="background:${a.meta.color}22; color:${a.meta.color};">${a.meta.label}</span>
+                    <span class="tone-badge" style="background:${accMeta.color}22; color:${accMeta.color};">${accMeta.label}</span>
+                </div>`;
+            }).join('');
+        }
+        function buildStoryHeadline(s, j, role) {
+            if (role === 'skeptic') return `تشكيك: هل ${activeClub} فعلاً قريب من ${s.name}؟`;
+            const templates = {
+                rumor: `مصادر: ${activeClub} يتحرك بهدوء تجاه ${s.name}`,
+                advancing: `مفاوضات متقدمة بين ${activeClub} وأطراف صفقة ${s.name}`,
+                close: `الاتفاق أصبح قريباً بشأن ${s.name}`,
+                medical: `${s.name} يخضع للفحص الطبي استعداداً للانضمام لـ${activeClub}`,
+            };
+            const prefix = role === 'confirmer' ? '✅ تأكيد: ' : (j.sensationalism > 60 ? '⚡ ' : '');
+            return prefix + (templates[s.stage] || s.detail);
+        }
+        function generateHeadline(ev, j) {
+            const clean = stripPrefix(ev.text);
+            const short = clean.length > 70 ? clean.slice(0, 68) + '…' : clean;
+            if (j.id === 'harriet' || j.id === 'nour') return `⚡ ${short}`;
+            if (j.id === 'lina' || j.id === 'lukas') return `📊 ${short}`;
+            if (j.id === 'sami') return `🔍 ${short}`;
+            return short;
+        }
+
+        // ============================================================
+        // كرة القدم العالمية — شريط أخبار عام يعكس أن هناك عالماً كروياً حياً حول ناديك، بلا اقتباسات مُختلَقة لأشخاص حقيقيين
+        // ============================================================
+        const WORLD_HEADLINES = [
+            'مانشستر سيتي يمدّد عقد أحد نجومه حتى 2029',
+            'ريال مدريد يراقب موهبة صاعدة في أمريكا الجنوبية',
+            'باريس سان جيرمان يرفض عرضاً جديداً لأحد لاعبيه',
+            'بايرن ميونخ يعلن غياب أحد أساسييه للإصابة',
+            'الاتحاد الأوروبي يعلن مواعيد قرعة البطولة القارية',
+            'إنتر ميلان يفتتح مفاوضات لتجديد عقد مدربه',
+            'ليفربول يواجه غرامة مالية من الاتحاد الإنجليزي',
+            'أتلتيكو مدريد يعلن عن راعٍ رسمي جديد للقميص',
+            'يوفنتوس يبحث عن بديل استراتيجي في خط الوسط',
+            'بوروسيا دورتموند يمدد التعاون مع شركة معدات رياضية عالمية',
+        ];
+        function renderWorldNews() {
+            const gd = getGameDate();
+            const seed = seedHash('world' + dateSortKey(gd));
+            const picks = [0,1,2].map(i => WORLD_HEADLINES[(seed+i*37) % WORLD_HEADLINES.length]);
+            document.getElementById('worldNewsContainer').innerHTML = picks.map(h => `
+                <div class="world-ticker"><i class="fas fa-circle-nodes"></i><span>${h}</span></div>
+            `).join('');
+        }
+
+        // ============================================================
+        // قسم: الصحفيون — ملفات كاملة مع العلاقة الحقيقية المتطوّرة
+        // ============================================================
+        function renderJournalistsList() {
+            resolveJournoMemories();
+            const el = document.getElementById('journalistsListContainer');
+            el.innerHTML = JOURNALISTS.map(j => {
+                const rel = getRelationship(j.id);
+                const relColor = rel>=65?'var(--green)':rel>=40?'var(--gold)':'var(--red)';
+                const track = getJournalistTrackRecord(j.id);
+                return `
+                <div class="journalist-card">
+                    <div class="journalist-avatar" style="background:${j.color}22; color:${j.color};"><i class="fas ${j.icon}"></i></div>
+                    <div class="info">
+                        <div class="journalist-name">${j.nat} ${j.name} <span style="color:var(--muted); font-weight:400;">— ${j.outlet}</span></div>
+                        <div class="stats-row">
+                            <span class="mini-stat">التخصص: ${j.spec.map(s=>CATEGORY_LABELS[s]||s).join('، ')}</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="mini-stat">أقدمية ${j.seniority} سنة</span>
+                            <span class="mini-stat">مصداقية معلَنة ${j.credibility}%</span>
+                            <span class="mini-stat" style="color:${track===null?'var(--muted)':track>=70?'var(--green)':'var(--red)'};">${track===null?'لا سجل بعد':'سجل دقة فعلي '+track+'%'}</span>
+                        </div>
+                        <div class="rel-bar"><div class="rel-fill" style="width:${rel}%; background:${relColor};"></div></div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        function renderRelationships() {
+            const el = document.getElementById('relationshipsContainer');
+            el.innerHTML = JOURNALISTS.map(j => {
+                const rel = getRelationship(j.id);
+                const relColor = rel>=65?'var(--green)':rel>=40?'var(--gold)':'var(--red)';
+                return `<div class="journalist-card">
+                    <div class="journalist-avatar" style="background:${j.color}22; color:${j.color};"><i class="fas ${j.icon}"></i></div>
+                    <div class="info"><div class="journalist-name">${j.name}</div><div class="rel-bar"><div class="rel-fill" style="width:${rel}%; background:${relColor};"></div></div></div>
+                    <div style="font-size:13px; font-weight:800; color:${relColor};">${rel}%</div>
+                </div>`;
+            }).join('');
+        }
+
+        // ============================================================
+        // قسم: المؤتمرات الصحفية — أسئلة حقيقية مبنية على أحداث فعلية، لا أسئلة عامة عشوائية
+        // 4 أساليب إجابة حقيقية بأثر فعلي على ثقة المجلس والعلاقة مع الصحفي
+        // ============================================================
+        // ============================================================
+        // كاشف مؤتمرات حقيقي شامل — عدة محفزات فعلية متزامنة، كل واحد بشدة (severity) محسوبة من البيانات الحقيقية فعلياً
+        // ============================================================
+        function getRecentResultsStreak() {
+            try {
+                const scores = JSON.parse(localStorage.getItem('full_season_scores')) || [];
+                const recent = scores.slice(-5).reverse();
+                let losses = 0;
+                for (const s of recent) {
+                    if (s.homeScore < s.awayScore) losses++; else break;
+                }
+                return losses;
+            } catch(e) { return 0; }
+        }
+        function detectAllConferenceTriggers() {
+            const budget = getClubBudget();
+            const confidence = getConfidence();
+            const losses = getRecentResultsStreak();
+            const stories = getRealTransferStories();
+            const bigDeal = stories.find(s => s.stage === 'medical' || s.stage === 'close');
+            const triggers = [];
+
+            if (budget < 0) triggers.push({ type:'financial_crisis', id:'fin_'+Math.floor(budget),
+                text:`الرئيس، ميزانية النادي في عجز حالياً (${budget.toFixed(1)}M €). هل النادي يواجه مشكلة حقيقية في السيولة؟`,
+                severity: Math.min(1, Math.abs(budget)/50) });
+
+            if (confidence < 40) triggers.push({ type:'confidence_crisis', id:'conf_'+Math.floor(confidence/5),
+                text:'الرئيس، ثقة مجلس الإدارة بك تراجعت بشكل ملحوظ مؤخراً. كيف تُقيّم علاقتك الحالية بالمجلس؟',
+                severity: Math.min(1, (40-confidence)/40) });
+
+            if (losses >= 3) triggers.push({ type:'losing_streak', id:'streak_'+losses,
+                text:`الرئيس، الفريق خسر ${losses} مباريات متتالية. هل ما زلت تثق بالجهاز الفني الحالي؟`,
+                severity: Math.min(1, losses/6) });
+
+            if (bigDeal) {
+                const feeSeverity = Math.min(1, (getClubBudget()>0 ? 20/getClubBudget() : 1));
+                triggers.push({ type:'big_signing', id:'deal_'+bigDeal.name,
+                    text:`دخل ناديكم في مراحل متقدمة لضم ${bigDeal.name}. هل تعتقد أن النادي مستعد لتحمّل تبعات هذه الصفقة مالياً؟`,
+                    severity: feeSeverity });
+            }
+
+            if (!triggers.length) triggers.push({ type:'general', id:'general',
+                text:'الرئيس، كيف تُقيّم أداء النادي في الفترة الأخيرة بشكل عام؟', severity: 0.2 });
+
+            return triggers;
+        }
+        function isTriggerResolved(t) { return localStorage.getItem(`confResolved_${activeClub}_${t.id}`) === '1'; }
+        function markTriggerResolved(t) { localStorage.setItem(`confResolved_${activeClub}_${t.id}`, '1'); }
+
+        // كل أسلوب إجابة له أثر أساسي، لكن الأثر الفعلي يُعدَّل حسب شدة الأزمة الحقيقية وصفات الصحفي السائل تحديداً
+        const ANSWER_STYLES = [
+            { key:'diplomatic', label:'دبلوماسي', sample:'"نحن نثق في مشروعنا ونعمل على المدى الطويل."', base:{conf:4, rel:2} },
+            { key:'honest', label:'صريح', sample:'"نعم، هناك تحديات حقيقية وسنراجع الوضع بجدية."', base:{conf:-2, rel:7} },
+            { key:'aggressive', label:'هجومي', sample:'"بعض الانتقادات لا تستند إلى معلومات صحيحة."', base:{conf:-1, rel:-9} },
+            { key:'noComment', label:'رفض التعليق', sample:'"لا أرغب في التعليق في الوقت الحالي."', base:{conf:0, rel:-4} },
+        ];
+        // الأثر الفعلي الحقيقي: يتضاعف مع شدة الأزمة، ويتفاعل مع صفات الصحفي تحديداً (لا رقم ثابت بمعزل عن السياق)
+        function computeAnswerImpact(style, trigger, j) {
+            const severityMult = 0.6 + trigger.severity * 1.2;
+            let conf = style.base.conf * severityMult;
+            let rel = style.base.rel;
+            if (style.key === 'aggressive') {
+                // الهجوم على صحفي مثير للجدل أو ذي علاقة سيئة أصلاً يأتي بنتائج عكسية أشد بكثير
+                if (j.sensationalism > 60) rel -= 10;
+                if (getRelationship(j.id) < 40) rel -= 6;
+            }
+            if (style.key === 'honest' && j.credibility > 75) rel += 4; // الصدق مع صحفي موثوق يُكافَأ فعلياً أكثر
+            if (style.key === 'diplomatic' && trigger.severity > 0.7) conf *= 0.5; // التمويه لا يُجدي كثيراً في أزمة حقيقية كبيرة
+            return { conf: Math.round(conf), rel: Math.round(rel) };
+        }
+        let activeConferences = [];
+        function renderConference() {
+            activeConferences = detectAllConferenceTriggers().filter(t => !isTriggerResolved(t));
+            const el = document.getElementById('conferenceContainer');
+            if (!activeConferences.length) {
+                el.innerHTML = `<div class="empty-state"><i class="fas fa-microphone-slash"></i>لا توجد مؤتمرات صحفية عاجلة حالياً — الأحداث الكبرى في ناديك (أزمة مالية، سلسلة خسائر، صفقة كبرى) تستدعي مؤتمراً تلقائياً فور حدوثها فعلياً.</div>`;
+                return;
+            }
+            el.innerHTML = activeConferences.map((trigger, idx) => {
+                const beat = trigger.type==='big_signing'?'transfer':trigger.type==='financial_crisis'?'finance':'system';
+                const j = getJournalistFor(beat, activeClub+trigger.id);
+                const sevLabel = trigger.severity >= 0.7 ? 'أزمة كبرى' : trigger.severity >= 0.4 ? 'موقف حسّاس' : 'سؤال روتيني';
+                const sevColor = trigger.severity >= 0.7 ? 'var(--red)' : trigger.severity >= 0.4 ? 'var(--gold)' : 'var(--muted)';
+                return `
+                <div class="conf-question" style="${idx>0?'border-top:1px solid var(--border);':''}">
+                    <span class="stage-badge" style="background:${sevColor}22; color:${sevColor}; margin-bottom:8px;">${sevLabel}</span>
+                    <div class="conf-q-text">${trigger.text}</div>
+                    <div class="conf-asker">— ${j.nat} ${j.name}، ${j.outlet} ${getRelationship(j.id)<40?'<span style="color:var(--red);">(علاقة متوترة معك)</span>':''}</div>
+                    ${ANSWER_STYLES.map(a => {
+                        const impact = computeAnswerImpact(a, trigger, j);
+                        return `<button class="answer-btn" onclick="answerConference('${trigger.id}', '${a.key}', '${j.id}')"><span class="style-tag">${a.label} <span style="color:var(--muted); font-weight:400;">(ثقة ${impact.conf>=0?'+':''}${impact.conf} · علاقة ${impact.rel>=0?'+':''}${impact.rel}%)</span></span>${a.sample}</button>`;
+                    }).join('')}
+                </div>`;
+            }).join('');
+        }
+        function answerConference(triggerId, styleKey, journalistId) {
+            const trigger = activeConferences.find(t => t.id === triggerId);
+            const style = ANSWER_STYLES.find(a=>a.key===styleKey);
+            const j = getJournalistById(journalistId);
+            const impact = computeAnswerImpact(style, trigger, j);
+
+            setConfidence(getConfidence() + impact.conf);
+            setRelationship(journalistId, getRelationship(journalistId) + impact.rel);
+            markTriggerResolved(trigger);
+
+            addMessageToSystem(j.name, `🎤 في المؤتمر الصحفي، رد الرئيس بأسلوب "${style.label}" على سؤال حول: ${trigger.text.slice(0,50)}...`, 'system');
+            logArchive({ type:'conference', text:`رد الرئيس بأسلوب ${style.label} على سؤال ${j.name} (${trigger.type}) — ثقة المجلس ${impact.conf>=0?'+':''}${impact.conf}، علاقة ${impact.rel>=0?'+':''}${impact.rel}%` });
+
+            // الأسلوب الهجومي مع صحفي مثير للجدل قد يُشعل صراعاً حقيقياً ينعكس في تغطيته القادمة فعلياً
+            if (style.key === 'aggressive' && impact.rel <= -12) {
+                recordArticle(journalistId, 'conflict_'+trigger.id, 'exaggerated', activeClub);
+                addMessageToSystem(j.name, `⚔️ عقب تصريحات الرئيس الهجومية، ألمح ${j.name} في تغطيته القادمة إلى "توتر واضح" داخل إدارة ${activeClub}.`, 'system');
+            }
+
+            showToast(`✅ تم الرد — ثقة المجلس ${impact.conf>=0?'+':''}${impact.conf}، علاقة ${impact.rel>=0?'+':''}${impact.rel}% مع ${j.name}`);
+            renderConference();
+        }
+
+        // ============================================================
+        // قسم: المقابلات والطلبات الإعلامية
+        // ============================================================
+        function getMediaRequests() {
+            const key = `mediaRequests_${activeClub}`;
+            const today = dateSortKey(getGameDate());
+            let requests = JSON.parse(localStorage.getItem(key) || '[]');
+            const lastGen = parseInt(localStorage.getItem(`mediaRequestsGenDate_${activeClub}`)) || 0;
+            if (today - lastGen >= 3 && requests.length < 3) {
+                const seed = seedHash(activeClub + 'req' + today);
+                const j = JOURNALISTS[seed % JOURNALISTS.length];
+                const types = [
+                    { icon:'fa-microphone', label:'طلب مقابلة حصرية' },
+                    { icon:'fa-comment-dots', label:'طلب تعليق على آخر الأحداث' },
+                    { icon:'fa-tv', label:'دعوة لظهور تلفزيوني' },
+                ];
+                const type = types[seed % types.length];
+                requests.push({ id: Date.now(), journalistId: j.id, type: type.label, icon: type.icon });
+                localStorage.setItem(key, JSON.stringify(requests));
+                localStorage.setItem(`mediaRequestsGenDate_${activeClub}`, String(today));
+            }
+            return requests;
+        }
+        function renderRequests() {
+            const requests = getMediaRequests();
+            const el = document.getElementById('requestsContainer');
+            if (!requests.length) { el.innerHTML = `<div class="empty-state"><i class="fas fa-envelope-open-text"></i>لا توجد طلبات إعلامية معلَّقة حالياً.</div>`; return; }
+            el.innerHTML = requests.map(r => {
+                const j = getJournalistById(r.journalistId);
+                return `<div class="request-row">
+                    <div class="journalist-avatar" style="background:${j.color}22; color:${j.color};"><i class="fas ${r.icon}"></i></div>
+                    <div class="info"><div class="journalist-name">${r.type}</div><div class="journalist-outlet">${j.nat} ${j.name} — ${j.outlet}</div></div>
+                    <button class="btn-sm" onclick="respondRequest(${r.id}, true)">قبول</button>
+                    <button class="btn-sm-outline" onclick="respondRequest(${r.id}, false)">رفض</button>
+                </div>`;
+            }).join('');
+        }
+        function respondRequest(id, accept) {
+            const key = `mediaRequests_${activeClub}`;
+            let requests = JSON.parse(localStorage.getItem(key) || '[]');
+            const r = requests.find(x=>x.id===id);
+            if (!r) return;
+            const j = getJournalistById(r.journalistId);
+            if (accept) {
+                setRelationship(r.journalistId, getRelationship(r.journalistId) + 8);
+                addMessageToSystem(j.name, `📸 لبّى الرئيس طلب "${r.type}" — تحسّنت العلاقة مع ${j.outlet}.`, 'system');
+                logArchive({ type:'request', text:`قبل الرئيس ${r.type} من ${j.name} (${j.outlet})` });
+                showToast('✅ تم القبول — تحسّنت العلاقة');
+            } else {
+                setRelationship(r.journalistId, getRelationship(r.journalistId) - 5);
+                showToast('تم الرفض — تأثرت العلاقة قليلاً');
+            }
+            requests = requests.filter(x=>x.id!==id);
+            localStorage.setItem(key, JSON.stringify(requests));
+            renderRequests();
+        }
+
+        // ============================================================
+        // قسم: سمعة النادي إعلامياً — محسوبة من نبرة الأحداث الحقيقية الأخيرة
+        // ============================================================
+        function computeMediaSentiment() {
+            const events = getRealEvents().slice(0, 25);
+            let positive = 0, negative = 0;
+            const negWords = ['رفض','فشل','خسارة','إصابة','قيود','حظر','غرامة','تحقيق','تحذير','عجز'];
+            const posWords = ['وافق','نجح','فاز','اكتمل','تطوّر','ارتفع','وقّع','اعتماد'];
+            events.forEach(e => {
+                const t = e.text || '';
+                if (negWords.some(w => t.includes(w))) negative++;
+                else if (posWords.some(w => t.includes(w))) positive++;
+            });
+            const total = positive + negative;
+            const score = total > 0 ? Math.round((positive/total)*100) : 60;
+            return { score, coverage: events.length };
+        }
+        function renderSentiment() {
+            const s = computeMediaSentiment();
+            const label = s.score >= 65 ? 'إيجابي' : s.score >= 40 ? 'متوازن' : 'سلبي';
+            const color = s.score >= 65 ? 'var(--green)' : s.score >= 40 ? 'var(--gold)' : 'var(--red)';
+            const avgRel = Math.round(JOURNALISTS.reduce((s,j)=>s+getRelationship(j.id),0)/JOURNALISTS.length);
+            document.getElementById('sentimentGrid').innerHTML = `
+                <div class="sentiment-box"><div class="lbl">مؤشر الرأي العام</div><div class="val" style="color:${color};">${s.score}% — ${label}</div></div>
+                <div class="sentiment-box"><div class="lbl">متوسط العلاقة مع الصحافة</div><div class="val" style="color:var(--gold);">${avgRel}%</div></div>
+            `;
+        }
+
+        // ============================================================
+        // قسم: الأرشيف الإعلامي
+        // ============================================================
+        function getArchive() { try { return JSON.parse(localStorage.getItem(`mediaArchive_${activeClub}`)) || []; } catch(e){ return []; } }
+        function logArchive(entry) {
+            const arch = getArchive();
+            arch.unshift({ ...entry, dateSort: dateSortKey(getGameDate()) });
+            localStorage.setItem(`mediaArchive_${activeClub}`, JSON.stringify(arch.slice(0, 100)));
+        }
+        function renderArchive() {
+            const arch = getArchive();
+            const el = document.getElementById('archiveContainer');
+            if (!arch.length) { el.innerHTML = `<div class="empty-state"><i class="fas fa-box-archive"></i>لا يوجد أرشيف إعلامي بعد — سيتراكم مع مؤتمراتك وردودك على طلبات الصحفيين.</div>`; return; }
+            el.innerHTML = arch.map(a => `<div class="world-ticker"><i class="fas ${a.type==='conference'?'fa-microphone':'fa-envelope'}"></i><span>${a.text}</span></div>`).join('');
+        }
+
+        function renderBreakingBanner() {
+            const stories = getRealTransferStories();
+            const close = stories.find(s => s.stage === 'medical' || s.stage === 'close');
+            const el = document.getElementById('breakingBanner');
+            if (!close) { el.innerHTML = ''; return; }
+            el.innerHTML = `<div class="breaking"><i class="fas fa-satellite-dish" style="color:var(--red);"></i><span><b>عاجل:</b> ${activeClub} يقترب من إتمام صفقة ${close.name}</span></div>`;
+        }
+
+        window.onload = function() {
+            renderBreakingBanner();
+            renderJournalistFilterTabs();
+            renderFeed();
+            renderWorldNews();
+        };
+    </script>
+</body>
+</html>

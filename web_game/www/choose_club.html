@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>الديوان الرئاسي - الدرجات الرسمية فقط</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="indexeddb.js"></script>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+        :root {
+            --gold: #e8b84b;
+            --dark: #0a0b10;
+            --card-bg: #161b22;
+            --card-hover: #1f2a36;
+            --text: #e6edf3;
+            --text-dim: #8b949e;
+            --border-dim: #30363d;
+        }
+        html[data-theme="light"] {
+            --gold: #b8862f;
+            --dark: #f4f5f9;
+            --card-bg: #ffffff;
+            --card-hover: #eef0f5;
+            --text: #151a24;
+            --text-dim: #6b7385;
+            --border-dim: #e2e5ec;
+        }
+        
+
+        body {
+            background: radial-gradient(circle at 20% 30%, #0c0f15, #030407);
+            color: var(--text);
+            font-family: 'Segoe UI', 'Tahoma', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(22,27,34,0.98), rgba(8,9,14,0.98));
+            backdrop-filter: blur(10px);
+            padding: 22px 15px;
+            border-bottom: 2px solid var(--gold);
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: 1px;
+            color: var(--gold);
+            font-weight: 500;
+        }
+        .sub {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 6px;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 550px;
+            margin: 0 auto;
+            animation: fadeSlide 0.35s ease;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+        .flag-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-dim);
+            border-radius: 24px;
+            padding: 18px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        .flag-card:active { transform: scale(0.96); background: var(--card-hover); border-color: var(--gold);}
+        .flag-icon { font-size: 40px; display: block; margin-bottom: 8px; }
+        .country-name { font-weight: bold; font-size: 14px; }
+
+        .league-card {
+            background: linear-gradient(115deg, #161b22, #0f131a);
+            border: 1px solid var(--border-dim);
+            margin-bottom: 14px;
+            padding: 14px 18px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .league-card:hover {
+            border-color: var(--gold);
+            transform: translateX(-5px);
+            background: #1e2532;
+        }
+        
+        .league-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .league-info-box {
+            flex-grow: 1;
+        }
+
+        .league-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text);
+        }
+        .league-card:hover .league-name {
+            color: var(--gold);
+        }
+        .league-tier {
+            font-size: 11px;
+            color: var(--text-dim);
+            background: #0a0c12;
+            padding: 2px 10px;
+            border-radius: 40px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .badge-gold {
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .back-link {
+            color: var(--gold);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(197,160,89,0.12);
+            padding: 7px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .back-link:active { background: rgba(197,160,89,0.3);}
+
+        .hidden { display: none; }
+
+        #contractView {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.96);
+            backdrop-filter: blur(14px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .scroll-paper {
+            background: #fdf6e8;
+            color: #2c2416;
+            width: 92%;
+            max-width: 380px;
+            padding: 30px 22px 24px;
+            border: 10px double #b88b3a;
+            border-radius: 18px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.55);
+            position: relative;
+            background-image:
+                repeating-linear-gradient(0deg, rgba(184,139,58,0.035) 0px, rgba(184,139,58,0.035) 1px, transparent 1px, transparent 26px);
+            max-height: 92vh;
+            overflow-y: auto;
+        }
+        .doc-seal {
+            position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+            width: 46px; height: 46px; border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #d4a94f, #9e7b3e 70%);
+            border: 2px solid #fdf6e8; box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center; color: #fdf6e8; font-size: 16px;
+        }
+        .doc-letterhead {
+            font-size: 12px; font-weight: 800; color: #6b5220; margin-top: 10px; line-height: 1.7;
+            border-bottom: 1px solid #b88b3a; padding-bottom: 10px;
+        }
+        .doc-letterhead span { font-weight: 400; font-size: 10px; color: #8e6d28; }
+        .doc-ref-row { display: flex; justify-content: space-between; font-size: 9.5px; color: #8e6d28; padding: 8px 2px 0; }
+        .doc-divider { height: 1px; background: repeating-linear-gradient(90deg, #b88b3a, #b88b3a 4px, transparent 4px, transparent 8px); margin: 10px 0; }
+        .doc-title { margin: 4px 0 6px; font-size: 18px; font-weight: 800; color: #6b5220; }
+        .doc-body { font-size: 12px; line-height: 1.7; color: #4a3a1e; margin-bottom: 6px; }
+        .doc-club-name { color:#9e7b3e; font-size:26px; border-bottom:2px solid #b88b3a; display:inline-block; padding:0 12px 8px; margin: 4px 0 12px; }
+        .doc-club-logo-wrap { margin: 8px 0 6px; }
+        .doc-club-logo { width:60px; height:60px; object-fit:contain; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.25)); }
+        .doc-terms { font-size: 10.5px; line-height: 1.8; color: #6b5a3e; background: rgba(184,139,58,0.08); border-radius: 10px; padding: 10px; margin-bottom: 4px; text-align: justify; }
+        .sig-hint { position:absolute; top:42%; width:100%; text-align:center; opacity:0.4; pointer-events:none; font-size: 13px; }
+        .sig-line-label { font-size: 10px; color: #8e6d28; margin-top: -6px; margin-bottom: 4px; }
+        .cancel-link { background:none; border:none; margin-top:12px; color:#886633; font-size:12px; cursor: pointer; }
+        .sig-box {
+            border: 2px dashed #b88b3a;
+            height: 130px;
+            margin: 20px 0;
+            background: #fff3e0;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            cursor: crosshair;
+            background: #fff3e0;
+        }
+        .sign-btn {
+            background: #2c2416;
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            padding: 12px;
+            font-weight: bold;
+            border-radius: 50px;
+            width: 100%;
+            display: none;
+            font-size: 16px;
+            margin-top: 8px;
+        }
+        .clear-btn {
+            background: transparent;
+            border: 1px solid #8e6d28;
+            padding: 6px 12px;
+            border-radius: 40px;
+            margin-top: 10px;
+            color: #8e6d28;
+            font-size: 12px;
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 25px;
+            left: 20px;
+            right: 20px;
+            background: #1f3b2c;
+            color: #e6f7e6;
+            padding: 14px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 1300;
+            backdrop-filter: blur(10px);
+            animation: fadeUp 2.4s forwards;
+            font-weight: bold;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(10px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(20px);}
+            15% { opacity: 1; transform: translateY(0);}
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-30px); visibility: hidden;}
+        }
+        .no-data {
+            text-align: center;
+            padding: 35px;
+            background: #10141c;
+            border-radius: 24px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>الديوان الرئاسي للأندية</h1>
+    <div class="sub">الدرجات الرسمية فقط • الدرجة الأولى، الثانية، الثالثة</div>
+</div>
+
+<div class="container" id="mainApp">
+    <div id="viewCountries">
+        <h3 style="text-align:center; margin-bottom:20px; font-weight:300; color:var(--gold);">اختر الوجهة المستهدفة</h3>
+        <div class="grid" id="countriesList"></div>
+    </div>
+
+    <div id="viewLeagues" class="hidden">
+        <span class="back-link" onclick="goToCountries()">← العودة للخريطة</span>
+        <div id="leaguesContainer"></div>
+    </div>
+
+    <div id="viewTeams" class="hidden">
+        <span class="back-link" onclick="goToLeagues()">← العودة للدوريات</span>
+        <div id="teamsContainer"></div>
+    </div>
+</div>
+
+<div id="contractView">
+    <div class="scroll-paper">
+        <div class="doc-seal"><i class="fas fa-landmark"></i></div>
+        <div class="doc-letterhead">الاتحاد الدولي لكرة القدم<br><span>مكتب الرئاسة والتكليفات الرسمية</span></div>
+        <div class="doc-ref-row">
+            <span id="docRefNumber">رقم المرجع: --</span>
+            <span id="docDate">--</span>
+        </div>
+        <div class="doc-divider"></div>
+        <h2 class="doc-title">مرسوم تكليف رئاسي</h2>
+        <p class="doc-body">بناءً على الصلاحيات الرسمية المخوَّلة، تقرر إسناد مهام الرئاسة والإدارة الكاملة لنادي:</p>
+        <div class="doc-club-logo-wrap">
+            <img id="selectedClubLogo" class="doc-club-logo" src="" alt="" onerror="this.style.display='none';">
+        </div>
+        <h1 id="selectedClubTitle" class="doc-club-name">---</h1>
+        <p class="doc-terms">
+            يتحمّل السيد الرئيس المُكلَّف كامل المسؤولية الإدارية والمالية والفنية للنادي المذكور، ويلتزم بالعمل وفق اللوائح الرسمية للاتحاد المختص، اعتباراً من تاريخ التوقيع أدناه.
+        </p>
+        <div class="sig-box">
+            <canvas id="signatureCanvas"></canvas>
+            <div id="signHint" class="sig-hint"><i class="fas fa-signature"></i> وقّع هنا بإصبعك</div>
+        </div>
+        <div class="sig-line-label">التوقيع الرئاسي المعتمَد</div>
+        <button id="confirmSignBtn" class="sign-btn" onclick="finalizeContract()"><i class="fas fa-stamp"></i> اعتماد وتصديق التعاقد</button>
+        <button class="clear-btn" onclick="clearSignature()"><i class="fas fa-eraser"></i> مسح التوقيع</button>
+        <button onclick="closeContractDialog()" class="cancel-link">إلغاء الأمر</button>
+    </div>
+</div>
+
+<script>
+    let competitionsDB = [];     
+    let teamsDictionary = {};    
+    let teamsRawDB = [];
+    let currentCountryLeagues = [];  
+    let currentSelectedLeagueName = "";
+    let currentSelectedLeague = null; 
+
+    // ============================================================
+    //  محرك قوانين الاتحادات
+    // ============================================================
+    function getTierFromTypeId(typeId) {
+        const t = parseInt(typeId);
+        return (t >= 1 && t <= 3) ? t : 4;
+    }
+
+    const COUNTRY_TO_CONFED = {
+        "Saudi Arabia": "AFC", "Egypt": "CAF", "Morocco": "CAF", "Algeria": "CAF",
+        "Spain": "UEFA", "England": "UEFA", "France": "UEFA", "Italy": "UEFA", "Germany": "UEFA",
+        "Netherlands": "UEFA", "Turkiye": "UEFA", "Russia": "UEFA", "Switzerland": "UEFA",
+        "Ireland": "UEFA", "Wales": "UEFA", "Ukraine": "UEFA", "Belgium": "UEFA", "Austria": "UEFA",
+        "Portugal": "UEFA", "Norway": "UEFA", "Poland": "UEFA", "Monaco": "UEFA",
+        "United Arab Emirates": "AFC", "Japan": "AFC", "South Korea": "AFC", "Qatar": "AFC",
+        "Indonesia": "AFC", "China": "AFC", "Iran": "AFC", "Iraq": "AFC", "India": "AFC",
+        "Brazil": "CONMEBOL", "Argentina": "CONMEBOL", "Ecuador": "CONMEBOL",
+        "Venezuela": "CONMEBOL", "Chile": "CONMEBOL", "Colombia": "CONMEBOL",
+        "United States": "CONCACAF", "Mexico": "CONCACAF", "Canada": "CONCACAF"
+    };
+    
+    function normalizeConfed(raw) {
+        if (!raw) return "UEFA";
+        if (raw === "South American Football Confederation") return "CONMEBOL";
+        return raw;
+    }
+    
+    function resolveConfederation(row) {
+        if (row && row.area && row.area !== "NULL" && String(row.area).trim() !== "") return normalizeConfed(row.area);
+        return normalizeConfed(COUNTRY_TO_CONFED[row ? row.country : null] || "UEFA");
+    }
+
+    const CONFEDERATION_RULES = {
+        UEFA: {
+            label: "الاتحاد الأوروبي لكرة القدم (UEFA)",
+            note: "يُطبَّق نظام اللعب المالي النظيف (FFP) بصرامة، وقاعدة اللاعبين المحليين (Homegrown Rule) ضمن القائمة.",
+            1: { squadMax: 25, foreignMax: 17, homegrownMin: 8, wageCapPct: 70, minStadium: 8000  },
+            2: { squadMax: 23, foreignMax: 12, homegrownMin: 6, wageCapPct: 55, minStadium: 3000  },
+            3: { squadMax: 22, foreignMax: 8,  homegrownMin: 5, wageCapPct: 45, minStadium: 1000  },
+            4: { squadMax: 20, foreignMax: 4,  homegrownMin: 4, wageCapPct: 35, minStadium: 300   }
+        },
+        AFC: {
+            label: "الاتحاد الآسيوي لكرة القدم (AFC)",
+            note: "يُطبَّق غالباً نظام «3+1» (3 لاعبين أجانب + لاعب واحد من دولة آسيوية أخرى) في الدرجات العليا.",
+            1: { squadMax: 30, foreignMax: 8, homegrownMin: 0, wageCapPct: 65, minStadium: 10000 },
+            2: { squadMax: 28, foreignMax: 5, homegrownMin: 0, wageCapPct: 50, minStadium: 3000  },
+            3: { squadMax: 25, foreignMax: 3, homegrownMin: 0, wageCapPct: 40, minStadium: 1000  },
+            4: { squadMax: 22, foreignMax: 1, homegrownMin: 0, wageCapPct: 30, minStadium: 300   }
+        },
+        CAF: {
+            label: "الاتحاد الأفريقي لكرة القدم (CAF)",
+            note: "يُشترط ترخيص سنوي من الاتحاد المحلي، وتُطبَّق قيود صارمة نسبياً على عدد الأجانب لحماية المواهب المحلية.",
+            1: { squadMax: 30, foreignMax: 5, homegrownMin: 0, wageCapPct: 55, minStadium: 8000 },
+            2: { squadMax: 25, foreignMax: 3, homegrownMin: 0, wageCapPct: 40, minStadium: 2000 },
+            3: { squadMax: 22, foreignMax: 2, homegrownMin: 0, wageCapPct: 30, minStadium: 500  },
+            4: { squadMax: 20, foreignMax: 1, homegrownMin: 0, wageCapPct: 25, minStadium: 200  }
+        },
+        CONCACAF: {
+            label: "اتحاد الكونكاكاف لكرة القدم (CONCACAF)",
+            note: "بعض الدوريات (مثل الـ MLS) تعتمد نظام رواتب مركزي شبه موحّد بدل نسبة حرة من إيرادات النادي.",
+            1: { squadMax: 30, foreignMax: 8, homegrownMin: 0, wageCapPct: 60, minStadium: 15000 },
+            2: { squadMax: 26, foreignMax: 5, homegrownMin: 0, wageCapPct: 45, minStadium: 5000  },
+            3: { squadMax: 23, foreignMax: 3, homegrownMin: 0, wageCapPct: 35, minStadium: 1000  },
+            4: { squadMax: 20, foreignMax: 1, homegrownMin: 0, wageCapPct: 25, minStadium: 300   }
+        },
+        CONMEBOL: {
+            label: "اتحاد أمريكا الجنوبية لكرة القدم (CONMEBOL)",
+            note: "لا يوجد سقف صارم موحّد لعدد الأجانب في أغلب الدول، لكن يُشترط تسجيل حصة من المواهب الشابة ضمن القائمة.",
+            1: { squadMax: 30, foreignMax: 7, homegrownMin: 0, wageCapPct: 55, minStadium: 10000 },
+            2: { squadMax: 27, foreignMax: 4, homegrownMin: 0, wageCapPct: 40, minStadium: 3000  },
+            3: { squadMax: 24, foreignMax: 2, homegrownMin: 0, wageCapPct: 30, minStadium: 800   },
+            4: { squadMax: 20, foreignMax: 1, homegrownMin: 0, wageCapPct: 25, minStadium: 200   }
+        },
+        OFC: {
+            label: "اتحاد أوقيانوسيا لكرة القدم (OFC)",
+            note: "دوريات محدودة الاحترافية، وتُطبَّق قيود مالية مخففة نظراً لصغر حجم السوق المحلي.",
+            1: { squadMax: 25, foreignMax: 5, homegrownMin: 0, wageCapPct: 50, minStadium: 3000 },
+            2: { squadMax: 23, foreignMax: 3, homegrownMin: 0, wageCapPct: 40, minStadium: 1000 },
+            3: { squadMax: 20, foreignMax: 2, homegrownMin: 0, wageCapPct: 30, minStadium: 500  },
+            4: { squadMax: 18, foreignMax: 1, homegrownMin: 0, wageCapPct: 25, minStadium: 200  }
+        }
+    };
+
+    const COUNTRY_OVERRIDES = {
+        "Saudi Arabia":  { squadMax: 30, foreignMax: 10, wageCapPct: 75, minStadium: 12000, note: "الدوري السعودي للمحترفين يسمح بتسجيل حتى 10 لاعبين أجانب في القائمة النهائية للمباراة." },
+        "England":       { squadMax: 25, foreignMax: 17, homegrownMin: 8, wageCapPct: 70, minStadium: 25000, note: "قائمة الدوري الإنجليزي: 25 لاعباً كحد أقصى بشرط تسجيل 8 لاعبين «محليي النشأة» على الأقل، دون سقف على الجنسية بحد ذاتها." },
+        "Spain":         { squadMax: 25, foreignMax: 3,  wageCapPct: 70, minStadium: 15000, note: "الليغا تطبّق «كوبو» صارماً: 3 لاعبين فقط من خارج الاتحاد الأوروبي مسموح تسجيلهم لكل نادٍ." },
+        "Italy":         { squadMax: 25, foreignMax: 5,  wageCapPct: 70, minStadium: 12000, note: "الدوري الإيطالي يقيّد عدد التسجيلات الجديدة للاعبين من خارج الاتحاد الأوروبي كل موسم." },
+        "Germany":       { squadMax: 25, foreignMax: 20, wageCapPct: 70, minStadium: 15000, note: "لا يوجد سقف جنسية صارم، لكن يُطبَّق نظام «50+1» في ملكية الأندية بدل قيود تسجيل اللاعبين." },
+        "France":        { squadMax: 25, foreignMax: 20, wageCapPct: 70, minStadium: 12000, note: "الدوري الفرنسي لا يفرض سقفاً صارماً على الجنسيات، لكنه يخضع لرقابة مالية صارمة (DNCG)." },
+        "Egypt":         { squadMax: 30, foreignMax: 5,  wageCapPct: 55, minStadium: 8000,  note: "الاتحاد المصري يسمح بتسجيل 5 لاعبين أجانب كحد أقصى في القائمة." },
+        "Morocco":       { squadMax: 28, foreignMax: 6,  wageCapPct: 50, minStadium: 5000,  note: "البطولة الاحترافية المغربية تسمح بستة أجانب مع اشتراط لاعب أفريقي إضافي." },
+        "Japan":         { squadMax: 30, foreignMax: 5,  wageCapPct: 55, minStadium: 15000, note: "الدوري الياباني (J1) يعتمد نظام 5 أجانب + لاعب واحد إضافي من دول آسيان." },
+        "United Arab Emirates": { squadMax: 30, foreignMax: 6, wageCapPct: 65, minStadium: 8000, note: "الدوري الإماراتي يسمح بستة لاعبين أجانب في القائمة النهائية." },
+        "United States": { squadMax: 30, foreignMax: 8,  wageCapPct: 60, minStadium: 18000, note: "الدوري الأمريكي (MLS) يعتمد نظام رواتب مركزي («Salary Cap») تُديره الرابطة نفسها بدل نسبة حرة." },
+        "Brazil":        { squadMax: 30, foreignMax: 9,  wageCapPct: 55, minStadium: 15000, note: "لا يوجد سقف جنسية صارم بالدوري البرازيلي، لكن يُشترط تسجيل حصة من لاعبي الفئات السنية ضمن القائمة." },
+        "Argentina":     { squadMax: 30, foreignMax: 6,  wageCapPct: 50, minStadium: 15000, note: "الدوري الأرجنتيني يفرض حداً أدنى لعدد اللاعبين المحليين تحت 24 عاماً ضمن القائمة." },
+        "Qatar":         { squadMax: 30, foreignMax: 7,  wageCapPct: 70, minStadium: 10000, note: "دوري نجوم قطر يسمح بسبعة لاعبين أجانب مع اشتراط لاعب واحد على الأقل من دول آسيان." }
+    };
+
+    function computeFederationRules(row, tier) {
+        const confedKey = resolveConfederation(row);
+        const confed = CONFEDERATION_RULES[confedKey] || CONFEDERATION_RULES.UEFA;
+        const base = confed[tier] || confed[4];
+        const country = row ? row.country : '';
+        const override = (tier === 1 && country && COUNTRY_OVERRIDES[country]) ? COUNTRY_OVERRIDES[country] : {};
+        const tierLabelMap = { 1: "الدرجة الأولى (الممتاز)", 2: "الدرجة الثانية", 3: "الدرجة الثالثة", 4: "درجات الهواة/المحلي" };
+        return {
+            tier,
+            tierLabel: tierLabelMap[tier] || `المستوى ${tier}`,
+            confederation: confedKey,
+            confederationLabel: confed.label,
+            confederationNote: confed.note,
+            country: country || '',
+            countryNote: override.note || null,
+            squadMax: override.squadMax || base.squadMax,
+            foreignMax: override.foreignMax || base.foreignMax,
+            homegrownMin: (override.homegrownMin !== undefined ? override.homegrownMin : base.homegrownMin) || 0,
+            wageCapPct: override.wageCapPct || base.wageCapPct,
+            minStadium: override.minStadium || base.minStadium
+        };
+    }
+
+    const countriesMeta = [
+        { code: "Saudi Arabia", display: "السعودية", flag: "🇸🇦" },
+        { code: "Egypt", display: "مصر", flag: "🇪🇬" },
+        { code: "Morocco", display: "المغرب", flag: "🇲🇦" },
+        { code: "Spain", display: "إسبانيا", flag: "🇪🇸" },
+        { code: "England", display: "إنجلترا", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+        { code: "France", display: "فرنسا", flag: "🇫🇷" },
+        { code: "Italy", display: "إيطاليا", flag: "🇮🇹" },
+        { code: "Germany", display: "ألمانيا", flag: "🇩🇪" },
+        { code: "Brazil", display: "البرازيل", flag: "🇧🇷" },
+        { code: "Netherlands", display: "هولندا", flag: "🇳🇱" },
+        { code: "Turkiye", display: "تركيا", flag: "🇹🇷" },
+        { code: "Russia", display: "روسيا", flag: "🇷🇺" },
+        { code: "Switzerland", display: "سويسرا", flag: "🇨🇭" },
+        { code: "Ireland", display: "أيرلندا", flag: "🇮🇪" },
+        { code: "Wales", display: "ويلز", flag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿" },
+        { code: "Ukraine", display: "أوكرانيا", flag: "🇺🇦" },
+        { code: "United Arab Emirates", display: "الإمارات", flag: "🇦🇪" },
+        { code: "Belgium", display: "بلجيكا", flag: "🇧🇪" },
+        { code: "Austria", display: "النمسا", flag: "🇦🇹" },
+        { code: "Portugal", display: "البرتغال", flag: "🇵🇹" },
+        { code: "Japan", display: "اليابان", flag: "🇯🇵" },
+        { code: "Norway", display: "النرويج", flag: "🇧🇻" },
+    ];
+
+    function isValidLeague(competitionName, typeId) {
+        if (!competitionName) return false;
+        const nameLower = competitionName.toLowerCase();
+        const forbiddenKeywords = [
+            "cup", "كأس", "supercup", "super cup", "supercopa", "supercope",
+            "playoff", "play-off", "elimination", "trophy", "league cup", "كأس الرابطة",
+            "community shield", "supercoppa", "superliga"
+        ];
+        for (let kw of forbiddenKeywords) {
+            if (nameLower.includes(kw)) return false;
+        }
+        const tier = parseInt(typeId);
+        return (tier === 1 || tier === 2 || tier === 3);
+    }
+
+    // ============================================================
+    //  مسح كل بيانات اللعبة (بما فيها اسم النادي)
+    // ============================================================
+    // ============================================================
+    // Session Guard (نفس النظام المستخدم في fixtures.html/friendly_matches.html)
+    // كل توقيع جديد مع نادٍ جديد يجب أن يبدأ بجلسة جديدة تماماً حتى تُحجب أي
+    // بيانات ودية/مباريات قديمة لم تُوسم بشكل صحيح (ownerClub/sessionId)
+    // ============================================================
+    function startNewGameSession() {
+        const sid = 'S' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+        localStorage.setItem('game_session_id', sid);
+        return sid;
+    }
+
+    // محاولة تفريغ قاعدة بيانات IndexedDB (المباريات الودية القادمة/المنتهية وعلاقات الأندية)
+    // بأفضل جهد ممكن، حتى لا تبقى أي مباراة قديمة مرتبطة بالنادي السابق عند تعيين نادٍ جديد
+    async function purgeFriendlyMatchData() {
+        if (typeof clubDB === 'undefined') return;
+        try {
+            await clubDB.init();
+            try {
+                const upcoming = await clubDB.getAllUpcomingMatches();
+                for (const m of upcoming) {
+                    try { await clubDB.delete('upcomingMatches', m.id); } catch (e) {}
+                }
+            } catch (e) {}
+            try {
+                const history = await clubDB.getAllFriendlyMatches();
+                for (const m of history) {
+                    try { await clubDB.delete('friendlyMatches', m.id); } catch (e) {}
+                }
+            } catch (e) {}
+        } catch (e) {
+            console.warn('تعذر تفريغ بيانات المباريات الودية القديمة:', e);
+        }
+    }
+
+    function clearAllGameData() {
+        const keysToClear = [
+            'signed_players_by_club',
+            'pending_registration_by_club',
+            'club_transfer_list',
+            'player_owner_club',
+            'current_league_teams',
+            'presidentialClub',
+            'presidentialTeamId',
+            'clubStadiumName',
+            'clubStadiumCapacity',
+            'current_league_name',
+            'current_country_id',
+            'current_competition_type_id',
+            'current_competition_id',
+            'homeCountry',
+            'federationRules'
+        ];
+        keysToClear.forEach(key => localStorage.removeItem(key));
+        startNewGameSession();
+    }
+
+    function loadData() {
+        // إضافة البيانات الأساسية أولاً
+        injectStructuralLeagues();
+        fillEmptyLeagues();
+
+        // محاولة تحميل ملفات CSV
+        Promise.all([
+            fetch('competition_detailed.csv').then(r => r.text()).catch(() => ''),
+            fetch('team.csv').then(r => r.text()).catch(() => '')
+        ]).then(([csvComp, csvTeam]) => {
+            if (csvComp) {
+                Papa.parse(csvComp, { header: true, complete: (res) => { 
+                    const parsedLeagues = res.data.filter(comp => isValidLeague(comp.competition, comp.competition_type_id));
+                    parsedLeagues.forEach(pl => {
+                        let compName = pl.competition ? pl.competition.trim() : "";
+                        if (compName === "Argentina Primera Division" || compName === "Primera División") {
+                            compName = "Argentina Primera División";
+                        }
+                        if (compName === "Challenge League" || compName === "Switzerland Challenge League") {
+                            compName = "Switzerland Challenge League";
+                        }
+
+                        if (!competitionsDB.some(c => c.competition === compName)) {
+                            pl.competition = compName;
+                            competitionsDB.push(pl);
+                        }
+                    });
+                } });
+            }
+
+            if (csvTeam) {
+                Papa.parse(csvTeam, { header: true, complete: (res) => {
+                    res.data.forEach(row => {
+                        if (!row.team) return;
+                        if (row.team.includes("Youth") || row.team.includes("U21") || row.team.includes("U19") || row.team.includes("U17")) return;
+                        
+                        let comp = row.competition ? row.competition.trim() : "";
+                        if (!comp) return;
+
+                        if (comp === "Argentina Primera Division" || comp === "Primera División") {
+                            comp = "Argentina Primera División";
+                        }
+                        if (comp === "Challenge League" || comp === "Switzerland Challenge League") {
+                            comp = "Switzerland Challenge League";
+                        }
+
+                        if (!teamsDictionary[comp]) teamsDictionary[comp] = new Set();
+                        if (teamsDictionary[comp].size < 40) teamsDictionary[comp].add(row.team.trim());
+
+                        teamsRawDB.push({
+                            team: row.team.trim(),
+                            team_id: row.team_id || '',
+                            competition_id: row.competition_id || '',
+                            competition: comp,
+                            stadium_name: row.stadium_name || '',
+                            stadium_capacity: row.stadium_capacity || ''
+                        });
+                    });
+                    
+                    fillEmptyLeagues();
+                    buildCountriesUI();
+                } });
+            }
+
+            // حتى لو لم تتحمّل ملفات CSV، نعرض الواجهة بالبيانات الأساسية
+            setTimeout(() => {
+                if (document.getElementById('countriesList').children.length === 0) {
+                    buildCountriesUI();
+                }
+            }, 1000);
+        }).catch(() => {
+            // في حالة فشل التحميل، استخدم البيانات الاحتياطية
+            injectFilteredFallback();
+            buildCountriesUI();
+        });
+    }
+
+    function injectMissingLeaguesToDB() {
+        const structuralLeagues = [
+            { country: "Argentina", competition: "Primera División", competition_type_id: 1 },
+            { country: "Switzerland", competition: "Challenge League", competition_type_id: 2 },
+            { country: "United States", competition: "MLS", competition_type_id: 1 },
+            { country: "Poland", competition: "Ekstraklasa", competition_type_id: 1 },
+            { country: "Ecuador", competition: "LigaPro Serie A", competition_type_id: 1 },
+            { country: "Qatar", competition: "Stars League", competition_type_id: 1 },
+            { country: "Japan", competition: "J1 League", competition_type_id: 1 },
+            { country: "South Korea", competition: "K League 1", competition_type_id: 1 },
+            { country: "Norway", competition: "Eliteserien", competition_type_id: 1 },
+            { country: "Canada", competition: "Canadian Premier League", competition_type_id: 1 }
+        ];
+        
+        structuralLeagues.forEach(sl => {
+            const exists = competitionsDB.some(c => c.competition === sl.competition);
+            if (!exists) competitionsDB.push(sl);
+        });
+    }
+
+    function fillEmptyLeaguesWithTeams() {
+        const backupTeams = {
+            "Primera División": ["Boca Juniors", "River Plate", "Racing Club", "Independiente", "San Lorenzo", "Estudiantes"],
+            "Challenge League": ["FC Aarau", "FC Thun", "FC Vaduz", "Neuchâtel Xamax", "Schaffhausen", "Wil 1900"],
+            "Ekstraklasa": ["Legia Warszawa", "Lech Poznań", "Raków Częstochowa", "Pogoń Szczecin"],
+            "Liga MX": ["Club América", "Chivas Guadalajara", "Cruz Azul", "Tigres UANL", "CF Monterrey"],
+            "LigaPro Serie A": ["LDU Quito", "Barcelona SC", "Independiente del Valle", "Emelec"],
+            "Stars League": ["السد", "الدحيل", "الريان", "الغرافة", "العربي", "قطر"],
+            "Primera División VE": ["Caracas FC", "Deportivo Táchira", "Zamora FC", "Metropolitanos"],
+            "J1 League": ["Vissel Kobe", "Yokohama F. Marinos", "Kawasaki Frontale", "Urawa Reds"],
+            "Monaco National": ["AS Monaco FC", "Monaco Selector", "Monte Carlo Union"],
+            "K League 1": ["Ulsan HD", "Jeonbuk Hyundai Motors", "Pohang Steelers", "FC Seoul"],
+            "Eliteserien": ["Bodø/Glimt", "Molde FK", "Rosenborg BK", "Brann", "Viking FK"],
+            "Canadian Premier League": ["Forge FC", "Cavalry FC", "Pacific FC", "Vancouver FC"]
+        };
+
+        for (let league in backupTeams) {
+            if (!teamsDictionary[league] || teamsDictionary[league].size === 0) {
+                teamsDictionary[league] = new Set(backupTeams[league]);
+            }
+        }
+    }
+
+    function injectFilteredFallback() {
+        const cleanLeagues = [
+            { country: "Netherlands", competition: "Eredivisie", competition_type_id: 1 },
+            { country: "Netherlands", competition: "Keuken Kampioen Divisie", competition_type_id: 2 },
+            { country: "Tunisia", competition: "Tunisia Ligue 1", competition_type_id: 1 },
+            { country: "Tunisia", competition: "Ligue 2", competition_type_id: 2 },
+            { country: "Turkiye", competition: "Super Lig", competition_type_id: 1 },
+            { country: "Turkiye", competition: "1. Lig", competition_type_id: 2 },
+            { country: "Russia", competition: "Russia Premier Liga", competition_type_id: 1 },
+            { country: "Russia", competition: "1. Division", competition_type_id: 2 },
+            { country: "Switzerland", competition: "Super League", competition_type_id: 1 },
+            { country: "Switzerland", competition: "Challenge League", competition_type_id: 2 },
+            { country: "Algeria", competition: "Algeria Ligue 1", competition_type_id: 1 },
+            { country: "Ireland", competition: "Premier Division", competition_type_id: 1 },
+            { country: "Ireland", competition: "First Division", competition_type_id: 2 },
+            { country: "Wales", competition: "Cymru Premier", competition_type_id: 1 },
+            { country: "Ukraine", competition: "Ukraine Premier Liga", competition_type_id: 1 },
+            { country: "Ukraine", competition: "Persha Liga", competition_type_id: 2 },
+            { country: "United Arab Emirates", competition: "UAE Pro League", competition_type_id: 1 },
+            { country: "Belgium", competition: "Jupiler Pro League", competition_type_id: 1 },
+            { country: "Belgium", competition: "Challenger Pro League", competition_type_id: 2 },
+            { country: "Austria", competition: "Austria Bundesliga", competition_type_id: 1 },
+            { country: "Austria", competition: "2. Liga", competition_type_id: 2 },
+            { country: "Portugal", competition: "Liga Portugal", competition_type_id: 1 },
+            { country: "Portugal", competition: "Liga Portugal 2", competition_type_id: 2 },
+            { country: "Saudi Arabia", competition: "Saudi Pro League", competition_type_id: 1 },
+            { country: "Egypt", competition: "Egyptian Premier League", competition_type_id: 1 },
+            { country: "Morocco", competition: "Botola Pro Inwi", competition_type_id: 1 },
+            { country: "Spain", competition: "LaLiga", competition_type_id: 1 },
+            { country: "Spain", competition: "LaLiga2", competition_type_id: 2 },
+            { country: "England", competition: "Premier League", competition_type_id: 1 },
+            { country: "England", competition: "Championship", competition_type_id: 2 },
+            { country: "France", competition: "Ligue 1", competition_type_id: 1 },
+            { country: "France", competition: "Ligue 2", competition_type_id: 2 },
+            { country: "Italy", competition: "Serie A", competition_type_id: 1 },
+            { country: "Italy", competition: "Serie B", competition_type_id: 2 },
+            { country: "Germany", competition: "Bundesliga", competition_type_id: 1 },
+            { country: "Germany", competition: "2. Bundesliga", competition_type_id: 2 },
+            { country: "Brazil", competition: "Série A", competition_type_id: 1 },
+            { country: "Argentina", competition: "Primera División", competition_type_id: 1 },
+            { country: "United States", competition: "MLS", competition_type_id: 1 },
+            { country: "Poland", competition: "Ekstraklasa", competition_type_id: 1 },
+            { country: "Ecuador", competition: "LigaPro Serie A", competition_type_id: 1 },
+            { country: "Qatar", competition: "Stars League", competition_type_id: 1 },
+            { country: "Japan", competition: "J1 League", competition_type_id: 1 },
+            { country: "Monaco", competition: "Monaco National", competition_type_id: 1 },
+            { country: "South Korea", competition: "K League 1", competition_type_id: 1 },
+            { country: "Norway", competition: "Eliteserien", competition_type_id: 1 },
+            { country: "Canada", competition: "Canadian Premier League", competition_type_id: 1 }
+        ];
+        competitionsDB = cleanLeagues;
+        
+        fillEmptyLeaguesWithTeams();
+        
+        const legacyTeams = {
+            "Eredivisie": ["Ajax", "PSV", "Feyenoord", "AZ Alkmaar"],
+            "Super Lig": ["Galatasaray", "Fenerbahçe", "Beşiktaş"],
+            "Russia Premier Liga": ["Zenit", "Spartak Moscow", "CSKA"],
+            "Egyptian Premier League": ["الأهلي", "الزمالك", "بيراميدز", "المصري"],
+            "Saudi Pro League": ["الهلال", "النصر", "الاتحاد", "الأهلي"],
+            "Botola Pro Inwi": ["الرجاء", "الوداد", "الجيش الملكي"],
+            "Premier League": ["Chelsea", "Man City", "Arsenal", "Liverpool", "Man United", "Tottenham"],
+            "LaLiga": ["Real Madrid", "Barcelona", "Atl. Madrid", "Villarreal", "Sevilla"],
+            "Ligue 1": ["Paris SG", "Marseille", "Monaco", "Lille", "Lyon"],
+            "Super League": ["Young Boys", "Servette", "FC Zürich", "FC Basel"]
+        };
+        for (let league in legacyTeams) {
+            teamsDictionary[league] = new Set(legacyTeams[league]);
+        }
+        competitionsDB.forEach(c => {
+            if (!teamsDictionary[c.competition]) teamsDictionary[c.competition] = new Set(["النادي القائد", "البطل الأسطوري"]);
+        });
+    }
+
+    function buildCountriesUI() {
+        const container = document.getElementById('countriesList');
+        container.innerHTML = '';
+        countriesMeta.forEach(c => {
+            const card = document.createElement('div');
+            card.className = 'flag-card';
+            card.innerHTML = `<span class="flag-icon">${c.flag}</span><span class="country-name">${c.display}</span>`;
+            card.onclick = () => openCountryLeagues(c.code, c.flag);
+            container.appendChild(card);
+        });
+    }
+
+    function openCountryLeagues(countryCode, flagIcon) {
+        let leagues = competitionsDB.filter(comp => comp.country === countryCode);
+        // حجب صارم: أي درجة رابعة أو خامسة أو سادسة أو أعلى لا تُعرض أبداً مهما كان مصدر البيانات
+        leagues = leagues.filter(comp => {
+            const t = parseInt(comp.competition_type_id);
+            return t === 1 || t === 2 || t === 3;
+        });
+        const uniqueMap = new Map();
+        leagues.forEach(l => { if (!uniqueMap.has(l.competition)) uniqueMap.set(l.competition, l); });
+        let sorted = Array.from(uniqueMap.values()).sort((a,b) => (a.competition_type_id||99) - (b.competition_type_id||99));
+        currentCountryLeagues = sorted;
+        const leaguesDiv = document.getElementById('leaguesContainer');
+        if (sorted.length === 0) {
+            leaguesDiv.innerHTML = `<div class="no-data"><i class="fas fa-triangle-exclamation"></i> لا توجد دوريات (درجة أولى/ثانية/ثالثة) مسجلة لهذه الدولة.</div>`;
+        } else {
+            let html = `<h3 style="text-align:center; color:var(--gold); margin-bottom:15px;">${flagIcon} الدرجات الرسمية</h3>`;
+            sorted.forEach(league => {
+                const tierLabel = getTierText(league.competition_type_id);
+                const logoPath = `leagues_logos/${league.competition}.png`;
+                const fallbackLogo = `leagues_logos/default_league.png`;
+
+                html += `
+                    <div class="league-card" onclick="showTeamsForLeague('${escapeQuotes(league.competition)}')">
+                        <img src="${logoPath}" class="league-logo" onerror="this.onerror=null; this.src='${fallbackLogo}';">
+                        <div class="league-info-box">
+                            <div class="league-name">${league.competition}</div>
+                            <div class="league-tier">${tierLabel}</div>
+                        </div>
+                        <div class="badge-gold">اختيار ←</div>
+                    </div>
+                `;
+            });
+            leaguesDiv.innerHTML = html;
+        }
+        toggleView('viewLeagues');
+    }
+
+    function getTierText(typeId) {
+        const id = parseInt(typeId);
+        if (id === 1) return '<i class="fas fa-trophy"></i> الدرجة الأولى (الممتاز)';
+        if (id === 2) return '<i class="fas fa-medal"></i> الدرجة الثانية';
+        if (id === 3) return '<i class="fas fa-medal" style="opacity:0.7;"></i> الدرجة الثالثة';
+        return null; // أي درجة رابعة فما فوق محجوبة تماماً ولا تُعرض إطلاقاً
+    }
+
+    function showTeamsForLeague(leagueName) {
+        currentSelectedLeagueName = leagueName;
+        currentSelectedLeague = currentCountryLeagues.find(l => l.competition === leagueName) || null;
+        const teamsSet = teamsDictionary[leagueName] || new Set();
+        const teamsDiv = document.getElementById('teamsContainer');
+        if (!teamsSet || teamsSet.size === 0) {
+            teamsDiv.innerHTML = `<div class="no-data"><i class="fas fa-ban"></i> لا توجد أندية متاحة لهذه المسابقة.</div>`;
+        } else {
+            let html = `<h3 style="text-align:center; color:var(--gold); margin-bottom:12px;"><i class="fas fa-shield-halved"></i> ${leagueName}</h3>
+                        <div style="font-size:13px; text-align:center; margin-bottom:15px;">اختر النادي الذي سيتم تكليفك برئاسته</div>`;
+            const sortedTeams = Array.from(teamsSet).sort();
+            sortedTeams.forEach(team => {
+                html += `
+                    <div class="league-card" onclick="openContractSign('${escapeQuotes(team)}')">
+                        <img src="teams_logos/${escapeQuotes(team)}.png" class="league-logo" onerror="this.onerror=null; this.style.display='none';">
+                        <div class="league-info-box"><b>${team}</b></div>
+                        <span style="color:var(--gold);border:1px solid var(--gold);padding:4px 12px;border-radius:40px;"><i class="fas fa-signature"></i> توقيع </span>
+                    </div>
+                `;
+            });
+            teamsDiv.innerHTML = html;
+        }
+        toggleView('viewTeams');
+    }
+
+    // ----------------------- التوقيع والرسم -----------------------
+    const canvas = document.getElementById('signatureCanvas');
+    let ctxSign = canvas.getContext('2d');
+    let isDrawing = false;
+    let signExists = false;
+    const confirmBtn = document.getElementById('confirmSignBtn');
+    const signHintDiv = document.getElementById('signHint');
+    
+    function resizeAndClearCanvas() {
+        const parent = canvas.parentElement;
+        canvas.width = parent.clientWidth;
+        canvas.height = parent.clientHeight;
+        ctxSign = canvas.getContext('2d');
+        ctxSign.fillStyle = "#fff3e0";
+        ctxSign.fillRect(0, 0, canvas.width, canvas.height);
+        ctxSign.strokeStyle = "#3a2a1a";
+        ctxSign.lineWidth = 2.8;
+        ctxSign.lineCap = "round";
+        signExists = false;
+        confirmBtn.style.display = 'none';
+        signHintDiv.style.display = 'block';
+    }
+
+    function getCanvasCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        let clientX, clientY;
+        if (e.touches) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+            e.preventDefault();
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        let x = (clientX - rect.left) * scaleX;
+        let y = (clientY - rect.top) * scaleY;
+        x = Math.min(Math.max(0, x), canvas.width);
+        y = Math.min(Math.max(0, y), canvas.height);
+        return { x, y };
+    }
+    function startDraw(e) {
+        isDrawing = true;
+        const { x, y } = getCanvasCoords(e);
+        ctxSign.beginPath();
+        ctxSign.moveTo(x, y);
+        if (!signExists) {
+            signExists = true;
+            confirmBtn.style.display = 'block';
+            signHintDiv.style.display = 'none';
+        }
+        e.preventDefault();
+    }
+    
+    function draw(e) {
+        if (!isDrawing) return;
+        const { x, y } = getCanvasCoords(e);
+        ctxSign.lineTo(x, y);
+        ctxSign.stroke();
+        ctxSign.beginPath();
+        ctxSign.moveTo(x, y);
+        e.preventDefault();
+    }
+    
+    function endDraw() {
+        isDrawing = false;
+        ctxSign.beginPath();
+    }
+    
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('touchstart', startDraw, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', endDraw);
+    
+    function clearSignature() {
+        ctxSign.clearRect(0, 0, canvas.width, canvas.height);
+        ctxSign.fillStyle = "#fff3e0";
+        ctxSign.fillRect(0, 0, canvas.width, canvas.height);
+        ctxSign.strokeStyle = "#3a2a1a";
+        signExists = false;
+        confirmBtn.style.display = 'none';
+        signHintDiv.style.display = 'block';
+    }
+    
+    function openContractSign(teamName) {
+        document.getElementById('selectedClubTitle').innerText = teamName;
+        document.getElementById('selectedClubLogo').src = `teams_logos/${teamName.trim()}.png`;
+        document.getElementById('selectedClubLogo').style.display = '';
+        const refNum = 'FIFA-' + new Date().getFullYear() + '-' + String(Math.floor(seedHashLocal(teamName) % 90000) + 10000);
+        document.getElementById('docRefNumber').innerText = 'رقم المرجع: ' + refNum;
+        const today = new Date();
+        document.getElementById('docDate').innerText = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
+        document.getElementById('contractView').style.display = 'flex';
+        setTimeout(() => { resizeAndClearCanvas(); }, 30);
+    }
+    function seedHashLocal(str) { let h=0; const s=String(str); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+    
+    function closeContractDialog() {
+        document.getElementById('contractView').style.display = 'none';
+    }
+    
+    async function finalizeContract() {
+        if (!signExists) {
+            showToastMessage('<i class="fas fa-hand"></i> يجب التوقيع على مرسوم التكليف أولاً!', "#aa3e2e");
+            return;
+        }
+        
+        // ============================================================
+        //  مسح كل بيانات اللعبة القديمة (في الخلفية)
+        // ============================================================
+        clearAllGameData();
+        await purgeFriendlyMatchData();
+        
+        const clubName = document.getElementById('selectedClubTitle').innerText;
+        localStorage.setItem('presidentialClub', clubName);
+        localStorage.setItem('current_league_name', "مسيرة " + currentSelectedLeagueName);
+
+        if (currentSelectedLeague) {
+            localStorage.setItem('current_country_id',          String(currentSelectedLeague.country_id          || ''));
+            localStorage.setItem('current_competition_type_id', String(currentSelectedLeague.competition_type_id || ''));
+            localStorage.setItem('current_competition_id',      String(currentSelectedLeague.competition_id      || ''));
+            localStorage.setItem('homeCountry', String(currentSelectedLeague.country || ''));
+        }
+
+        const rawTeamsSet = teamsDictionary[currentSelectedLeagueName];
+        if (rawTeamsSet && rawTeamsSet.size > 0) {
+            const leagueTeamsArray = Array.from(rawTeamsSet);
+            localStorage.setItem('current_league_teams', JSON.stringify(leagueTeamsArray));
+        }
+
+        const teamRow = teamsRawDB.find(t => t.team === clubName && t.competition === currentSelectedLeagueName)
+                     || teamsRawDB.find(t => t.team === clubName);
+
+        if (teamRow) {
+            localStorage.setItem('presidentialTeamId', teamRow.team_id || '');
+            localStorage.setItem('clubStadiumName', teamRow.stadium_name || `ملعب ${clubName}`);
+            localStorage.setItem('clubStadiumCapacity', String(parseInt(teamRow.stadium_capacity) || 15000));
+        } else {
+            localStorage.setItem('clubStadiumName', `ملعب ${clubName}`);
+            localStorage.setItem('clubStadiumCapacity', '15000');
+        }
+
+        const tier = getTierFromTypeId(currentSelectedLeague ? currentSelectedLeague.competition_type_id : 1);
+        const rules = computeFederationRules(currentSelectedLeague, tier);
+        localStorage.setItem('federationRules', JSON.stringify(rules));
+
+        showToastMessage(`<i class="fas fa-circle-check"></i> تم تعيينك رئيساً لنادي ${clubName}`, "#2c6e2c");
+        setTimeout(() => {
+            window.location.href = 'game_main.html';
+        }, 1200);
+    }
+    
+    function showToastMessage(msg, bgColor) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-msg';
+        toast.innerHTML = msg;
+        toast.style.background = bgColor;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2600);
+    }
+
+    function toggleView(visibleId) {
+        document.getElementById('viewCountries').classList.add('hidden');
+        document.getElementById('viewLeagues').classList.add('hidden');
+        document.getElementById('viewTeams').classList.add('hidden');
+        document.getElementById(visibleId).classList.remove('hidden');
+    }
+    function goToCountries() { toggleView('viewCountries'); }
+    function goToLeagues() { toggleView('viewLeagues'); }
+    function escapeQuotes(str) { return str.replace(/'/g, "\\'"); }
+    
+    // ============================================================
+    //  إضافة البيانات الأساسية للدوريات
+    // ============================================================
+    function injectStructuralLeagues() {
+        const customLeagues = [
+            { country: "Argentina", competition: "Argentina Primera División", competition_type_id: 1 },
+            { country: "Switzerland", competition: "Switzerland Challenge League", competition_type_id: 2 },
+            { country: "United States", competition: "MLS", competition_type_id: 1 },
+            { country: "Poland", competition: "Ekstraklasa", competition_type_id: 1 },
+            { country: "Mexico", competition: "Liga MX", competition_type_id: 1 },
+            { country: "Ecuador", competition: "LigaPro Serie A", competition_type_id: 1 },
+            { country: "Qatar", competition: "Stars League", competition_type_id: 1 },
+            { country: "Venezuela", competition: "Primera División VE", competition_type_id: 1 },
+            { country: "Japan", competition: "J1 League", competition_type_id: 1 },
+            { country: "Monaco", competition: "Monaco National", competition_type_id: 1 },
+            { country: "South Korea", competition: "K League 1", competition_type_id: 1 },
+            { country: "Norway", competition: "Eliteserien", competition_type_id: 1 },
+            { country: "Canada", competition: "Canadian Premier League", competition_type_id: 1 },
+            { country: "England", competition: "Championship", competition_type_id: 2 }
+        ];
+        customLeagues.forEach(l => {
+            if (!competitionsDB.some(c => c.competition === l.competition)) {
+                competitionsDB.push(l);
+            }
+        });
+    }
+    
+    function fillEmptyLeagues() {
+        const fallbackMap = {
+            "Argentina Primera División": ["Boca Juniors", "River Plate", "Racing Club", "Independiente", "San Lorenzo", "Estudiantes"],
+            "Switzerland Challenge League": ["FC Aarau", "FC Thun", "FC Vaduz", "Neuchâtel Xamax FCS", "FC Wil 1900", "FC Stade-Lausanne-Ouchy", "Yverdon Sport FC", "Etoile Carouge FC", "AC Bellinzona"],
+            "MLS": ["Inter Miami", "LA Galaxy", "New York City FC", "Seattle Sounders", "Atlanta United FC"],
+            "Ekstraklasa": ["Legia Warszawa", "Lech Poznań", "Raków Częstochowa", "Pogoń Szczecin"],
+            "Liga MX": ["Club América", "Chivas Guadalajara", "Cruz Azul", "Tigres UANL", "CF Monterrey"],
+            "LigaPro Serie A": ["LDU Quito", "Barcelona SC", "Independiente del Valle", "Emelec"],
+            "Stars League": ["السد", "الدحيل", "الريان", "الغرافة", "العربي", "قطر القطري"],
+            "Primera División VE": ["Caracas FC", "Deportivo Táchira", "Zamora FC", "Metropolitanos"],
+            "J1 League": ["Vissel Kobe", "Yokohama F. Marinos", "Kawasaki Frontale", "Urawa Reds"],
+            "Monaco National": ["AS Monaco FC", "Monaco Selector", "Monte Carlo Union"],
+            "K League 1": ["Ulsan HD", "Jeonbuk Hyundai Motors", "Pohang Steelers", "FC Seoul"],
+            "Eliteserien": ["Bodø/Glimt", "Molde FK", "Rosenborg BK", "Brann", "Viking FK"],
+            "Canadian Premier League": ["Forge FC", "Cavalry FC", "Pacific FC", "Vancouver FC"],
+        };
+        for (let key in fallbackMap) {
+            if (!teamsDictionary[key] || teamsDictionary[key].size === 0) {
+                teamsDictionary[key] = new Set(fallbackMap[key]);
+            }
+        }
+    }
+
+    // ============================================================
+    //  بدء التحميل
+    // ============================================================
+    loadData();
+</script>
+
+<!-- نظام التهيئة المركزي -->
+<script src="init.js"></script>
+
+</body>
+</html>    

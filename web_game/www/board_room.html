@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>مجلس الإدارة | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444; --blue:#3b82f6; }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+            --blue: #2563eb;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:10px 12px; border-radius:12px; border:1px solid var(--border); }
+        .back-btn { background:var(--border); color:white; border:none; padding:8px 12px; font-size:12px; border-radius:8px; text-decoration:none; }
+        .page-title { font-size:14px; font-weight:800; color:var(--gold); }
+
+        .confidence-card { background:linear-gradient(135deg, #1a2338, #0d1220); border:1px solid var(--border); border-radius:16px; padding:18px 14px; text-align:center; }
+        .confidence-num { font-size:34px; font-weight:900; }
+        .confidence-lbl { font-size:12px; color:var(--muted); margin-top:2px; }
+        .confidence-status { display:inline-block; margin-top:10px; padding:6px 16px; border-radius:20px; font-size:12px; font-weight:800; }
+        .confidence-track { height:8px; background:rgba(255,255,255,0.08); border-radius:5px; overflow:hidden; margin:12px auto 0 auto; max-width:280px; }
+        .confidence-fill { height:100%; }
+
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .card-title { font-size:12px; font-weight:800; color:var(--gold); padding:12px 14px 8px 14px; display:flex; align-items:center; gap:6px; }
+        .report-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:10px 14px 14px 14px; }
+        .report-box { background:var(--bg); border-radius:10px; padding:10px; }
+        .report-box .lbl { font-size:10px; color:var(--muted); }
+        .report-box .val { font-size:15px; font-weight:800; margin-top:3px; }
+        .report-box .val.pos { color:var(--green); } .report-box .val.neg { color:var(--red); }
+        .empty-state { text-align:center; padding:26px 16px; color:var(--muted); font-size:12.5px; line-height:1.8; }
+
+        .objective-box { display:flex; align-items:center; gap:10px; padding:12px 14px; }
+        .objective-box i { font-size:20px; color:var(--gold); }
+        .objective-box .t1 { font-size:13px; font-weight:800; }
+        .objective-box .t2 { font-size:11px; color:var(--muted); margin-top:2px; }
+
+        .member-row { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
+        .member-row:last-child { border-bottom:none; }
+        .member-avatar { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:var(--gold); flex:0 0 auto; }
+        .member-info { flex:1; }
+        .member-name { font-size:12.5px; font-weight:700; }
+        .member-sub { font-size:10.5px; color:var(--muted); margin-top:2px; }
+        .member-weight { font-size:11px; font-weight:800; color:var(--gold); }
+        .sat-track { height:4px; background:var(--border); border-radius:3px; overflow:hidden; margin-top:5px; max-width:140px; }
+        .sat-fill { height:100%; transition:width 0.3s; }
+
+        .meeting-row { padding:12px 14px; border-bottom:1px solid var(--border); }
+        .meeting-row:last-child { border-bottom:none; }
+        .meeting-title { font-size:12.5px; font-weight:800; display:flex; justify-content:space-between; }
+        .meeting-date { font-size:10px; color:var(--muted); }
+        .meeting-verdict { font-size:11.5px; margin-top:6px; line-height:1.7; }
+
+        .vote-row { display:flex; align-items:center; gap:8px; padding:6px 0; font-size:11.5px; }
+        .vote-row i { width:16px; text-align:center; }
+        .amount-input-row { display:flex; align-items:center; gap:8px; padding:8px 0; }
+        .amount-input-row input { flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; font-size:14px; text-align:center; font-weight:800; }
+        .chance-track { height:8px; background:var(--border); border-radius:5px; overflow:hidden; margin:6px 0; }
+        .chance-fill { height:100%; transition:width 0.2s; }
+        .confirm-vote-btn { width:100%; border:none; padding:12px; border-radius:10px; font-size:13px; font-weight:800; cursor:pointer; background:var(--gold); color:#06090f; margin-top:10px; }
+        .confirm-vote-btn:disabled { opacity:0.5; }
+        .vote-yes { color:var(--green); } .vote-no { color:var(--red); }
+
+        .action-row { display:flex; gap:8px; padding:10px 14px; }
+        .btn { flex:1; border:none; padding:10px; border-radius:10px; font-size:12px; font-weight:800; cursor:pointer; }
+        .btn-gold { background:var(--gold); color:#06090f; }
+        .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:50; align-items:flex-end; justify-content:center; }
+        .modal-overlay.active { display:flex; }
+        .modal-sheet { background:var(--card); width:100%; max-width:480px; border-radius:16px 16px 0 0; padding:16px; display:flex; flex-direction:column; gap:10px; max-height:85vh; overflow-y:auto; }
+        .close-modal { margin-right:auto; background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title">🏛️ مجلس الإدارة</div>
+        <div style="width:34px;"></div>
+    </div>
+
+    <div class="confidence-card" id="confidenceCard"></div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-sack-dollar"></i> الوضع المالي الذي يراه المجلس</div>
+        <div id="financialSnapshotContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-bullseye"></i> هدف الموسم الرسمي</div>
+        <div id="objectiveContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-users"></i> أعضاء مجلس الإدارة</div>
+        <div id="membersContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="action-row" style="flex-wrap:wrap;">
+            <button class="btn btn-gold" onclick="openVoteModal('budget')">طلب زيادة ميزانية الانتقالات</button>
+        </div>
+        <div class="action-row" style="flex-wrap:wrap; padding-top:0;">
+            <button class="btn btn-outline" onclick="presentPerformanceReport()">تقديم تقرير أداء للمجلس</button>
+            <button class="btn btn-outline" onclick="requestObjectiveEasing()">طلب تخفيف هدف الموسم</button>
+        </div>
+        <div class="action-row" style="flex-wrap:wrap; padding-top:0;">
+            <button class="btn btn-outline" onclick="requestPrCampaign()">حملة علاقات عامة (تحسين السمعة)</button>
+            <button class="btn btn-outline" onclick="requestEmergencyLoan()">طلب قرض طارئ من المالك</button>
+        </div>
+        <div class="action-row" style="flex-wrap:wrap; padding-top:0;">
+            <button class="btn btn-outline" onclick="requestCoachDismissal()">طلب إقالة المدرب الرئيسي</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-clipboard-list"></i> سجل الاجتماعات</div>
+        <div id="meetingsContainer"></div>
+    </div>
+
+    <!-- نافذة التصويت -->
+    <div class="modal-overlay" id="voteModal">
+        <div class="modal-sheet">
+            <div style="display:flex; align-items:center;">
+                <div style="font-size:14px; font-weight:800; color:var(--gold);" id="voteModalTitle">طلب من المجلس</div>
+                <button class="close-modal" onclick="closeVoteModal()">✕</button>
+            </div>
+            <div id="voteModalAmountSection" style="display:none;">
+                <div style="font-size:11px; color:var(--muted); margin-top:4px;">المبلغ المطلوب (مليون €) — اطلب أي مبلغ تريده</div>
+                <div class="amount-input-row"><input type="number" id="voteAmountInput" min="1" step="1" oninput="updateVotePreview()"></div>
+                <div class="vote-row"><span>فرصة الموافقة المتوقَّعة</span><b id="voteChanceLabel" style="color:var(--gold); margin-right:auto;">--%</b></div>
+                <div class="chance-track"><div class="chance-fill" id="voteChanceBar" style="width:0%;"></div></div>
+                <button class="confirm-vote-btn" id="voteConfirmBtn" onclick="submitAmountVote()">عرض الطلب على المجلس</button>
+            </div>
+            <div id="voteModalBody"></div>
+        </div>
+    </div>
+
+    <div id="toast" style="position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--gold); color:var(--text); padding:10px 16px; border-radius:10px; font-size:12px; display:none; z-index:99; max-width:90%; text-align:center;"></div>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || 'نادي المستقبل';
+        const homeCountry = localStorage.getItem('homeCountry') || 'Saudi Arabia';
+
+        function showToast(msg) { const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 3200); }
+        function seedHash(str) { let h=0; const s=String(str); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+        function getGameDate() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+        function dateLabel(d) { return `${String(d.day).padStart(2,'0')}/${String(d.month).padStart(2,'0')}/${d.year}`; }
+        function getClubBudget() { return parseFloat(localStorage.getItem('clubBudget')) || 150.0; }
+        function setClubBudget(v) { localStorage.setItem('clubBudget', v.toFixed(2)); }
+        function getClubReputation() { return parseFloat(localStorage.getItem('clubReputation')) || 50; }
+        function fedGetRules() { return JSON.parse(localStorage.getItem('federationRules')) || { tier:1, wageCapPct:70, tierLabel:'الدرجة الأولى' }; }
+
+        function addMessageToSystem(sender, text, category) {
+            let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+            inbox.unshift({ id: Date.now(), sender, text, time: new Date().toLocaleTimeString('en-US', { hour12:false }), read:false, category: category || 'federation' });
+            localStorage.setItem('gameInbox', JSON.stringify(inbox));
+            localStorage.setItem('hasNewMessage', 'true');
+        }
+
+        // ============================================================
+        // حساب ترتيب دوريك الحالي (نفس المنطق الحقيقي المستخدم في league_table4-2.html)
+        // ============================================================
+        function calculateCurrentStanding() {
+            let teams = [];
+            try {
+                const stored = localStorage.getItem('current_league_teams');
+                if (stored) teams = JSON.parse(stored).filter(t => t !== 'إستراحة' && t.trim() !== '');
+            } catch(e) {}
+            if (!teams.length || !teams.includes(activeClub)) return null;
+            const currentRound = parseInt(localStorage.getItem('database_current_round')) || 0;
+            let standings = {};
+            teams.forEach(t => { standings[t] = { name:t, pts:0, gf:0, ga:0 }; });
+            let pool = [...teams];
+            if (pool.length % 2 !== 0) pool.push('إستراحة');
+            const total = pool.length, rounds = total-1, perRound = total/2;
+            let schedule = [];
+            for (let r=0;r<rounds;r++){
+                let matches=[];
+                for(let i=0;i<perRound;i++){
+                    let home=pool[i], away=pool[total-1-i];
+                    if (home==='إستراحة'||away==='إستراحة') continue;
+                    if (r%2===1){ const t=home; home=away; away=t; }
+                    matches.push({home,away});
+                }
+                schedule.push(matches); pool.splice(1,0,pool.pop());
+            }
+            const half = schedule.length;
+            for (let r=0;r<half;r++) schedule.push(schedule[r].map(m=>({home:m.away,away:m.home})));
+            let savedScores = JSON.parse(localStorage.getItem('full_season_scores')) || [];
+            for (let i=0;i<currentRound;i++){
+                if (!schedule[i]) break;
+                schedule[i].forEach(match => {
+                    let hScore, aScore;
+                    if (match.home===activeClub || match.away===activeClub) {
+                        let found = savedScores.find(s=>s.roundIdx===i);
+                        hScore = found?found.homeScore:0; aScore = found?found.awayScore:0;
+                    } else {
+                        let seed = i + match.home.length + match.away.length;
+                        hScore = seed%3; aScore = (seed+1)%3;
+                    }
+                    let home=standings[match.home], away=standings[match.away];
+                    if (home && away) {
+                        home.gf+=hScore; home.ga+=aScore; away.gf+=aScore; away.ga+=hScore;
+                        if (hScore>aScore) home.pts+=3; else if (hScore===aScore){ home.pts++; away.pts++; } else away.pts+=3;
+                    }
+                });
+            }
+            const sorted = Object.values(standings).sort((a,b)=>b.pts-a.pts || (b.gf-b.ga)-(a.gf-a.ga));
+            const pos = sorted.findIndex(t=>t.name===activeClub) + 1;
+            return { position: pos, total: sorted.length, round: currentRound, totalRounds: half*2 };
+        }
+
+        // ============================================================
+        // أعضاء مجلس الإدارة — يُولَّدون مرة واحدة لكل نادٍ، بشخصيات وأوزان تصويت حقيقية
+        // ============================================================
+        const BOARD_POSITIONS = ['مالك النادي', 'رئيس مجلس الإدارة', 'المدير التنفيذي', 'المدير المالي', 'المدير الرياضي (عضو مجلس)', 'عضو مجلس مستقل'];
+        const PERSONALITIES = [
+            { key:'conservative', label:'محافظ مالياً' }, { key:'risk', label:'مغامر' }, { key:'ambitious', label:'طموح' },
+            { key:'youth', label:'يهتم بالشباب' }, { key:'profit', label:'يهتم بالأرباح' }, { key:'trophy', label:'يهتم بالبطولات' },
+            { key:'patient', label:'صبور' }, { key:'shorttemper', label:'سريع الغضب' }
+        ];
+        const FIRST_NAMES = ["عبدالله","محمد","سلطان","فيصل","خالد","تركي","سعود","نواف","Carlos","Marco","Klaus","Antoine","Ricardo","Henrik"];
+        const LAST_NAMES = ["العتيبي","القحطاني","الدوسري","الشهري","Rossi","Fernandez","Müller","Dubois","Silva","Andersen"];
+
+        function generateBoard() {
+            const stored = localStorage.getItem('board_members_' + activeClub);
+            if (stored) return JSON.parse(stored);
+            const members = BOARD_POSITIONS.map((pos, i) => {
+                const seed = seedHash(activeClub + pos);
+                const personality = PERSONALITIES[Math.floor(seed/13) % PERSONALITIES.length];
+                return {
+                    id: i, position: pos, age: 42 + (seed % 28), personality: personality.key, personalityLabel: personality.label,
+                    votingWeight: 0, loyalty: 40 + (seed % 50), ambition: 30 + (Math.floor(seed/3) % 60), patience: 30 + (Math.floor(seed/5) % 60)
+                };
+            });
+            // توزيع أوزان تصويت واقعية: المالك ورئيس المجلس أعلى تأثيراً
+            const rawWeights = [30, 20, 15, 15, 12, 8];
+            members.forEach((m,i) => m.votingWeight = rawWeights[i]);
+            localStorage.setItem('board_members_' + activeClub, JSON.stringify(members));
+            return members;
+        }
+
+        // ============================================================
+        // رضا فردي حقيقي لكل عضو مجلس — ليس رقماً واحداً جماعياً، بل رضا مستقل لكل عضو
+        // حسب اهتمامه الشخصي الفعلي (مالي، طموح، شباب، صبر...)، محسوب من بيانات حقيقية فعلية
+        // ============================================================
+        function getMemberSatisfaction(memberId) {
+            const stored = localStorage.getItem('member_satisfaction_' + activeClub + '_' + memberId);
+            return stored !== null ? parseFloat(stored) : 60; // نقطة بداية محايدة واقعية
+        }
+        function setMemberSatisfaction(memberId, v) {
+            localStorage.setItem('member_satisfaction_' + activeClub + '_' + memberId, String(Math.max(0, Math.min(100, Math.round(v)))));
+        }
+
+        function computeMemberSatisfactionDelta(member, standing, objective, snapshot) {
+            let delta = 0;
+            const onTrack = standing ? standing.position <= objective.maxPosition : true;
+
+            switch (member.personality) {
+                case 'conservative':
+                case 'profit':
+                    delta = snapshot.netMomentum >= 0 ? 3 : -4;
+                    break;
+                case 'ambitious':
+                case 'trophy':
+                    delta = onTrack ? 4 : -5;
+                    break;
+                case 'youth': {
+                    const academyPool = parseFloat(localStorage.getItem('pool_academy_' + activeClub)) || 0;
+                    delta = academyPool > 3 ? 2 : -2;
+                    break;
+                }
+                case 'risk': {
+                    const transferSpend = parseFloat(localStorage.getItem('transferPurchases')) || 0;
+                    delta = transferSpend > 10 ? 3 : (onTrack ? 1 : -3);
+                    break;
+                }
+                case 'patient':
+                    delta = (onTrack ? 2 : -2) * 0.5;
+                    break;
+                case 'shorttemper':
+                    delta = onTrack ? 5 : -7;
+                    break;
+                default:
+                    delta = onTrack ? 2 : -2;
+            }
+            return Math.round(delta);
+        }
+
+        function updateAllMemberSatisfaction(standing, objective) {
+            const members = generateBoard();
+            const snapshot = getRealFinancialSnapshot();
+            members.forEach(m => {
+                const delta = computeMemberSatisfactionDelta(m, standing, objective, snapshot);
+                setMemberSatisfaction(m.id, getMemberSatisfaction(m.id) + delta);
+            });
+        }
+
+        // ============================================================
+        // هدف الموسم — يُحدَّد فعلياً من درجة ناديك وسمعته الحقيقية، وليس اختياراً عشوائياً
+        // ============================================================
+        function determineObjective() {
+            const gd = getGameDate();
+            const seasonYear = (gd.month>=8) ? gd.year : gd.year-1;
+            const key = 'season_objective_' + activeClub + '_' + seasonYear;
+            const stored = localStorage.getItem(key);
+            if (stored) return JSON.parse(stored);
+
+            const rules = fedGetRules();
+            const rep = getClubReputation();
+            let objective;
+            if (rules.tier === 3) objective = { type:'promotion2', label:'الصعود إلى الدرجة الثانية', maxPosition: 3 };
+            else if (rules.tier === 2) objective = { type:'promotion1', label:'الصعود إلى الدرجة الأولى', maxPosition: 3 };
+            else if (rep >= 70) objective = { type:'title', label:'المنافسة الجادة على لقب الدوري', maxPosition: 2 };
+            else if (rep >= 50) objective = { type:'continental', label:'التأهل للمسابقات القارية (أفضل 4-6 مراكز)', maxPosition: 6 };
+            else if (rep >= 30) objective = { type:'midtable', label:'إنهاء الموسم في النصف الأول من الجدول', maxPosition: 999 };
+            else objective = { type:'survival', label:'تجنّب الهبوط', maxPosition: 999 };
+            localStorage.setItem(key, JSON.stringify(objective));
+            return objective;
+        }
+
+        // ============================================================
+        // ثقة المجلس (Confidence / Job Security)
+        // ============================================================
+        function getConfidence() { return parseFloat(localStorage.getItem('board_confidence_' + activeClub)); }
+        function setConfidence(v) { localStorage.setItem('board_confidence_' + activeClub, String(Math.max(0, Math.min(100, Math.round(v))))); }
+        function ensureConfidenceInit() { if (isNaN(getConfidence())) setConfidence(60); }
+
+        // ============================================================
+        // مدة رئاستك — تُسجَّل فعلياً من أول زيارة لهذه الصفحة مع هذا النادي (فترة سماح واقعية لرئيس جديد)
+        // ============================================================
+        function getTenureStart() {
+            const key = 'president_tenure_start_' + activeClub;
+            let stored = localStorage.getItem(key);
+            if (!stored) {
+                const gd = getGameDate();
+                stored = JSON.stringify(gd);
+                localStorage.setItem(key, stored);
+            }
+            return JSON.parse(stored);
+        }
+        function getTenureRounds() {
+            const start = getTenureStart();
+            const startRound = parseInt(localStorage.getItem('president_tenure_start_round_' + activeClub));
+            if (isNaN(startRound)) {
+                const currentRound = parseInt(localStorage.getItem('database_current_round')) || 0;
+                localStorage.setItem('president_tenure_start_round_' + activeClub, String(currentRound));
+                return 0;
+            }
+            const currentRound = parseInt(localStorage.getItem('database_current_round')) || 0;
+            return Math.max(0, currentRound - startRound);
+        }
+        function isInHoneymoonPeriod() { return getTenureRounds() < 8; } // أول 8 جولات من رئاستك: تسامح واقعي أكبر من المجلس
+
+        function renderConfidenceCard() {
+            ensureConfidenceInit();
+            const c = getConfidence();
+            const color = c >= 60 ? 'var(--green)' : c >= 30 ? 'var(--gold)' : 'var(--red)';
+            const status = c >= 60 ? 'مدعوم من المجلس' : c >= 30 ? 'تحت المراقبة' : 'خطر الإقالة الوشيك';
+            const tenureRounds = getTenureRounds();
+            const honeymoon = isInHoneymoonPeriod();
+            document.getElementById('confidenceCard').innerHTML = `
+                <div class="confidence-num" style="color:${color};">${c}%</div>
+                <div class="confidence-lbl">ثقة مجلس الإدارة بإدارتك</div>
+                <div class="confidence-status" style="background:${color}22; color:${color}; border:1px solid ${color};">${status}</div>
+                <div class="confidence-track"><div class="confidence-fill" style="width:${c}%; background:${color};"></div></div>
+                <div style="font-size:10.5px; color:var(--muted); margin-top:10px;">رئيس النادي منذ ${tenureRounds} جولة${honeymoon ? ' · 🌤️ فترة سماح (تقييم أخف من المعتاد)' : ''}</div>
+            `;
+            if (c <= 0 && localStorage.getItem('presidentFired_' + activeClub) !== 'true') {
+                localStorage.setItem('presidentFired_' + activeClub, 'true');
+                addMessageToSystem('مجلس الإدارة', `🔴 قرر مجلس الإدارة إقالتك من رئاسة ${activeClub} بعد فقدان الثقة الكاملة بإدارتك.`, 'federation');
+            }
+        }
+
+        function renderObjective(objective, standing) {
+            const el = document.getElementById('objectiveContainer');
+            let progressNote = 'الموسم لم يبدأ بعد أو لا توجد بيانات كافية.';
+            if (standing) {
+                const onTrack = standing.position <= objective.maxPosition;
+                progressNote = `ترتيبك الحالي: المركز ${standing.position} من ${standing.total} — ${onTrack ? '✅ على المسار الصحيح لتحقيق الهدف' : '⚠️ متأخر عن الهدف المطلوب'}`;
+            }
+            el.innerHTML = `<div class="objective-box"><i class="fas fa-bullseye"></i><div><div class="t1">${objective.label}</div><div class="t2">${progressNote}</div></div></div>`;
+        }
+
+        const POSITION_ICONS = { 'مالك النادي':'fa-crown', 'رئيس مجلس الإدارة':'fa-gavel', 'المدير التنفيذي':'fa-briefcase', 'المدير المالي':'fa-sack-dollar', 'المدير الرياضي (عضو مجلس)':'fa-futbol', 'عضو مجلس مستقل':'fa-user-tie' };
+        function renderMembers(members) {
+            document.getElementById('membersContainer').innerHTML = members.map(m => {
+                const sat = getMemberSatisfaction(m.id);
+                const satColor = sat >= 60 ? 'var(--green)' : sat >= 35 ? 'var(--gold)' : 'var(--red)';
+                return `
+                <div class="member-row">
+                    <div class="member-avatar"><i class="fas ${POSITION_ICONS[m.position] || 'fa-user-tie'}"></i></div>
+                    <div class="member-info">
+                        <div class="member-name">${m.position}</div>
+                        <div class="member-sub">${m.personalityLabel} · العمر ${m.age}</div>
+                        <div class="sat-track"><div class="sat-fill" style="width:${sat}%; background:${satColor};"></div></div>
+                    </div>
+                    <div class="member-weight" style="color:${satColor};">${sat}%</div>
+                </div>`;
+            }).join('');
+        }
+
+        // ============================================================
+        // اجتماعات المجلس — تُعقد فقط عند أحداث حقيقية فعلية، وليست دورية عشوائية
+        // ============================================================
+        function getMeetingLog() { return JSON.parse(localStorage.getItem('board_meetings_' + activeClub)) || []; }
+        function logMeeting(entry) {
+            const log = getMeetingLog();
+            log.unshift({ ...entry, when: getGameDate() });
+            localStorage.setItem('board_meetings_' + activeClub, JSON.stringify(log.slice(0, 30)));
+        }
+
+        function checkAndTriggerMeetings(standing, objective) {
+            if (!standing) return;
+            const { round, totalRounds } = standing;
+            const heldRounds = JSON.parse(localStorage.getItem('board_meeting_rounds_' + activeClub)) || [];
+            const markHeld = (tag) => { heldRounds.push(tag); localStorage.setItem('board_meeting_rounds_' + activeClub, JSON.stringify(heldRounds)); };
+
+            // اجتماع منتصف الموسم
+            const midTag = 'mid';
+            if (round >= Math.floor(totalRounds/2) && !heldRounds.includes(midTag)) {
+                runObjectiveMeeting('اجتماع منتصف الموسم', standing, objective);
+                updateAllMemberSatisfaction(standing, objective);
+                markHeld(midTag);
+            }
+            // اجتماع نهاية الموسم
+            const endTag = 'end';
+            if (round >= totalRounds && !heldRounds.includes(endTag)) {
+                runObjectiveMeeting('اجتماع تقييم نهاية الموسم', standing, objective);
+                updateAllMemberSatisfaction(standing, objective);
+                markHeld(endTag);
+            }
+            // اجتماع طارئ عند أزمة مالية حقيقية
+            const budget = getClubBudget();
+            const crisisTag = 'crisis_' + Math.floor(round/5);
+            if (budget < 0 && !heldRounds.includes(crisisTag)) {
+                runCrisisMeeting(budget);
+                markHeld(crisisTag);
+            }
+        }
+
+        function runObjectiveMeeting(title, standing, objective) {
+            const onTrack = standing.position <= objective.maxPosition;
+            const members = generateBoard();
+            let delta = 0;
+            let verdictParts = [];
+            members.forEach(m => {
+                let memberDelta = onTrack ? (m.personality==='patient'?4:2) : (m.personality==='shorttemper'?-8:-4);
+                delta += memberDelta * (m.votingWeight/100);
+            });
+            delta = Math.round(delta * 3); // تضخيم واقعي للأثر الإجمالي
+            if (delta < 0 && isInHoneymoonPeriod()) delta = Math.round(delta * 0.4); // فترة سماح واقعية لرئيس جديد
+            const newConf = getConfidence() + delta;
+            setConfidence(newConf);
+            const honeymoonNote = (delta < 0 && isInHoneymoonPeriod()) ? ' (خُفِّف الأثر بسبب فترة السماح لرئيس جديد)' : '';
+            const verdict = (onTrack
+                ? `النادي في المركز ${standing.position} ويحقق هدف "${objective.label}" حتى الآن. عبّر المجلس عن رضاه (${delta>=0?'+':''}${delta}% ثقة).`
+                : `النادي في المركز ${standing.position}، متأخر عن هدف "${objective.label}". أبدى المجلس قلقه (${delta}% ثقة).`) + honeymoonNote;
+            logMeeting({ title, verdict, deltaConfidence: delta, position: standing.position });
+            addMessageToSystem('مجلس الإدارة', `📋 ${title}: ${verdict}`, 'federation');
+        }
+
+        // نفس دالة جمع عقود الرعاة الحقيقية النشطة المستخدمة في finance.html/budget_office.html بالضبط
+        function getRealSponsorIncomeTotal() {
+            try {
+                const contracts = JSON.parse(localStorage.getItem('sponsorContracts_v1')) || {};
+                const today = getGameDate();
+                const todayAbs = Math.floor(new Date(today.year, today.month-1, today.day).getTime()/86400000);
+                return Object.values(contracts)
+                    .filter(c => c && c.status === 'active' && c.endAbsDay >= todayAbs)
+                    .reduce((s,c) => s + (c.annualValue||0), 0);
+            } catch(e) { return 0; }
+        }
+        function getTotalWeeklyWage() {
+            const signed = JSON.parse(localStorage.getItem('signed_players_by_club')||'{}')[activeClub] || [];
+            const coachAll = JSON.parse(localStorage.getItem('signed_coach_by_club')) || {};
+            const coach = coachAll[activeClub];
+            return signed.reduce((s,p)=>s+(parseFloat(p.weekly_wage)||0),0) + (coach ? (parseFloat(coach.weekly_wage)||0) : 0);
+        }
+        function getRealFinancialSnapshot() {
+            const sponsorValue = getRealSponsorIncomeTotal();
+            const broadcastValue = parseFloat(localStorage.getItem('broadcastIncomeTotal')) || 0;
+            const shopRevenue = parseFloat(localStorage.getItem('shopRevenue')) || 0;
+            const annualWage = getTotalWeeklyWage() * 52 / 1000000;
+            const totalIncome = sponsorValue + broadcastValue + shopRevenue;
+            return { sponsorValue, broadcastValue, shopRevenue, annualWage, totalIncome, netMomentum: totalIncome - annualWage };
+        }
+
+        function renderFinancialSnapshot() {
+            const s = getRealFinancialSnapshot();
+            const budget = getClubBudget();
+            document.getElementById('financialSnapshotContainer').innerHTML = `
+                <div class="report-grid">
+                    <div class="report-box"><div class="lbl">الرصيد الحالي</div><div class="val">${budget.toFixed(1)}M €</div></div>
+                    <div class="report-box"><div class="lbl">دخل الرعاة والبث والمتجر</div><div class="val pos">${s.totalIncome.toFixed(1)}M €</div></div>
+                    <div class="report-box"><div class="lbl">الرواتب السنوية</div><div class="val neg">${s.annualWage.toFixed(1)}M €</div></div>
+                    <div class="report-box"><div class="lbl">زخم مالي صافٍ</div><div class="val ${s.netMomentum>=0?'pos':'neg'}">${s.netMomentum>=0?'+':''}${s.netMomentum.toFixed(1)}M €</div></div>
+                </div>
+                <div style="padding:0 14px 12px 14px; font-size:10px; color:var(--muted);">هذا هو نفس الوضع المالي الحقيقي الذي يظهر في <a href="budget_office.html" style="color:var(--gold);">مكتب الميزانية</a> — لا يعتمد المجلس على أرقام منفصلة.</div>
+            `;
+        }
+
+        function runCrisisMeeting(budget) {
+            const members = generateBoard();
+            const snapshot = getRealFinancialSnapshot();
+            // أزمة نقدية مع زخم مالي حقيقي إيجابي (رعاة/بث/متجر تغطي الرواتب) أخف وطأة من أزمة بلا أي دخل حقيقي في الأفق
+            const severityMult = snapshot.netMomentum >= 0 ? 0.55 : 1.0;
+            let delta = 0;
+            members.forEach(m => { delta += (m.personality==='profit' || m.personality==='conservative' ? -10 : -5) * (m.votingWeight/100); });
+            delta = Math.round(delta * 3 * severityMult);
+            if (isInHoneymoonPeriod()) delta = Math.round(delta * 0.4);
+            setConfidence(getConfidence() + delta);
+            const momentumNote = snapshot.netMomentum >= 0
+                ? ` لكن المجلس يلاحظ أن دخل الرعاة والبث والمتجر (${snapshot.totalIncome.toFixed(1)}M €) يغطي الرواتب فعلياً، ما يخفف قلقه قليلاً.`
+                : ` ويحذّر المجلس من أن دخلك التجاري الحالي (${snapshot.totalIncome.toFixed(1)}M €) لا يغطي حتى الرواتب — الأزمة هيكلية وليست عابرة.`;
+            const verdict = `الميزانية في العجز (${budget.toFixed(2)}M €).${momentumNote} طالب المجلس بخطة تعافٍ مالي عاجلة، وقد يفرض بيع لاعبين إن استمر العجز. (${delta}% ثقة)`;
+            logMeeting({ title: 'اجتماع طارئ — أزمة مالية', verdict, deltaConfidence: delta });
+            addMessageToSystem('مجلس الإدارة', `🚨 اجتماع طارئ: ${verdict}`, 'federation');
+        }
+
+        function renderMeetings() {
+            const log = getMeetingLog();
+            const el = document.getElementById('meetingsContainer');
+            if (!log.length) { el.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-check"></i>لا توجد اجتماعات بعد. تُعقد الاجتماعات عند أحداث حقيقية (منتصف/نهاية الموسم، أزمة مالية...).</div>`; return; }
+            el.innerHTML = log.map(m => `
+                <div class="meeting-row">
+                    <div class="meeting-title"><span>${m.title}</span><span class="meeting-date">${dateLabel(m.when)}</span></div>
+                    <div class="meeting-verdict">${m.verdict}</div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================
+        // نظام التصويت — يصوّت كل عضو فعلياً حسب شخصيته وحالة النادي الحقيقية
+        // ============================================================
+        // ============================================================
+        // نظام طلب مبلغ عام قابل للتعديل يدوياً بالكامل — تكتب أي رقم تريده وترى فرصة الموافقة
+        // الحقيقية تتحدث فوراً حسب حجم طلبك مقارنة بوضعك الفعلي (وليس رقماً محسوباً مسبقاً وحيداً)
+        // ============================================================
+        let activeAmountRequest = null;
+        function openAmountRequestModal(config) {
+            activeAmountRequest = config;
+            document.getElementById('voteModalTitle').innerText = config.title;
+            document.getElementById('voteModalBody').innerHTML = '';
+            document.getElementById('voteModalAmountSection').style.display = 'block';
+            document.getElementById('voteAmountInput').value = config.defaultAmount;
+            updateVotePreview();
+            document.getElementById('voteModal').classList.add('active');
+        }
+        function updateVotePreview() {
+            if (!activeAmountRequest) return;
+            const amount = Math.max(0, parseFloat(document.getElementById('voteAmountInput').value) || 0);
+            const chance = activeAmountRequest.computeChance(amount);
+            document.getElementById('voteChanceLabel').innerText = chance + '%';
+            document.getElementById('voteChanceBar').style.width = chance + '%';
+            document.getElementById('voteChanceBar').style.background = chance >= 60 ? 'var(--green)' : chance >= 30 ? 'var(--gold)' : 'var(--red)';
+            document.getElementById('voteConfirmBtn').disabled = amount <= 0;
+        }
+        function submitAmountVote() {
+            const amount = Math.max(0, parseFloat(document.getElementById('voteAmountInput').value) || 0);
+            if (amount <= 0 || !activeAmountRequest) return;
+            const config = activeAmountRequest;
+            const members = generateBoard();
+            const chance = config.computeChance(amount);
+
+            // رضا العضو الفعلي المتراكم هو المحرّك الأساسي لتصويته — عضو راضٍ عنك يثق بطلباتك أكثر،
+            // وعضو غير راضٍ يعارضك حتى لو كان الطلب معقولاً موضوعياً (كالواقع تماماً)
+            let yesWeight = 0, votes = [];
+            members.forEach(m => {
+                const satisfaction = getMemberSatisfaction(m.id);
+                const satisfactionBias = (satisfaction - 50) * 0.6; // رضا أعلى من 50% يرفع الثقة، وأقل يخفّضها فعلياً
+                const seed = seedHash(activeClub + config.title + m.position + Math.round(amount));
+                const memberRoll = (seed % 100);
+                const yes = memberRoll < chance + satisfactionBias + (config.personalityBias ? config.personalityBias(m) : 0);
+                if (yes) yesWeight += m.votingWeight;
+                votes.push({ member: m, yes, satisfaction });
+            });
+            const approved = yesWeight >= 50;
+
+            document.getElementById('voteModalAmountSection').style.display = 'none';
+            document.getElementById('voteModalBody').innerHTML = `
+                <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">المبلغ المطلوب: <b style="color:var(--gold);">${amount}M €</b> · فرصة محسوبة: <b style="color:var(--gold);">${chance}%</b></div>
+                <div style="font-size:10px; color:var(--muted); margin-bottom:6px;">تصويت كل عضو يتأثر برضاه الفعلي المتراكم عنك — راجع "أعضاء مجلس الإدارة" لمعرفة السبب.</div>
+                ${votes.map(v => `<div class="vote-row"><i class="fas ${v.yes?'fa-check-circle vote-yes':'fa-times-circle vote-no'}"></i> ${v.member.position} <span style="font-size:9px; color:var(--muted);">(رضا ${v.satisfaction}%)</span> — ${v.yes?'موافق':'معارض'} <span style="color:var(--muted); margin-right:auto;">${v.member.votingWeight}%</span></div>`).join('')}
+                <div style="margin-top:10px; padding:10px; border-radius:8px; background:${approved?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; font-size:12.5px; font-weight:700; color:${approved?'var(--green)':'var(--red)'};">
+                    ${approved ? config.onApproveMsg(amount, yesWeight) : config.onRejectMsg(amount, 100-yesWeight)}
+                </div>
+            `;
+            if (approved && config.onApprove) config.onApprove(amount);
+            logMeeting({ title: config.title, verdict: approved ? `وافق المجلس (${yesWeight}%) على ${amount}M €.` : `رفض المجلس (${100-yesWeight}%) طلب ${amount}M €.`, deltaConfidence: 0 });
+            renderConfidenceCard();
+        }
+
+        function openVoteModal(type) {
+            const budget = getClubBudget();
+            const rep = getClubReputation();
+            const rules = fedGetRules();
+            // القدرة المالية الحقيقية لنادٍ بهذه السمعة والدرجة — الأندية العملاقة فعلياً تملك قدرة إنفاق بمئات الملايين
+            // (مطابقة لواقع سوق الانتقالات الحقيقي)، وليست مقيَّدة برصيدها النقدي اللحظي فقط
+            const tierMult = rules.tier === 1 ? 1.0 : rules.tier === 2 ? 0.4 : 0.15;
+            const expectedSeasonBudget = (10 + Math.pow(rep/100, 2.2) * 480) * tierMult;
+            const defaultAmount = Math.max(5, Math.round(expectedSeasonBudget * 0.3));
+            openAmountRequestModal({
+                title: 'طلب زيادة ميزانية الانتقالات',
+                defaultAmount,
+                computeChance: (amount) => {
+                    // منحنى أكثر واقعية: أي طلب حتى 80% من القدرة الحقيقية المتوقَّعة للنادي يبقى مقبولاً بسهولة،
+                    // والعقوبة الفعلية تبدأ فقط عند تجاوز القدرة الحقيقية لا عند أي زيادة بسيطة
+                    const ratio = amount / Math.max(5, expectedSeasonBudget * 0.8);
+                    let chance = 80 - Math.max(0, ratio - 1) * 22;
+                    return Math.max(3, Math.min(97, Math.round(chance)));
+                },
+                onApprove: (amount) => setClubBudget(getClubBudget() + amount),
+                onApproveMsg: (amount, w) => `✅ وافق المجلس (${w}%) — تمت إضافة ${amount}M € لميزانيتك.`,
+                onRejectMsg: (amount, w) => `❌ رفض المجلس (${w}% معارضون) — طلب ${amount}M € أكبر مما يراه المجلس معقولاً لنادٍ بحجمك الحالي.`
+            });
+        }
+        function closeVoteModal() { document.getElementById('voteModal').classList.remove('active'); document.getElementById('voteModalAmountSection').style.display='none'; renderMeetings(); }
+
+        // ============================================================
+        // تقديم تقرير أداء للمجلس — الرئيس يدافع عن نفسه بأرقام حقيقية (سمعة، ألقاب، ميزانية)
+        // ليست مضمونة النجاح؛ محسوبة من بيانات فعلية
+        // ============================================================
+        function presentPerformanceReport() {
+            const members = generateBoard();
+            const rep = getClubReputation();
+            const trophies = (() => { try { return (JSON.parse(localStorage.getItem('club_trophies'))||[]).length; } catch(e){ return 0; } })();
+            const budget = getClubBudget();
+            const standing = calculateCurrentStanding();
+
+            // قوة الدفاع الحقيقية: مبنية على إنجازات فعلية (سمعة، ألقاب حقيقية هذا العهد، سيولة إيجابية)
+            let strength = (rep - 50) * 0.4 + trophies * 6 + (budget > 0 ? 8 : -10);
+            if (standing) strength += (standing.total - standing.position) * 0.5; // كل مركز أعلى من القاع يُحسب لصالحك
+
+            let yesWeight = 0, votes = [];
+            members.forEach(m => {
+                let base = 40 + strength;
+                if (m.personality === 'patient') base += 10;
+                if (m.personality === 'shorttemper') base -= 10;
+                base += (m.loyalty - 50) * 0.3;
+                const satisfaction = getMemberSatisfaction(m.id);
+                base += (satisfaction - 50) * 0.4; // رضاه الفعلي المتراكم يؤثر في قابليته للاقتناع بدفاعك
+                const yes = base >= 50;
+                if (yes) {
+                    yesWeight += m.votingWeight;
+                    setMemberSatisfaction(m.id, satisfaction + 4); // دفاع مقنع يرمّم رضاه الفردي فعلياً
+                } else {
+                    setMemberSatisfaction(m.id, satisfaction - 1);
+                }
+                votes.push({ member: m, yes, satisfaction });
+            });
+            const persuaded = yesWeight >= 50;
+            const delta = persuaded ? Math.round(5 + strength * 0.15) : Math.round(-2 - Math.max(0, -strength) * 0.1);
+            setConfidence(getConfidence() + delta);
+
+            document.getElementById('voteModalTitle').innerText = 'تقرير الأداء المقدَّم للمجلس';
+            document.getElementById('voteModalBody').innerHTML = `
+                <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">السمعة: ${rep} · الألقاب: ${trophies} · الميزانية: ${budget.toFixed(1)}M € ${standing?('· الترتيب: '+standing.position+'/'+standing.total):''}</div>
+                ${votes.map(v => `<div class="vote-row"><i class="fas ${v.yes?'fa-check-circle vote-yes':'fa-times-circle vote-no'}"></i> ${v.member.position} <span style="font-size:9px; color:var(--muted);">(رضا ${v.satisfaction}%)</span> — ${v.yes?'مقتنع':'غير مقتنع'} <span style="color:var(--muted); margin-right:auto;">${v.member.votingWeight}%</span></div>`).join('')}
+                <div style="margin-top:10px; padding:10px; border-radius:8px; background:${persuaded?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; font-size:12.5px; font-weight:700; color:${persuaded?'var(--green)':'var(--red)'};">
+                    ${persuaded ? `✅ اقتنع المجلس بتقريرك (${delta>=0?'+':''}${delta}% ثقة).` : `❌ لم يقتنع المجلس بما يكفي (${delta}% ثقة).`}
+                </div>
+            `;
+            logMeeting({ title: 'تقرير أداء مقدَّم من الرئيس', verdict: persuaded ? `اقتنع المجلس (${delta>=0?'+':''}${delta}% ثقة).` : `لم يقتنع المجلس (${delta}% ثقة).`, deltaConfidence: delta });
+            document.getElementById('voteModal').classList.add('active');
+            renderConfidenceCard();
+        }
+
+        // ============================================================
+        // طلب تخفيف هدف الموسم — تصويت حقيقي، أصعب كلما كان النادي أكبر سمعةً (طموح المالك أعلى)
+        // ============================================================
+        function requestObjectiveEasing() {
+            const members = generateBoard();
+            const rep = getClubReputation();
+            const standing = calculateCurrentStanding();
+            if (!standing) { showToast('لا تتوفر بيانات ترتيب كافية بعد لتقييم هذا الطلب.'); return; }
+
+            let yesWeight = 0, votes = [];
+            members.forEach(m => {
+                let base = 35 - (rep-50)*0.3; // الأندية الكبرى أصعب في قبول خفض الطموح
+                if (m.personality === 'patient') base += 20;
+                if (m.personality === 'ambitious' || m.personality === 'trophy') base -= 15;
+                base += (m.loyalty - 50) * 0.3;
+                const satisfaction = getMemberSatisfaction(m.id);
+                base += (satisfaction - 50) * 0.4;
+                const yes = base >= 50;
+                if (yes) yesWeight += m.votingWeight;
+                votes.push({ member: m, yes, satisfaction });
+            });
+            const approved = yesWeight >= 50;
+
+            document.getElementById('voteModalTitle').innerText = 'طلب تخفيف هدف الموسم';
+            document.getElementById('voteModalBody').innerHTML = `
+                ${votes.map(v => `<div class="vote-row"><i class="fas ${v.yes?'fa-check-circle vote-yes':'fa-times-circle vote-no'}"></i> ${v.member.position} <span style="font-size:9px; color:var(--muted);">(رضا ${v.satisfaction}%)</span> — ${v.yes?'موافق':'معارض'} <span style="color:var(--muted); margin-right:auto;">${v.member.votingWeight}%</span></div>`).join('')}
+                <div style="margin-top:10px; padding:10px; border-radius:8px; background:${approved?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; font-size:12.5px; font-weight:700; color:${approved?'var(--green)':'var(--red)'};">
+                    ${approved ? '✅ وافق المجلس على خفض السقف المطلوب لهذا الموسم بمركز واحد.' : '❌ رفض المجلس تخفيف الهدف — التوقعات تبقى كما هي.'}
+                </div>
+            `;
+            if (approved) {
+                const gd = getGameDate();
+                const seasonYear = (gd.month>=8) ? gd.year : gd.year-1;
+                const key = 'season_objective_' + activeClub + '_' + seasonYear;
+                const obj = JSON.parse(localStorage.getItem(key));
+                obj.maxPosition = Math.min(999, obj.maxPosition + 1);
+                localStorage.setItem(key, JSON.stringify(obj));
+                addMessageToSystem('مجلس الإدارة', `✅ وافق المجلس على تخفيف هدف الموسم قليلاً بعد طلبك.`, 'federation');
+            }
+            logMeeting({ title: 'طلب تخفيف هدف الموسم', verdict: approved ? 'وافق المجلس.' : 'رفض المجلس.', deltaConfidence: 0 });
+            document.getElementById('voteModal').classList.add('active');
+        }
+
+        // ============================================================
+        // حملة علاقات عامة — تكلفة حقيقية مقابل تحسين سمعة ناديك الفعلية (تؤثر على كل أنظمة اللعبة الأخرى)
+        // ============================================================
+        function requestPrCampaign() {
+            const budget = getClubBudget();
+            const rep = getClubReputation();
+            const defaultAmount = Math.max(2, Math.round(budget * 0.04 * 10) / 10);
+            openAmountRequestModal({
+                title: 'حملة علاقات عامة',
+                defaultAmount,
+                computeChance: (amount) => {
+                    const ratio = amount / Math.max(0.5, budget * 0.06);
+                    let chance = 65 - (ratio - 1) * 25;
+                    return Math.max(3, Math.min(95, Math.round(chance)));
+                },
+                personalityBias: (m) => (m.personality === 'ambitious' || m.personality === 'trophy') ? 12 : (m.personality === 'conservative' || m.personality === 'profit') ? -12 : 0,
+                onApprove: (amount) => {
+                    setClubBudget(budget - amount);
+                    // حملة أكبر ميزانية = أثر إعلامي أكبر فعلياً، وليس مكسباً ثابتاً دائماً
+                    const repGain = Math.max(1, Math.min(6, Math.round(1 + amount / 3)));
+                    localStorage.setItem('clubReputation', String(Math.min(100, rep + repGain)));
+                    addMessageToSystem('مجلس الإدارة', `✅ وافق المجلس على حملة علاقات عامة بتكلفة ${amount}M € — ارتفعت سمعة النادي +${repGain}.`, 'federation');
+                },
+                onApproveMsg: (amount, w) => {
+                    const repGain = Math.max(1, Math.min(6, Math.round(1 + amount / 3)));
+                    return `✅ وافق المجلس (${w}%) — أُنفقت ${amount}M € ورُفعت سمعة ناديك +${repGain}.`;
+                },
+                onRejectMsg: (amount, w) => `❌ رفض المجلس الحملة بهذه التكلفة (${w}% معارضون) — جرّب مبلغاً أقل.`
+            });
+        }
+
+        // ============================================================
+        // قرض طارئ من المالك — مبلغ كبير نسبياً، أصعب في الموافقة من قرض بنكي عادي، ويُخصم من ثقة المجلس بك مستقبلاً
+        // ============================================================
+        function requestEmergencyLoan() {
+            const budget = getClubBudget();
+            const defaultAmount = Math.max(10, Math.round(Math.abs(budget) * 0.5 + 15));
+            openAmountRequestModal({
+                title: 'قرض طارئ من المالك',
+                defaultAmount,
+                computeChance: (amount) => {
+                    const ratio = amount / Math.max(5, defaultAmount);
+                    let chance = 50 - (ratio - 1) * 35; // عتبة أعلى وأصعب من الطلبات العادية — قرار استثنائي حقيقي
+                    return Math.max(2, Math.min(90, Math.round(chance)));
+                },
+                personalityBias: (m) => {
+                    let b = 0;
+                    if (m.personality === 'patient') b += 15;
+                    if (m.personality === 'conservative' || m.personality === 'profit') b -= 20;
+                    if (m.position === 'مالك النادي') b += 10;
+                    return b;
+                },
+                onApprove: (amount) => {
+                    setClubBudget(budget + amount);
+                    // قرض أكبر = التزام أكبر حقيقي = خصم أكبر من هامش ثقتك المستقبلي
+                    const confidenceCost = Math.min(15, Math.round(3 + amount/10));
+                    setConfidence(getConfidence() - confidenceCost);
+                    addMessageToSystem('مالك النادي', `✅ وافقت على قرض طارئ بقيمة ${amount}M € — أتوقع نتائج تبرر هذه الثقة.`, 'federation');
+                },
+                onApproveMsg: (amount, w) => `✅ وافق المالك (${w}%) — تم إيداع ${amount}M € في ميزانيتك كقرض طارئ.`,
+                onRejectMsg: (amount, w) => `❌ رفض المالك طلب ${amount}M € (${w}% معارضون) — مبلغ كهذا يحتاج تبريراً أقوى.`
+            });
+        }
+
+        // ============================================================
+        // طلب إقالة المدرب الرئيسي — قرار حساس، المجلس قد يمنعه إن رأى المشروع طويل الأمد (كما في الواقع)
+        // ============================================================
+        function requestCoachDismissal() {
+            const staffAll = JSON.parse(localStorage.getItem('staff_by_club')) || {};
+            const staff = staffAll[activeClub] || [];
+            const coach = staff.find(s => s.role === 'head_coach');
+            if (!coach) { showToast('لا يوجد مدرب رئيسي حالياً لإقالته.'); return; }
+
+            const standing = calculateCurrentStanding();
+            const members = generateBoard();
+            const tenureRounds = getTenureRounds();
+            let yesWeight = 0, votes = [];
+            members.forEach(m => {
+                let base = 40;
+                // المجلس يميل لحماية مشروع طويل الأمد إن كان المدرب حديث التعيين نسبياً أو النتائج ليست كارثية
+                if (m.personality === 'patient' && tenureRounds < 15) base -= 20;
+                if (m.personality === 'shorttemper') base += 15;
+                if (standing && standing.position > standing.total * 0.7) base += 15; // نتائج سيئة فعلاً تبرر الإقالة أكثر
+                base += (m.loyalty - 50) * 0.2;
+                const satisfaction = getMemberSatisfaction(m.id);
+                base += (satisfaction - 50) * 0.3; // عضو غير راضٍ عنك أصلاً يميل لمعارضة قراراتك الكبرى أيضاً
+                const yes = base >= 50;
+                if (yes) yesWeight += m.votingWeight;
+                votes.push({ member: m, yes, satisfaction });
+            });
+            const approved = yesWeight >= 50;
+
+            document.getElementById('voteModalTitle').innerText = 'طلب إقالة ' + coach.name;
+            document.getElementById('voteModalBody').innerHTML = `
+                ${votes.map(v => `<div class="vote-row"><i class="fas ${v.yes?'fa-check-circle vote-yes':'fa-times-circle vote-no'}"></i> ${v.member.position} <span style="font-size:9px; color:var(--muted);">(رضا ${v.satisfaction}%)</span> — ${v.yes?'موافق':'معارض'} <span style="color:var(--muted); margin-right:auto;">${v.member.votingWeight}%</span></div>`).join('')}
+                <div style="margin-top:10px; padding:10px; border-radius:8px; background:${approved?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)'}; font-size:12.5px; font-weight:700; color:${approved?'var(--green)':'var(--red)'};">
+                    ${approved ? `✅ وافق المجلس على إقالة ${coach.name}.` : `❌ رفض المجلس الإقالة — يرى أن المشروع يحتاج وقتاً أطول قبل الحكم على المدرب.`}
+                </div>
+            `;
+            if (approved) {
+                staffAll[activeClub] = staff.filter(s => s !== coach);
+                localStorage.setItem('staff_by_club', JSON.stringify(staffAll));
+                addMessageToSystem('مجلس الإدارة', `✅ تمت إقالة ${coach.name} رسمياً بموافقة المجلس. يمكنك التعاقد مع بديل من سوق الانتقالات.`, 'federation');
+            }
+            logMeeting({ title: 'طلب إقالة المدرب الرئيسي', verdict: approved ? `أُقيل ${coach.name}.` : `رفض المجلس إقالة ${coach.name}.`, deltaConfidence: 0 });
+            document.getElementById('voteModal').classList.add('active');
+        }
+
+        window.onload = function() {
+            const members = generateBoard();
+            const objective = determineObjective();
+            const standing = calculateCurrentStanding();
+            checkAndTriggerMeetings(standing, objective);
+            renderConfidenceCard();
+            renderFinancialSnapshot();
+            renderObjective(objective, standing);
+            renderMembers(members);
+            renderMeetings();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>مكتب الرئيس | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444; }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #b8862f;
+            --green: #16a34a;
+            --red: #dc2626;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:10px 12px; border-radius:12px; border:1px solid var(--border); }
+        .back-btn { background:var(--border); color:white; border:none; padding:8px 12px; font-size:12px; border-radius:8px; text-decoration:none; }
+        .page-title { font-size:14px; font-weight:800; color:var(--gold); }
+
+        .summary-hero { background:linear-gradient(135deg, #1a2338, #0d1220); border:1px solid var(--border); border-radius:16px; padding:18px 14px; text-align:center; }
+        .summary-hero .big-num { font-size:36px; font-weight:900; color:var(--gold); }
+        .summary-hero .lbl { font-size:11px; color:var(--muted); margin-top:2px; }
+        .summary-hero.empty .big-num { color:var(--green); }
+
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .card-title { font-size:12px; font-weight:800; color:var(--gold); padding:12px 14px 8px 14px; display:flex; align-items:center; gap:6px; justify-content:space-between; }
+        .badge-count { background:var(--red); color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px; }
+        .empty-state { text-align:center; padding:20px 16px; color:var(--muted); font-size:12px; line-height:1.8; }
+
+        .decision-row { display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--border); }
+        .decision-row:last-child { border-bottom:none; }
+        .decision-row .icon { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; font-size:14px; }
+        .decision-row .info { flex:1; }
+        .decision-row .dtitle { font-size:12.5px; font-weight:700; }
+        .decision-row .dsub { font-size:10.5px; color:var(--muted); margin-top:2px; }
+        .decision-row .go-btn { background:var(--gold); color:#06090f; border:none; padding:7px 12px; border-radius:8px; font-size:10.5px; font-weight:800; text-decoration:none; white-space:nowrap; }
+
+        .alert-row { border-right:3px solid var(--red); }
+        .alert-row .icon { background:rgba(239,68,68,0.15); color:var(--red); }
+        .offer-row .icon { background:rgba(232,184,75,0.15); color:var(--gold); }
+
+        .report-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:10px 14px 14px 14px; }
+        .report-box { background:var(--bg); border-radius:10px; padding:10px; }
+        .report-box .lbl { font-size:10px; color:var(--muted); }
+        .report-box .val { font-size:14px; font-weight:800; margin-top:3px; }
+        .report-box .val.pos { color:var(--green); } .report-box .val.neg { color:var(--red); }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title">🖋️ مكتب الرئيس</div>
+        <div style="width:34px;"></div>
+    </div>
+
+    <div class="summary-hero" id="summaryHero"></div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-triangle-exclamation"></i> أحداث عاجلة <span class="badge-count" id="alertCount">0</span></div>
+        <div id="alertsContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-file-signature"></i> قرارات تنتظر توقيعك <span class="badge-count" id="decisionCount">0</span></div>
+        <div id="decisionsContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-chart-simple"></i> التقرير اليومي من الإدارات</div>
+        <div class="report-grid" id="reportGrid"></div>
+    </div>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || '';
+        function getGameDate() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+        function dateLabel(d) { return `${String(d.day).padStart(2,'0')}/${String(d.month).padStart(2,'0')}/${d.year}`; }
+        function getClubBudget() { return parseFloat(localStorage.getItem('clubBudget')) || 150.0; }
+        function getClubReputation() { return parseFloat(localStorage.getItem('clubReputation')) || 50; }
+        function fmtM(v) { return (v||0).toFixed(2) + 'M €'; }
+        function getTeamLogoUrl(t) { return `teams_logos/${(t||'').trim()}.png`; }
+
+        // ============================================================
+        // تجميع القرارات الحقيقية الفعلية المعلَّقة من كل صفحات اللعبة — وليس نظاماً موازياً مُختلقاً
+        // ============================================================
+        function collectPendingDecisions() {
+            const items = [];
+
+            // عروض مضادة على صفقات انتقال حقيقية (من negotiations.html)
+            try {
+                const counters = JSON.parse(localStorage.getItem('club_counter_offers')) || [];
+                counters.forEach(c => items.push({
+                    type:'offer', icon:'fa-handshake', title:`عرض مضاد: ${c.name}`,
+                    sub:`${c.dealType==='coach'?'مدرب':'لاعب'} · ${c.club||'-'}`, link:'negotiations.html'
+                }));
+            } catch(e) {}
+
+            // عروض شراء واردة من أندية أخرى على لاعبيك (من transfers.html/negotiations.html)
+            try {
+                const incoming = JSON.parse(localStorage.getItem('club_incoming_offers')) || [];
+                incoming.forEach(o => items.push({
+                    type:'offer', icon:'fa-money-bill-transfer', title:`عرض شراء: ${o.player_name}`,
+                    sub:`من ${o.buyer} · ${fmtM((o.amount||0)/1000000)}`, link:'negotiations.html'
+                }));
+            } catch(e) {}
+
+            // عروض رعاية واردة من شركات حقيقية (من sponsors.html)
+            try {
+                const sponsorOffers = JSON.parse(localStorage.getItem('incomingSponsorOffers_v1')) || [];
+                sponsorOffers.forEach(o => items.push({
+                    type:'offer', icon:'fa-file-invoice-dollar', title:`عرض رعاية: ${o.companyName}`,
+                    sub:`${fmtM(o.annualValue)} سنوياً`, link:'sponsors.html'
+                }));
+            } catch(e) {}
+
+            // صفقات بانتظار التفاوض الشخصي (تحتاج قرارك بعد موافقة النادي البائع)
+            try {
+                const queue = JSON.parse(localStorage.getItem('club_personal_terms_queue')) || [];
+                queue.forEach(d => items.push({
+                    type:'offer', icon:'fa-file-contract', title:`تفاوض شخصي: ${d.name}`,
+                    sub:'بانتظار عرض راتب منك', link:'negotiations.html'
+                }));
+            } catch(e) {}
+
+            return items;
+        }
+
+        // ============================================================
+        // أحداث عاجلة حقيقية — كلها مبنية على بيانات فعلية موجودة، وليست أحداثاً وهمية
+        // ============================================================
+        function collectUrgentAlerts() {
+            const alerts = [];
+
+            // إصابة لاعب أساسي حقيقية (من medical.html)
+            try {
+                const injuries = JSON.parse(localStorage.getItem('club_injuries')) || [];
+                injuries.forEach(inj => alerts.push({
+                    title:`🔴 إصابة: ${inj.playerName}`, sub:`${inj.type} — راجع المركز الطبي`, link:'medical.html'
+                }));
+            } catch(e) {}
+
+            // أزمة مالية حقيقية (رصيد سالب فعلياً)
+            const budget = getClubBudget();
+            if (budget < 0) alerts.push({ title:'🔴 أزمة مالية', sub:`الرصيد الحالي ${fmtM(budget)} — راجع مكتب الميزانية`, link:'budget_office.html' });
+
+            // ثقة مجلس الإدارة منخفضة فعلياً (خطر إقالة حقيقي)
+            const confidence = parseFloat(localStorage.getItem('board_confidence_' + activeClub));
+            if (!isNaN(confidence) && confidence < 30) alerts.push({ title:'🔴 خطر إقالة', sub:`ثقة المجلس بك ${confidence}% فقط — راجع مجلس الإدارة`, link:'board_room.html' });
+
+            // مخزون المتجر شارف على النفاد (من store.html)
+            try {
+                const jerseyStock = parseInt(localStorage.getItem('jerseyStock'));
+                if (!isNaN(jerseyStock) && jerseyStock <= 0) alerts.push({ title:'🔴 نفاد المخزون', sub:'القميص الرسمي نفد بالكامل — راجع المتجر', link:'store.html' });
+            } catch(e) {}
+
+            return alerts;
+        }
+
+        function renderSummary(decisions, alerts) {
+            const total = decisions.length + alerts.length;
+            const el = document.getElementById('summaryHero');
+            if (total === 0) {
+                el.className = 'summary-hero empty';
+                el.innerHTML = `<div class="big-num">0</div><div class="lbl">لا توجد قرارات أو أحداث عاجلة — كل شيء تحت السيطرة ✅</div>`;
+            } else {
+                el.className = 'summary-hero';
+                el.innerHTML = `<div class="big-num">${total}</div><div class="lbl">قرار وحدث يحتاج مراجعتك اليوم</div>`;
+            }
+        }
+
+        function renderAlerts(alerts) {
+            document.getElementById('alertCount').innerText = alerts.length;
+            const el = document.getElementById('alertsContainer');
+            if (!alerts.length) { el.innerHTML = `<div class="empty-state"><i class="fas fa-shield-heart"></i>لا توجد أحداث عاجلة حالياً.</div>`; return; }
+            el.innerHTML = alerts.map(a => `
+                <div class="decision-row alert-row">
+                    <div class="icon"><i class="fas fa-triangle-exclamation"></i></div>
+                    <div class="info"><div class="dtitle">${a.title}</div><div class="dsub">${a.sub}</div></div>
+                    <a class="go-btn" href="${a.link}">مراجعة</a>
+                </div>
+            `).join('');
+        }
+
+        function renderDecisions(decisions) {
+            document.getElementById('decisionCount').innerText = decisions.length;
+            const el = document.getElementById('decisionsContainer');
+            if (!decisions.length) { el.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle"></i>لا توجد قرارات معلَّقة حالياً.</div>`; return; }
+            el.innerHTML = decisions.map(d => `
+                <div class="decision-row offer-row">
+                    <div class="icon"><i class="fas ${d.icon}"></i></div>
+                    <div class="info"><div class="dtitle">${d.title}</div><div class="dsub">${d.sub}</div></div>
+                    <a class="go-btn" href="${d.link}">مراجعة</a>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================
+        // تقرير يومي مختصر من كل إدارة — أرقام حقيقية من نفس الأنظمة الموحَّدة المستخدمة في باقي اللعبة
+        // ============================================================
+        function getRealSponsorIncomeTotal() {
+            try {
+                const contracts = JSON.parse(localStorage.getItem('sponsorContracts_v1')) || {};
+                const today = getGameDate();
+                const todayAbs = Math.floor(new Date(today.year, today.month-1, today.day).getTime()/86400000);
+                return Object.values(contracts).filter(c => c && c.status==='active' && c.endAbsDay>=todayAbs).reduce((s,c)=>s+(c.annualValue||0),0);
+            } catch(e) { return 0; }
+        }
+        function renderDailyReport() {
+            const budget = getClubBudget();
+            const rep = getClubReputation();
+            const squad = JSON.parse(localStorage.getItem('signed_players_by_club')||'{}')[activeClub] || [];
+            const injuries = JSON.parse(localStorage.getItem('club_injuries')) || [];
+            const staff = JSON.parse(localStorage.getItem('staff_by_club')||'{}')[activeClub] || [];
+            const sponsorCount = Object.keys(JSON.parse(localStorage.getItem('sponsorContracts_v1')||'{}')).length;
+
+            document.getElementById('reportGrid').innerHTML = `
+                <div class="report-box"><div class="lbl">💰 الإدارة المالية</div><div class="val">${fmtM(budget)}</div></div>
+                <div class="report-box"><div class="lbl">⚽ الإدارة الرياضية</div><div class="val">${squad.length} لاعباً</div></div>
+                <div class="report-box"><div class="lbl">🩺 الإدارة الطبية</div><div class="val ${injuries.length?'neg':'pos'}">${injuries.length} إصابة نشطة</div></div>
+                <div class="report-box"><div class="lbl">👔 إدارة الموظفين</div><div class="val">${staff.length} موظفاً</div></div>
+                <div class="report-box"><div class="lbl">📣 إدارة التسويق</div><div class="val">${sponsorCount}/9 عقود رعاية</div></div>
+                <div class="report-box"><div class="lbl">⭐ العلاقات العامة</div><div class="val">سمعة ${rep}</div></div>
+            `;
+        }
+
+        window.onload = function() {
+            const decisions = collectPendingDecisions();
+            const alerts = collectUrgentAlerts();
+            renderSummary(decisions, alerts);
+            renderAlerts(alerts);
+            renderDecisions(decisions);
+            renderDailyReport();
+        };
+    </script>
+</body>
+</html>

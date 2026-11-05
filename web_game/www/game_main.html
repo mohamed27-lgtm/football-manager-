@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة بالضبط في settings.html — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() {
+            const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light');
+            const lang = localStorage.getItem('gameLanguage') || 'ar';
+            const rtlLangs = ['ar'];
+            document.documentElement.lang = lang;
+            document.documentElement.dir = rtlLangs.includes(lang) ? 'rtl' : 'ltr';
+        })();
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* ===== Material Design 3 — نظام رموز داكن، بلون العلامة الذهبي الموحَّد عبر اللعبة (بدل الأزرق السابق غير المتّسق) ===== */
+            --md-bg: #0a0e17;
+            --md-surface: #0f1420;
+            --md-surface-container: #141b2d;
+            --md-surface-container-high: #1a2236;
+            --md-surface-container-highest: #202a42;
+            --md-primary: #e8b84b;
+            --md-on-primary: #06090f;
+            --md-primary-container: rgba(232,184,75,0.16);
+            --md-on-surface: #f1f5f9;
+            --md-on-surface-variant: #8b96ab;
+            --md-outline: #232d42;
+            --md-outline-variant: rgba(255,255,255,0.06);
+            --md-elevation-1: 0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.5);
+            --md-elevation-2: 0 3px 8px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.5);
+            --md-elevation-3: 0 6px 18px rgba(0,0,0,0.45);
+            --md-shape-sm: 12px; --md-shape-md: 16px; --md-shape-lg: 20px; --md-shape-full: 999px;
+            /* توافق مع المتغيرات القديمة المستخدمة في بقية الصفحة */
+            --bg: var(--md-bg); --card: var(--md-surface-container); --accent: var(--md-primary); --header: var(--md-surface-container); --border: var(--md-outline);
+        }
+        /* نفس آلية المظهر الفاتح الحقيقية بالضبط المستخدمة في settings.html — إعداد المظهر يُطبَّق فعلياً هنا الآن أيضاً، لا في صفحة الإعدادات فقط */
+        html[data-theme="light"] {
+            --md-bg:#f4f5f9; --md-surface:#eef0f5; --md-surface-container:#ffffff; --md-surface-container-high:#eef0f5; --md-surface-container-highest:#e2e5ec;
+            --md-primary:#b8862f; --md-on-primary:#ffffff; --md-primary-container: rgba(184,134,47,0.12);
+            --md-on-surface:#151a24; --md-on-surface-variant:#6b7385;
+            --md-outline:#e2e5ec; --md-outline-variant: rgba(30,35,50,0.06);
+            --md-elevation-1: 0 1px 3px rgba(30,35,50,0.08), 0 1px 2px rgba(30,35,50,0.06);
+            --md-elevation-2: 0 3px 10px rgba(30,35,50,0.1), 0 1px 3px rgba(30,35,50,0.08);
+            --md-elevation-3: 0 6px 18px rgba(30,35,50,0.12);
+        }
+        body { background: var(--md-bg); color: var(--md-on-surface); font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; }
+
+        /* --- الشاشة الرئيسية --- */
+        .top-nav { background: var(--md-surface-container); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--md-elevation-1); position: relative; z-index: 2; }
+        .menu-btn { font-size: 1.4rem; cursor: pointer; color: var(--md-primary); width: 40px; height: 40px; border-radius: var(--md-shape-full); display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .menu-btn:active { background: var(--md-primary-container); }
+        .main-container { padding: 16px; padding-bottom: 100px; }
+        .grid-8 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .tile {
+            position: relative; border-radius: var(--md-shape-lg); overflow: hidden; aspect-ratio: 16/9;
+            border: 1px solid var(--md-outline-variant); cursor: pointer;
+            background: var(--md-surface-container-high);
+            box-shadow: var(--md-elevation-1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+            transition: transform 0.15s cubic-bezier(0.2,0,0,1), box-shadow 0.15s, background 0.15s;
+        }
+        .tile:active { transform: scale(0.95); background: var(--md-primary-container); box-shadow: var(--md-elevation-2); }
+        .tile-icon { font-size: 1.5rem; color: var(--md-primary); }
+        .tile b { font-size: 0.72rem; font-weight: 700; color: var(--md-on-surface); }
+        .matches { background: var(--md-surface-container); border-radius: var(--md-shape-lg); padding: 16px; border: 1px solid var(--md-outline-variant); box-shadow: var(--md-elevation-1); transition: transform 0.15s, box-shadow 0.15s; }
+        .matches:active { transform: scale(0.98); box-shadow: var(--md-elevation-2); }
+        .footer { position: fixed; bottom: 0; width: 100%; padding: 16px; display: flex; justify-content: flex-end; box-sizing: border-box; pointer-events: none; }
+        .footer > * { pointer-events: auto; }
+        .next-btn {
+            background: var(--md-primary); color: var(--md-on-primary); border: none;
+            padding: 14px 26px; border-radius: var(--md-shape-full); font-weight: 800; font-size: 0.9rem; cursor: pointer;
+            box-shadow: var(--md-elevation-3); display: flex; align-items: center; gap: 8px;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .next-btn:active { transform: scale(0.95); box-shadow: var(--md-elevation-1); }
+
+
+        /* =============================================
+           القائمة الجانبية الجديدة — بالألوان الزرقاء
+        ============================================= */
+        .side-overlay { position: fixed; inset: 0; z-index: 9999; display: none; flex-direction: row; direction: rtl; }
+        .side-overlay.active { display: flex; }
+        .side-backdrop { flex: 1; background: rgba(2, 6, 23, 0.6); backdrop-filter: blur(3px); }
+        .side-panel {
+            width: 78%; max-width: 320px;
+            background: var(--md-surface-container);
+            display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden;
+            box-shadow: -8px 0 50px rgba(0, 0, 0, 0.8);
+            animation: slideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .menu-top {
+            background: var(--md-surface-container-high); padding: 20px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 1; box-shadow: var(--md-elevation-1);
+        }
+        .menu-top b { font-size: 1rem; color: var(--md-primary); letter-spacing: 0.5px; }
+        .menu-close { color: var(--md-primary); font-size: 1.2rem; cursor: pointer; padding: 6px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: var(--md-shape-full); transition: background 0.2s; }
+        .menu-close:active { background: var(--md-primary-container); }
+        .group-label {
+            padding: 16px 24px 8px; font-size: 0.7rem; font-weight: 700; letter-spacing: 1.5px;
+            color: var(--md-primary); text-transform: uppercase;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .list-btn {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 13px 16px; margin: 2px 12px; border-radius: var(--md-shape-full);
+            cursor: pointer; transition: background 0.15s;
+        }
+        .list-btn:hover  { background: var(--md-surface-container-high); }
+        .list-btn:active { background: var(--md-primary-container); }
+        .list-btn-left { display: flex; align-items: center; gap: 16px; }
+        .list-btn i.icon { width: 22px; font-size: 1rem; color: var(--md-primary); text-align: center; }
+        .list-btn span   { font-size: 0.92rem; color: var(--md-on-surface); font-weight: 500; }
+        .list-btn i.arrow { color: var(--md-on-surface-variant); font-size: 0.7rem; }
+
+        .badge-count { background: var(--md-primary); color: var(--md-on-primary); font-size: 0.62rem; font-weight: 800; border-radius: var(--md-shape-full); padding: 2px 9px; margin-right: 4px; }
+
+        .calendar-toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(16, 185, 129, 0.95); color: white; padding: 10px 20px; border-radius: 20px;
+            font-size: 0.9rem; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 10000; display: none; animation: pulse 0.5s ease-in-out;
+        }
+        @keyframes pulse { 0% { transform: translateX(-50%) scale(0.9); opacity: 0; } 100% { transform: translateX(-50%) scale(1); opacity: 1; } }
+
+        /* ============================================================
+           نظام السمعة الاحترافي - Reputation System
+           ============================================================ */
+        .rep-container {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.98));
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            border-radius: 16px;
+            padding: 12px 18px;
+            margin: 8px 0 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .rep-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(59,130,246,0.03), transparent 60%);
+            pointer-events: none;
+        }
+        .rep-container:hover {
+            border-color: rgba(59, 130, 246, 0.35);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 40px rgba(59, 130, 246, 0.08);
+        }
+
+        .rep-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+        .rep-icon-box {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .rep-icon {
+            font-size: 1.6rem;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.05));
+            transition: transform 0.3s ease;
+        }
+        .rep-container:hover .rep-icon {
+            transform: scale(1.05);
+        }
+
+        .rep-text h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 0.3px;
+            transition: color 0.3s ease;
+        }
+        .rep-text .rep-meta {
+            font-size: 0.6rem;
+            color: #8b949e;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 1px;
+        }
+        #repNextLevelGap {
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 0.58rem;
+        }
+        .rep-text .rep-meta .rep-market-val {
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .rep-center {
+            flex: 1;
+            min-width: 120px;
+            max-width: 240px;
+            position: relative;
+            z-index: 1;
+        }
+        .rep-bar-bg {
+            height: 5px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        .rep-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+        .rep-bar-fill::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            animation: shimmerBar 2.5s infinite;
+        }
+        @keyframes shimmerBar {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .rep-bar-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.5rem;
+            color: #8b949e;
+            margin-top: 2px;
+        }
+        .rep-bar-labels .rep-score {
+            font-weight: 700;
+            font-size: 0.65rem;
+        }
+
+        .rep-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+        .rep-stat {
+            text-align: center;
+            padding: 0 6px;
+        }
+        .rep-stat .val {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #e6edf3;
+            line-height: 1.2;
+        }
+        .rep-stat .lbl {
+            font-size: 0.5rem;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .rep-stat .trend {
+            font-size: 0.6rem;
+            margin-right: 3px;
+        }
+        .rep-stat .trend.up { color: #00ff88; }
+        .rep-stat .trend.down { color: #ff3366; }
+        .rep-stat .trend.stable { color: #f5a623; }
+
+        .rep-badge {
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid;
+            white-space: nowrap;
+        }
+
+        /* ===== مستويات السمعة ===== */
+        .rep-level-beginner .rep-text h4 { color: #8b949e; }
+        .rep-level-beginner .rep-badge { border-color: #8b949e; color: #8b949e; }
+        .rep-level-beginner .rep-bar-fill { background: linear-gradient(90deg, #8b949e, #6b7280); }
+
+        .rep-level-developing .rep-text h4 { color: #58a6ff; }
+        .rep-level-developing .rep-badge { border-color: #58a6ff; color: #58a6ff; }
+        .rep-level-developing .rep-bar-fill { background: linear-gradient(90deg, #58a6ff, #3b82f6); }
+
+        .rep-level-established .rep-text h4 { color: #f0883e; }
+        .rep-level-established .rep-badge { border-color: #f0883e; color: #f0883e; }
+        .rep-level-established .rep-bar-fill { background: linear-gradient(90deg, #f0883e, #f5a623); }
+
+        .rep-level-prestigious .rep-text h4 { color: #f5a623; }
+        .rep-level-prestigious .rep-badge { border-color: #f5a623; color: #f5a623; }
+        .rep-level-prestigious .rep-bar-fill { background: linear-gradient(90deg, #f5a623, #f59e0b); }
+
+        .rep-level-legendary .rep-text h4 { color: #ff6b6b; }
+        .rep-level-legendary .rep-badge { border-color: #ff6b6b; color: #ff6b6b; }
+        .rep-level-legendary .rep-bar-fill { background: linear-gradient(90deg, #ff6b6b, #ff3366); }
+        .rep-level-legendary .rep-icon { filter: drop-shadow(0 0 20px rgba(255,107,107,0.3)); }
+
+        .rep-level-mythic .rep-text h4 { 
+            color: #ff3366; 
+            text-shadow: 0 0 20px rgba(255,51,102,0.2);
+        }
+        .rep-level-mythic .rep-badge { 
+            border-color: #ff3366; 
+            color: #ff3366;
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+        .rep-level-mythic .rep-bar-fill { 
+            background: linear-gradient(90deg, #ff3366, #ff6b6b, #ff3366);
+            background-size: 200% 100%;
+            animation: mythicGradient 3s ease-in-out infinite;
+        }
+        .rep-level-mythic .rep-icon { 
+            filter: drop-shadow(0 0 30px rgba(255,51,102,0.4));
+            animation: iconFloat 2s ease-in-out infinite;
+        }
+        @keyframes badgePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        @keyframes mythicGradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        /* ===== تأثير الدخول ===== */
+        .rep-enter {
+            animation: repSlide 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes repSlide {
+            from { opacity: 0; transform: translateY(-12px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ===== التجاوب ===== */
+        @media (max-width: 600px) {
+            .rep-container { padding: 10px 14px; gap: 8px; }
+            .rep-left { gap: 8px; }
+            .rep-icon-box { width: 34px; height: 34px; }
+            .rep-icon { font-size: 1.2rem; }
+            .rep-text h4 { font-size: 0.7rem; }
+            .rep-text .rep-meta { font-size: 0.5rem; }
+            .rep-center { min-width: 80px; max-width: 140px; }
+            .rep-stat .val { font-size: 0.7rem; }
+            .rep-stat .lbl { font-size: 0.4rem; }
+            .rep-badge { font-size: 0.45rem; padding: 2px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <div class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
+        <div style="font-weight:bold;" id="navClubName">نادي الهلال</div>
+        <div style="font-size:0.9rem; font-weight: bold; color: var(--md-primary);" id="gameCalendarDisplay">01 / 06 / 2026</div>
+    </nav>
+
+    <!-- ===== نظام السمعة الاحترافي ===== -->
+    <div id="reputationContainer" class="rep-container rep-enter">
+        <div class="rep-left">
+            <div class="rep-icon-box">
+                <span class="rep-icon" id="repIcon">⭐</span>
+            </div>
+            <div class="rep-text">
+                <h4 id="repLevelName">متوسط</h4>
+                <div class="rep-meta">
+                    <span id="repClubName">نادي الهلال</span>
+                    <span id="repNextLevelGap">--</span>
+                    <span id="repChangeDisplay">+0</span>
+                    <span id="repChangeArrow">→</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="rep-center">
+            <div class="rep-bar-bg">
+                <div class="rep-bar-fill" id="repBar" style="width: 50%;"></div>
+            </div>
+            <div class="rep-bar-labels">
+                <span id="repScaleMin">مبتدئ</span>
+                <span class="rep-score" id="repScore">50</span>
+                <span id="repScaleMax">خرافي</span>
+            </div>
+        </div>
+        
+        <div class="rep-right">
+            <div class="rep-stat">
+                <div class="val" id="repMarketValue">--</div>
+                <div class="lbl" id="lblSquadValue">قيمة التشكيلة</div>
+            </div>
+            <div class="rep-stat">
+                <div class="val" id="repGlobalRank">#--</div>
+                <div class="lbl" id="lblRank">الترتيب</div>
+            </div>
+            <div class="rep-stat">
+                <div class="val" id="repTrophies">0</div>
+                <div class="lbl" id="lblTrophies">البطولات</div>
+            </div>
+            <span class="rep-badge" id="repBadge">متوسط</span>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="grid-8">
+            <div class="tile" onclick="location.href='finance.html'"><i class="fas fa-sack-dollar tile-icon"></i><b id="nav_finance">المالية</b></div>
+            <div class="tile" onclick="location.href='negotiations.html'"><i class="fas fa-handshake tile-icon"></i><b id="nav_negotiations">المفاوضات</b></div>
+            <div class="tile" onclick="location.href='player.html'"><i class="fas fa-file-contract tile-icon"></i><b id="nav_player">العقود</b></div>
+            <div class="tile" onclick="location.href='academy.html'"><i class="fas fa-graduation-cap tile-icon"></i><b id="nav_academy">الأكاديمية</b></div>
+            <div class="tile" onclick="location.href='stadium.html'"><i class="fas fa-landmark-dome tile-icon"></i><b id="nav_stadium">الملعب</b></div>
+            <div class="tile" onclick="location.href='sponsors.html'"><i class="fas fa-file-invoice-dollar tile-icon"></i><b id="nav_sponsors">الراعي</b></div>
+            <div class="tile" onclick="location.href='inbox.html'"><i class="fas fa-envelope tile-icon"></i><b id="nav_inbox">الرسائل</b></div>
+            <div class="tile" onclick="location.href='tactics.html'"><i class="fas fa-chess-board tile-icon"></i><b id="nav_tactics">التكتيكات</b></div>
+        </div>
+        <div class="matches" onclick="location.href='fixtures.html'" style="cursor:pointer;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <div style="font-size:0.8rem; color:var(--accent);" id="lblMatchOfWeek">مباراة الأسبوع</div>
+                <div style="font-size:0.75rem; color:var(--md-primary);" id="nextMatchWeekLabel">الأسبوع 1</div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:10px; align-items:center;">
+                <span id="matchHomeTeam">نادي الهلال</span>
+                <b id="nextMatchScoreOrVs">VS</b>
+                <span id="matchAwayTeam">—</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:0.75rem; color:#94a3b8;">
+                <span id="nextMatchMeta">جاري تحميل المباراة...</span>
+                <span id="showAgendaLbl" style="color:var(--md-primary);">عرض الأجندة</span>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <a href="president_desk.html" id="presidentDeskLink" style="display:none; text-align:center; font-size:11px; color:#ef4444; font-weight:800; padding:6px; text-decoration:none;"><i class="fas fa-file-signature"></i> <span id="presidentDeskLbl">مكتب الرئيس</span> — <span id="pendingBadgeText"></span> <span id="pendingReviewLbl">بانتظار المراجعة</span></a>
+        <button class="next-btn" onclick="advanceGameDay()"><i class="fas fa-forward"></i> <span id="nextDayBtnLbl">اليوم التالي</span></button>
+    </footer>
+
+    <div class="calendar-toast" id="calendarToast"><i class="fas fa-calendar-day"></i> يوم جديد في مسيرتك الرئاسية!</div>
+
+    <div class="side-overlay" id="sideMenu">
+        <div class="side-backdrop" onclick="toggleMenu()"></div>
+
+        <div class="side-panel">
+            <div class="menu-top">
+                <b id="navPresidentDesk">مركز الإدارة</b>
+                <i class="fas fa-times menu-close" onclick="toggleMenu()"></i>
+            </div>
+
+            <div class="group-label"><i class="fas fa-shield-alt"></i> <span id="grpTeam">الفريق</span></div>
+            <div class="list-btn" onclick="location.href='player.html'">
+                <div class="list-btn-left"><i class="fas fa-users icon"></i><span id="navl_player">اللاعبون</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <div class="list-btn" onclick="location.href='tactics.html'">
+                <div class="list-btn-left"><i class="fas fa-chess-board icon"></i><span id="navl_tactics">التكتيكات</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <div class="list-btn" onclick="location.href='training.html'">
+                <div class="list-btn-left"><i class="fas fa-dumbbell icon"></i><span id="navl_training">التدريب</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+
+            <div class="group-label"><i class="fas fa-building icon"></i> <span id="grpClub">النادي</span></div>
+            <div class="list-btn" onclick="location.href='transfers.html'">
+                <div class="list-btn-left"><i class="fas fa-exchange-alt icon"></i><span id="navl_transfers">الانتقالات</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <div class="list-btn" onclick="location.href='registration.html'">
+                <div class="list-btn-left"><i class="fas fa-file-signature icon"></i><span id="navl_registration">تسجيل اللاعبين</span></div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="badge-count" id="regPendingBadge" style="display:none;">0</span>
+                    <i class="fas fa-chevron-left arrow"></i>
+                </div>
+            </div>
+            <!-- ========= زر الخزينة الجديد ========= -->
+            <div class="list-btn" onclick="location.href='finance.html'">
+                <div class="list-btn-left"><i class="fas fa-vault icon"></i><span id="navl_finance">الخزينة</span></div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="badge-count" id="budgetBadge" style="display:none;">0</span>
+                    <i class="fas fa-chevron-left arrow"></i>
+                </div>
+            </div>
+            <!-- ==================================== -->
+            <div class="list-btn" onclick="location.href='staff.html'">
+                <div class="list-btn-left"><i class="fas fa-user-tie icon"></i><span id="navl_staff">الطاقم الفني</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <div class="list-btn" onclick="location.href='fixtures.html'">
+                <div class="list-btn-left"><i class="fas fa-calendar-alt icon"></i><span id="navl_fixtures">الأحداث</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <div class="list-btn" onclick="location.href='press.html'">
+                <div class="list-btn-left"><i class="fas fa-newspaper icon"></i><span id="navl_press">الصحافة</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+
+            <div class="group-label"><i class="fas fa-city icon"></i> <span id="grpFacilities">المرافق</span></div>
+            <div class="list-btn" onclick="location.href='stadium.html'">
+                <div class="list-btn-left"><i class="fas fa-futbol icon"></i><span id="navl_stadium">الملعب</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <div class="list-btn" onclick="location.href='medical.html'">
+                <div class="list-btn-left"><i class="fas fa-plus-square icon"></i><span id="navl_medical">المركز الطبي</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <div class="list-btn" onclick="location.href='store.html'">
+                <div class="list-btn-left"><i class="fas fa-shopping-cart icon"></i><span id="navl_store">المتجر</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <div class="list-btn" onclick="location.href='tv_channels.html'">
+                <div class="list-btn-left"><i class="fas fa-tv icon"></i><span id="navl_tv_channels">القناة التلفزيونية</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <div class="list-btn" onclick="location.href='federation.html'">
+                <div class="list-btn-left"><i class="fas fa-th icon"></i><span id="navl_federation">المباني الإدارية</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+
+            <div class="group-label"><i class="fas fa-trophy icon"></i> <span id="grpCompetitions">المسابقات</span></div>
+            <!-- ========= زر المباراة الجديد (محرك المباراة المباشر) ========= -->
+            <div class="list-btn" onclick="location.href='match_center.html'">
+                <div class="list-btn-left"><i class="fas fa-stopwatch icon"></i><span id="navl_match_center">المباراة (بث مباشر)</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <!-- ============================================================== -->
+            <div class="list-btn" onclick="location.href='fixtures.html'">
+                <div class="list-btn-left"><i class="fas fa-calendar-check icon"></i><span id="navl_fixtures_2">جدول المباريات</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <div class="list-btn" onclick="location.href='league_table.html'">
+                <div class="list-btn-left"><i class="fas fa-list-ol icon"></i><span id="navl_league_table">الدوري</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <!-- ========= زر الكؤوس ========= -->
+            <div class="list-btn" onclick="location.href='trophy_room.html'">
+                <div class="list-btn-left"><i class="fas fa-award icon"></i><span id="navl_trophy_room">كؤوس النادي</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <!-- ============================= -->
+            <div class="list-btn" onclick="location.href='classifications.html'">
+                <div class="list-btn-left"><i class="fas fa-chart-line icon"></i><span id="navl_classifications">التصنيفات</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+            <div class="list-btn" onclick="location.href='friendly_matches.html'">
+                <div class="list-btn-left"><i class="fas fa-handshake icon"></i><span id="navl_friendly_matches">المباريات الودية</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+
+            <div class="group-label"><i class="fas fa-id-badge icon"></i> <span id="grpFederation">الاتحاد</span></div>
+            <div class="list-btn" onclick="location.href='federation.html'">
+                <div class="list-btn-left"><i class="fas fa-address-card icon"></i><span id="navl_federation_2">الاتحاد</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+
+            <div class="group-label"><i class="fas fa-gear icon"></i> <span id="grpSystem">النظام</span></div>
+            <div class="list-btn" style="border-bottom:none;" onclick="location.href='settings.html'">
+                <div class="list-btn-left"><i class="fas fa-sliders icon"></i><span id="navl_settings">الإعدادات</span></div>
+                <i class="fas fa-chevron-left arrow"></i>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentPresidentialClub = localStorage.getItem('presidentialClub') || 'نادي الهلال';
+        document.getElementById('navClubName').innerText = currentPresidentialClub;
+        document.getElementById('matchHomeTeam').innerText = currentPresidentialClub;
+
+        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); }
+
+        function updateRegBadge() {
+            try {
+                const all = JSON.parse(localStorage.getItem('pending_registration_by_club')) || {};
+                const pend = all[currentPresidentialClub] || [];
+                const badge = document.getElementById('regPendingBadge');
+                if (pend.length > 0) { badge.style.display = 'inline-block'; badge.innerText = pend.length; }
+                else { badge.style.display = 'none'; }
+            } catch(e) {}
+        }
+        // شارة الخزينة: تعرض الميزانية الحالية بالمليون
+        function updateBudgetBadge() {
+            try {
+                const b = parseFloat(localStorage.getItem('clubBudget'));
+                const badge = document.getElementById('budgetBadge');
+                if (!isNaN(b)) { badge.style.display = 'inline-block'; badge.innerText = Math.round(b) + 'M'; }
+            } catch(e) {}
+        }
+        updateRegBadge();
+        updateBudgetBadge();
+
+        function safeGetLS(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
+        function getCurrentRoundSafe() { const r = parseInt(safeGetLS('database_current_round') || '0'); return isNaN(r) ? 0 : r; }
+        function getLeagueTeamsSafe() {
+            try {
+                const raw = safeGetLS('current_league_teams');
+                if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) return arr.filter(t => t && t !== 'إستراحة' && String(t).trim() !== ''); }
+            } catch(e) {}
+            return [currentPresidentialClub, 'النصر', 'الاتحاد', 'الأهلي', 'الشباب', 'الاتفاق', 'التعاون', 'الفتح'];
+        }
+        function generateDoubleRoundRobin(teams) {
+            let pool = [...teams];
+            if (pool.length % 2 !== 0) pool.push('إستراحة');
+            let totalTeams = pool.length, roundsCount = totalTeams - 1, matchesPerRound = totalTeams / 2, schedule = [];
+            for (let round = 0; round < roundsCount; round++) {
+                let roundMatches = [];
+                for (let i = 0; i < matchesPerRound; i++) {
+                    let home = pool[i], away = pool[totalTeams - 1 - i];
+                    if (home === 'إستراحة' || away === 'إستراحة') continue;
+                    if (round % 2 === 1) { let tmp = home; home = away; away = tmp; }
+                    roundMatches.push({ home, away, roundIdx: round });
+                }
+                schedule.push(roundMatches); pool.splice(1, 0, pool.pop());
+            }
+            let firstHalfLength = schedule.length;
+            for (let round = 0; round < firstHalfLength; round++) {
+                let roundMatches = [];
+                schedule[round].forEach(m => roundMatches.push({ home: m.away, away: m.home, roundIdx: round + firstHalfLength }));
+                schedule.push(roundMatches);
+            }
+            return schedule;
+        }
+        function computeNextWeekMatch() {
+            const teams = getLeagueTeamsSafe();
+            const schedule = generateDoubleRoundRobin(teams);
+            const currentRound = getCurrentRoundSafe();
+            const nextRoundIdx = Math.min(currentRound, schedule.length - 1);
+            const nextRoundMatches = schedule[nextRoundIdx] || [];
+            let myMatch = nextRoundMatches.find(m => m.home === currentPresidentialClub || m.away === currentPresidentialClub);
+            if (!myMatch) myMatch = nextRoundMatches[0];
+            const weekEl = document.getElementById('nextMatchWeekLabel');
+            if (weekEl) weekEl.innerText = `${gm('weekLbl')} ${nextRoundIdx + 1}`;
+            const metaEl = document.getElementById('nextMatchMeta');
+            const awayEl = document.getElementById('matchAwayTeam');
+            const vsEl = document.getElementById('nextMatchScoreOrVs');
+            if (!myMatch) { if (awayEl) awayEl.innerText = '—'; if (vsEl) vsEl.innerText = 'VS'; if (metaEl) metaEl.innerText = gm('noMatchThisWeek'); return; }
+            if (document.getElementById('matchHomeTeam')) document.getElementById('matchHomeTeam').innerText = myMatch.home;
+            if (awayEl) awayEl.innerText = myMatch.away;
+            let scoreShown = false;
+            try {
+                const saved = JSON.parse(safeGetLS('full_season_scores') || '[]');
+                const found = saved.find(s => s.roundIdx === nextRoundIdx);
+                if (found && typeof found.homeScore === 'number' && typeof found.awayScore === 'number') { if (vsEl) vsEl.innerText = `${found.homeScore} - ${found.awayScore}`; scoreShown = true; }
+            } catch(e) {}
+            if (!scoreShown && vsEl) vsEl.innerText = 'VS';
+            const leagueName = safeGetLS('current_league_name') || gm('leagueFallback');
+            if (metaEl) metaEl.innerText = `${leagueName} • ${gm('roundLbl')} ${nextRoundIdx + 1}`;
+        }
+
+        let gameDate = {
+            day: parseInt(localStorage.getItem('game_day') || '1'),
+            month: parseInt(localStorage.getItem('game_month') || '6'),
+            year: parseInt(localStorage.getItem('game_year') || '2026')
+        };
+        function pad(n) { return n < 10 ? '0' + n : n; }
+        function updateCalendarUI() { const el = document.getElementById('gameCalendarDisplay'); if (el) el.innerText = `${pad(gameDate.day)} / ${pad(gameDate.month)} / ${gameDate.year}`; }
+        function saveGameDate() { localStorage.setItem('game_day', gameDate.day); localStorage.setItem('game_month', gameDate.month); localStorage.setItem('game_year', gameDate.year); }
+
+        // ================================================================
+        //  نظام السمعة الديناميكي المتكامل - Reputation Engine v3.0
+        //  يرتبط بجميع قرارات اللاعب وأداء الفريق
+        // ================================================================
+
+        const REP_KEY = 'club_reputation_dynamic';
+        const REP_HISTORY_KEY = 'reputation_history_dynamic';
+        const REP_LOG_KEY = 'reputation_change_log';
+
+        // ===== أوزان الاتحادات القارية =====
+        const CONFEDERATION_WEIGHTS = {
+            'UEFA': 1.0,
+            'CONMEBOL': 0.85,
+            'AFC': 0.65,
+            'CAF': 0.50,
+            'CONCACAF': 0.45,
+            'OFC': 0.25
+        };
+
+        // ===== مستويات السمعة =====
+        // ============================================================
+        // مساعد ترجمة عام لبقية النصوص الديناميكية المتفرقة في هذه الصفحة (رسائل، أسباب تغيّر السمعة، تنبيهات)
+        // ============================================================
+        const GM_I18N = {
+            weekLbl: {ar:'الأسبوع',en:'Week',fr:'Semaine',es:'Semana',de:'Woche',pt:'Semana',tr:'Hafta'},
+            roundLbl: {ar:'الجولة',en:'Round',fr:'Journée',es:'Jornada',de:'Runde',pt:'Jornada',tr:'Hafta'},
+            noMatchThisWeek: {ar:'لا توجد مباراة هذا الأسبوع.',en:'No match this week.',fr:'Aucun match cette semaine.',es:'No hay partido esta semana.',de:'Kein Spiel diese Woche.',pt:'Sem jogo esta semana.',tr:'Bu hafta maç yok.'},
+            leagueFallback: {ar:'الدوري',en:'League',fr:'Championnat',es:'Liga',de:'Liga',pt:'Liga',tr:'Lig'},
+            winStreak: {ar:(w)=>`سلسلة انتصارات (${w} فوز في آخر 5 مباريات)`,en:(w)=>`Win streak (${w} wins in last 5 matches)`,fr:(w)=>`Série de victoires (${w} victoires sur les 5 derniers matchs)`,es:(w)=>`Racha de victorias (${w} victorias en los últimos 5 partidos)`,de:(w)=>`Siegesserie (${w} Siege in den letzten 5 Spielen)`,pt:(w)=>`Sequência de vitórias (${w} vitórias nos últimos 5 jogos)`,tr:(w)=>`Galibiyet serisi (son 5 maçta ${w} galibiyet)`},
+            loseStreak: {ar:(l)=>`سلسلة خسائر (${l} خسارة في آخر 5 مباريات)`,en:(l)=>`Losing streak (${l} losses in last 5 matches)`,fr:(l)=>`Série de défaites (${l} défaites sur les 5 derniers matchs)`,es:(l)=>`Racha de derrotas (${l} derrotas en los últimos 5 partidos)`,de:(l)=>`Niederlagenserie (${l} Niederlagen in den letzten 5 Spielen)`,pt:(l)=>`Sequência de derrotas (${l} derrotas nos últimos 5 jogos)`,tr:(l)=>`Mağlubiyet serisi (son 5 maçta ${l} mağlubiyet)`},
+            leagueProgress: {ar:(p)=>`تقدم في ترتيب الدوري (المركز ${p})`,en:(p)=>`League standing progress (Position ${p})`,fr:(p)=>`Progression au classement (Position ${p})`,es:(p)=>`Progreso en la clasificación (Posición ${p})`,de:(p)=>`Fortschritt in der Tabelle (Platz ${p})`,pt:(p)=>`Progresso na classificação (Posição ${p})`,tr:(p)=>`Lig sıralamasında ilerleme (${p}. sıra)`},
+            achievements: {ar:(c)=>`تحقيق إنجازات (${c} بطولة)`,en:(c)=>`Achievements unlocked (${c} trophies)`,fr:(c)=>`Réalisations débloquées (${c} trophées)`,es:(c)=>`Logros desbloqueados (${c} trofeos)`,de:(c)=>`Erfolge freigeschaltet (${c} Trophäen)`,pt:(c)=>`Conquistas desbloqueadas (${c} troféus)`,tr:(c)=>`Başarılar açıldı (${c} kupa)`},
+            financialImprove: {ar:(b)=>`تحسن مالي (ميزانية ${b}M €)`,en:(b)=>`Financial improvement (budget ${b}M €)`,fr:(b)=>`Amélioration financière (budget ${b}M €)`,es:(b)=>`Mejora financiera (presupuesto ${b}M €)`,de:(b)=>`Finanzielle Verbesserung (Budget ${b}Mio €)`,pt:(b)=>`Melhoria financeira (orçamento ${b}M €)`,tr:(b)=>`Mali iyileşme (bütçe ${b}M €)`},
+            newSponsor: {ar:'عقود رعاية جديدة',en:'New sponsorship deals',fr:'Nouveaux contrats de sponsoring',es:'Nuevos contratos de patrocinio',de:'Neue Sponsoring-Verträge',pt:'Novos contratos de patrocínio',tr:'Yeni sponsorluk anlaşmaları'},
+            facilitiesDev: {ar:'تطوير المرافق والملعب',en:'Facility & stadium development',fr:'Développement des installations',es:'Desarrollo de instalaciones',de:'Entwicklung von Einrichtungen',pt:'Desenvolvimento de instalações',tr:'Tesis ve stadyum geliştirme'},
+            inactivityDecline: {ar:'انخفاض تدريجي بسبب عدم النشاط',en:'Gradual decline due to inactivity',fr:'Déclin progressif par inactivité',es:'Declive gradual por inactividad',de:'Allmählicher Rückgang durch Inaktivität',pt:'Declínio gradual por inatividade',tr:'Hareketsizlik nedeniyle kademeli düşüş'},
+            signedPlayer: {ar:(r)=>`التعاقد مع لاعب تقييم ${r}`,en:(r)=>`Signed a player rated ${r}`,fr:(r)=>`Signature d'un joueur noté ${r}`,es:(r)=>`Fichaje de un jugador valorado en ${r}`,de:(r)=>`Verpflichtung eines Spielers mit Bewertung ${r}`,pt:(r)=>`Contratação de um jogador avaliado em ${r}`,tr:(r)=>`${r} reytingli bir oyuncu transfer edildi`},
+            soldPlayer: {ar:(r)=>`بيع لاعب تقييم ${r}`,en:(r)=>`Sold a player rated ${r}`,fr:(r)=>`Vente d'un joueur noté ${r}`,es:(r)=>`Venta de un jugador valorado en ${r}`,de:(r)=>`Verkauf eines Spielers mit Bewertung ${r}`,pt:(r)=>`Venda de um jogador avaliado em ${r}`,tr:(r)=>`${r} reytingli bir oyuncu satıldı`},
+            stadiumDev: {ar:(c)=>`تطوير الملعب إلى ${c} مقعد`,en:(c)=>`Stadium developed to ${c} seats`,fr:(c)=>`Stade porté à ${c} places`,es:(c)=>`Estadio ampliado a ${c} asientos`,de:(c)=>`Stadion auf ${c} Plätze ausgebaut`,pt:(c)=>`Estádio ampliado para ${c} lugares`,tr:(c)=>`Stadyum ${c} koltuğa çıkarıldı`},
+            newSponsorDeal: {ar:(v)=>`عقد رعاية جديد بقيمة ${v}M €`,en:(v)=>`New sponsorship deal worth ${v}M €`,fr:(v)=>`Nouveau contrat de sponsoring de ${v}M €`,es:(v)=>`Nuevo contrato de patrocinio de ${v}M €`,de:(v)=>`Neuer Sponsoring-Vertrag im Wert von ${v}Mio €`,pt:(v)=>`Novo contrato de patrocínio de ${v}M €`,tr:(v)=>`${v}M € değerinde yeni sponsorluk anlaşması`},
+            wonCup: {ar:(c)=>`الفوز ببطولة ${c}`,en:(c)=>`Won the ${c} title`,fr:(c)=>`Titre remporté : ${c}`,es:(c)=>`Título ganado: ${c}`,de:(c)=>`${c}-Titel gewonnen`,pt:(c)=>`Título conquistado: ${c}`,tr:(c)=>`${c} şampiyonluğu kazanıldı`},
+            financialImprove2: {ar:(b)=>`تحسن مالي (+${b}M €)`,en:(b)=>`Financial improvement (+${b}M €)`,fr:(b)=>`Amélioration financière (+${b}M €)`,es:(b)=>`Mejora financiera (+${b}M €)`,de:(b)=>`Finanzielle Verbesserung (+${b}Mio €)`,pt:(b)=>`Melhoria financeira (+${b}M €)`,tr:(b)=>`Mali iyileşme (+${b}M €)`},
+            catSigning: {ar:'التعاقدات',en:'Signings',fr:'Recrutement',es:'Fichajes',de:'Verpflichtungen',pt:'Contratações',tr:'Transferler'},
+            catFacilities: {ar:'المرافق',en:'Facilities',fr:'Installations',es:'Instalaciones',de:'Einrichtungen',pt:'Instalações',tr:'Tesisler'},
+            catSponsors: {ar:'الرعاة',en:'Sponsors',fr:'Sponsors',es:'Patrocinadores',de:'Sponsoren',pt:'Patrocinadores',tr:'Sponsorlar'},
+            catAchievements: {ar:'الإنجازات',en:'Achievements',fr:'Réalisations',es:'Logros',de:'Erfolge',pt:'Conquistas',tr:'Başarılar'},
+            catFinance: {ar:'المالية',en:'Finance',fr:'Finances',es:'Finanzas',de:'Finanzen',pt:'Finanças',tr:'Finans'},
+            catAuto: {ar:'تلقائي',en:'Automatic',fr:'Automatique',es:'Automático',de:'Automatisch',pt:'Automático',tr:'Otomatik'},
+            catMatchResults: {ar:'نتائج المباريات',en:'Match Results',fr:'Résultats des matchs',es:'Resultados de partidos',de:'Spielergebnisse',pt:'Resultados de jogos',tr:'Maç Sonuçları'},
+            catLeagueStanding: {ar:'ترتيب الدوري',en:'League Standing',fr:'Classement du championnat',es:'Clasificación de la liga',de:'Ligatabelle',pt:'Classificação da liga',tr:'Lig Sıralaması'},
+            catDecay: {ar:'التضاؤل',en:'Decline',fr:'Déclin',es:'Declive',de:'Rückgang',pt:'Declínio',tr:'Düşüş'},
+            importantWin: {ar:'فوز مهم في المباراة',en:'Important match win',fr:'Victoire importante en match',es:'Victoria importante en el partido',de:'Wichtiger Spielsieg',pt:'Vitória importante no jogo',tr:'Maçta önemli galibiyet'},
+            matchLoss: {ar:'خسارة في المباراة',en:'Match loss',fr:'Défaite en match',es:'Derrota en el partido',de:'Spielniederlage',pt:'Derrota no jogo',tr:'Maç mağlubiyeti'},
+            continentalQualify: {ar:'التأهل إلى المسابقات القارية',en:'Qualified for continental competitions',fr:'Qualifié pour les compétitions continentales',es:'Clasificado para competiciones continentales',de:'Für kontinentale Wettbewerbe qualifiziert',pt:'Qualificado para competições continentais',tr:'Kıtasal turnuvalara katılım hakkı kazandı'},
+            repChanged: {ar:'تغير السمعة',en:'Reputation Changed',fr:'Réputation modifiée',es:'Reputación cambiada',de:'Ruf geändert',pt:'Reputação alterada',tr:'İtibar Değişti'},
+            pointsUnit: {ar:'نقطة',en:'points',fr:'points',es:'puntos',de:'Punkte',pt:'pontos',tr:'puan'},
+            toLevel: {ar:'لـ',en:'to',fr:'vers',es:'para',de:'bis',pt:'para',tr:'için'},
+            readyFor: {ar:'جاهز لـ',en:'Ready for',fr:'Prêt pour',es:'Listo para',de:'Bereit für',pt:'Pronto para',tr:'İçin hazır'},
+            maxLevel: {ar:'أعلى مستوى',en:'Max Level',fr:'Niveau maximum',es:'Nivel máximo',de:'Höchststufe',pt:'Nível máximo',tr:'Maksimum Seviye'},
+            pendingConfirm: {ar:(n)=>`لديك ${n} قراراً/حدثاً عاجلاً بانتظار مراجعتك في مكتب الرئيس. لا يمكن الانتقال لليوم التالي قبل مراجعتها.\n\nهل تريد الذهاب لمكتب الرئيس الآن؟`,en:(n)=>`You have ${n} urgent decision(s)/event(s) awaiting review at the President's Office. You cannot advance to the next day before reviewing them.\n\nGo to the President's Office now?`,fr:(n)=>`Vous avez ${n} décision(s) urgente(s) en attente au bureau du président.`,es:(n)=>`Tienes ${n} decisión(es) urgente(s) pendiente(s) en la oficina del presidente.`,de:(n)=>`Sie haben ${n} dringende Entscheidung(en) im Büro des Präsidenten.`,pt:(n)=>`Tem ${n} decisão(ões) urgente(s) pendente(s) no gabinete do presidente.`,tr:(n)=>`Başkanlık ofisinde incelemenizi bekleyen ${n} acil karar var.`},
+        };
+        function gm(key, ...args) {
+            const lang = localStorage.getItem('gameLanguage') || 'ar';
+            const entry = GM_I18N[key];
+            if (!entry) return key;
+            const val = entry[lang] || entry['ar'];
+            return typeof val === 'function' ? val(...args) : val;
+        }
+
+        const REP_LEVEL_I18N = {
+            beginner: { label:{ar:'مبتدئ',en:'Beginner',fr:'Débutant',es:'Principiante',de:'Anfänger',pt:'Iniciante',tr:'Başlangıç'}, desc:{ar:'في بداية الطريق',en:'Just starting out',fr:'Au tout début',es:'Recién empezando',de:'Am Anfang',pt:'No início',tr:'Yeni başlıyor'} },
+            developing: { label:{ar:'ناشئ',en:'Developing',fr:'En développement',es:'En desarrollo',de:'Aufstrebend',pt:'Em desenvolvimento',tr:'Gelişmekte'}, desc:{ar:'يخطو خطوات ثابتة',en:'Taking steady steps',fr:'Progression régulière',es:'Progreso constante',de:'Stetige Fortschritte',pt:'Progresso constante',tr:'İstikrarlı adımlar'} },
+            established: { label:{ar:'متوسط',en:'Established',fr:'Établi',es:'Establecido',de:'Etabliert',pt:'Estabelecido',tr:'Yerleşik'}, desc:{ar:'نادي راسخ في المنافسة',en:'A club firmly established in competition',fr:'Club bien établi dans la compétition',es:'Club bien establecido en la competición',de:'Fest etablierter Verein im Wettbewerb',pt:'Clube bem estabelecido na competição',tr:'Rekabette köklü bir kulüp'} },
+            prestigious: { label:{ar:'مرموق',en:'Prestigious',fr:'Prestigieux',es:'Prestigioso',de:'Angesehen',pt:'Prestigiado',tr:'Prestijli'}, desc:{ar:'نادي كبير يحظى بالتقدير',en:'A big club held in high regard',fr:'Un grand club très respecté',es:'Un gran club muy respetado',de:'Ein großer, hoch angesehener Verein',pt:'Um grande clube muito respeitado',tr:'Büyük saygı gören bir kulüp'} },
+            legendary: { label:{ar:'أسطوري',en:'Legendary',fr:'Légendaire',es:'Legendario',de:'Legendär',pt:'Lendário',tr:'Efsanevi'}, desc:{ar:'نادي من عمالقة كرة القدم',en:'A giant of world football',fr:'Un géant du football mondial',es:'Un gigante del fútbol mundial',de:'Ein Gigant des Weltfußballs',pt:'Um gigante do futebol mundial',tr:'Dünya futbolunun devi'} },
+            mythic: { label:{ar:'خرافي',en:'Mythic',fr:'Mythique',es:'Mítico',de:'Mythisch',pt:'Mítico',tr:'Mitik'}, desc:{ar:'أسطورة خالدة في التاريخ',en:'An eternal legend in history',fr:'Une légende éternelle de l\'histoire',es:'Una leyenda eterna de la historia',de:'Eine ewige Legende der Geschichte',pt:'Uma lenda eterna da história',tr:'Tarihin ölümsüz efsanesi'} },
+        };
+        function repLang() { return localStorage.getItem('gameLanguage') || 'ar'; }
+        const REP_LEVELS = [
+            { min: 0, max: 20, id: 'beginner', get label(){ return REP_LEVEL_I18N.beginner.label[repLang()]; }, icon: 'fa-seedling', get badge(){ return REP_LEVEL_I18N.beginner.label[repLang()]; }, color: '#8b949e', get desc(){ return REP_LEVEL_I18N.beginner.desc[repLang()]; } },
+            { min: 21, max: 40, id: 'developing', get label(){ return REP_LEVEL_I18N.developing.label[repLang()]; }, icon: 'fa-chart-line', get badge(){ return REP_LEVEL_I18N.developing.label[repLang()]; }, color: '#58a6ff', get desc(){ return REP_LEVEL_I18N.developing.desc[repLang()]; } },
+            { min: 41, max: 60, id: 'established', get label(){ return REP_LEVEL_I18N.established.label[repLang()]; }, icon: 'fa-shield-halved', get badge(){ return REP_LEVEL_I18N.established.label[repLang()]; }, color: '#f0883e', get desc(){ return REP_LEVEL_I18N.established.desc[repLang()]; } },
+            { min: 61, max: 80, id: 'prestigious', get label(){ return REP_LEVEL_I18N.prestigious.label[repLang()]; }, icon: 'fa-star', get badge(){ return REP_LEVEL_I18N.prestigious.label[repLang()]; }, color: '#f5a623', get desc(){ return REP_LEVEL_I18N.prestigious.desc[repLang()]; } },
+            { min: 81, max: 95, id: 'legendary', get label(){ return REP_LEVEL_I18N.legendary.label[repLang()]; }, icon: 'fa-crown', get badge(){ return REP_LEVEL_I18N.legendary.label[repLang()]; }, color: '#ff6b6b', get desc(){ return REP_LEVEL_I18N.legendary.desc[repLang()]; } },
+            { min: 96, max: 100, id: 'mythic', get label(){ return REP_LEVEL_I18N.mythic.label[repLang()]; }, icon: 'fa-trophy', get badge(){ return REP_LEVEL_I18N.mythic.label[repLang()]; }, color: '#ff3366', get desc(){ return REP_LEVEL_I18N.mythic.desc[repLang()]; } }
+        ];
+
+        function getRepLevel(value) {
+            for (let l of REP_LEVELS) {
+                if (value >= l.min && value <= l.max) return l;
+            }
+            return REP_LEVELS[0];
+        }
+        
+                // ===== سجل تغيرات السمعة =====
+        function logReputationChange(club, oldValue, newValue, reason, category) {
+            try {
+                const log = JSON.parse(localStorage.getItem(REP_LOG_KEY + '_' + club) || '[]');
+                log.unshift({
+                    date: Date.now(),
+                    oldValue: oldValue,
+                    newValue: newValue,
+                    change: newValue - oldValue,
+                    reason: reason,
+                    category: category || 'عام'
+                });
+                if (log.length > 100) log.pop();
+                localStorage.setItem(REP_LOG_KEY + '_' + club, JSON.stringify(log));
+            } catch(e) {}
+        }
+
+        // ===== الحصول على آخر سجل للتغيرات =====
+        function getReputationLog(club, limit = 10) {
+            try {
+                const log = JSON.parse(localStorage.getItem(REP_LOG_KEY + '_' + club) || '[]');
+                return log.slice(0, limit);
+            } catch(e) { return []; }
+        }
+
+        // ===== حساب السمعة الديناميكية =====
+        function calculateDynamicReputation(clubName) {
+            // 1. السمعة الحالية
+            const current = parseInt(localStorage.getItem(REP_KEY + '_' + clubName)) || 50;
+            
+            // 2. حساب القيمة السوقية الإجمالية
+            let totalMarketValue = 0;
+            let playerCount = 0;
+            let totalRating = 0;
+            let hasPlayers = false;
+            
+            try {
+                const allPlayers = JSON.parse(localStorage.getItem('signed_players_by_club') || '{}');
+                const players = allPlayers[clubName] || [];
+                if (players.length > 0) {
+                    hasPlayers = true;
+                    players.forEach(p => {
+                        const mv = parseFloat(p.market_value_eur) || 0;
+                        totalMarketValue += mv;
+                        totalRating += parseInt(p.rating) || 65;
+                    });
+                    playerCount = players.length;
+                }
+            } catch(e) {}
+            
+            // 3. الاتحاد القاري
+            let confederation = 'AFC';
+            let confederationWeight = 0.65;
+            let tier = 1;
+            try {
+                const rules = JSON.parse(localStorage.getItem('federationRules'));
+                if (rules) {
+                    confederation = rules.confederation || 'AFC';
+                    confederationWeight = CONFEDERATION_WEIGHTS[confederation] || 0.65;
+                    tier = rules.tier || 1;
+                }
+            } catch(e) {}
+            
+            // 4. نتائج المباريات (آخر 5 مباريات)
+            let wins = 0, draws = 0, losses = 0;
+            let matchScore = 0;
+            try {
+                const scores = JSON.parse(localStorage.getItem('full_season_scores') || '[]');
+                const lastMatches = scores.slice(-5);
+                lastMatches.forEach(m => {
+                    const isHome = m.home === clubName;
+                    const myScore = isHome ? m.homeScore : m.awayScore;
+                    const oppScore = isHome ? m.awayScore : m.homeScore;
+                    if (myScore > oppScore) wins++;
+                    else if (myScore === oppScore) draws++;
+                    else losses++;
+                });
+                // الفوز +3، التعادل +1، الخسارة -2
+                matchScore = (wins * 3) + (draws * 1) - (losses * 2);
+            } catch(e) {}
+            
+            // 5. ترتيب الدوري
+            let leaguePosition = null;
+            let leagueTotal = 0;
+            let leagueScore = 0;
+            try {
+                const table = JSON.parse(localStorage.getItem('league_table') || '[]');
+                const pos = table.findIndex(t => t.team === clubName);
+                if (pos !== -1) {
+                    leaguePosition = pos + 1;
+                    leagueTotal = table.length;
+                    const positionRatio = (leagueTotal - pos) / leagueTotal;
+                    leagueScore = positionRatio * 15;
+                    // مكافأة للمراكز الأولى
+                    if (leaguePosition <= 2) leagueScore += 5;
+                    else if (leaguePosition <= 4) leagueScore += 3;
+                    else if (leaguePosition <= 8) leagueScore += 1;
+                }
+            } catch(e) {}
+            
+            // 6. الإنجازات
+            let cupsCount = 0;
+            let achievementScore = 0;
+            try {
+                const cups = JSON.parse(localStorage.getItem('club_cups') || '[]');
+                cupsCount = cups.length;
+                achievementScore = Math.min(15, cupsCount * 2);
+                cups.forEach(cup => {
+                    if (cup.type === 'league' || cup.includes('دوري')) achievementScore += 3;
+                    if (cup.includes('UCL') || cup.includes('دوري أبطال')) achievementScore += 5;
+                });
+                achievementScore = Math.min(20, achievementScore);
+            } catch(e) {}
+            
+            // 7. الميزانية والوضع المالي
+            let budgetScore = 0;
+            try {
+                const budget = parseFloat(localStorage.getItem('clubBudget')) || 0;
+                if (budget > 500) budgetScore = 8;
+                else if (budget > 200) budgetScore = 6;
+                else if (budget > 100) budgetScore = 4;
+                else if (budget > 50) budgetScore = 2;
+                else if (budget > 10) budgetScore = 1;
+            } catch(e) {}
+            
+            // 8. الرعاة (عدد الرعاة النشطين)
+            let sponsorScore = 0;
+            try {
+                const contracts = JSON.parse(localStorage.getItem('sponsorContracts_v1') || '{}');
+                const active = Object.values(contracts).filter(c => c && c.status !== 'expired');
+                sponsorScore = Math.min(8, active.length);
+            } catch(e) {}
+            
+            // 9. مستوى الملعب والمرافق
+            let facilityScore = 0;
+            try {
+                const stadiumCap = parseInt(localStorage.getItem('clubStadiumCapacity')) || 0;
+                if (stadiumCap >= 50000) facilityScore = 6;
+                else if (stadiumCap >= 30000) facilityScore = 4;
+                else if (stadiumCap >= 15000) facilityScore = 2;
+                else facilityScore = 1;
+                
+                const training = JSON.parse(localStorage.getItem('training_data') || '{}');
+                if (training.facility && training.facility >= 3) facilityScore += 2;
+            } catch(e) {}
+            
+            // ===== حساب السمعة الأساسية =====
+            // A. سمعة القيمة السوقية (أساسية)
+            let marketRep = 0;
+            if (hasPlayers && totalMarketValue > 0) {
+                const mvInMillions = totalMarketValue / 1000000;
+                if (mvInMillions >= 500) marketRep = 45;
+                else if (mvInMillions >= 200) marketRep = 38;
+                else if (mvInMillions >= 100) marketRep = 30;
+                else if (mvInMillions >= 50) marketRep = 22;
+                else if (mvInMillions >= 25) marketRep = 16;
+                else if (mvInMillions >= 10) marketRep = 10;
+                else if (mvInMillions >= 5) marketRep = 6;
+                else marketRep = 3;
+                
+                // مكافأة جودة اللاعبين
+                const avgRating = playerCount > 0 ? totalRating / playerCount : 0;
+                if (avgRating >= 85) marketRep += 8;
+                else if (avgRating >= 80) marketRep += 6;
+                else if (avgRating >= 75) marketRep += 4;
+                else if (avgRating >= 70) marketRep += 2;
+            }
+            
+            // B. سمعة الاتحاد
+            let confederationRep = confederationWeight * 15;
+            
+            // C. سمعة الأداء (المباريات + الترتيب)
+            let performanceRep = matchScore + leagueScore;
+            performanceRep = Math.max(0, Math.min(25, performanceRep));
+            
+            // D. الإنجازات والمالية
+            let bonusRep = achievementScore + budgetScore + sponsorScore + facilityScore;
+            
+            // ===== السمعة النهائية =====
+            let totalRep = marketRep + confederationRep + performanceRep + bonusRep;
+            totalRep = Math.min(100, Math.max(0, Math.round(totalRep)));
+            
+            // ===== التضاؤل الزمني (إن لم يكن هناك نشاط) =====
+            const lastUpdate = parseInt(localStorage.getItem(REP_KEY + '_last_update_' + clubName)) || Date.now();
+            const daysPassed = (Date.now() - lastUpdate) / (1000 * 60 * 60 * 24);
+            let decay = daysPassed * 0.05;
+            if (decay > 8) decay = 8;
+            if (hasPlayers && (wins + draws + losses) > 0) decay *= 0.3;
+            if (matchScore > 0) decay *= 0.5;
+            
+            let finalRep = Math.max(0, Math.round(totalRep - decay));
+            
+            // ===== حساب التغيير =====
+            const change = finalRep - current;
+            
+            // ===== تسجيل التغيير إن كان مهماً =====
+            if (Math.abs(change) >= 2) {
+                let reason = '';
+                let category = gm('catAuto');
+                if (matchScore > 5) {
+                    reason = gm('winStreak', wins);
+                    category = gm('catMatchResults');
+                } else if (matchScore < -3) {
+                    reason = gm('loseStreak', losses);
+                    category = gm('catMatchResults');
+                } else if (leagueScore > 10) {
+                    reason = gm('leagueProgress', leaguePosition);
+                    category = gm('catLeagueStanding');
+                } else if (achievementScore > 5) {
+                    reason = gm('achievements', cupsCount);
+                    category = gm('catAchievements');
+                } else if (budgetScore > 4) {
+                    reason = gm('financialImprove', (parseFloat(localStorage.getItem('clubBudget'))||0).toFixed(0));
+                    category = gm('catFinance');
+                } else if (sponsorScore > 0) {
+                    reason = gm('newSponsor');
+                    category = gm('catSponsors');
+                } else if (facilityScore > 3) {
+                    reason = gm('facilitiesDev');
+                    category = gm('catFacilities');
+                } else if (decay > 1) {
+                    reason = gm('inactivityDecline');
+                    category = gm('catDecay');
+                }
+                
+                if (reason) {
+                    logReputationChange(clubName, current, finalRep, reason, category);
+                }
+            }
+            
+            // ===== حفظ البيانات =====
+            localStorage.setItem(REP_KEY + '_' + clubName, finalRep);
+            localStorage.setItem(REP_KEY + '_last_update_' + clubName, Date.now());
+            localStorage.setItem('club_market_value', totalMarketValue);
+            localStorage.setItem('club_market_value_millions', (totalMarketValue / 1000000).toFixed(2));
+            
+            // ===== حفظ السجل التاريخي =====
+            try {
+                const history = JSON.parse(localStorage.getItem(REP_HISTORY_KEY + '_' + clubName) || '[]');
+                history.push({ 
+                    date: Date.now(), 
+                    value: finalRep, 
+                    change: change,
+                    marketValue: totalMarketValue,
+                    confederation: confederation,
+                    leaguePosition: leaguePosition
+                });
+                if (history.length > 200) history.shift();
+                localStorage.setItem(REP_HISTORY_KEY + '_' + clubName, JSON.stringify(history));
+            } catch(e) {}
+            
+            return { 
+                value: finalRep, 
+                change: change,
+                marketValue: totalMarketValue,
+                marketValueMillions: totalMarketValue / 1000000,
+                confederation: confederation,
+                tier: tier,
+                leaguePosition: leaguePosition,
+                cups: cupsCount,
+                matchWins: wins,
+                matchDraws: draws,
+                matchLosses: losses,
+                performanceScore: performanceRep,
+                details: {
+                    marketRep: marketRep,
+                    confederationRep: confederationRep,
+                    performanceRep: performanceRep,
+                    bonusRep: bonusRep,
+                    decay: decay
+                }
+            };
+        }
+
+        // ===== تأثير قرارات اللاعب على السمعة =====
+        function applyReputationImpact(clubName, impact, reason, category) {
+            const current = parseInt(localStorage.getItem(REP_KEY + '_' + clubName)) || 50;
+            const newValue = Math.max(0, Math.min(100, current + impact));
+            localStorage.setItem(REP_KEY + '_' + clubName, newValue);
+            localStorage.setItem(REP_KEY + '_last_update_' + clubName, Date.now());
+            logReputationChange(clubName, current, newValue, reason, category);
+            return newValue;
+        }
+
+        // ===== تحديث واجهة السمعة =====
+        function updateReputationUI() {
+            const club = localStorage.getItem('presidentialClub') || 'نادي الهلال';
+            const data = calculateDynamicReputation(club);
+            const level = getRepLevel(data.value);
+            
+            const repIcon = document.getElementById('repIcon');
+            const repLevelName = document.getElementById('repLevelName');
+            const repClubName = document.getElementById('repClubName');
+            const repScore = document.getElementById('repScore');
+            const repBar = document.getElementById('repBar');
+            const repBadge = document.getElementById('repBadge');
+            const changeEl = document.getElementById('repChangeDisplay');
+            const arrowEl = document.getElementById('repChangeArrow');
+            const container = document.getElementById('reputationContainer');
+            const rankEl = document.getElementById('repGlobalRank');
+            const trophiesEl = document.getElementById('repTrophies');
+            
+            if (repIcon) { repIcon.innerHTML = `<i class="fas ${level.icon}"></i>`; repIcon.style.color = level.color; }
+            if (repLevelName) {
+                repLevelName.textContent = level.label;
+                repLevelName.style.color = level.color;
+            }
+            if (repClubName) repClubName.textContent = club;
+            if (repScore) repScore.textContent = data.value;
+            const nextGapEl = document.getElementById('repNextLevelGap');
+            if (nextGapEl) {
+                const levelIdx = REP_LEVELS.findIndex(l => l.id === level.id);
+                if (levelIdx >= 0 && levelIdx < REP_LEVELS.length - 1) {
+                    const nextLevel = REP_LEVELS[levelIdx + 1];
+                    const gap = nextLevel.min - data.value;
+                    nextGapEl.textContent = gap > 0 ? `${gap} ${gm('pointsUnit')} ${gm('toLevel')} ${nextLevel.label}` : `${gm('readyFor')} ${nextLevel.label}`;
+                } else {
+                    nextGapEl.textContent = gm('maxLevel');
+                }
+            }
+            if (repBar) {
+                repBar.style.width = data.value + '%';
+                repBar.style.background = `linear-gradient(90deg, ${level.color}88, ${level.color})`;
+            }
+            if (repBadge) {
+                repBadge.textContent = level.badge;
+                repBadge.style.borderColor = level.color;
+                repBadge.style.color = level.color;
+            }
+            
+            // التغيير
+            if (changeEl && arrowEl) {
+                if (data.change > 0) {
+                    changeEl.textContent = '+' + data.change;
+                    changeEl.style.color = '#00ff88';
+                    arrowEl.textContent = '↑';
+                    arrowEl.style.color = '#00ff88';
+                } else if (data.change < 0) {
+                    changeEl.textContent = data.change;
+                    changeEl.style.color = '#ff3366';
+                    arrowEl.textContent = '↓';
+                    arrowEl.style.color = '#ff3366';
+                } else {
+                    changeEl.textContent = '0';
+                    changeEl.style.color = '#f5a623';
+                    arrowEl.textContent = '→';
+                    arrowEl.style.color = '#f5a623';
+                }
+            }
+            
+            if (container) {
+                container.className = 'rep-container rep-enter rep-level-' + level.id;
+            }
+            
+            // الترتيب العالمي
+            if (rankEl) {
+                try {
+                    const allClubs = JSON.parse(localStorage.getItem('all_clubs_reputation') || '[]');
+                    if (allClubs.length > 0) {
+                        const sorted = [...allClubs].sort((a, b) => b.rep - a.rep);
+                        const pos = sorted.findIndex(c => c.club === club);
+                        if (pos !== -1) {
+                            rankEl.textContent = '#' + (pos + 1);
+                        } else {
+                            rankEl.textContent = '#' + (Math.floor((100 - data.value) * 0.8) + 1);
+                        }
+                    } else {
+                        rankEl.textContent = '#' + (Math.floor((100 - data.value) * 0.8) + 1);
+                    }
+                } catch(e) {
+                    rankEl.textContent = '#' + (Math.floor((100 - data.value) * 0.8) + 1);
+                }
+            }
+            
+            if (trophiesEl) {
+                trophiesEl.textContent = data.cups || 0;
+            }
+            const marketValueEl = document.getElementById('repMarketValue');
+            if (marketValueEl) {
+                const mv = parseFloat(localStorage.getItem('club_market_value_millions')) || 0;
+                marketValueEl.textContent = mv >= 1000 ? (mv/1000).toFixed(2) + 'B' : mv.toFixed(1) + 'M';
+            }
+            
+            // عرض تفاصيل الأداء
+            updateReputationDetails(data);
+            
+            return data;
+        }
+
+        // ===== عرض تفاصيل السمعة =====
+        function updateReputationDetails(data) {
+            let detailsEl = document.getElementById('repDetails');
+            if (!detailsEl) {
+                const container = document.getElementById('reputationContainer');
+                if (container) {
+                    detailsEl = document.createElement('div');
+                    detailsEl.id = 'repDetails';
+                    detailsEl.style.cssText = `
+                        width: 100%;
+                        margin-top: 6px;
+                        padding-top: 6px;
+                        border-top: 1px solid rgba(255,255,255,0.05);
+                        display: flex;
+                        justify-content: space-between;
+                        flex-wrap: wrap;
+                        gap: 4px;
+                        font-size: 0.6rem;
+                        color: #8b949e;
+                    `;
+                    container.appendChild(detailsEl);
+                }
+            }
+            
+            if (detailsEl && data.details) {
+                const d = data.details;
+                const matchStr = data.matchWins !== undefined ? 
+                    `${data.matchWins}W-${data.matchDraws}D-${data.matchLosses}L` : '--';
+                detailsEl.innerHTML = `
+                    <span><i class="fas fa-sack-dollar"></i> ق.سوقية: ${data.marketValueMillions ? data.marketValueMillions.toFixed(1) : '0'}M €</span>
+                    <span><i class="fas fa-chart-simple"></i> ${matchStr}</span>
+                    <span><i class="fas fa-earth-africa"></i> ${data.confederation || 'AFC'}</span>
+                    <span><i class="fas fa-trophy"></i> ${data.cups || 0} بطولة</span>
+                    <span style="color:${d.performanceRep > 10 ? '#00ff88' : '#ff6b6b'}">
+                        <i class="fas fa-gauge-high"></i> أداء: ${d.performanceRep > 0 ? '+' : ''}${d.performanceRep.toFixed(0)}
+                    </span>
+                `;
+            }
+        }
+
+        // ===== تحديث سمعة جميع الأندية =====
+        function updateAllClubsReputation() {
+            try {
+                const teams = JSON.parse(localStorage.getItem('current_league_teams') || '[]');
+                const allData = teams.map(team => {
+                    const data = calculateDynamicReputation(team);
+                    return { club: team, rep: data.value, marketValue: data.marketValueMillions };
+                });
+                localStorage.setItem('all_clubs_reputation', JSON.stringify(allData));
+            } catch(e) {}
+        }
+
+        // ===== دوال التأثير على السمعة من قرارات اللاعب =====
+
+        // تأثير الفوز في المباراة
+        function reputationOnWin(clubName) {
+            return applyReputationImpact(clubName, 2, gm('importantWin'), gm('catMatchResults'));
+        }
+
+        // تأثير الخسارة في المباراة
+        function reputationOnLoss(clubName) {
+            return applyReputationImpact(clubName, -1.5, gm('matchLoss'), gm('catMatchResults'));
+        }
+
+                // تأثير التعاقد مع لاعب مميز
+        function reputationOnSigningStar(clubName, playerRating) {
+            let impact = 0;
+            if (playerRating >= 85) impact = 5;
+            else if (playerRating >= 80) impact = 3;
+            else if (playerRating >= 75) impact = 1.5;
+            else impact = 0.5;
+            return applyReputationImpact(clubName, impact, gm('signedPlayer', playerRating), gm('catSigning'));
+        }
+
+        // تأثير بيع لاعب
+        function reputationOnSellPlayer(clubName, playerRating) {
+            let impact = 0;
+            if (playerRating >= 85) impact = -3;
+            else if (playerRating >= 80) impact = -1.5;
+            else if (playerRating >= 75) impact = -0.5;
+            return applyReputationImpact(clubName, impact, gm('soldPlayer', playerRating), gm('catSigning'));
+        }
+
+        // تأثير تطوير الملعب
+        function reputationOnStadiumUpgrade(clubName, newCapacity) {
+            let impact = 0;
+            if (newCapacity >= 50000) impact = 4;
+            else if (newCapacity >= 30000) impact = 2.5;
+            else if (newCapacity >= 15000) impact = 1.5;
+            else impact = 0.5;
+            return applyReputationImpact(clubName, impact, gm('stadiumDev', newCapacity), gm('catFacilities'));
+        }
+
+        // تأثير الحصول على راعي جديد
+        function reputationOnNewSponsor(clubName, sponsorValue) {
+            let impact = 0;
+            if (sponsorValue >= 100) impact = 3;
+            else if (sponsorValue >= 50) impact = 2;
+            else if (sponsorValue >= 20) impact = 1;
+            else impact = 0.5;
+            return applyReputationImpact(clubName, impact, gm('newSponsorDeal', sponsorValue), gm('catSponsors'));
+        }
+
+        // تأثير الفوز بالبطولة
+        function reputationOnWinCup(clubName, cupName) {
+            return applyReputationImpact(clubName, 8, gm('wonCup', cupName), gm('catAchievements'));
+        }
+
+        // تأثير التأهل القاري
+        function reputationOnContinentalQualification(clubName) {
+            return applyReputationImpact(clubName, 5, gm('continentalQualify'), gm('catAchievements'));
+        }
+
+        // تأثير التحسن المالي
+        function reputationOnFinancialImprovement(clubName, budgetChange) {
+            let impact = 0;
+            if (budgetChange > 50) impact = 3;
+            else if (budgetChange > 20) impact = 2;
+            else if (budgetChange > 10) impact = 1;
+            else impact = 0.5;
+            return applyReputationImpact(clubName, impact, gm('financialImprove2', budgetChange), gm('catFinance'));
+        }
+
+        // ===== تصدير الدوال للاستخدام من ملفات أخرى =====
+        window.getReputation = function(clubName) {
+            const data = calculateDynamicReputation(clubName);
+            return data.value;
+        };
+        window.getRepLevel = getRepLevel;
+        window.updateReputationUI = updateReputationUI;
+        window.calculateDynamicReputation = calculateDynamicReputation;
+        window.applyReputationImpact = applyReputationImpact;
+        window.getReputationLog = getReputationLog;
+        window.reputationOnWin = reputationOnWin;
+        window.reputationOnLoss = reputationOnLoss;
+        window.reputationOnSigningStar = reputationOnSigningStar;
+        window.reputationOnSellPlayer = reputationOnSellPlayer;
+        window.reputationOnStadiumUpgrade = reputationOnStadiumUpgrade;
+        window.reputationOnNewSponsor = reputationOnNewSponsor;
+        window.reputationOnWinCup = reputationOnWinCup;
+        window.reputationOnContinentalQualification = reputationOnContinentalQualification;
+        window.reputationOnFinancialImprovement = reputationOnFinancialImprovement;
+
+        // ===== تهيئة النظام =====
+        function initReputationSystem() {
+            const club = localStorage.getItem('presidentialClub') || 'نادي الهلال';
+            // التأكد من وجود سمعة أولية
+            if (!localStorage.getItem(REP_KEY + '_' + club)) {
+                const initialRep = 50;
+                localStorage.setItem(REP_KEY + '_' + club, initialRep);
+                localStorage.setItem(REP_KEY + '_last_update_' + club, Date.now());
+                logReputationChange(club, 0, initialRep, 'بداية المسيرة الرئاسية', 'التهيئة');
+            }
+            updateReputationUI();
+            updateAllClubsReputation();
+        }
+
+        // ===== دالة advanceGameDay الأصلية (معدلة) =====
+        // ============================================================
+        // بوابة اليوم التالي: لا يتقدّم التاريخ إن وُجدت قرارات أو أحداث عاجلة حقيقية معلَّقة —
+        // نفس البيانات الحقيقية المجمَّعة في president_desk.html بالضبط، وليس نظاماً منفصلاً
+        // ============================================================
+        function checkPendingPresidentialItems() {
+            const club = localStorage.getItem('presidentialClub') || '';
+            let count = 0;
+            try { count += (JSON.parse(localStorage.getItem('club_counter_offers'))||[]).length; } catch(e){}
+            try { count += (JSON.parse(localStorage.getItem('club_incoming_offers'))||[]).length; } catch(e){}
+            try { count += (JSON.parse(localStorage.getItem('incomingSponsorOffers_v1'))||[]).length; } catch(e){}
+            try { count += (JSON.parse(localStorage.getItem('club_personal_terms_queue'))||[]).length; } catch(e){}
+            try { count += (JSON.parse(localStorage.getItem('club_injuries'))||[]).length; } catch(e){}
+            const budget = parseFloat(localStorage.getItem('clubBudget')) || 0;
+            if (budget < 0) count += 1;
+            const confidence = parseFloat(localStorage.getItem('board_confidence_' + club));
+            if (!isNaN(confidence) && confidence < 30) count += 1;
+            return count;
+        }
+        // شارة تنبيه معلَّقة عند التحميل — منفصلة تماماً عن أي منطق تهيئة آخر لتفادي أي تعارض
+        window.addEventListener('load', function() {
+            try {
+                const n = checkPendingPresidentialItems();
+                const link = document.getElementById('presidentDeskLink');
+                if (link && n > 0) {
+                    document.getElementById('pendingBadgeText').innerText = n;
+                    link.style.display = 'block';
+                }
+            } catch(e) {}
+        });
+
+        function advanceGameDay() {
+            const pendingCount = checkPendingPresidentialItems();
+            if (pendingCount > 0) {
+                const goNow = confirm(gm('pendingConfirm', pendingCount));
+                if (goNow) window.location.href = 'president_desk.html';
+                return;
+            }
+            // إعداد حقيقي فعلي من صفحة الإعدادات — إن كان مفعَّلاً، يطلب تأكيداً صريحاً قبل التقدّم فعلياً
+            if (localStorage.getItem('confirmBeforeAdvance') === '1') {
+                if (!confirm('هل تريد التقدّم لليوم التالي فعلياً؟')) return;
+            }
+
+            gameDate.day++;
+            let daysInMonth = 30;
+            if ([1,3,5,7,8,10,12].includes(gameDate.month)) daysInMonth = 31;
+            else if (gameDate.month === 2) daysInMonth = (gameDate.year % 4 === 0) ? 29 : 28;
+            if (gameDate.day > daysInMonth) { gameDate.day = 1; gameDate.month++; }
+            if (gameDate.month > 12) { gameDate.month = 1; gameDate.year++; }
+            saveGameDate(); updateCalendarUI();
+            
+            const toast = document.getElementById('calendarToast');
+            if (toast && localStorage.getItem('notificationsEnabled') !== '0') { toast.style.display = 'block'; setTimeout(() => { toast.style.display = 'none'; }, 1500); }
+            if (localStorage.getItem('vibrationEnabled') === '1' && navigator.vibrate) navigator.vibrate(40);
+            
+            computeNextWeekMatch(); updateRegBadge(); updateBudgetBadge();
+            
+            // تحديث السمعة بناءً على نتائج المباريات
+            const club = localStorage.getItem('presidentialClub') || 'نادي الهلال';
+            const data = calculateDynamicReputation(club);
+            
+            // إذا كان هناك تغير كبير، أظهر إشعاراً
+            if (Math.abs(data.change) >= 2) {
+                const toastEl = document.getElementById('calendarToast');
+                if (toastEl) {
+                    const sign = data.change > 0 ? '<i class="fas fa-arrow-trend-up"></i>' : '<i class="fas fa-arrow-trend-down"></i>';
+                    toastEl.innerHTML = `${sign} ${gm('repChanged')}: ${data.change > 0 ? '+' : ''}${data.change} ${gm('pointsUnit')} (${data.value}/100)`;
+                    toastEl.style.display = 'block';
+                    toastEl.style.background = data.change > 0 ? 'rgba(16,185,129,0.95)' : 'rgba(239,68,68,0.95)';
+                    setTimeout(() => { toastEl.style.display = 'none'; }, 2500);
+                }
+            }
+            
+            updateReputationUI();
+            updateAllClubsReputation();
+        }
+
+        // ===== تهيئة أولية =====
+        updateCalendarUI();
+        computeNextWeekMatch();
+        
+        // تحديث السمعة عند التحميل
+        setTimeout(function() {
+            initReputationSystem();
+        }, 200);
+
+        // ربط التحديث بالتغييرات من صفحات أخرى
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'signed_players_by_club' || 
+                e.key === 'clubBudget' || 
+                e.key === 'full_season_scores' ||
+                e.key === 'league_table') {
+                setTimeout(function() {
+                    updateReputationUI();
+                    updateAllClubsReputation();
+                }, 300);
+            }
+        });
+
+        // تحديث دوري كل 30 ثانية للحفاظ على المزامنة
+        setInterval(function() {
+            updateReputationUI();
+            updateAllClubsReputation();
+        }, 30000);
+
+        // ============================================================
+        // نظام لغات حقيقي كامل للصفحة الرئيسية — أول نموذج شامل يُطبَّق فعلياً على كل النصوص الظاهرة، لا صفحة الإعدادات فقط
+        // ============================================================
+        const I18N_MAIN = {
+            nav_finance: { ar:'المالية', en:'Finance', fr:'Finances', es:'Finanzas', de:'Finanzen', pt:'Finanças', tr:'Finans' },
+            nav_negotiations: { ar:'المفاوضات', en:'Negotiations', fr:'Négociations', es:'Negociaciones', de:'Verhandlungen', pt:'Negociações', tr:'Müzakereler' },
+            nav_player: { ar:'العقود', en:'Contracts', fr:'Contrats', es:'Contratos', de:'Verträge', pt:'Contratos', tr:'Sözleşmeler' },
+            nav_academy: { ar:'الأكاديمية', en:'Academy', fr:'Académie', es:'Academia', de:'Akademie', pt:'Academia', tr:'Akademi' },
+            nav_stadium: { ar:'الملعب', en:'Stadium', fr:'Stade', es:'Estadio', de:'Stadion', pt:'Estádio', tr:'Stadyum' },
+            nav_sponsors: { ar:'الراعي', en:'Sponsor', fr:'Sponsor', es:'Patrocinador', de:'Sponsor', pt:'Patrocinador', tr:'Sponsor' },
+            nav_inbox: { ar:'الرسائل', en:'Messages', fr:'Messages', es:'Mensajes', de:'Nachrichten', pt:'Mensagens', tr:'Mesajlar' },
+            nav_tactics: { ar:'التكتيكات', en:'Tactics', fr:'Tactiques', es:'Tácticas', de:'Taktiken', pt:'Táticas', tr:'Taktikler' },
+
+            navl_player: { ar:'اللاعبون', en:'Players', fr:'Joueurs', es:'Jugadores', de:'Spieler', pt:'Jogadores', tr:'Oyuncular' },
+            navl_tactics: { ar:'التكتيكات', en:'Tactics', fr:'Tactiques', es:'Tácticas', de:'Taktiken', pt:'Táticas', tr:'Taktikler' },
+            navl_training: { ar:'التدريب', en:'Training', fr:'Entraînement', es:'Entrenamiento', de:'Training', pt:'Treino', tr:'Antrenman' },
+            navl_transfers: { ar:'الانتقالات', en:'Transfers', fr:'Transferts', es:'Traspasos', de:'Transfers', pt:'Transferências', tr:'Transferler' },
+            navl_registration: { ar:'تسجيل اللاعبين', en:'Player Registration', fr:'Enregistrement des joueurs', es:'Registro de jugadores', de:'Spielerregistrierung', pt:'Registo de jogadores', tr:'Oyuncu Tescili' },
+            navl_finance: { ar:'الخزينة', en:'Treasury', fr:'Trésorerie', es:'Tesorería', de:'Kasse', pt:'Tesouraria', tr:'Hazine' },
+            navl_staff: { ar:'الطاقم الفني', en:'Coaching Staff', fr:'Staff technique', es:'Cuerpo técnico', de:'Trainerteam', pt:'Comissão técnica', tr:'Teknik Kadro' },
+            navl_fixtures: { ar:'الأحداث', en:'Events', fr:'Événements', es:'Eventos', de:'Ereignisse', pt:'Eventos', tr:'Etkinlikler' },
+            navl_press: { ar:'الصحافة', en:'Press', fr:'Presse', es:'Prensa', de:'Presse', pt:'Imprensa', tr:'Basın' },
+            navl_stadium: { ar:'الملعب', en:'Stadium', fr:'Stade', es:'Estadio', de:'Stadion', pt:'Estádio', tr:'Stadyum' },
+            navl_medical: { ar:'المركز الطبي', en:'Medical Center', fr:'Centre médical', es:'Centro médico', de:'Medizinisches Zentrum', pt:'Centro médico', tr:'Sağlık Merkezi' },
+            navl_store: { ar:'المتجر', en:'Store', fr:'Boutique', es:'Tienda', de:'Shop', pt:'Loja', tr:'Mağaza' },
+            navl_tv_channels: { ar:'القناة التلفزيونية', en:'TV Channel', fr:'Chaîne TV', es:'Canal de TV', de:'TV-Kanal', pt:'Canal de TV', tr:'TV Kanalı' },
+            navl_federation: { ar:'المباني الإدارية', en:'Administration Buildings', fr:'Bâtiments administratifs', es:'Edificios administrativos', de:'Verwaltungsgebäude', pt:'Edifícios administrativos', tr:'İdari Binalar' },
+            navl_match_center: { ar:'المباراة (بث مباشر)', en:'Match (Live)', fr:'Match (en direct)', es:'Partido (en vivo)', de:'Spiel (Live)', pt:'Partida (ao vivo)', tr:'Maç (Canlı)' },
+            navl_fixtures_2: { ar:'جدول المباريات', en:'Fixtures', fr:'Calendrier des matchs', es:'Calendario de partidos', de:'Spielplan', pt:'Calendário de jogos', tr:'Fikstür' },
+            navl_league_table: { ar:'الدوري', en:'League', fr:'Championnat', es:'Liga', de:'Liga', pt:'Liga', tr:'Lig' },
+            navl_trophy_room: { ar:'كؤوس النادي', en:'Club Trophies', fr:'Trophées du club', es:'Trofeos del club', de:'Vereinstrophäen', pt:'Troféus do clube', tr:'Kulüp Kupaları' },
+            navl_classifications: { ar:'التصنيفات', en:'Rankings', fr:'Classements', es:'Clasificaciones', de:'Ranglisten', pt:'Classificações', tr:'Sıralamalar' },
+            navl_friendly_matches: { ar:'المباريات الودية', en:'Friendly Matches', fr:'Matchs amicaux', es:'Partidos amistosos', de:'Freundschaftsspiele', pt:'Jogos amistosos', tr:'Hazırlık Maçları' },
+            navl_federation_2: { ar:'الاتحاد', en:'Federation', fr:'Fédération', es:'Federación', de:'Verband', pt:'Federação', tr:'Federasyon' },
+            navl_settings: { ar:'الإعدادات', en:'Settings', fr:'Paramètres', es:'Ajustes', de:'Einstellungen', pt:'Configurações', tr:'Ayarlar' },
+
+            navPresidentDesk: { ar:'مركز الإدارة', en:'Management Center', fr:'Centre de gestion', es:'Centro de gestión', de:'Verwaltungszentrum', pt:'Centro de gestão', tr:'Yönetim Merkezi' },
+
+            grpTeam: { ar:'الفريق', en:'Team', fr:'Équipe', es:'Equipo', de:'Team', pt:'Equipa', tr:'Takım' },
+            grpClub: { ar:'النادي', en:'Club', fr:'Club', es:'Club', de:'Verein', pt:'Clube', tr:'Kulüp' },
+            grpFacilities: { ar:'المرافق', en:'Facilities', fr:'Installations', es:'Instalaciones', de:'Einrichtungen', pt:'Instalações', tr:'Tesisler' },
+            grpCompetitions: { ar:'المسابقات', en:'Competitions', fr:'Compétitions', es:'Competiciones', de:'Wettbewerbe', pt:'Competições', tr:'Turnuvalar' },
+            grpFederation: { ar:'الاتحاد', en:'Federation', fr:'Fédération', es:'Federación', de:'Verband', pt:'Federação', tr:'Federasyon' },
+            grpSystem: { ar:'النظام', en:'System', fr:'Système', es:'Sistema', de:'System', pt:'Sistema', tr:'Sistem' },
+
+            repScaleMin: { ar:'مبتدئ', en:'Beginner', fr:'Débutant', es:'Principiante', de:'Anfänger', pt:'Iniciante', tr:'Başlangıç' },
+            repScaleMax: { ar:'خرافي', en:'Legendary', fr:'Légendaire', es:'Legendario', de:'Legendär', pt:'Lendário', tr:'Efsanevi' },
+            lblSquadValue: { ar:'قيمة التشكيلة', en:'Squad Value', fr:'Valeur de l\'effectif', es:'Valor de la plantilla', de:'Kaderwert', pt:'Valor do elenco', tr:'Kadro Değeri' },
+            lblRank: { ar:'الترتيب', en:'Rank', fr:'Classement', es:'Clasificación', de:'Rang', pt:'Classificação', tr:'Sıralama' },
+            lblTrophies: { ar:'البطولات', en:'Trophies', fr:'Trophées', es:'Trofeos', de:'Trophäen', pt:'Troféus', tr:'Kupalar' },
+            lblMatchOfWeek: { ar:'مباراة الأسبوع', en:'Match of the Week', fr:'Match de la semaine', es:'Partido de la semana', de:'Spiel der Woche', pt:'Jogo da semana', tr:'Haftanın Maçı' },
+            showAgendaLbl: { ar:'عرض الأجندة', en:'View Agenda', fr:'Voir l\'agenda', es:'Ver agenda', de:'Kalender anzeigen', pt:'Ver agenda', tr:'Ajandayı Görüntüle' },
+            nextDayBtnLbl: { ar:'اليوم التالي', en:'Next Day', fr:'Jour suivant', es:'Día siguiente', de:'Nächster Tag', pt:'Dia seguinte', tr:'Sonraki Gün' },
+            presidentDeskLbl: { ar:'مكتب الرئيس', en:'President\'s Office', fr:'Bureau du président', es:'Oficina del presidente', de:'Büro des Präsidenten', pt:'Gabinete do presidente', tr:'Başkanlık Ofisi' },
+            pendingReviewLbl: { ar:'بانتظار المراجعة', en:'awaiting review', fr:'en attente de révision', es:'esperando revisión', de:'wartet auf Überprüfung', pt:'aguardando revisão', tr:'inceleme bekliyor' },
+        };
+        function applyMainLanguage() {
+            const lang = localStorage.getItem('gameLanguage') || 'ar';
+            for (const key in I18N_MAIN) {
+                const el = document.getElementById(key);
+                if (el && I18N_MAIN[key][lang]) el.innerText = I18N_MAIN[key][lang];
+            }
+        }
+        applyMainLanguage();
+    </script>
+
+    <!-- نظام التهيئة المركزي -->
+    <script src="init.js"></script>
+
+</body>
+</html>

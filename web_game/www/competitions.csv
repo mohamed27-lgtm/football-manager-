@@ -1,0 +1,833 @@
+﻿competition_id,competition,standard_competition_name,country_or_region,federation,tier_or_type,match_status
+C2,Switzerland Challenge League,Switzerland Challenge League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+C1,Switzerland Super League,Switzerland Super League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CEF1,Copa Federation,Copa Federation,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+E4G3,Segunda Federación - Grupo III,Segunda Federación - Grupo III,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+E4G4,Segunda Federación - Grupo IV,Segunda Federación - Grupo IV,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SUC,Supercopa,Supercopa de España,Spain,UEFA,National Super Cup,Partial/Sub-Match
+CHPR,Promotion League,Promotion League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CDR,Copa del Rey,Copa del Rey,Spain,UEFA,National Cup,Exact Match
+SCC,Swiss Cup,Swiss Cup,Switzerland,UEFA,National Cup,Exact Match
+I3P1,Liga Nusantara Promotion Playoff,Liga Nusantara Promotion Playoff,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CIR2,2. Liga interregional - Gruppe 2,2. Liga,Austria,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+CIR3,2. Liga interregional - Gruppe 3,2. Liga,Austria,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+CH17,Swiss U17 Elite League,Swiss U17 Elite League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CHC2,1. Liga Classic group 2,1. Lig,Turkey,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+IN20,EPA Super League U20,EPA Super League U20,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+C17C,Schweizer Cup U17,Schweizer Cup U17,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ILI2,ILI2 Championship,ILI2 Championship,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ILI2,Championship,UEFA European Championship (Euro),Europe,UEFA,National Teams Championship,Partial/Sub-Match
+ILI2, ILI2 Championship, ILI2 Championship,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ILI2,ILI2Championship,ILI2Championship,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CIR1,2. Liga interregional - Gruppe 1,2. Liga,Austria,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+QSL,Qatar Stars League,Qatar Stars League,Qatar,AFC,Domestic Tier 1 League,Exact Match
+CHC1,1. Liga Classic group 1,1. Lig,Turkey,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+LAO1,Lao League 1,Lao League 1,Laos,AFC,Domestic Tier 1 League,Exact Match
+CHC3,1. Liga Classic group 3,1. Lig,Turkey,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+C191,Swiss U19 Elite League,Swiss U19 Elite League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IN3L,Liga Nusantara,Liga Nusantara,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CIR4,2. Liga interregional - Gruppe 4,2. Liga,Austria,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+CIR5,2. Liga interregional - Gruppe 5,2. Liga,Austria,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+HKFA,Hong Kong FA Cup,Hong Kong FA Cup,Hong Kong,AFC,National Cup,Exact Match
+LAP1,Prime Minister Cup ,Prime Minister Cup ,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+I3P2,Liga Nusantara Relegation Playoff,Liga Nusantara Relegation Playoff,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+C19C,Schweizer Cup U19,Schweizer Cup U19,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+E4G1,Segunda Federación - Grupo I,Segunda Federación - Grupo I,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OM1L,Oman Jindal League,Oman Jindal League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SUIC,Swiss Cup qualifiers,Swiss Cup,Switzerland,UEFA,National Cup,Partial/Sub-Match
+IN1L,India Super League,India Super League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+E4G5,Segunda Federación - Grupo V,Segunda Federación - Grupo V,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+A2VI,National Premier League - Victoria,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+IND1,Indian Super League,Indian Super League,India,AFC,Domestic Tier 1 League,Exact Match
+A2SW,National Premier League - New South Wales,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+BH1L,Bhutan Premier League,Bhutan Premier League,Bhutan,AFC,Domestic Tier 1 League,Exact Match
+AUS1,A-League Men,A-League Men,Australia,AFC,Domestic Tier 1 League,Exact Match
+HGKG,Hong Kong Premier League,Hong Kong Premier League,Hong Kong,AFC,Domestic Tier 1 League,Exact Match
+KHM1,Cambodian Premier League,Cambodian Premier League,Cambodia,AFC,Domestic Tier 1 League,Exact Match
+HKSC,Hong Kong Senior Challenge Shield,Hong Kong Senior Challenge Shield,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CSPC,Cambodian Super Cup,Cambodian Super Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+HK3L,Hong Kong Second Division,Second Division,Qatar,AFC,Domestic Tier 2 League,Partial/Sub-Match
+HK2L,Hong Kong First Division,Hong Kong First Division,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+INDC,Durand Cup,Super Cup / Durand Cup,India,AFC,National Cup,Partial/Sub-Match
+HLC2,Hong Kong League Cup,Hong Kong League Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+HK22,Hong Kong U22 League,Hong Kong U22 League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+HFA4,Hong Kong FA Cup Junior Division,Hong Kong FA Cup,Hong Kong,AFC,National Cup,Partial/Sub-Match
+HK2F,Hong Kong U22 FA Cup,FA Cup,Maldives,AFC,National Cup,Partial/Sub-Match
+RSK2,K League 2,K League 2,South Korea,AFC,Domestic Tier 2 League,Exact Match
+LIB1,Lebanese Premier League,Lebanese Premier League,Lebanon,AFC,Domestic Tier 1 League,Exact Match
+KSC1,Korean Super Cup,Korean Super Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RSK1,K League 1,K League 1,South Korea,AFC,Domestic Tier 1 League,Exact Match
+TFL2,Taiwan Football League Div.2,Taiwan Football League Div.2,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BGD1,Bangladesh Football League,Bangladesh Football League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+K3L,K3 League,K3 League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BGSC,Bangladesh Super Cup,Bangladesh Super Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BGDP,Bangladesh Federation Cup,Federation Cup,Bangladesh,AFC,National Cup,Country Combined Match
+KRC3,K3·K4 Championship,K3·K4 Championship,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+K4L,K4 League,K4 League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IND2,I-League 2,I-League,India,AFC,Domestic Tier 2 League,Partial/Sub-Match
+TFPL,Taiwan Football Premier League,Taiwan Football Premier League,Chinese Taipei,AFC,Domestic Tier 1 League,Exact Match
+INIL,Indian Football League,Indian Football League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+INKP,Super League Kerala Playoffs,Super League Kerala Playoffs,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+INSC,Super Cup,UEFA Super Cup,Europe,UEFA,Continental Super Cup,Partial/Sub-Match
+HOSL,Hokkaido Soccer League,Hokkaido Soccer League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+INR1,Super League Kerala,Super League Kerala,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+JAP2,J2 League,J2 League,Japan,AFC,Domestic Tier 2 League,Exact Match
+JFL,Japan Football League,Japan Football League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IND4,RF Development League,RF Development League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TOSL,Tokai Soccer League (Div.1),Tokai Soccer League (Div.1),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TOHL,Tohoku Soccer League (Div.1),Tohoku Soccer League (Div.1),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+JAP1,J1 League,J1 League,Japan,AFC,Domestic Tier 1 League,Exact Match
+JAP3,J3 League,J3 League,Japan,AFC,Domestic Tier 3 League,Exact Match
+JPKA,Kansai Soccer League (Div.1),Kansai Soccer League (Div.1),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+JCSL,Chugoku Soccer League,Chugoku Soccer League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+KTOS,Kanto Soccer League (Div.1),Kanto Soccer League (Div.1),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+HKSE,Hokushin'etsu Football League (Div.1),Hokushin'etsu Football League (Div.1),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+J6K2,Kanto Soccer League (Div.2),Kanto Soccer League (Div.2),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+JPKS,Kyushu Soccer League,Kyushu Soccer League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+J6TN,Tohoku Soccer League (Div.2 North),Tohoku Soccer League (Div.2 North),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SHSL,Shikoku Soccer League,Shikoku Soccer League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+J18E,Prince Takamado U18 Premier League East,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+J6TS,Tohoku Soccer League (Div.2 South),Tohoku Soccer League (Div.2 South),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+J18W,Prince Takamado U18 Premier League West,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+J6KA,Kansai Soccer League (Div.2),Kansai Soccer League (Div.2),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+JJFL,JFL Cup,JFL Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+J1YV,J1 100 Year Vision League,J1 100 Year Vision League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+J6H2,Hokushin'etsu Football League (Div.2),Hokushin'etsu Football League (Div.2),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IRN1,Persian Gulf Pro League,Persian Gulf Pro League,Iran,AFC,Domestic Tier 1 League,Exact Match
+J6T2,Tokai Soccer League (Div.2),Tokai Soccer League (Div.2),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IRN2,Azadegan League,Azadegan League,Iran,AFC,Domestic Tier 2 League,Exact Match
+J2J3,J2/J3 100 Year Vision League,J2/J3 100 Year Vision League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IRN3,League 2,K League 2,South Korea,AFC,Domestic Tier 2 League,Partial/Sub-Match
+IRSC,Iran Super Cup,Iran Super Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IPL2,League 2 - Playoff,League 2 - Playoff,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MYC1,Piala Malaysia,Piala Malaysia,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IRNP,Hazfi Cup,Hazfi Cup,Iran,AFC,National Cup,Exact Match
+MYS1,Malaysia Super League,Malaysia Super League,Malaysia,AFC,Domestic Tier 1 League,Exact Match
+CLO,China League One,China League One,China,AFC,Domestic Tier 2 League,Exact Match
+CSL,Chinese Super League,Chinese Super League,China,AFC,Domestic Tier 1 League,Exact Match
+MLCC,MFL Challenge Cup,MFL Challenge Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MYSP,Malaysia FA Cup,Malaysia FA Cup / Malaysia Cup,Malaysia,AFC,National Cup,Partial/Sub-Match
+CHFA,Chinese FA Cup,Chinese FA Cup,China,AFC,National Cup,Exact Match
+IRQC,Iraq FA Cup,Iraq FA Cup,Iraq,AFC,National Cup,Exact Match
+CL3S,China League Two B,China League Two B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CHSC,Chinese FA Super Cup,Chinese FA Super Cup,China,AFC,National Super Cup,Exact Match
+QSCP,Qatari Stars Cup (Ooredoo),Qatari Stars Cup (Ooredoo),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CN41,Chinese Champions League (Regional Stage),Champions League,Sri Lanka,AFC,Domestic Tier 1 League,Partial/Sub-Match
+CGB,EFL Cup,FA Cup / EFL Cup,England,UEFA,National Cup,Partial/Sub-Match
+FAC,FA Cup,FA Cup,Maldives,AFC,National Cup,Exact Match
+IRQ1,Iraq Stars League,Iraq Stars League,Iraq,AFC,Domestic Tier 1 League,Exact Match
+KG1L,Jogorku Liga,Jogorku Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MYA1,Myanmar National League,Myanmar National League,Myanmar,AFC,Domestic Tier 1 League,Exact Match
+CHL3,China League Two A,China League Two A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SA1,Saudi Pro League,Saudi Pro League,Saudi Arabia,AFC,Domestic Tier 1 League,Exact Match
+QU2L,Qatari Second Division,Second Division,Qatar,AFC,Domestic Tier 2 League,Partial/Sub-Match
+JO1L,Jordanian Pro League,Jordanian Pro League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MLD1,Dhivehi Premier League,Dhivehi Premier League,Maldives,AFC,Domestic Tier 1 League,Exact Match
+SIN2,Singapore Premier League 2,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+QEC1,Amir Cup,Amir Cup / Qatar Cup,Qatar,AFC,National Cup,Partial/Sub-Match
+SPCS,Singapore Community Shield,Singapore Community Shield,Singapore,AFC,National Super Cup,Exact Match
+AMCQ,Amir Cup - Preliminary stage,Amir Cup - Preliminary stage,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SINP,Singapore Cup,Singapore Cup,Singapore,AFC,National Cup,Exact Match
+SIN1,Singapore Premier League,Singapore Premier League,Singapore,AFC,Domestic Tier 1 League,Exact Match
+PFL1,Philippines Football League,Philippines Football League,Philippines,AFC,Domestic Tier 1 League,Exact Match
+GB2,Championship,UEFA European Championship (Euro),Europe,UEFA,National Teams Championship,Partial/Sub-Match
+GB3,League One,EFL League One,England,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+CLLC,Copa de la Liga de Chile,Copa de la Liga de Chile,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CSUC,Supercopa de Chile,Supercopa de Chile,Chile,CONMEBOL,National Super Cup,Exact Match
+GB4,League Two,AFC Champions League Two,Asia,AFC,Continental Tier 2,Partial/Sub-Match
+NLC,National League Cup,National League Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GB1,Premier League,Premier League,England,UEFA,Domestic Tier 1 League,Exact Match
+NLN6,National League North,National League North,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GBCS,Community Shield,FA Community Shield,England,UEFA,National Super Cup,Partial/Sub-Match
+PLIC,Premier League International Cup U21,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+CNAT,National League,Myanmar National League,Myanmar,AFC,Domestic Tier 1 League,Partial/Sub-Match
+GB18,U18 Premier League,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+NLS6,National League South,National League South,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GBFL,EFL Trophy,EFL Trophy,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+21PL,Premier League Cup,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+COLP,Liga DIMAYOR Apertura,Liga DIMAYOR Apertura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GB21,Premier League 2,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+BU2,Vtora Liga,Vtora Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+WER2,Pershaya Liga,Pershaya Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ARM2,Armenian First League,Armenian First League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+WER1,Vysheyshaya Liga,Vysheyshaya Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ZYP1,Cyprus League,Cyprus League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+COSP,Superliga Águila de Campeones,Superliga Águila de Campeones,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ARSC,Armenian Supercup,Armenian Supercup,Armenia,UEFA,National Super Cup,Exact Match
+WRPO,Belarusian Cup,Belarusian Cup,Belarus,UEFA,National Cup,Exact Match
+ARPO,Armenian Independence Cup,Armenian Independence Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CO2T,Torneo DIMAYOR I,Torneo DIMAYOR I,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FAYC,FA Youth Cup,FA Youth Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FI2,Ykkösliiga,Ykkösliiga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ARM1,ARM1 Premier League,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+AND2,Segona Divisió,Segona Divisió,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+AND1,Primera Divisió,Primera Divisió,Andorra,UEFA,Domestic Tier 1 League,Exact Match
+ANDP,Copa Constitució,Copa Constitució,Andorra,UEFA,National Cup,Exact Match
+WRSP,Belarusian Super Cup,Belarusian Super Cup,Belarus,UEFA,National Super Cup,Exact Match
+CYSC,Cypriot Super Cup,Cypriot Super Cup,Cyprus,UEFA,National Super Cup,Exact Match
+CPO1,Kypello Kyprou,Kypello Kyprou,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ALB2,Kategoria e Parë,Kategoria e Parë,Albania,UEFA,Domestic Tier 2 League,Exact Match
+ALBP,Kupa e Shqipërisë,Kupa e Shqipërisë,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+KRC,Hrvatski nogometni kup,Hrvatski nogometni kup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CYP2,2. Division,2. Division,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+KR2,Prva Nogometna Liga,Prva Nogometna Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DK4L,3.Division,3.Division,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DK1,Superliga,Danish Superliga,Denmark,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+KR1,SuperSport HNL,SuperSport HNL,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DK2,Denmark 1. Division,Denmark 1. Division,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DKP,Oddset Pokalen,Oddset Pokalen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ALB1,Kategoria Superiore,Kategoria Superiore,Albania,UEFA,Domestic Tier 1 League,Exact Match
+DKDL,U19 Boys League,U19 Boys League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DK3O,2.Division,2.Division,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DKDD,U19 Boys Division,U19 Boys Division,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DK2R,1.Division Relegation,1.Division Relegation,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DKDA,2.Division Relegation,2.Division Relegation,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DKMR,Superliga Championship round,Superliga Championship round,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DK3V,2.Division Promotion,2.Division Promotion,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ALBS,Superkupa e Shqipërisë,Superkupa e Shqipërisë,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DKAR,Superliga Relegation round,Superliga Relegation round,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+D4P1,3.Division Promotion,3.Division Promotion,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+UR2T,Segunda División - Torneo Competencia,Segunda División - Torneo Competencia,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+URSC,Supercopa Uruguaya,Supercopa Uruguaya,Uruguay,CONMEBOL,National Super Cup,Exact Match
+URU1,Liga AUF Apertura,Liga AUF Apertura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FR3,Championnat National,Togolese Championnat National,Togo,CAF,Domestic Tier 1 League,Partial/Sub-Match
+D4P2,3.Division Relegation,3.Division Relegation,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DKRE,Future Cup,Future Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FR1,Ligue 1,Ligue 1,France,UEFA,Domestic Tier 1 League,Exact Match
+URU2,Segunda División - Fase Regular,Segunda División - Fase Regular,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CN2B,Championnat National 2 - Groupe B,Championnat National 2 - Groupe B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CN2C,Championnat National 2 - Groupe C,Championnat National 2 - Groupe C,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FR2,Ligue 2,Ligue 2,France,UEFA,Domestic Tier 2 League,Exact Match
+CN2A,Championnat National 2 - Groupe A,Championnat National 2 - Groupe A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+C3IF,Championnat National 3 - Groupe H,Championnat National 3 - Groupe H,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+C3HF,Championnat National 3 - Groupe G,Championnat National 3 - Groupe G,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+C3PL,Championnat National 3 - Groupe D,Championnat National 3 - Groupe D,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DK2P,1.Division Promotion,1.Division Promotion,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+C3BR,Championnat National 3 - Groupe E,Championnat National 3 - Groupe E,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+C3VL,Championnat National 3 - Groupe C,Championnat National 3 - Groupe C,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+C3CM,Championnat National 3 - Groupe A,Championnat National 3 - Groupe A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+C3NA,Championnat National 3 - Groupe B,Championnat National 3 - Groupe B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+211S,U21 Division 1 Spring,U21 Division 1 Spring,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+F19A,National U19 Championship - Group A,National U19 Championship - Group A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+F19C,Championnat National U19 - Groupe C,Championnat National U19 - Groupe C,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FRCH,Trophée des Champions,Trophée des Champions,France,UEFA,National Super Cup,Exact Match
+F19D,Championnat National U19 - Groupe D,Championnat National U19 - Groupe D,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BULS,Bulgarian Super Cup,Bulgarian Super Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+C3NO,Championnat National 3 - Groupe F,Championnat National 3 - Groupe F,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FI1,Veikkausliiga,Veikkausliiga,Finland,UEFA,Domestic Tier 1 League,Exact Match
+F19B,Championnat National U19 - Groupe B,Championnat National U19 - Groupe B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BULP,Bulgarian Cup,Bulgarian Cup,Bulgaria,UEFA,National Cup,Exact Match
+BU1,efbet Liga,efbet Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FRYC,Coupe Gambardella,Coupe Gambardella,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FRC,Coupe de France,Coupe de France,France,UEFA,National Cup,Exact Match
+F4KP,Kolmonen Pohjoinen,Kolmonen Pohjoinen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FI3C,Kakkonen - Group C,Kakkonen - Group C,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FI3B,Kakkonen - Group B,Kakkonen - Group B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SKC,Slovnaft Cup,Slovnaft Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+KOG3,Kolmonen Etelä Group C,Kolmonen Etelä Group C,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FIYK,Ykkönen,Ykkönen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+F4LA,Kolmonen Läntinen,Kolmonen Läntinen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FI4L,Kolmonen Itäinen,Kolmonen Itäinen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SL1,Prva Liga,Prva Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+211F,U21 Division 1 Fall,U21 Division 1 Fall,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+KOG2,Kolmonen Etelä Group B,Kolmonen Etelä Group B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+212F,U21 Division 2 Fall,U21 Division 2 Fall,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NLAE,U19 Division 2 Spring,U19 Division 2 Spring,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NLEV,U19 Division 2 Fall,U19 Division 2 Fall,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NLJV,U19 Division 1 Fall,U19 Division 1 Fall,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+511,Derde Divisie B,Derde Divisie B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NLVB,U17 Division 1 Fall,U17 Division 1 Fall,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NLAJ,U19 Division 1 Spring,U19 Division 1 Spring,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+212S,U21 Division 2 Spring,U21 Division 2 Spring,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NLBJ,U17 Divisie 1 Spring,U17 Divisie 1 Spring,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NLSC,Johan Cruijff Schaal,Johan Cruijff Schaal,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NLP,KNVB Beker,KNVB Beker,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PO1,Liga Portugal,Liga Portugal,Portugal,UEFA,Domestic Tier 1 League,Exact Match
+NLBP,U21 Cup Netherlands,U21 Cup Netherlands,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FI3A,Kakkonen - Group A,Kakkonen - Group A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+7NP2,O17 Divisie 1 Najaar Degradatiepoule,O17 Divisie 1 Najaar Degradatiepoule,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PO2,Liga Portugal 2 ,Liga Portugal 2,Portugal,UEFA,Domestic Tier 2 League,Exact Match
+SLMR,Nike Liga - Relegation Group,Nike Liga - Relegation Group,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SLO1,Niké Liga,Niké Liga,Slovakia,UEFA,Domestic Tier 1 League,Exact Match
+CPSD,Campeonato de Portugal - Série D,Campeonato de Portugal - Série D,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NLJB,U19 Cup Netherlands,U19 Cup Netherlands,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SK19,I. Liga starsieho dorastu,I liga,Poland,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+CPSA,Campeonato de Portugal - Série A,Campeonato de Portugal - Série A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+7NP1,O17 Divisie 1 Najaar Kampioenspoule,O17 Divisie 1 Najaar Kampioenspoule,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CPSC,Campeonato de Portugal - Série C,Série C,Brazil,CONMEBOL,Domestic Tier 3 League,Partial/Sub-Match
+SK2,MONACObet liga,MONACObet liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CPSB,Campeonato de Portugal - Série B,Série B,Brazil,CONMEBOL,Domestic Tier 2 League,Partial/Sub-Match
+POPO,Taça de Portugal,Taça de Portugal / Taça da Liga,Portugal,UEFA,National Cup,Partial/Sub-Match
+SLAR,Nike Liga - Championship Group,Nike Liga - Championship Group,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+P23C,Liga Revelação U23 - Championship round,Liga Revelação U23 - Championship round,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+R3D2,2. Division A (Phase 2),2. Division A (Phase 2),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+P3As,Liga 3 - Relegation round,Liga 3 - Relegation round,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+P3Au,Liga 3 - Promotion stage,Liga 3 - Promotion stage,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+POCP,Allianz Cup,Allianz Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+POSU,Supertaça Cândido de Oliveira,Supertaça Cândido de Oliveira,Portugal,UEFA,National Super Cup,Exact Match
+R3D1,2. Division A (Phase 1),2. Division A (Phase 1),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PT3A,Liga 3,Liga 3,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+P23Q,Liga Revelação U23 - Qualifikation round,Liga Revelação U23 - Qualifikation round,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RU1,Russia Premier Liga,Russia Premier Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+UKR1,Ukraine Premier Liga,Ukraine Premier Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RU2,Russia 1. Division,Russia 1. Division,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+UA3L,Druga Liga,Druga Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RJL2,U19 M-Liga (since 2024),U19 M-Liga (since 2024),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+Y246,YFL U16,YFL U16,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+2DVB,2. Division B,2. Division B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PT23,Liga Revelação U23,Liga Revelação U23,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+Y047,YFL U17,YFL U17,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RUSS,Russian Super Cup,Russian Super Cup,Russia,UEFA,National Super Cup,Exact Match
+SER1,Super liga Srbije,Super liga Srbije,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+UKRP,Ukrainian Cup,Ukrainian Cup,Ukraine,UEFA,National Cup,Exact Match
+SB19,Omladinska liga Srbije,Omladinska liga Srbije,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SER2,Prva liga Srbije,Prva liga Srbije,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SL2,Druga Liga,Druga Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+UA19,U19 Premier Liga,U19 Premier Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RUP,Russian Cup,Russian Cup,Russia,UEFA,National Cup,Exact Match
+SL19,NextGen Liga,NextGen Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SERP,Kup Srbije,Kup Srbije,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+UKR2,Persha Liga,Persha Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TR3B,2.Lig Kirmizi,2.Lig Kirmizi,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SB17,Kadetska liga Srbije,Kadetska liga Srbije,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SLP,Pokal Slovenije,Pokal Slovenije,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TR1,Super Lig,Moldovan Super Liga,Moldova,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+TR4C,3.Lig Grup 3,3.Lig Grup 3,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TR4D,3.Lig Grup 4,3.Lig Grup 4,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TR4B,3.Lig Grup 2,3.Lig Grup 2,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TR2,1.Lig,1. Lig,Turkey,UEFA,Domestic Tier 2 League,Exact Match
+TR4A,3.Lig Grup 1,3.Lig Grup 1,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TR3A,2.Lig Beyaz,2.Lig Beyaz,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TRP,Türkiye Kupasi,Türkiye Kupasi,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RO2,Romania Liga 2,Liga 2,Indonesia,AFC,Domestic Tier 2 League,Partial/Sub-Match
+T191,U19 Süper Lig,Süper Lig,Turkey,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+RO1R,SuperLiga - Relegation group,SuperLiga - Relegation group,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+R2AP,Liga 2 Play-Off,Liga 2,Indonesia,AFC,Domestic Tier 2 League,Partial/Sub-Match
+WAL2,Cymru North,Cymru North,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TRS,TFF Süper Kupa,TFF Süper Kupa,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+R2AO,Liga 2 Play-Out,Liga 2,Indonesia,AFC,Domestic Tier 2 League,Partial/Sub-Match
+ROMS,Romanian Supercup,Romanian Supercup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+WAL1,Cymru Premier,Cymru Premier,Wales,UEFA,Domestic Tier 1 League,Exact Match
+RO1,SuperLiga,Danish Superliga,Denmark,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+RO1C,SuperLiga - Championship group,SuperLiga - Championship group,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ROMP,Romanian Cup,Romanian Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SE3N,Ettan Norra,Ettan Norra,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SMR1,Campionato Sammarinese,Campionato Sammarinese,San Marino,UEFA,Domestic Tier 1 League,Exact Match
+WALM,Welsh Tier Two League Cup,Welsh Tier Two League Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SMP1,Coppa Titano,Coppa Titano,San Marino,UEFA,National Cup,Exact Match
+SE1,Allsvenskan,Allsvenskan,Sweden,UEFA,Domestic Tier 1 League,Exact Match
+SE3S,Ettan Södra,Ettan Södra,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SMRS,Supercoppa San Marino,Supercoppa San Marino,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+WALE,Welsh Cup,Welsh Cup,Wales,UEFA,National Cup,Exact Match
+ES1,LaLiga,LaLiga,Spain,UEFA,Domestic Tier 1 League,Exact Match
+E3G2,Primera Federación - Grupo II,Primera Federación,Spain,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+ES2,LaLiga2,LaLiga,Spain,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+SE2,Superettan,Superettan,Sweden,UEFA,Domestic Tier 2 League,Exact Match
+WALC,Welsh League Cup,Welsh League Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+E4G2,Segunda Federación - Grupo II,Segunda Federación - Grupo II,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SEC,Svenska Cupen,Svenska Cupen,Sweden,UEFA,National Cup,Exact Match
+KAZP,Kazakhstan Cup,Kazakhstan Cup,Kazakhstan,UEFA,National Cup,Exact Match
+E3G1,Primera Federación - Grupo I,Primera Federación,Spain,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+WA2S,Cymru South,Cymru South,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+KAS1,Kazakhstan Premier Liga,Kazakhstan Premier Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+UNG1,Nemzeti Bajnokság,Nemzeti Bajnokság I,Hungary,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+LET1,Virsliga,Virsliga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LET2,Futbola Pirmā līga,Futbola Pirmā līga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+UNGP,Magyar Kupa,Magyar Kupa,Hungary,UEFA,National Cup,Exact Match
+UN2,Nemzeti Bajnokság II.,Nemzeti Bajnokság I,Hungary,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+KASC,Kasachischer Supercup,Kasachischer Supercup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+KAS2,Pervaya Liga,Pervaya Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ISR2,Liga Leumit,Liga Leumit,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NOPO,NM-Cup,NM-Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ISR1,Ligat ha'Al,Ligat ha'Al,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ISRA,Ligat ha'Al - Relegation round,Ligat ha'Al - Relegation round,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SSCP,Steel & Sons Cup,Steel & Sons Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NSC,NIFL Charity Shield,NIFL Charity Shield,Northern Ireland,UEFA,National Super Cup,Exact Match
+SKKO,Superkupa e Kosovës,Superkupa e Kosovës,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRCP,Bob Radcliffe Cup,Bob Radcliffe Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IRLP,Aluf haAlufim,Aluf haAlufim,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NILC,Irish League Cup,Irish League Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ISPO,Gvia haMedina,Gvia haMedina,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NWSC,North West Cup,North West Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NIRU,Playout Premiership,Playout Premiership,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NIAR,Playout Championship,Playout Championship,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+KO1,Superliga e Kosovës,Superliga e Kosovës,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NIRF,Playoff Premiership,Playoff Premiership,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NIRC,Irish Cup,Irish Cup,Northern Ireland,UEFA,National Cup,Exact Match
+NIR1,Premiership,NIFL Premiership,Northern Ireland,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+NIMC,Playoff Championship,Playoff Championship,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NIR2,Playoff Championship,Playoff Championship,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LUX1,BGL Ligue,BGL Ligue,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CMCU,Craig Memorial Cup,Craig Memorial Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NIR3,Intermediate League,Intermediate League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ISRF,Ligat ha'Al -  Championship round,Ligat ha'Al -  Championship round,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MUCU,Mid Ulster Cup,Mid Ulster Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+KOP1,Kupa e Kosovës,Kupa e Kosovës,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CASH,County Antrim Shield,County Antrim Shield,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LUX2,Ehrenpromotion,Ehrenpromotion,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MT1P,Premier League Closing Round,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+MT1N,Premier League Opening Round,Premier League,England,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+MAL2,Malaysia Challenge League,Malaysia Challenge League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LUXP,Coupe de Luxembourg,Coupe de Luxembourg,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GZO1,Gozo Football League First Division,Gozo Football League First Division,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NMAP,Kup na Makedonija,Kup na Makedonija,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MAZ1,Prva Makedonska Fudbalska Liga,Prva Makedonska Fudbalska Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MAL3,National Amateur League I,National Amateur League I,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LTU2,I Lyga,I Lyga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LTVP,Lithuanian Cup,Lithuanian Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MALS,Maltese Super Cup,Maltese Super Cup,Malta,UEFA,National Super Cup,Exact Match
+MNEC,Montenegro Cup,Montenegro Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LIEP,Liechtensteiner Cup,Liechtensteiner Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LI1,Toplyga,Toplyga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MNE1,Meridianbet 1. CFL,Meridianbet 1. CFL,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PL2L,Betclic 2 Liga,2. Liga,Austria,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+GFAC,Gozo FA Cup,FA Cup,Maldives,AFC,National Cup,Partial/Sub-Match
+PL1,PKO BP Ekstraklasa,Ekstraklasa,Poland,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+MT2P,Challenge League - Finals,Challenge League - Finals,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MLP2,BOV Challenge Cup,BOV Challenge Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PL33,Betclic 3 Liga - Group III,3. Liga,Germany,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+PL31,Betclic 3 Liga - Group I,3. Liga,Germany,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+MLAC,National Amateur Cup,National Amateur Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PLZJ,Central Youth League,Central Youth League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MALC,Maltese FA Trophy,Maltese FA Trophy,Malta,UEFA,National Cup,Exact Match
+PL32,Betclic 3 Liga - Group II,3. Liga,Germany,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+PL34,Betclic 3 Liga - Group IV,3. Liga,Germany,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+MNE2,2. CFL,2. CFL,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PL2,Betclic 1 Liga,1. Lig,Turkey,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+LTSC,Lithuanian Supercup,Lithuanian Supercup,Lithuania,UEFA,National Super Cup,Exact Match
+NO1,Eliteserien,Eliteserien,Norway,UEFA,Domestic Tier 1 League,Exact Match
+NO41,Norsk Tipping-Ligaen avdeling 1,Norsk Tipping-Ligaen avdeling 1,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NO32,PostNord-ligaen Avd. 2,PostNord-ligaen Avd. 2,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PLSC,Superpuchar Polski,Superpuchar Polski,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+POPU,STS Polish Cup,Polish Cup,Poland,UEFA,National Cup,Partial/Sub-Match
+NO42,Norsk Tipping-Ligaen avdeling 2,Norsk Tipping-Ligaen avdeling 2,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NO31,PostNord-ligaen Avd. 1,PostNord-ligaen Avd. 1,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NO2,OBOS-ligaen,OBOS-ligaen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NO43,Norsk Tipping-Ligaen avdeling 3,Norsk Tipping-Ligaen avdeling 3,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NO44,Norsk Tipping-Ligaen avdeling 4,Norsk Tipping-Ligaen avdeling 4,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SC4,Scottish League Two,Scottish League Two,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MWP1,Moldovan Cup,Moldovan Cup,Moldova,UEFA,National Cup,Exact Match
+SCP,Scottish League Cup,Scottish Cup / Scottish League Cup,Scotland,UEFA,National Cup,Partial/Sub-Match
+SCPA,Scottish Premiership Relegation Round,Scottish Premiership,Scotland,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+SC3,Scottish League One,Scottish League One,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NO45,Norsk Tipping-Ligaen avdeling 5,Norsk Tipping-Ligaen avdeling 5,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SCPM,Scottish Premiership Top Six Split,Scottish Premiership,Scotland,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+MO1N,Super Liga,Moldovan Super Liga,Moldova,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+NL1,Eredivisie,Eredivisie,Netherlands,UEFA,Domestic Tier 1 League,Exact Match
+NO46,Norsk Tipping-Ligaen avdeling 6,Norsk Tipping-Ligaen avdeling 6,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NL2,Keuken Kampioen Divisie,Keuken Kampioen Divisie,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ML1P,Liga 1 (Promotion),Liga 1,Indonesia,AFC,Domestic Tier 1 League,Partial/Sub-Match
+SL2P,Scottish League Two Play Offs,Scottish League Two Play Offs,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SC5L,Scottish Lowland Football League,Scottish Lowland Football League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ECUP,Copa Ecuador,Copa Ecuador,Ecuador,CONMEBOL,National Cup,Exact Match
+PR1A,Primera División Apertura,Primera Divisió,Andorra,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+SFA,Scottish FA Cup,FA Cup,Maldives,AFC,National Cup,Partial/Sub-Match
+PAR2,División Intermedia,División Intermedia,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SC2,Scottish Championship,Scottish Championship,Scotland,UEFA,Domestic Tier 2 League,Exact Match
+TDeA,Liga 1 Apertura,Liga 1,Indonesia,AFC,Domestic Tier 1 League,Partial/Sub-Match
+A2,2. Liga,2. Liga,Austria,UEFA,Domestic Tier 2 League,Exact Match
+SCBR,Supercopa Rei,Supercopa Rei,Brazil,CONMEBOL,National Super Cup,Exact Match
+510,Derde Divisie A,Derde Divisie A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SC5H,Scottish Highland Football League,Scottish Highland Football League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PLI3,Liga 3,Liga 3,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRA1,Campeonato Brasileiro Série A,Campeonato Brasileiro Série A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PER2,Peru Liga 2,Liga 2,Indonesia,AFC,Domestic Tier 2 League,Partial/Sub-Match
+BRA2,Campeonato Brasileiro Série B,Série B,Brazil,CONMEBOL,Domestic Tier 2 League,Partial/Sub-Match
+EC1N,LigaPro Serie A,Serie A,Italy,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+SSC,Scottish Challenge Cup,Scottish Challenge Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRA3,Campeonato Brasileiro Série C,Série C,Brazil,CONMEBOL,Domestic Tier 3 League,Partial/Sub-Match
+MOP2,Super Liga (Phase 2),Super Liga (Phase 2),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NTD,Tweede Divisie,Tweede Divisie,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRC,Copa do Brasil,Copa do Brasil,Brazil,CONMEBOL,National Cup,Exact Match
+SC1,Scottish Premiership,Scottish Premiership,Scotland,UEFA,Domestic Tier 1 League,Exact Match
+BRA4,Campeonato Brasileiro Série D,Campeonato Brasileiro Série D,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+EC2L,Liga Pro Serie B,Serie B,Italy,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+BRP1,Campeonato Paranaense - Quadrangular de Rebaixamen,Campeonato Paranaense - Quadrangular de Rebaixamen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SPjr,Copa São Paulo de Futebol Júnior,Copa São Paulo de Futebol Júnior,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRP6,Taça Acesc 70 anos,Taça Acesc 70 anos,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CB20,CBF Brasileiro U20,CBF Brasileiro U20,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRP4,Campeonato Maranhense - Quadrangular de Rebaixamen,Campeonato Maranhense - Quadrangular de Rebaixamen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRCC,Troféu Farroupilha,Troféu Farroupilha,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CSUS,Copa Sul-Sudeste,Copa Sul-Sudeste,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRVE,Copa Verde,Copa Verde,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRCR,Campeonato Carioca - Taça Rio,Campeonato Carioca - Taça Rio,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRNE,Copa do Nordeste,Copa do Nordeste,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BCP1,Campeonato Paulista,Campeonato Paulista,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRRS,Campeonato Gaúcho,Campeonato Gaúcho,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRCG,Campeonato Carioca,Campeonato Carioca,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRCM,Campeonato Mineiro,Campeonato Mineiro,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRP5,Campeonato Carioca - Quadrangular de Rebaixamento,Campeonato Carioca - Quadrangular de Rebaixamento,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRQR,Campeonato Gaúcho - Relegation Round,Campeonato Gaúcho - Relegation Round,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRDF,Campeonato Brasiliense,Campeonato Brasiliense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRCB,Campeonato Baiano,Campeonato Baiano,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRPE,Campeonato Pernambucano,Campeonato Pernambucano,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRAL,Campeonato Alagoano,Campeonato Alagoano,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRRN,Campeonato Potiguar,Campeonato Potiguar,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRPA,Campeonato Paraense,Campeonato Paraense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRGO,Campeonato Goiano,Campeonato Goiano,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ofb,ÖFB-Cup,ÖFB-Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRP3,Campeonato Catarinense - Quadrangular de Rebaixame,Campeonato Catarinense - Quadrangular de Rebaixame,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRPB,Campeonato Paraibano,Campeonato Paraibano,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRPR,Campeonato Paranaense,Campeonato Paranaense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRMS,Campeonato Mato-Grossense,Campeonato Mato-Grossense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRMA,Campeonato Maranhense,Campeonato Maranhense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ATRM,Regional League Central,Regional League Central,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRTO,Campeonato Tocantinense,Campeonato Tocantinense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRSC,Campeonato Catarinense,Campeonato Catarinense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRRD,Campeonato Rondoniense,Campeonato Rondoniense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BCE2,Campeonato Cearense - Relegation Round,Campeonato Cearense - Relegation Round,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRPI,Campeonato Piauiense,Campeonato Piauiense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+brti,Troféu Inconfidência,Troféu Inconfidência,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BO1A,División Profesional,Copa División Profesional,Bolivia,CONMEBOL,National Cup,Partial/Sub-Match
+VZ1A, Premier Division VE, Premier Division VE,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VZ1A,Liga FUTVE Apertura,Liga FUTVE Apertura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRRR,Campeonato Roraimense,Campeonato Roraimense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ATRO,Regional League East,Regional League East,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRSE,Campeonato Sergipano,Campeonato Sergipano,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRES,Campeonato Capixaba,Campeonato Capixaba,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRAP,Campeonato Amapaense,Campeonato Amapaense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRCE,Campeonato Cearense ,Campeonato Cearense ,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ATRW,Regionalliga West,Regionalliga West,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VN2A,Liga FUTVE 2,Liga FUTVE 2,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRMT,Campeonato Sul-Mato-Grossense,Campeonato Sul-Mato-Grossense,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRAC,Campeonato Acreano,Campeonato Acreano,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+A4V,Eliteliga Vorarlberg,Eliteliga Vorarlberg,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+A1,Austria Bundesliga,Bundesliga,Germany,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+A4W,Wiener Stadtliga,Wiener Stadtliga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+A4S,Salzburger Liga,Salzburger Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+A4B,Burgenlandliga,Burgenlandliga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+A4O,Oberösterreich Liga,Oberösterreich Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+A4T,Regionalliga Tirol,Regionalliga Tirol,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+A4K,Kärntner Liga,Kärntner Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+A4ST,Landesliga Steiermark,Landesliga Steiermark,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BE1,Jupiler Pro League,Jupiler Pro League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ASPK,Azerbaycan Kuboku,Azerbaycan Kuboku,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+A4N,1. Landesliga Niederösterreich,1. Landesliga Niederösterreich,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BE2,Challenger Pro League,Challenger Pro League,Belgium,UEFA,Domestic Tier 2 League,Exact Match
+JGD3,ÖFB Jugendliga U16,ÖFB Jugendliga U16,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BE3A,1ste Nationale ACFF,1ste Nationale ACFF,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+AZ1,Premyer Liqa,Premyer Liqa,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BE3V,1ste Nationale VV,1ste Nationale VV,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VFVA,2de Nationale VV A,2de Nationale VV A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+JGD2,ÖFB Jugendliga U18,ÖFB Jugendliga U18,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BE5A,3de Nationale VV A,3de Nationale VV A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VFVB,2de Nationale VV B,2de Nationale VV B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ACFF,2de Nationale ACFF,2de Nationale ACFF,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SAKC,King's Cup,King's Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BE3B,1ste Nationale ACFF Relegation Play-Offs,1ste Nationale ACFF Relegation Play-Offs,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BE21,U21 Pro League,U21 Pro League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CCB,Croky Cup,Croky Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BEY1,U18 Elite 1 - Belgium,U18 Elite 1 - Belgium,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+USC3,USL League One,USL League One,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BE5B,3de Nationale VV B,3de Nationale VV B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+EJPL,Jupiler Pro League Champions' Play-Offs,Jupiler Pro League Champions' Play-Offs,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+POBE,Jupiler Pro League Europe Play-Offs,Jupiler Pro League Europe Play-Offs,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+B3AB,1ste Nationale ACFF Promotion Play-Offs,1ste Nationale ACFF Promotion Play-Offs,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CLPD,Liga de Primera ,Liga de Primera ,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+EGY1,Egyptian Premier League,Egyptian Premier League,Egypt,CAF,Domestic Tier 1 League,Exact Match
+BPO4,Jupiler Pro League Relegation Play-offs,Jupiler Pro League Relegation Play-offs,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BESC,Volkswagen Supercup,Volkswagen Supercup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CL2B,Liga de Ascenso ,Liga de Ascenso ,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MNP3,MLS Next Pro,MLS Next Pro,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VIE1,V.League 1,V.League 1,Vietnam,AFC,Domestic Tier 1 League,Exact Match
+CH1C,Copa Chile,Copa Chile,Chile,CONMEBOL,National Cup,Exact Match
+SA2L,Saudi First Division League,Saudi First Division League (Yelo),Saudi Arabia,AFC,Domestic Tier 2 League,Partial/Sub-Match
+SASS,Saudi Super Cup,Saudi Super Cup,Saudi Arabia,AFC,National Super Cup,Exact Match
+UAEP,UAE President's Cup,President's Cup,Mauritania,CAF,National Cup,Partial/Sub-Match
+CHI3,Segunda División Profesional,Segunda División Profesional,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+UAE1,UAE Pro League,UAE Pro League,UAE,AFC,Domestic Tier 1 League,Exact Match
+UZ2L,O'zbekiston Pro Liga,O'zbekiston Pro Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+UASC,UAE Super Cup,UAE Super Cup,UAE,AFC,National Super Cup,Exact Match
+UALC,UAE League Cup,President's Cup / UAE League Cup,UAE,AFC,National Cup,Partial/Sub-Match
+TAD1,Vysshaya Liga,Vysshaya Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+UZSC,Uzbekistan Supercup,Uzbekistan Supercup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VPO1,Vietnamese Cup,Vietnamese Cup,Vietnam,AFC,National Cup,Exact Match
+UZ1,O'zbekiston Superligasi,O'zbekiston Superligasi,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ALG1,Algeria Ligue 1,Ligue 1,France,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+THFA,Thai FA Cup,FA Cup,Maldives,AFC,National Cup,Partial/Sub-Match
+THA2,Thai League 2,Thai League 2,Thailand,AFC,Domestic Tier 2 League,Exact Match
+THLC,Thai Cup,Thai Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+AGSC,Supercoupe d'Algérie,Supercoupe d'Algérie,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+EGRP,Relegation Playoff,Relegation Playoff,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+T3LC,Thai League 3 Champions League,I-League,India,AFC,Domestic Tier 2 League,Partial/Sub-Match
+EGYP,Egypt Cup,Egypt Cup / EPL Cup,Egypt,CAF,National Cup,Partial/Sub-Match
+SEN1,Senegal Ligue 1,Ligue 1,France,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+ALGP,Coupe d'Algerie,Coupe d'Algerie,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+COM1,Championnat des Comores de D1,Championnat des Comores de D1,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ESCU,Egyptian Super Cup,Egyptian Super Cup,Egypt,CAF,National Super Cup,Exact Match
+EGCP,Championship Playoff,Championship Playoff,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SFA1,Betway Premiership,Betway Premiership,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MAR1,Botola Pro Inwi,Botola Pro Inwi,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+EGLC,Egyptian League Cup,Egyptian League Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SEN1,Senegal ,Ligue 1 Senegal,Senegal,CAF,Domestic Tier 1 League,Partial/Sub-Match
+,,FIFA World Cup,Global,FIFA,National Teams World Cup,Partial/Sub-Match
+GHPL,Ghana Premier League,Ghana Premier League,Ghana,CAF,Domestic Tier 1 League,Exact Match
+SFAL,MTN8,MTN8,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ETP1,Ethiopian Premier League,Ethiopian Premier League,Ethiopia,CAF,Domestic Tier 1 League,Exact Match
+NPFL,Nigeria Professional Football League,Nigeria Professional Football League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TUN1,Tunisia Ligue 1,Ligue 1,France,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+TELK,Carling Knockout,Carling Knockout,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NEDC,Nedbank Cup,Nedbank Cup / Telkom Knockout,South Africa,CAF,National Cup,Partial/Sub-Match
+TUNP,Tunisian Cup,Tunisian Cup,Tunisia,CAF,National Cup,Exact Match
+BZ1C,Liga Premier de Belice Clausura,Liga Premier de Belice Clausura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LPL,Libyan Premier League,Libyan Premier League,Libya,CAF,Domestic Tier 1 League,Exact Match
+UGL1,Uganda Premier League,Uganda Premier League,Uganda,CAF,Domestic Tier 1 League,Exact Match
+CDN1,Canadian Premier League,Canadian Premier League,Canada,CONCACAF,Domestic Tier 1 League,Exact Match
+CRPV,Primera División Apertura Play-Off,Primera Divisió,Andorra,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+CAN,Canadian Championship,Canadian Championship,Canada,CONCACAF,National Cup,Exact Match
+PDV1,Primera División Clausura,Primera Divisió,Andorra,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+CRPD,Primera División Apertura,Primera Divisió,Andorra,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+DOM1,Liga Dominicana de Fútbol,Liga Dominicana de Fútbol,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+HO1A,Liga Nacional Apertura,Liga Nacional Apertura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CRPO,Copa de Costa Rica,Copa de Costa Rica,Costa Rica,CONCACAF,National Cup,Exact Match
+CSC2,Recopa Costa Rica,Recopa Costa Rica,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DO1P,Liga Dominicana de Fútbol - Liguilla,Liga Dominicana de Fútbol - Liguilla,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+HOC1,Liga Nacional Clausura,Liga Nacional Clausura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SL1C,Primera División Clausura,Primera Divisió,Andorra,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+HOAP,Liga Nacional Apertura Playoff,Liga Nacional Apertura Playoff,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ELC1,Copa El Salvador,Copa El Salvador,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SL1A,Primera División Apertura,Primera Divisió,Andorra,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+ELSC,Supercopa de El Salvador,Supercopa de El Salvador,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SLP1,Primera División Apertura Final stages,Primera Divisió,Andorra,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+MEXA,Liga MX ,Liga MX,Mexico,CONCACAF,Domestic Tier 1 League,Exact Match
+MEX1,Liga MX ,Liga MX,Mexico,CONCACAF,Domestic Tier 1 League,Exact Match
+MEX1,Liga MX Clausura,Liga MX,Mexico,CONCACAF,Domestic Tier 1 League,Partial/Sub-Match
+PN1C,Liga Panameña de Fútbol Clausura,Liga Panameña de Fútbol Clausura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+POMX,Liguilla Apertura,Liguilla Apertura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MXBA,Liguilla de Expansión Apertura,Liguilla de Expansión Apertura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MEX2,Liga de Expansión MX Clausura,Liga de Expansión MX,Mexico,CONCACAF,Domestic Tier 2 League,Partial/Sub-Match
+GU1C,National League Clausura,National League Clausura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MEXB,Liga de Expansión MX Apertura,Liga de Expansión MX,Mexico,CONCACAF,Domestic Tier 2 League,Partial/Sub-Match
+M193,Liguilla MX U19 Apertura,Liguilla MX U19 Apertura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MLSP,US Open Cup,US Open Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+M192,Liga MX U19 Clausura,Liga MX,Mexico,CONCACAF,Domestic Tier 1 League,Partial/Sub-Match
+PRC1,Liga Puerto Rico Clausura,Liga Puerto Rico Clausura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+M21A,Liga MX U21 Apertura,Liga MX,Mexico,CONCACAF,Domestic Tier 1 League,Partial/Sub-Match
+M21C,Liga MX U21 Clausura,Liga MX,Mexico,CONCACAF,Domestic Tier 1 League,Partial/Sub-Match
+M191,Liga MX U19 Apertura,Liga MX,Mexico,CONCACAF,Domestic Tier 1 League,Partial/Sub-Match
+JPL1,Jamaica Premier League,Jamaica Premier League,Jamaica,CONCACAF,Domestic Tier 1 League,Exact Match
+NC1A,Liga Primera de Nicaragua Apertura,Liga Primera de Nicaragua Apertura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PRA1,Liga Puerto Rico Apertura,Liga Puerto Rico Apertura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+21MA,Liguilla MX U21 Apertura,Liguilla MX U21 Apertura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NCL1,National League - Central,National League - Central,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MLS1,MLS,Major League Soccer (MLS),USA,CONCACAF,Domestic Tier 1 League,Partial/Sub-Match
+ARCA,Copa Argentina,Copa Argentina / Copa de la Liga,Argentina,CONMEBOL,National Cup,Partial/Sub-Match
+MLS1,Major League Soccer,Major League Soccer (MLS),USA,CONCACAF,Domestic Tier 1 League,Partial/Sub-Match
+GUPA,National League Apertura Play-Off,National League Apertura Play-Off,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CNIC,Copa Primera de Nicaragua,Copa Primera de Nicaragua,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IS1,Besta deild,Besta deild,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+USL,USL Championship,USL Championship,USA,CONCACAF,Domestic Tier 2 League,Exact Match
+FIJ1,Fiji Premier League,Fiji Premier League,Fiji,OFC,Domestic Tier 1 League,Exact Match
+NSL1,National League - South,National League - South,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+PRP1,Liga Puerto Rico Apertura Playoff,Liga Puerto Rico Apertura Playoff,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GE1N,Erovnuli Liga,Erovnuli Liga,Georgia,UEFA,Domestic Tier 1 League,Exact Match
+NC1C,Liga Primera de Nicaragua Clausura,Liga Primera de Nicaragua Clausura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CLPI,Copa LPF Proyección Apertura,Copa LPF Proyección Apertura,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NNL1,National League - North,National League - North,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ARG3,Torneo Federal A,Torneo Federal A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NCP1,Liga Primera de Nicaragua Apertura Playoff,Liga Primera de Nicaragua Apertura Playoff,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DFL,Franz-Beckenbauer-Supercup,Franz-Beckenbauer-Supercup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GU1A,National League Apertura ,National League Apertura ,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+URL3,Primera B Metropolitana,Primera B,Chile,CONMEBOL,Domestic Tier 2 League,Partial/Sub-Match
+USLC,USL Cup,USL Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+AJ,German Under-19 Championship,German Under-19 Championship,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ARG2,Primera Nacional,Primera Nacional,Argentina,CONMEBOL,Domestic Tier 2 League,Exact Match
+SCIN,Supercopa Internacional,Supercopa Internacional,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DFBJ,DFB-Pokal der Junioren,DFB-Pokal,Germany,UEFA,National Cup,Partial/Sub-Match
+ARG1,Torneo Apertura ,Torneo Apertura ,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SANP,Landespokal Sachsen-Anhalt,Landespokal Sachsen-Anhalt,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SAPO,Landespokal Sachsen,Landespokal Sachsen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CIT,Italy Cup,Italy Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+WFVP,Landespokal Württemberg,Landespokal Württemberg,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BJ,German Under-17 Championship,German Under-17 Championship,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+DFB,DFB-Pokal,DFB-Pokal,Germany,UEFA,National Cup,Exact Match
+MRPO,Landespokal Mittelrhein,Landespokal Mittelrhein,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+HBPO,Landespokal Bremen,Landespokal Bremen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+17LB,U17 DFB-Nachwuchsliga - Hauptrunde Liga B,U17 DFB-Nachwuchsliga - Hauptrunde Liga B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TFVP,Landespokal Thüringen,Landespokal Thüringen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+MPPO,Landespokal Mecklenburg-Vorpommern,Landespokal Mecklenburg-Vorpommern,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IRPO,FAI Cup,FAI Cup,Republic of Ireland,UEFA,National Cup,Exact Match
+NRPO,Landespokal Niederrhein,Landespokal Niederrhein,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GIRC,Rock Cup,Rock Cup,Gibraltar,UEFA,National Cup,Exact Match
+WFPO,Landespokal Westfalen,Landespokal Westfalen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BBPO,Landespokal Brandenburg,Landespokal Brandenburg,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OPHH,Landespokal Hamburg,Landespokal Hamburg,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+THA1,Thai League,I-League,India,AFC,Domestic Tier 2 League,Partial/Sub-Match
+TSP,MOL Cup,MOL Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SBP,Landespokal Südbaden,Landespokal Südbaden,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+HEPO,Landespokal Hessen,Landespokal Hessen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NP34,Landespokal Niedersachsen (3. und 4. Liga),Landespokal Niedersachsen (3. und 4. Liga),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BVFP,Landespokal Baden,Landespokal Baden,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+NPAM,Regional Cup Lower Saxony (Amateure),Regional Cup Lower Saxony (Amateure),Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BH2S,Prva Liga RS,Prva Liga RS,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SWP,Landespokal Südwest,Landespokal Südwest,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BPP,Landespokal Berlin,Landespokal Berlin,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BOS2,Prva liga FBiH,Prva liga FBiH,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RLP,Landespokal Rheinland,Landespokal Rheinland,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SRPO,Landespokal Saarland,Landespokal Saarland,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FIS,Suomen Cup,Suomen Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BVP,Landespokal Bayern,Landespokal Bayern,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BOS1,Premijer Liga Bosne i Hercegovine,Premijer Liga Bosne i Hercegovine,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SHPO,Landespokal Schleswig-Holstein,Landespokal Schleswig-Holstein,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BI17,Premijer Liga BiH U17,Premijer Liga BiH U17,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BI19,Premijer Liga BiH U19,Premijer Liga BiH U19,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ISLS,Meistarakeppni,Meistarakeppni,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BIHP,Kup BiH,Kup BiH,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GR1,Super League 1,Super League 1,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IS2,Lengjudeild,Lengjudeild,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+S2PA,Super League 2 Play-off,Super League 2 Play-off,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ISL,Lengjubikarinn,Lengjubikarinn,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GRS2,Super League 2,Super League 2,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GRP,Kypello Elladas,Kypello Elladas,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GRSC,Greek Super Cup,Greek Super Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ISL3,2. deild,2. deild,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+POGR,Super League Play-off,Super League Play-off,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GRP2,G' Ethniki Play-off,G' Ethniki Play-off,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+S2PO,Super League 2 Play-out,Super League 2 Play-out,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GRP3,Kypello Elladas Amateur,Kypello Elladas Amateur,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+S1PO,Super League Play-out,Super League Play-out,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GRPL,Super League 5th place play-off,Super League 5th place play-off,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IT3A,Serie C - Girone A,Serie C,Italy,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+GEO2,Erovnuli Liga 2,Erovnuli Liga,Georgia,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+IT1,Serie A,Serie A,Italy,UEFA,Domestic Tier 1 League,Exact Match
+GR20,Super League U19,Super League U19,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+G19C,Kypello Super League U19,Kypello Super League U19,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GEP1,David Kipiani Cup,David Kipiani Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+G2SC,Super League 2 Super Cup,Super League 2 Super Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IT3C,Serie C - Girone C,Serie C,Italy,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+IT4B,Serie D - Girone B,Serie D - Girone B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IT4G,Serie D - Girone G,Serie D - Girone G,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IT4A,Serie D - Girone A,Serie D - Girone A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IT4C,Serie D - Girone C,Serie D - Girone C,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IT3B,Serie C - Girone B,Serie C,Italy,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+IT2,Serie B,Serie B,Italy,UEFA,Domestic Tier 2 League,Exact Match
+IJ2A,Primavera 2 - A,Primavera 2 - A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IT4D,Serie D - Girone D,Serie D - Girone D,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IT4H,Serie D - Girone H,Serie D - Girone H,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IJ2B,Primavera 2 - B,Primavera 2 - B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IT4I,Serie D - Girone I,Serie D - Girone I,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IT4F,Serie D - Girone F,Serie D - Girone F,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IJ1,Primavera 1,Primavera 1,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ITJ5,Campionato nazionale Under 17 - B,Campionato nazionale Under 17 - B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IT4E,Serie D - Girone E,Serie D - Girone E,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SCI,Supercoppa Italiana,Supercoppa Italiana,Italy,UEFA,National Super Cup,Exact Match
+ITJ7,Campionato Under 18,Campionato Under 18,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ITJ4,Campionato Under 17 - A,Campionato Under 17 - A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ITJ6,Campionato nazionale Under 17 - C,Campionato nazionale Under 17 - C,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CITP,Coppa Italia Primavera,Coppa Italia,Italy,UEFA,National Cup,Partial/Sub-Match
+ITJF,Campionato Under 17 - Finals,Campionato Under 17 - Finals,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TDV,Viareggio Cup,Viareggio Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IR2,League of Ireland First Division,League of Ireland First Division,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IR1,League of Ireland Premier Division,League of Ireland Premier Division,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+IRMC,Munster Senior Cup,Munster Senior Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ITC4,Coppa Italia Serie D,Coppa Italia,Italy,UEFA,National Cup,Partial/Sub-Match
+CILP,Coppa Italia Serie C,Serie C,Italy,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+IRPC,President of Ireland's Cup,President of Ireland's Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SCIJ,Supercoppa Primavera,Supercoppa Primavera,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+G17L,Gibraltar U18 League,Gibraltar U18 League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GI1,Gibraltar Football League,Gibraltar Football League,Gibraltar,UEFA,Domestic Tier 1 League,Exact Match
+IRLC,Leinster Senior Cup,Leinster Senior Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+L3,3. Liga,3. Liga,Germany,UEFA,Domestic Tier 3 League,Exact Match
+U18R,U18 Rock Cup,Rock Cup,Gibraltar,UEFA,National Cup,Partial/Sub-Match
+GINC,Intermediate Cup,Intermediate Cup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GIIL,Gibraltar Intermediate League,Gibraltar Intermediate League,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SCIC,Supercoppa di Serie C,Serie C,Italy,UEFA,Domestic Tier 3 League,Partial/Sub-Match
+GN1P,National League Championship Group,National League Championship Group,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+F18Q,P18 SM Qualification,P18 SM Qualification,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+L2,2. Bundesliga,2. Bundesliga,Germany,UEFA,Domestic Tier 2 League,Exact Match
+KOG1,Kolmonen Etelä Group A,Kolmonen Etelä Group A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+YKCP,Ykkösliigacup,Ykkösliigacup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+TS2,Chance Narodni Liga,I liga,Poland,UEFA,Domestic Tier 2 League,Partial/Sub-Match
+TS1,Chance Liga,Chance Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+GISC,Pepe Reyes Cup,Pepe Reyes Cup,Gibraltar,UEFA,National Super Cup,Exact Match
+CZ19,1. Dorostenecka liga,1. Dorostenecka liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FASC,Stórsteypadystur,Stórsteypadystur,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CZ3C,Ceska fotbalova liga,Ceska fotbalova liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+CZ3M,Moravskoslezska fotbalova liga,Moravskoslezska fotbalova liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ES17,U17 Eliitliiga Esiliiga,U17 Eliitliiga Esiliiga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FAR2,1. deild,1. deild,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+EST2,Esiliiga,Esiliiga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+EST3,Esiliiga B,Esiliiga B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FARO,Meistaradeildin,Meistaradeildin,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FIL,Liigacup,Liigacup,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+FAPO,Løgmanssteypið,Løgmanssteypið,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ESTP,Eesti Karikas,Eesti Karikas,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+EST1,Premium Liiga,Premium Liiga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+L1,Bundesliga,Bundesliga,Germany,UEFA,Domestic Tier 1 League,Exact Match
+ELME,U19 Eliitliiga Meistriliiga,Meistriliiga,Estonia,UEFA,Domestic Tier 1 League,Partial/Sub-Match
+RLB3,Regionalliga Bayern,Regionalliga Bayern,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RLN4,Regionalliga Northeast,Regionalliga Northeast,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+ESTS,Eesti Superkarikas,Eesti Superkarikas,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RLSW,Regionalliga Südwest,Regionalliga Südwest,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RLW3,Regionalliga West,Regionalliga West,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OLNI,Oberliga Niederrhein,Oberliga Niederrhein,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OLB2,Bayernliga Süd,Bayernliga Süd,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OBLJ,Oberliga Hamburg,Oberliga Hamburg,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OBLC,Hessenliga,Hessenliga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OLW3,Oberliga Westfalen,Oberliga Westfalen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+QELM,U19 Eliitliiga Qualification,U19 Eliitliiga Qualification,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OBLB,Oberliga Baden-Württemberg,Oberliga Baden-Württemberg,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OLB1,Bayernliga Nord,Bayernliga Nord,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RLN3,Regionalliga Nord,Regionalliga Nord,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OLMR,Mittelrheinliga,Mittelrheinliga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OLRP,Oberliga Rheinland-Pfalz/Saar,Oberliga Rheinland-Pfalz/Saar,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OBLG,NOFV-Oberliga Süd,NOFV-Oberliga Süd,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OBLK,Bremenliga,Bremenliga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OBLN,Oberliga Niedersachsen,Oberliga Niedersachsen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OBLL,Oberliga Schleswig-Holstein,Oberliga Schleswig-Holstein,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LLL,Landesliga Lüneburg,Landesliga Lüneburg,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+OBLF,NOFV-Oberliga Nord,NOFV-Oberliga Nord,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LLHB,Landesliga Bremen,Landesliga Bremen,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VLBE,Berlin-Liga,Berlin-Liga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VLMV,Verbandsliga Mecklenburg-Vorpommern,Verbandsliga Mecklenburg-Vorpommern,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VLSA,Verbandsliga Sachsen-Anhalt,Verbandsliga Sachsen-Anhalt,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VLHM,Verbandsliga Hessen-Mitte,Verbandsliga Hessen-Mitte,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+RHL,Rheinlandliga,Rheinlandliga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VLHN,Verbandsliga Hessen-Nord,Verbandsliga Hessen-Nord,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VLSW,Verbandsliga Südwest,Verbandsliga Südwest,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LLHO,Landesliga Holstein,Landesliga Holstein,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VLHS,Verbandsliga Hessen-Süd,Verbandsliga Hessen-Süd,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+THLI,Thüringenliga,Thüringenliga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+SLI,Sachsenliga,Sachsenliga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VLW1,Westfalenliga 1,Liga 1,Indonesia,AFC,Domestic Tier 1 League,Partial/Sub-Match
+VLW2,Westfalenliga 2,Liga 2,Indonesia,AFC,Domestic Tier 2 League,Partial/Sub-Match
+LNR2,Landesliga Niederrhein - Gruppe 2 ,Landesliga Niederrhein - Gruppe 2 ,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LNR1,Landesliga Niederrhein - Gruppe 1,Landesliga Niederrhein - Gruppe 1,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LNHA,Landesliga Hannover,Landesliga Hannover,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VLBA,Verbandsliga Baden,Verbandsliga Baden,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LBNO,Landesliga Bayern Nordost,Landesliga Bayern Nordost,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LBNW,Landesliga Bayern Nordwest,Landesliga Bayern Nordwest,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LNBR,Landesliga Braunschweig,Landesliga Braunschweig,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LLM1,Landesliga Mittelrhein Staffel 1,Landesliga Mittelrhein Staffel 1,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LNWE,Landesliga Weser-Ems,Landesliga Weser-Ems,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LBSO,Landesliga Bayern Südost,Landesliga Bayern Südost,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+BRBL,Brandenburgliga,Brandenburgliga,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VLSB,Verbandsliga Südbaden,Verbandsliga Südbaden,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LLM2,Landesliga Mittelrhein Staffel 2,Landesliga Mittelrhein Staffel 2,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+VLBW,Verbandsliga Württemberg,Verbandsliga Württemberg,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LLSA,Schröder-Liga Saar,Schröder-Liga Saar,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LBMI,Landesliga Bayern Mitte,Landesliga Bayern Mitte,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LLSL,Landesliga Schleswig,Landesliga Schleswig,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LBSW,Landesliga Bayern Südwest,Landesliga Bayern Südwest,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LLHM,Landesliga Hammonia,Landesliga Hammonia,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+LLHA,Landesliga Hansa,Landesliga Hansa,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+19D2,U19 DFB-Nachwuchsliga - Vorrunde Gruppe B,U19 DFB-Nachwuchsliga - Vorrunde Gruppe B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+19D1,U19 DFB-Nachwuchsliga - Vorrunde Gruppe A,U19 DFB-Nachwuchsliga - Vorrunde Gruppe A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+19D4,U19 DFB-Nachwuchsliga - Vorrunde Gruppe D,U19 DFB-Nachwuchsliga - Vorrunde Gruppe D,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+19D7,U19 DFB-Nachwuchsliga - Vorrunde Gruppe G,U19 DFB-Nachwuchsliga - Vorrunde Gruppe G,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+19D6,U19 DFB-Nachwuchsliga - Vorrunde Gruppe F,U19 DFB-Nachwuchsliga - Vorrunde Gruppe F,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+19LA,U19 DFB-Nachwuchsliga - Hauptrunde Liga A,U19 DFB-Nachwuchsliga - Hauptrunde Liga A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+19D5,U19 DFB-Nachwuchsliga - Vorrunde Gruppe E,U19 DFB-Nachwuchsliga - Vorrunde Gruppe E,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+19D8,U19 DFB-Nachwuchsliga - Vorrunde Gruppe H,U19 DFB-Nachwuchsliga - Vorrunde Gruppe H,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+19D9,U19 DFB-Nachwuchsliga - Vorrunde Gruppe I,U19 DFB-Nachwuchsliga - Vorrunde Gruppe I,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+17DC,U17 DFB-Nachwuchsliga - Vorrunde Gruppe C,U17 DFB-Nachwuchsliga - Vorrunde Gruppe C,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+19LB,U19 DFB-Nachwuchsliga - Hauptrunde Liga B,U19 DFB-Nachwuchsliga - Hauptrunde Liga B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+19D3,U19 DFB-Nachwuchsliga - Vorrunde Gruppe C,U19 DFB-Nachwuchsliga - Vorrunde Gruppe C,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+17DA,U17 DFB-Nachwuchsliga - Vorrunde Gruppe A,U17 DFB-Nachwuchsliga - Vorrunde Gruppe A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+17DD,U17 DFB-Nachwuchsliga - Vorrunde Gruppe D,U17 DFB-Nachwuchsliga - Vorrunde Gruppe D,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+17DB,U17 DFB-Nachwuchsliga - Vorrunde Gruppe B,U17 DFB-Nachwuchsliga - Vorrunde Gruppe B,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+17DE,U17 DFB-Nachwuchsliga - Vorrunde Gruppe E,U17 DFB-Nachwuchsliga - Vorrunde Gruppe E,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+17DG,U17 DFB-Nachwuchsliga - Vorrunde Gruppe G,U17 DFB-Nachwuchsliga - Vorrunde Gruppe G,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+17DH,U17 DFB-Nachwuchsliga - Vorrunde Gruppe H,U17 DFB-Nachwuchsliga - Vorrunde Gruppe H,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+17DF,U17 DFB-Nachwuchsliga - Vorrunde Gruppe F,U17 DFB-Nachwuchsliga - Vorrunde Gruppe F,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)
+17LA,U17 DFB-Nachwuchsliga - Hauptrunde Liga A,U17 DFB-Nachwuchsliga - Hauptrunde Liga A,Local/Regional/Other,Domestic/Other,Lower Tier / Regional / Youth,Original (Unmatched)

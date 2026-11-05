@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="htmlRoot">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title id="pageTitleTag">الإعدادات | Football Manager World</title>
+    <script>
+        // تطبيق فوري للمظهر قبل رسم الصفحة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() {
+            const t = localStorage.getItem('appTheme');
+            const resolved = t === 'auto' ? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : t;
+            if (resolved === 'light') document.documentElement.setAttribute('data-theme','light');
+            const html = document.documentElement;
+            const ts = localStorage.getItem('a11yTextSize'); if (ts && ts !== 'normal') html.setAttribute('data-text-size', ts);
+            if (localStorage.getItem('a11yHighContrast') === '1') html.setAttribute('data-a11y-contrast','1');
+            if (localStorage.getItem('a11yReduceMotion') === '1') html.setAttribute('data-a11y-motion','1');
+            if (localStorage.getItem('a11yColorblind') === '1') html.setAttribute('data-a11y-colorblind','1');
+        })();
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg:#0a0e17; --card:#141b2d; --border:#232d42; --text:#f1f5f9; --muted:#8b96ab; --gold:#e8b84b; --green:#22c55e; --red:#ef4444;
+            --md-surface-container-high:#1a2236;
+            --md-elevation-1: 0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.5);
+            --md-elevation-2: 0 3px 8px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.5);
+            --md-shape-sm:12px; --md-shape-md:16px; --md-shape-lg:20px; --md-shape-full:999px;
+        }
+        html[data-theme="light"] {
+            --bg:#f4f5f9; --card:#ffffff; --border:#e2e5ec; --text:#151a24; --muted:#6b7385; --gold:#b8862f; --green:#16a34a; --red:#dc2626;
+            --md-surface-container-high:#eef0f5;
+            --md-elevation-1: 0 1px 3px rgba(30,35,50,0.08), 0 1px 2px rgba(30,35,50,0.06);
+            --md-elevation-2: 0 3px 10px rgba(30,35,50,0.1), 0 1px 3px rgba(30,35,50,0.08);
+        }
+        html[data-theme="light"] .switch .slider { background:#d5d9e2; }
+
+        /* إمكانية الوصول — قواعد حقيقية فعلية، لا مجرد مفاتيح معطَّلة */
+        html[data-text-size="large"] body { font-size: 1.18em; }
+        html[data-text-size="small"] body { font-size: 0.9em; }
+        html[data-a11y-contrast="1"] { --border: currentColor; }
+        html[data-a11y-contrast="1"] body { --muted: var(--text); }
+        html[data-a11y-contrast="1"] .card, html[data-a11y-contrast="1"] .status-box, html[data-a11y-contrast="1"] .lang-chip { border-width: 2px !important; border-color: var(--text) !important; }
+        html[data-a11y-motion="1"] * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+        html[data-a11y-colorblind="1"] { --green: #2563eb; --red: #ea580c; }
+        html[data-theme="light"] .toast, html[data-theme="light"] .legal-modal-sheet { box-shadow:0 -8px 24px rgba(30,35,50,0.15); }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; padding-bottom:30px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+        body[dir="ltr"] { direction: ltr; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:12px 14px; border-radius:var(--md-shape-md); box-shadow:var(--md-elevation-1); }
+        .back-btn { background:var(--md-surface-container-high); color:var(--text); border:none; padding:9px 13px; font-size:12px; border-radius:var(--md-shape-full); text-decoration:none; }
+        .page-title { font-size:14px; font-weight:800; color:var(--gold); }
+
+        .card { background:var(--card); border:1px solid rgba(255,255,255,0.06); border-radius:var(--md-shape-lg); box-shadow:var(--md-elevation-1); overflow:hidden; }
+        .card-title { font-size:12px; font-weight:800; color:var(--gold); padding:14px 14px 10px 14px; display:flex; align-items:center; gap:8px; }
+
+        .profile-hero { display:flex; align-items:center; gap:14px; padding:16px 14px; }
+        .profile-crest { width:52px; height:52px; border-radius:var(--md-shape-md); background:rgba(255,255,255,0.05); object-fit:contain; flex-shrink:0; }
+        .profile-info .pname { font-size:15px; font-weight:800; }
+        .profile-info .psub { font-size:11px; color:var(--muted); margin-top:3px; }
+        .profile-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:0 14px 14px 14px; }
+        .profile-stat { background:rgba(255,255,255,0.03); border-radius:var(--md-shape-md); padding:10px; text-align:center; }
+        .profile-stat .val { font-size:14px; font-weight:800; color:var(--gold); }
+        .profile-stat .lbl { font-size:9px; color:var(--muted); margin-top:2px; }
+
+        .lang-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:4px 14px 14px 14px; }
+        .lang-chip { display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:var(--md-shape-md); background:rgba(255,255,255,0.03); border:1px solid transparent; cursor:pointer; transition:background 0.15s; }
+        .lang-chip.active { background:rgba(232,184,75,0.14); border-color:var(--gold); }
+        .lang-chip .flag { font-size:20px; }
+        .lang-chip .lname { font-size:12px; font-weight:700; }
+        .lang-chip .lnative { font-size:9.5px; color:var(--muted); }
+
+        .setting-row { display:flex; align-items:center; gap:12px; padding:13px 14px; border-bottom:1px solid rgba(255,255,255,0.05); }
+        .setting-row:last-child { border-bottom:none; }
+        .setting-row .icon { width:36px; height:36px; border-radius:var(--md-shape-sm); background:rgba(232,184,75,0.1); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+        .setting-row .stext { flex:1; }
+        .setting-row .stitle { font-size:12.5px; font-weight:700; }
+        .setting-row .sdesc { font-size:10px; color:var(--muted); margin-top:2px; }
+
+        .switch { position:relative; width:44px; height:26px; flex-shrink:0; }
+        .switch input { opacity:0; width:0; height:0; }
+        .slider { position:absolute; inset:0; background:var(--border); border-radius:var(--md-shape-full); cursor:pointer; transition:0.2s; }
+        .slider::before { content:''; position:absolute; width:20px; height:20px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.2s; }
+        input:checked + .slider { background:var(--gold); }
+        input:checked + .slider::before { transform:translateX(18px); }
+        body[dir="rtl"] input:checked + .slider::before { transform:translateX(-18px); }
+
+        .btn-row { padding:6px 14px 14px 14px; display:flex; flex-direction:column; gap:8px; }
+        .btn { width:100%; border:none; padding:13px; border-radius:var(--md-shape-full); font-size:12.5px; font-weight:800; cursor:pointer; box-shadow:var(--md-elevation-1); display:flex; align-items:center; justify-content:center; gap:8px; }
+        .btn-primary { background:var(--gold); color:#06090f; }
+        .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); box-shadow:none; }
+        .btn-danger { background:rgba(239,68,68,0.12); color:var(--red); box-shadow:none; border:1px solid rgba(239,68,68,0.3); }
+
+        .about-box { padding:14px; font-size:11px; color:var(--muted); line-height:2; }
+        .about-box b { color:var(--text); }
+
+        .legal-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; display:none; align-items:flex-end; justify-content:center; }
+        .legal-modal-overlay.active { display:flex; }
+        .legal-modal-sheet { background:var(--card); width:100%; max-width:520px; max-height:88vh; border-radius:24px 24px 0 0; box-shadow:0 -8px 30px rgba(0,0,0,0.5); display:flex; flex-direction:column; }
+        .legal-modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid rgba(255,255,255,0.06); font-size:14px; font-weight:800; color:var(--gold); }
+        .legal-modal-header button { background:var(--md-surface-container-high); border:none; color:var(--text); width:32px; height:32px; border-radius:var(--md-shape-full); cursor:pointer; }
+        .legal-modal-body { padding:16px 18px 26px 18px; overflow-y:auto; font-size:11.5px; line-height:1.9; color:var(--muted); }
+        .legal-modal-body h4 { color:var(--text); font-size:12.5px; font-weight:800; margin:16px 0 6px; display:flex; align-items:center; gap:6px; }
+        .legal-modal-body h4:first-child { margin-top:0; }
+        .legal-modal-body p { margin-bottom:6px; text-align:justify; }
+        .legal-modal-body .updated { font-size:10px; color:var(--muted); opacity:0.7; margin-bottom:14px; }
+        .legal-modal-body .penalty-box { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:var(--md-shape-md); padding:12px; margin-top:8px; }
+        .legal-modal-body .penalty-box .ptitle { color:var(--red); font-weight:800; font-size:11.5px; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+        .legal-modal-body ol, .legal-modal-body ul { padding-inline-start:18px; margin-bottom:6px; }
+        .legal-modal-body li { margin-bottom:4px; }
+
+        .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--gold); color:var(--text); padding:10px 16px; border-radius:var(--md-shape-full); font-size:12px; display:none; z-index:99; max-width:90%; text-align:center; box-shadow:var(--md-elevation-2); }
+        #importFileInput { display:none; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="game_main.html" class="back-btn"><i class="fas fa-arrow-right" id="backIcon"></i></a>
+        <div class="page-title" id="pageTitleText"><i class="fas fa-gear"></i> الإعدادات</div>
+        <div style="width:34px;"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-language"></i> <span id="titleLanguage">اللغة</span></div>
+        <div class="lang-grid" id="langGrid"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-circle-half-stroke"></i> <span id="titleTheme">مظهر التطبيق</span></div>
+        <div class="lang-grid" style="grid-template-columns:repeat(3,1fr);" id="themeGrid"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-universal-access"></i> <span id="titleAccessibility">إمكانية الوصول</span></div>
+        <div class="setting-row">
+            <div class="icon"><i class="fas fa-text-height"></i></div>
+            <div class="stext"><div class="stitle" id="prefTextSizeTitle">حجم النص</div><div class="sdesc" id="prefTextSizeDesc">يكبّر كل نصوص هذه الصفحة فعلياً</div></div>
+        </div>
+        <div class="lang-grid" style="padding:0 14px 14px 14px; grid-template-columns:repeat(3,1fr);" id="textSizeGrid"></div>
+        <div class="setting-row">
+            <div class="icon"><i class="fas fa-circle-half-stroke"></i></div>
+            <div class="stext"><div class="stitle" id="prefContrastTitle">تباين أعلى</div><div class="sdesc" id="prefContrastDesc">حدود أوضح وألوان أكثر تشبعاً لتحسين القراءة</div></div>
+            <label class="switch"><input type="checkbox" id="contrastToggle" onchange="toggleAccessibility('highContrast', this.checked)"><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+            <div class="icon"><i class="fas fa-person-walking"></i></div>
+            <div class="stext"><div class="stitle" id="prefReduceMotionTitle">تقليل الحركة</div><div class="sdesc" id="prefReduceMotionDesc">يعطّل فعلياً كل الحركات والانتقالات البصرية في الصفحة</div></div>
+            <label class="switch"><input type="checkbox" id="motionToggle" onchange="toggleAccessibility('reduceMotion', this.checked)"><span class="slider"></span></label>
+        </div>
+        <div class="setting-row" style="border-bottom:none;">
+            <div class="icon"><i class="fas fa-eye-low-vision"></i></div>
+            <div class="stext"><div class="stitle" id="prefColorblindTitle">وضع صديق لعمى الألوان</div><div class="sdesc" id="prefColorblindDesc">يستبدل الأحمر/الأخضر بألوان أوضح تمييزاً (أزرق/برتقالي)</div></div>
+            <label class="switch"><input type="checkbox" id="colorblindToggle" onchange="toggleAccessibility('colorblindMode', this.checked)"><span class="slider"></span></label>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-sliders"></i> <span id="titlePrefs">التفضيلات</span></div>
+        <div class="setting-row">
+            <div class="icon"><i class="fas fa-bell"></i></div>
+            <div class="stext"><div class="stitle" id="prefNotifTitle">الإشعارات</div><div class="sdesc" id="prefNotifDesc">تنبيهات الأحداث المهمة داخل اللعبة</div></div>
+            <label class="switch"><input type="checkbox" id="notifToggle" onchange="savePref('notificationsEnabled', this.checked)"><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+            <div class="icon"><i class="fas fa-volume-high"></i></div>
+            <div class="stext"><div class="stitle" id="prefSoundTitle">المؤثرات الصوتية</div><div class="sdesc" id="prefSoundDesc">أصوات الأحداث والانتقالات</div></div>
+            <label class="switch"><input type="checkbox" id="soundToggle" onchange="savePref('soundEnabled', this.checked)"><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+            <div class="icon"><i class="fas fa-mobile-screen-button"></i></div>
+            <div class="stext"><div class="stitle" id="prefVibTitle">الاهتزاز</div><div class="sdesc" id="prefVibDesc">اهتزاز عند الأحداث الكبرى (أهداف، صفقات)</div></div>
+            <label class="switch"><input type="checkbox" id="vibToggle" onchange="savePref('vibrationEnabled', this.checked)"><span class="slider"></span></label>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-sliders-h"></i> <span id="titleSimExperience">تجربة المحاكاة</span></div>
+        <div style="padding:0 14px 10px 14px; font-size:9.5px; color:var(--muted); line-height:1.7;" id="simExperienceNote">
+            هذه إعدادات تخص محرك المحاكاة نفسه — لا تمثّل قرارات إدارية يتّخذها الرئيس داخل عالم اللعبة، بل تتحكم في مدى واقعية وصعوبة تجربتك الشخصية.
+        </div>
+        <div class="setting-row">
+            <div class="icon"><i class="fas fa-chess"></i></div>
+            <div class="stext"><div class="stitle" id="prefDifficultyTitle">نمط المحاكاة</div><div class="sdesc" id="prefDifficultyDesc">يحدد واقعية العالم من حولك — قوة الخصوم الفعلية وصعوبة نجاح المفاوضات، لا "غشاً" في قوانين اللعبة</div></div>
+        </div>
+        <div class="lang-grid" style="padding:0 14px 14px 14px; grid-template-columns:repeat(3,1fr);" id="difficultyGrid"></div>
+        <div class="setting-row" style="border-bottom:none;">
+            <div class="icon"><i class="fas fa-landmark"></i></div>
+            <div class="stext"><div class="stitle" id="prefBoardTitle">صرامة مجلس الإدارة</div><div class="sdesc" id="prefBoardDesc">يؤثر فعلياً على احتمال موافقة المجلس على طلباتك المالية (الملعب، الميزانية، المشاريع الكبرى)</div></div>
+        </div>
+        <div class="lang-grid" style="padding:0 14px 14px 14px; grid-template-columns:repeat(3,1fr);" id="boardDiffGrid"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-gauge-high"></i> <span id="titleGameplay">إعدادات اللعب</span></div>
+        <div class="setting-row">
+            <div class="icon"><i class="fas fa-forward"></i></div>
+            <div class="stext"><div class="stitle" id="prefSpeedTitle">سرعة محاكاة المباراة</div><div class="sdesc" id="prefSpeedDesc">تتحكم فعلياً في سرعة تقدّم دقائق المباراة المباشرة</div></div>
+        </div>
+        <div class="lang-grid" style="padding:0 14px 14px 14px; grid-template-columns:repeat(3,1fr);" id="speedGrid"></div>
+        <div class="setting-row">
+            <div class="icon"><i class="fas fa-circle-question"></i></div>
+            <div class="stext"><div class="stitle" id="prefConfirmTitle">تأكيد قبل التقدّم لليوم التالي</div><div class="sdesc" id="prefConfirmDesc">يطلب تأكيداً صريحاً منك في كل مرة قبل الانتقال الفعلي لليوم التالي</div></div>
+            <label class="switch"><input type="checkbox" id="confirmToggle" onchange="savePref('confirmBeforeAdvance', this.checked)"><span class="slider"></span></label>
+        </div>
+        <div class="setting-row" style="border-bottom:none;">
+            <div class="icon"><i class="fas fa-hand"></i></div>
+            <div class="stext"><div class="stitle" id="prefPauseTitle">إيقاف المباراة المباشرة عند حدث مهم</div><div class="sdesc" id="prefPauseDesc">توقف المحاكاة تلقائياً عند هدف أو بطاقة حمراء أو إصابة خطيرة، حتى تتابع القرار</div></div>
+            <label class="switch"><input type="checkbox" id="pauseToggle" onchange="savePref('pauseOnMajorEvent', this.checked)"><span class="slider"></span></label>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-database"></i> <span id="titleData">إدارة البيانات</span></div>
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="exportSave()"><i class="fas fa-download"></i> <span id="btnExport">تصدير حفظ اللعبة</span></button>
+            <button class="btn btn-outline" onclick="document.getElementById('importFileInput').click()"><i class="fas fa-upload"></i> <span id="btnImport">استيراد حفظ اللعبة</span></button>
+            <input type="file" id="importFileInput" accept="application/json" onchange="importSave(event)">
+            <button class="btn btn-danger" onclick="resetGame()"><i class="fas fa-trash"></i> <span id="btnReset">مسح البيانات وبدء لعبة جديدة</span></button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-cloud"></i> <span id="titleAccountSync">الحساب والمزامنة</span></div>
+        <div style="padding:14px; display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:16px; flex-shrink:0;"><i class="fas fa-user-slash"></i></div>
+            <div>
+                <div style="font-size:12px; font-weight:700;" id="accountLocalTitle">لا يوجد حساب مركزي حالياً</div>
+                <div style="font-size:10px; color:var(--muted); margin-top:3px; line-height:1.7;" id="accountLocalDesc">هذا الإصدار يعمل محلياً بالكامل على جهازك (بلا خادم أو حفظ سحابي). عند إضافة حسابات أو مزامنة سحابية مستقبلاً، ستظهر خيارات إدارة الحساب والأجهزة المرتبطة هنا.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-shield-halved"></i> <span id="titleLegal">الخصوصية والقانون</span></div>
+        <div class="setting-row" style="cursor:pointer;" onclick="openLegalModal('tos')">
+            <div class="icon"><i class="fas fa-file-contract"></i></div>
+            <div class="stext"><div class="stitle" id="legalTosTitle">شروط الخدمة</div><div class="sdesc" id="legalTosDesc">القواعد والالتزامات وسياسة العقوبات عند المخالفة</div></div>
+            <i class="fas fa-chevron-left" style="color:var(--muted); font-size:11px;"></i>
+        </div>
+        <div class="setting-row" style="cursor:pointer; border-bottom:none;" onclick="openLegalModal('privacy')">
+            <div class="icon"><i class="fas fa-user-shield"></i></div>
+            <div class="stext"><div class="stitle" id="legalPrivacyTitle">سياسة الخصوصية</div><div class="sdesc" id="legalPrivacyDesc">كيف تُخزَّن بياناتك ومن يملك الوصول إليها</div></div>
+            <i class="fas fa-chevron-left" style="color:var(--muted); font-size:11px;"></i>
+        </div>
+        <div style="padding:10px 14px 14px 14px; font-size:9.5px; color:var(--muted); line-height:1.7; border-top:1px solid rgba(255,255,255,0.05);" id="legalDisclaimerNote">
+            <i class="fas fa-triangle-exclamation" style="color:var(--gold);"></i> هذان مستندان أوّليان لتطبيق يعمل محلياً حالياً — قبل أي إطلاق تجاري فعلي (خصوصاً مع إضافة حسابات أو معالجة بيانات القُصَّر أو خدمات سحابية)، يجب مراجعتهما قانونياً من مختص لضمان توافقهما مع القوانين المعمول بها.
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-headset"></i> <span id="titleSupport">الدعم والمساعدة</span></div>
+        <div class="setting-row" style="cursor:pointer;" onclick="openLegalModal('faq')">
+            <div class="icon"><i class="fas fa-circle-question"></i></div>
+            <div class="stext"><div class="stitle" id="supportFaqTitle">الأسئلة الشائعة</div><div class="sdesc" id="supportFaqDesc">إجابات سريعة قبل التواصل معنا مباشرة</div></div>
+            <i class="fas fa-chevron-left" style="color:var(--muted); font-size:11px;"></i>
+        </div>
+        <div class="setting-row" style="cursor:pointer; border-bottom:none;" onclick="contactSupportByEmail()">
+            <div class="icon"><i class="fas fa-envelope"></i></div>
+            <div class="stext"><div class="stitle" id="supportEmailTitle">التواصل عبر البريد الإلكتروني</div><div class="sdesc" id="supportEmailDesc">أرسل مشكلتك مباشرة إلى فريق الدعم الفني</div></div>
+            <i class="fas fa-arrow-up-left-from-square" style="color:var(--muted); font-size:11px;"></i>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="fas fa-circle-info"></i> <span id="titleAbout">حول اللعبة</span></div>
+        <div class="about-box">
+            <div><b>Football Manager World</b> — <span id="aboutDesc">محاكي إدارة نادي كرة قدم واقعي</span></div>
+            <div><span id="aboutVersionLbl">الإصدار</span>: <b id="aboutVersion">1.0.0</b></div>
+            <div id="aboutStorage">حجم بيانات الحفظ: --</div>
+            <div id="aboutSupportEmailLine" style="margin-top:4px;">support@footballmanagerworld.game</div>
+        </div>
+    </div>
+
+    <div id="legalModal" class="legal-modal-overlay">
+        <div class="legal-modal-sheet">
+            <div class="legal-modal-header">
+                <span id="legalModalTitle">شروط الخدمة</span>
+                <button onclick="closeLegalModal()"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="legal-modal-body" id="legalModalBody"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        function showToast(msg) { const t=document.getElementById('toast'); t.innerHTML=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 3000); }
+        function getGameDate() { return { day: parseInt(localStorage.getItem('game_day'))||1, month: parseInt(localStorage.getItem('game_month'))||9, year: parseInt(localStorage.getItem('game_year'))||2026 }; }
+
+        // ============================================================
+        // نظام لغات حقيقي فعلي — تفضيل محفوظ حقيقياً، تترجم هذه الصفحة بالكامل الآن
+        // (تطبيقه على بقية صفحات اللعبة الأخرى يحتاج ربط كل صفحة بنفس القاموس لاحقاً)
+        // ============================================================
+        const LANGUAGES = [
+            { code:'ar', flag:'🇸🇦', name:'العربية', native:'العربية', dir:'rtl' },
+            { code:'en', flag:'🇬🇧', name:'English', native:'English', dir:'ltr' },
+            { code:'es', flag:'🇪🇸', name:'Español', native:'Español', dir:'ltr' },
+        ];
+        const I18N = {
+            pageTitle: { ar:'الإعدادات', en:'Settings', fr:'Paramètres', es:'Ajustes', de:'Einstellungen', pt:'Configurações', tr:'Ayarlar' },
+            lblBudget: { ar:'الميزانية', en:'Budget', fr:'Budget', es:'Presupuesto', de:'Budget', pt:'Orçamento', tr:'Bütçe' },
+            lblRep: { ar:'السمعة', en:'Reputation', fr:'Réputation', es:'Reputación', de:'Ruf', pt:'Reputação', tr:'İtibar' },
+            lblSquad: { ar:'الفريق', en:'Squad', fr:'Effectif', es:'Plantilla', de:'Kader', pt:'Elenco', tr:'Kadro' },
+            titleLanguage: { ar:'اللغة', en:'Language', fr:'Langue', es:'Idioma', de:'Sprache', pt:'Idioma', tr:'Dil' },
+            titleTheme: { ar:'مظهر التطبيق', en:'App Theme', fr:'Thème de l\'application', es:'Tema de la aplicación', de:'App-Design', pt:'Tema do aplicativo', tr:'Uygulama Teması' },
+            titleAccessibility: { ar:'إمكانية الوصول', en:'Accessibility', fr:'Accessibilité', es:'Accesibilidad', de:'Barrierefreiheit', pt:'Acessibilidade', tr:'Erişilebilirlik' },
+            prefTextSizeTitle: { ar:'حجم النص', en:'Text Size', fr:'Taille du texte', es:'Tamaño del texto', de:'Textgröße', pt:'Tamanho do texto', tr:'Metin Boyutu' },
+            prefTextSizeDesc: { ar:'يكبّر كل نصوص هذه الصفحة فعلياً', en:'Actually enlarges all text on this page', fr:'Agrandit réellement tout le texte', es:'Agranda realmente todo el texto', de:'Vergrößert tatsächlich den gesamten Text', pt:'Amplia realmente todo o texto', tr:'Sayfadaki tüm metni gerçekten büyütür' },
+            prefContrastTitle: { ar:'تباين أعلى', en:'Higher Contrast', fr:'Contraste plus élevé', es:'Mayor contraste', de:'Höherer Kontrast', pt:'Maior contraste', tr:'Daha Yüksek Kontrast' },
+            prefContrastDesc: { ar:'حدود أوضح وألوان أكثر تشبعاً لتحسين القراءة', en:'Clearer borders and more saturated colors for better readability', fr:'Bordures plus nettes et couleurs plus saturées', es:'Bordes más claros y colores más saturados', de:'Klarere Ränder und gesättigtere Farben', pt:'Bordas mais claras e cores mais saturadas', tr:'Daha net kenarlıklar ve daha doygun renkler' },
+            prefReduceMotionTitle: { ar:'تقليل الحركة', en:'Reduce Motion', fr:'Réduire les animations', es:'Reducir movimiento', de:'Bewegung reduzieren', pt:'Reduzir movimento', tr:'Hareketi Azalt' },
+            prefReduceMotionDesc: { ar:'يعطّل فعلياً كل الحركات والانتقالات البصرية في الصفحة', en:'Actually disables all animations and visual transitions', fr:'Désactive réellement toutes les animations', es:'Desactiva realmente todas las animaciones', de:'Deaktiviert tatsächlich alle Animationen', pt:'Desativa realmente todas as animações', tr:'Tüm animasyonları gerçekten devre dışı bırakır' },
+            prefColorblindTitle: { ar:'وضع صديق لعمى الألوان', en:'Colorblind-Friendly Mode', fr:'Mode daltonien', es:'Modo para daltonismo', de:'Farbenblind-Modus', pt:'Modo para daltonismo', tr:'Renk Körlüğü Dostu Mod' },
+            prefColorblindDesc: { ar:'يستبدل الأحمر/الأخضر بألوان أوضح تمييزاً (أزرق/برتقالي)', en:'Replaces red/green with more distinguishable colors (blue/orange)', fr:'Remplace le rouge/vert par des couleurs plus distinctes', es:'Reemplaza rojo/verde por colores más distinguibles', de:'Ersetzt Rot/Grün durch besser unterscheidbare Farben', pt:'Substitui vermelho/verde por cores mais distintas', tr:'Kırmızı/yeşili daha ayırt edilebilir renklerle değiştirir' },
+            titleAccountSync: { ar:'الحساب والمزامنة', en:'Account & Sync', fr:'Compte et synchronisation', es:'Cuenta y sincronización', de:'Konto & Synchronisierung', pt:'Conta e sincronização', tr:'Hesap ve Senkronizasyon' },
+            accountLocalTitle: { ar:'لا يوجد حساب مركزي حالياً', en:'No Central Account Yet', fr:'Aucun compte central pour le moment', es:'Sin cuenta central por ahora', de:'Noch kein zentrales Konto', pt:'Sem conta central por enquanto', tr:'Henüz Merkezi Hesap Yok' },
+            accountLocalDesc: { ar:'هذا الإصدار يعمل محلياً بالكامل على جهازك (بلا خادم أو حفظ سحابي). عند إضافة حسابات أو مزامنة سحابية مستقبلاً، ستظهر خيارات إدارة الحساب والأجهزة المرتبطة هنا.', en:'This version runs entirely locally on your device (no server or cloud save). If accounts or cloud sync are added in the future, account and device management options will appear here.', fr:'Cette version fonctionne entièrement en local sur votre appareil.', es:'Esta versión funciona completamente en local en tu dispositivo.', de:'Diese Version läuft vollständig lokal auf Ihrem Gerät.', pt:'Esta versão funciona totalmente localmente no seu dispositivo.', tr:'Bu sürüm tamamen cihazınızda yerel olarak çalışır.' },
+            legalDisclaimerNote: { ar:'هذان مستندان أوّليان لتطبيق يعمل محلياً حالياً — قبل أي إطلاق تجاري فعلي (خصوصاً مع إضافة حسابات أو معالجة بيانات القُصَّر أو خدمات سحابية)، يجب مراجعتهما قانونياً من مختص لضمان توافقهما مع القوانين المعمول بها.', en:'These are preliminary documents for a currently local application — before any real commercial launch, they must be reviewed by a legal professional for regulatory compliance.', fr:'Ce sont des documents préliminaires — ils doivent être examinés par un professionnel du droit.', es:'Estos son documentos preliminares — deben ser revisados por un profesional legal.', de:'Dies sind vorläufige Dokumente — sie müssen rechtlich geprüft werden.', pt:'Estes são documentos preliminares — devem ser revistos por um profissional jurídico.', tr:'Bunlar ön belgelerdir — bir hukuk uzmanı tarafından incelenmelidir.' },
+            titlePrefs: { ar:'التفضيلات', en:'Preferences', fr:'Préférences', es:'Preferencias', de:'Einstellungen', pt:'Preferências', tr:'Tercihler' },
+            prefNotifTitle: { ar:'الإشعارات', en:'Notifications', fr:'Notifications', es:'Notificaciones', de:'Benachrichtigungen', pt:'Notificações', tr:'Bildirimler' },
+            prefNotifDesc: { ar:'تنبيهات الأحداث المهمة داخل اللعبة', en:'Alerts for important in-game events', fr:'Alertes pour les événements importants', es:'Alertas de eventos importantes', de:'Benachrichtigungen für wichtige Ereignisse', pt:'Alertas de eventos importantes', tr:'Önemli oyun içi olay bildirimleri' },
+            prefSoundTitle: { ar:'المؤثرات الصوتية', en:'Sound Effects', fr:'Effets sonores', es:'Efectos de sonido', de:'Soundeffekte', pt:'Efeitos sonoros', tr:'Ses Efektleri' },
+            prefSoundDesc: { ar:'أصوات الأحداث والانتقالات', en:'Sounds for events and transfers', fr:'Sons des événements et transferts', es:'Sonidos de eventos y fichajes', de:'Töne für Ereignisse und Transfers', pt:'Sons de eventos e transferências', tr:'Olay ve transfer sesleri' },
+            prefVibTitle: { ar:'الاهتزاز', en:'Vibration', fr:'Vibration', es:'Vibración', de:'Vibration', pt:'Vibração', tr:'Titreşim' },
+            prefVibDesc: { ar:'اهتزاز عند الأحداث الكبرى (أهداف، صفقات)', en:'Vibrate on major events (goals, deals)', fr:'Vibration lors des événements majeurs', es:'Vibración en eventos importantes', de:'Vibration bei wichtigen Ereignissen', pt:'Vibrar em eventos importantes', tr:'Önemli olaylarda titreşim' },
+            titleData: { ar:'إدارة البيانات', en:'Data Management', fr:'Gestion des données', es:'Gestión de datos', de:'Datenverwaltung', pt:'Gestão de dados', tr:'Veri Yönetimi' },
+            titleGameplay: { ar:'إعدادات اللعب', en:'Gameplay', fr:'Gameplay', es:'Jugabilidad', de:'Spielablauf', pt:'Jogabilidade', tr:'Oynanış' },
+            titleSimExperience: { ar:'تجربة المحاكاة', en:'Simulation Experience', fr:'Expérience de simulation', es:'Experiencia de simulación', de:'Simulationserlebnis', pt:'Experiência de simulação', tr:'Simülasyon Deneyimi' },
+            simExperienceNote: { ar:'هذه إعدادات تخص محرك المحاكاة نفسه — لا تمثّل قرارات إدارية يتّخذها الرئيس داخل عالم اللعبة، بل تتحكم في مدى واقعية وصعوبة تجربتك الشخصية.', en:'These settings concern the simulation engine itself — they are not in-world decisions your president character makes, but control how realistic and difficult your personal experience is.', fr:'Ces paramètres concernent le moteur de simulation lui-même, pas des décisions dans le monde du jeu.', es:'Estos ajustes conciernen al motor de simulación en sí, no decisiones dentro del mundo del juego.', de:'Diese Einstellungen betreffen die Simulations-Engine selbst, keine Entscheidungen innerhalb der Spielwelt.', pt:'Estas definições dizem respeito ao motor de simulação, não a decisões dentro do mundo do jogo.', tr:'Bu ayarlar simülasyon motorunun kendisiyle ilgilidir, oyun dünyasındaki kararlarla değil.' },
+            prefDifficultyTitle: { ar:'نمط المحاكاة', en:'Simulation Preset', fr:'Préréglage de simulation', es:'Preajuste de simulación', de:'Simulationsvoreinstellung', pt:'Predefinição de simulação', tr:'Simülasyon Ön Ayarı' },
+            prefDifficultyDesc: { ar:'يحدد واقعية العالم من حولك — قوة الخصوم الفعلية وصعوبة نجاح المفاوضات، لا "غشاً" في قوانين اللعبة', en:'Defines how the world behaves around you — real opponent strength and negotiation difficulty, not "cheating" the game\'s rules', fr:'Définit le comportement du monde autour de vous', es:'Define cómo se comporta el mundo a tu alrededor', de:'Definiert, wie sich die Welt um dich herum verhält', pt:'Define como o mundo se comporta ao seu redor', tr:'Etrafınızdaki dünyanın nasıl davrandığını tanımlar' },
+            prefSpeedTitle: { ar:'سرعة محاكاة المباراة', en:'Match Simulation Speed', fr:'Vitesse de simulation du match', es:'Velocidad de simulación del partido', de:'Spielsimulationsgeschwindigkeit', pt:'Velocidade da simulação da partida', tr:'Maç Simülasyon Hızı' },
+            prefSpeedDesc: { ar:'تتحكم فعلياً في سرعة تقدّم دقائق المباراة المباشرة', en:'Actually controls how fast live match minutes progress', fr:'Contrôle réellement la vitesse du match en direct', es:'Controla realmente la velocidad del partido en vivo', de:'Steuert tatsächlich die Geschwindigkeit des Live-Spiels', pt:'Controla realmente a velocidade da partida ao vivo', tr:'Canlı maç dakikalarının hızını gerçekten kontrol eder' },
+            prefBoardTitle: { ar:'صرامة مجلس الإدارة', en:'Board Strictness', fr:'Sévérité du conseil', es:'Severidad de la junta', de:'Vorstandsstrenge', pt:'Rigor da diretoria', tr:'Yönetim Kurulu Sertliği' },
+            prefBoardDesc: { ar:'يؤثر فعلياً على احتمال موافقة المجلس على طلباتك المالية (الملعب، الميزانية، المشاريع الكبرى)', en:'Actually affects the board\'s approval chance for your financial requests', fr:'Affecte réellement les chances d\'approbation du conseil', es:'Afecta realmente la probabilidad de aprobación de la junta', de:'Beeinflusst tatsächlich die Zustimmungschance des Vorstands', pt:'Afeta realmente a chance de aprovação da diretoria', tr:'Kurulun mali taleplerinizi onaylama şansını gerçekten etkiler' },
+            prefConfirmTitle: { ar:'تأكيد قبل التقدّم لليوم التالي', en:'Confirm Before Advancing Day', fr:'Confirmer avant de passer au jour suivant', es:'Confirmar antes de avanzar de día', de:'Bestätigung vor Tageswechsel', pt:'Confirmar antes de avançar o dia', tr:'Sonraki Güne Geçmeden Önce Onayla' },
+            prefConfirmDesc: { ar:'يطلب تأكيداً صريحاً منك في كل مرة قبل الانتقال الفعلي لليوم التالي', en:'Asks for explicit confirmation each time before advancing', fr:'Demande une confirmation explicite à chaque fois', es:'Solicita confirmación explícita cada vez', de:'Fragt jedes Mal nach ausdrücklicher Bestätigung', pt:'Pede confirmação explícita todas as vezes', tr:'Her seferinde açık onay ister' },
+            prefPauseTitle: { ar:'إيقاف المباراة المباشرة عند حدث مهم', en:'Pause Live Match on Major Events', fr:'Mettre en pause lors d\'événements majeurs', es:'Pausar en eventos importantes', de:'Bei wichtigen Ereignissen pausieren', pt:'Pausar em eventos importantes', tr:'Önemli Olaylarda Duraklat' },
+            prefPauseDesc: { ar:'توقف المحاكاة تلقائياً عند هدف أو بطاقة حمراء أو إصابة خطيرة، حتى تتابع القرار', en:'Automatically pauses on a goal, red card, or serious injury', fr:'Met en pause automatiquement lors d\'un but, carton rouge ou blessure', es:'Pausa automáticamente en gol, tarjeta roja o lesión grave', de:'Pausiert automatisch bei Tor, roter Karte oder schwerer Verletzung', pt:'Pausa automaticamente em gol, cartão vermelho ou lesão grave', tr:'Gol, kırmızı kart veya ciddi sakatlıkta otomatik duraklatır' },
+            btnExport: { ar:'تصدير حفظ اللعبة', en:'Export Save', fr:'Exporter la sauvegarde', es:'Exportar partida', de:'Speicherstand exportieren', pt:'Exportar jogo salvo', tr:'Kayıt Dışa Aktar' },
+            btnImport: { ar:'استيراد حفظ اللعبة', en:'Import Save', fr:'Importer la sauvegarde', es:'Importar partida', de:'Speicherstand importieren', pt:'Importar jogo salvo', tr:'Kayıt İçe Aktar' },
+            btnReset: { ar:'مسح البيانات وبدء لعبة جديدة', en:'Erase Data & Start New Game', fr:'Effacer et recommencer', es:'Borrar y empezar de nuevo', de:'Daten löschen & neu starten', pt:'Apagar e começar de novo', tr:'Verileri Sil ve Yeniden Başla' },
+            titleAbout: { ar:'حول اللعبة', en:'About', fr:'À propos', es:'Acerca de', de:'Über', pt:'Sobre', tr:'Hakkında' },
+            titleLegal: { ar:'الخصوصية والقانون', en:'Privacy & Legal', fr:'Confidentialité et légal', es:'Privacidad y legal', de:'Datenschutz & Recht', pt:'Privacidade e legal', tr:'Gizlilik ve Hukuk' },
+            legalTosTitle: { ar:'شروط الخدمة', en:'Terms of Service', fr:'Conditions d\'utilisation', es:'Términos del servicio', de:'Nutzungsbedingungen', pt:'Termos de serviço', tr:'Hizmet Şartları' },
+            legalTosDesc: { ar:'القواعد والالتزامات وسياسة العقوبات عند المخالفة', en:'Rules, obligations, and the penalty policy for violations', fr:'Règles et politique de sanctions', es:'Reglas y política de sanciones', de:'Regeln und Sanktionsrichtlinie', pt:'Regras e política de penalidades', tr:'Kurallar ve ceza politikası' },
+            legalPrivacyTitle: { ar:'سياسة الخصوصية', en:'Privacy Policy', fr:'Politique de confidentialité', es:'Política de privacidad', de:'Datenschutzrichtlinie', pt:'Política de privacidade', tr:'Gizlilik Politikası' },
+            legalPrivacyDesc: { ar:'كيف تُخزَّن بياناتك ومن يملك الوصول إليها', en:'How your data is stored and who can access it', fr:'Comment vos données sont stockées', es:'Cómo se almacenan tus datos', de:'Wie Ihre Daten gespeichert werden', pt:'Como seus dados são armazenados', tr:'Verilerinizin nasıl saklandığı' },
+            titleSupport: { ar:'الدعم والمساعدة', en:'Support & Help', fr:'Support et aide', es:'Soporte y ayuda', de:'Support & Hilfe', pt:'Suporte e ajuda', tr:'Destek ve Yardım' },
+            supportFaqTitle: { ar:'الأسئلة الشائعة', en:'FAQ', fr:'FAQ', es:'Preguntas frecuentes', de:'FAQ', pt:'Perguntas frequentes', tr:'SSS' },
+            supportFaqDesc: { ar:'إجابات سريعة قبل التواصل معنا مباشرة', en:'Quick answers before contacting us', fr:'Réponses rapides avant de nous contacter', es:'Respuestas rápidas antes de contactarnos', de:'Schnelle Antworten vor Kontaktaufnahme', pt:'Respostas rápidas antes de nos contatar', tr:'Bizimle iletişime geçmeden önce hızlı yanıtlar' },
+            supportEmailTitle: { ar:'التواصل عبر البريد الإلكتروني', en:'Contact via Email', fr:'Contacter par e-mail', es:'Contactar por correo', de:'Per E-Mail kontaktieren', pt:'Contatar por e-mail', tr:'E-posta ile İletişim' },
+            supportEmailDesc: { ar:'أرسل مشكلتك مباشرة إلى فريق الدعم الفني', en:'Send your issue directly to our support team', fr:'Envoyez votre problème directement', es:'Envía tu problema directamente', de:'Senden Sie Ihr Problem direkt', pt:'Envie seu problema diretamente', tr:'Sorununuzu doğrudan gönderin' },
+            aboutVersionLbl: { ar:'الإصدار', en:'Version', fr:'Version', es:'Versión', de:'Version', pt:'Versão', tr:'Sürüm' },
+            aboutDesc: { ar:'محاكي إدارة نادي كرة قدم واقعي', en:'A realistic football club management simulator', fr:'Un simulateur de gestion de club réaliste', es:'Un simulador realista de gestión de clubes', de:'Ein realistischer Fußballverein-Manager', pt:'Um simulador realista de gestão de clubes', tr:'Gerçekçi bir futbol kulübü yönetim simülatörü' },
+        };
+        const ALLOWED_LANGS = ['ar', 'en', 'es'];
+        function getLang() {
+            const stored = localStorage.getItem('gameLanguage') || 'ar';
+            if (!ALLOWED_LANGS.includes(stored)) { localStorage.setItem('gameLanguage', 'ar'); return 'ar'; }
+            return stored;
+        }
+        function setLang(code) {
+            localStorage.setItem('gameLanguage', code);
+            applyLanguage();
+            renderLangGrid();
+            renderThemeGrid();
+            renderTextSizeGrid();
+            renderBoardDifficulty();
+            renderDifficultyGrid();
+            renderSpeedGrid();
+            showToast(I18N.pageTitle[code] ? '✓' : '✓');
+        }
+        function applyLanguage() {
+            const code = getLang();
+            const langMeta = LANGUAGES.find(l => l.code === code) || LANGUAGES[0];
+            document.getElementById('htmlRoot').lang = code;
+            document.body.dir = langMeta.dir;
+            document.getElementById('backIcon').className = langMeta.dir === 'rtl' ? 'fas fa-arrow-right' : 'fas fa-arrow-left';
+            for (const key in I18N) {
+                const el = document.getElementById(key) || document.getElementById(
+                    key === 'pageTitle' ? 'pageTitleText' : key
+                );
+                if (el && I18N[key][code]) {
+                    if (key === 'pageTitle') { el.innerHTML = `<i class="fas fa-gear"></i> ${I18N[key][code]}`; }
+                    else el.innerText = I18N[key][code];
+                }
+            }
+            document.getElementById('pageTitleTag').innerText = (I18N.pageTitle[code]||'Settings') + ' | Football Manager World';
+        }
+        // ============================================================
+        // وضع المظهر الحقيقي — داكن/فاتح فعلي، يُطبَّق فوراً على كل عناصر الصفحة عبر متغيرات CSS ويُحفَظ بشكل حقيقي
+        // ============================================================
+        const THEME_LABELS = {
+            dark: { ar:'داكن', en:'Dark', fr:'Sombre', es:'Oscuro', de:'Dunkel', pt:'Escuro', tr:'Koyu' },
+            light: { ar:'فاتح', en:'Light', fr:'Clair', es:'Claro', de:'Hell', pt:'Claro', tr:'Açık' },
+            auto: { ar:'تلقائي (حسب الجهاز)', en:'Auto (System)', fr:'Auto (Système)', es:'Automático (Sistema)', de:'Automatisch (System)', pt:'Automático (Sistema)', tr:'Otomatik (Sistem)' },
+        };
+        const THEME_OPTIONS = [
+            { key:'dark', get label(){ return THEME_LABELS.dark[getLang()]; }, icon:'fa-moon' },
+            { key:'light', get label(){ return THEME_LABELS.light[getLang()]; }, icon:'fa-sun' },
+            { key:'auto', get label(){ return THEME_LABELS.auto[getLang()]; }, icon:'fa-circle-half-stroke' },
+        ];
+        function getTheme() { return localStorage.getItem('appTheme') || 'dark'; }
+        function resolvedTheme() {
+            const theme = getTheme();
+            if (theme === 'auto') return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            return theme;
+        }
+        function applyTheme() {
+            document.getElementById('htmlRoot').setAttribute('data-theme', resolvedTheme() === 'light' ? 'light' : '');
+        }
+        function setTheme(key) {
+            localStorage.setItem('appTheme', key);
+            applyTheme();
+            renderThemeGrid();
+            showToast('<i class="fas fa-circle-check"></i> تم تغيير المظهر فعلياً');
+        }
+        function renderThemeGrid() {
+            const active = getTheme();
+            document.getElementById('themeGrid').innerHTML = THEME_OPTIONS.map(o => `
+                <div class="lang-chip ${o.key===active?'active':''}" style="flex-direction:column; text-align:center; gap:6px; padding:14px 10px;" onclick="setTheme('${o.key}')">
+                    <i class="fas ${o.icon}" style="font-size:18px; color:${o.key==='light'?'#eab308':'var(--gold)'};"></i>
+                    <div class="lname">${o.label}</div>
+                </div>
+            `).join('');
+        }
+        // إن كان المظهر "تلقائي"، تابع تغيّر تفضيل النظام حياً بلا حاجة لإعادة تحميل الصفحة
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { if (getTheme() === 'auto') applyTheme(); });
+        }
+
+        function renderLangGrid() {
+            const active = getLang();
+            document.getElementById('langGrid').innerHTML = LANGUAGES.map(l => `
+                <div class="lang-chip ${l.code===active?'active':''}" onclick="setLang('${l.code}')">
+                    <span class="flag">${l.flag}</span>
+                    <div><div class="lname">${l.name}</div><div class="lnative">${l.native}</div></div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================
+        // معلومات النادي الحقيقية — من نفس بيانات اللعبة الفعلية، لا نص تجريبي
+        // ============================================================
+        // ============================================================
+        // تفضيلات حقيقية محفوظة فعلياً — يمكن لبقية صفحات اللعبة قراءتها لاحقاً
+        // ============================================================
+        function savePref(key, value) {
+            localStorage.setItem(key, value ? '1' : '0');
+            showToast('✓');
+        }
+
+        // ============================================================
+        // شروط الخدمة وسياسة الخصوصية — وثيقتان حقيقيتان مُنسَّقتان باحترافية، بما في ذلك سياسة عقوبات حقيقية متدرجة
+        // ============================================================
+        const LEGAL_DOCS = {
+            tos: {
+                title: 'شروط الخدمة',
+                updated: 'آخر تحديث: 12 أغسطس 2026',
+                html: `
+                    <h4><i class="fas fa-handshake"></i> 1. قبول الشروط</h4>
+                    <p>باستخدامك لهذا التطبيق، فإنك توافق على الالتزام الكامل بشروط الخدمة هذه. إذا كنت لا توافق على أي بند منها، يُرجى التوقف عن استخدام التطبيق فوراً.</p>
+
+                    <h4><i class="fas fa-list-check"></i> 2. الاستخدام المسموح</h4>
+                    <p>يُسمح لك باستخدام التطبيق للأغراض الترفيهية الشخصية فقط، وفق الوظائف المتاحة رسمياً داخل واجهة اللعبة.</p>
+
+                    <h4><i class="fas fa-ban"></i> 3. الأفعال المحظورة</h4>
+                    <p>يُحظر على المستخدم القيام بأي مما يلي:</p>
+                    <ul>
+                        <li>محاولة التلاعب ببيانات الحفظ المحلية بطرق تخالف آلية اللعب الطبيعية (مثل التعديل المباشر غير المصرَّح به لتحقيق مكاسب غير واقعية).</li>
+                        <li>استخدام أدوات أو برمجيات آلية (Bots) للتفاعل مع اللعبة نيابة عنك.</li>
+                        <li>محاولة الهندسة العكسية أو فك تشفير أجزاء من كود اللعبة بقصد إساءة الاستخدام.</li>
+                        <li>استغلال أي ثغرة برمجية بشكل متعمَّد ومتكرر بدل الإبلاغ عنها.</li>
+                        <li>إعادة توزيع محتوى اللعبة أو انتحال صفة مطوّرها دون إذن رسمي.</li>
+                    </ul>
+
+                    <h4><i class="fas fa-gavel"></i> 4. سياسة الإنفاذ والعقوبات</h4>
+                    <p>هذا التطبيق تجربة محلية بالكامل (Local/Offline) ولا يعتمد على حساب مركزي أو خادم يتحكم بجلستك. لذلك تقتصر سياسة الإنفاذ على ما يمكن تطبيقه فعلياً على مستوى التطبيق نفسه على جهازك:</p>
+                    <div class="penalty-box">
+                        <div class="ptitle"><i class="fas fa-triangle-exclamation"></i> المستوى الأول — تنبيه داخل التطبيق</div>
+                        <p style="margin:0;">إشعار واضح داخل واجهة اللعبة عند رصد استخدام يخالف الآلية الطبيعية للعب (مثل تعديل مباشر لبيانات الحفظ يخالف منطق اللعبة).</p>
+                    </div>
+                    <div class="penalty-box">
+                        <div class="ptitle"><i class="fas fa-lock"></i> المستوى الثاني — تعطيل ميزات محدَّدة محلياً</div>
+                        <p style="margin:0;">قد يُعطَّل الوصول لبعض الميزات المتقدمة (مثل استيراد ملفات حفظ خارجية) داخل نسختك المحلية من التطبيق عند تكرار الاستخدام المخالف.</p>
+                    </div>
+                    <p style="font-size:10px; opacity:0.75; margin-top:6px;">لا يملك فريق التطوير القدرة التقنية على إيقاف جهازك أو حسابك أو الوصول إليه عن بُعد، لعدم وجود خادم مركزي يربط جلستك بأي طرف خارجي.</p>
+
+                    <h4><i class="fas fa-file-circle-xmark"></i> 5. حدود سياسة الإنفاذ</h4>
+                    <p>تنطبق سياسة الإنفاذ أعلاه على المستوى المحلي لتطبيقك فقط، ولا تمتد لأي شكل من أشكال حظر الجهاز أو الحساب أو الوصول الخارجي، لعدم توفر البنية التقنية اللازمة لذلك في تطبيق محلي بالكامل.</p>
+
+                    <h4><i class="fas fa-scale-unbalanced"></i> 6. حدود المسؤولية</h4>
+                    <p>يُقدَّم هذا التطبيق "كما هو" دون أي ضمانات صريحة أو ضمنية. لا يتحمّل فريق التطوير مسؤولية أي فقدان لبيانات الحفظ المحلية الناتج عن أخطاء المستخدم أو مشاكل الجهاز.</p>
+
+                    <h4><i class="fas fa-pen"></i> 7. التعديلات على الشروط</h4>
+                    <p>يجوز تحديث هذه الشروط دورياً. يُعدّ استمرارك في استخدام التطبيق بعد أي تعديل موافقة ضمنية على الشروط المُحدَّثة.</p>
+                `
+            },
+            privacy: {
+                title: 'سياسة الخصوصية',
+                updated: 'آخر تحديث: 12 أغسطس 2026',
+                html: `
+                    <h4><i class="fas fa-database"></i> 1. البيانات التي نجمعها</h4>
+                    <p>هذا التطبيق يخزّن جميع بيانات تقدّمك في اللعبة (ناديك، لاعبيك، قراراتك) <b style="color:var(--text);">محلياً على جهازك فقط</b> عبر خاصية التخزين المحلي للمتصفح (localStorage). بيانات تقدّمك هذه تحديداً لا تُرسَل تلقائياً أو تُنقَل إلى أي خادم خارجي في أي وقت.</p>
+                    <p><b style="color:var(--gold);">استثناء واحد صريح:</b> إن اخترت التواصل مع الدعم الفني عبر خيار "التواصل عبر البريد الإلكتروني"، سيُرسَل عبر تطبيق بريدك الخاص محتوى تشخيصي محدود (رقم الإصدار، اللغة المختارة، تاريخ اللعبة الداخلي، نوع المتصفح) لمساعدتنا على حل المشكلة — وهذا يحدث فقط عند مبادرتك الصريحة بإرسال هذه الرسالة، لا تلقائياً في أي وقت آخر.</p>
+
+                    <h4><i class="fas fa-eye-slash"></i> 2. مشاركة البيانات</h4>
+                    <p>لا نشارك أي من بيانات تقدّمك في اللعبة مع أي طرف ثالث تجاري أو إعلاني. المعلومات التشخيصية المحدودة التي قد تُرسَل عند تواصلك الاختياري مع الدعم (موضحة في القسم أعلاه) تذهب حصرياً إلى بريد الدعم الفني الخاص باللعبة، لا لأي طرف آخر.</p>
+
+                    <h4><i class="fas fa-user-shield"></i> 3. حقوقك على بياناتك</h4>
+                    <ul>
+                        <li><b style="color:var(--text);">حق التصدير:</b> يمكنك تصدير نسخة كاملة من بياناتك في أي وقت من قسم "إدارة البيانات".</li>
+                        <li><b style="color:var(--text);">حق الحذف الكامل:</b> يمكنك مسح كل بياناتك المحلية نهائياً عبر خيار "مسح البيانات وبدء لعبة جديدة".</li>
+                        <li><b style="color:var(--text);">حق النقل:</b> يمكنك استيراد بياناتك المُصدَّرة على أي جهاز آخر يدعم التطبيق.</li>
+                    </ul>
+
+                    <h4><i class="fas fa-lock"></i> 4. أمان البيانات</h4>
+                    <p>نظراً للطبيعة المحلية للتخزين، فإن أمان بياناتك مرتبط مباشرة بأمان جهازك ومتصفحك الخاص. يُنصَح بأخذ نسخة احتياطية دورية عبر ميزة التصدير.</p>
+
+                    <h4><i class="fas fa-child-reaching"></i> 5. خصوصية القُصَّر</h4>
+                    <p>هذا التطبيق غير موجَّه خصيصاً لجمع بيانات من الأطفال دون سن معيّنة، ونظراً لعدم وجود أي جمع بيانات فعلي على خوادم خارجية أصلاً، فلا توجد مخاطر إضافية مرتبطة بذلك.</p>
+
+                    <h4><i class="fas fa-cookie-bite"></i> 6. التخزين المحلي وملفات تعريف الارتباط</h4>
+                    <p>يعتمد التطبيق حصرياً على تقنية localStorage القياسية في المتصفح لحفظ تقدّمك، وليس على ملفات تعريف ارتباط (Cookies) تعقُّبية أو إعلانية من أي نوع.</p>
+
+                    <h4><i class="fas fa-envelope-open-text"></i> 7. التواصل بخصوص الخصوصية</h4>
+                    <p>لأي استفسار يتعلق بهذه السياسة، يمكنك مراسلتنا عبر البريد الإلكتروني الموضح في قسم "الدعم والمساعدة".</p>
+                `
+            },
+            faq: {
+                title: 'الأسئلة الشائعة',
+                updated: 'آخر تحديث: 12 أغسطس 2026',
+                html: `
+                    <h4><i class="fas fa-circle-question"></i> هل ستُفقَد بياناتي إذا مسحت ذاكرة التخزين المؤقت للمتصفح؟</h4>
+                    <p>نعم، لأن بياناتك محفوظة محلياً فقط. يُنصَح بشدة بتصدير نسخة احتياطية دورياً من قسم "إدارة البيانات" لتفادي فقدان تقدّمك.</p>
+
+                    <h4><i class="fas fa-circle-question"></i> هل يمكنني نقل تقدّمي لجهاز آخر؟</h4>
+                    <p>نعم، عبر تصدير ملف الحفظ من جهازك الحالي، ثم استيراده على الجهاز الجديد من نفس القسم.</p>
+
+                    <h4><i class="fas fa-circle-question"></i> لماذا تبدو نتائج المباريات أو المفاوضات مختلفة أحياناً رغم نفس الإعدادات؟</h4>
+                    <p>المحرك يعتمد على عوامل حقيقية متعددة (قوة الفريقين، الإرهاق، الطقس، صعوبة اللعبة المُختارة) وليس نتيجة ثابتة — هذا مقصود لواقعية أكبر.</p>
+
+                    <h4><i class="fas fa-circle-question"></i> غيّرت صعوبة اللعبة، لكن لم ألاحظ فرقاً فورياً — لماذا؟</h4>
+                    <p>تُطبَّق إعدادات الصعوبة على الأحداث الجديدة فقط (مباريات ومفاوضات تبدأ بعد تغيير الإعداد)، لا على أحداث جارية بالفعل.</p>
+
+                    <h4><i class="fas fa-circle-question"></i> لم أجد إجابة لمشكلتي هنا، ماذا أفعل؟</h4>
+                    <p>راسلنا مباشرة عبر خيار "التواصل عبر البريد الإلكتروني" في قسم الدعم — سيُرفَق تلقائياً معلومات تشخيصية تساعدنا على حل مشكلتك أسرع.</p>
+                `
+            }
+        };
+        function openLegalModal(type) {
+            const doc = LEGAL_DOCS[type];
+            document.getElementById('legalModalTitle').innerText = doc.title;
+            document.getElementById('legalModalBody').innerHTML = `<div class="updated">${doc.updated}</div>${doc.html}`;
+            document.getElementById('legalModal').classList.add('active');
+        }
+        function closeLegalModal() { document.getElementById('legalModal').classList.remove('active'); }
+
+        // ============================================================
+        // التواصل الفعلي عبر البريد الإلكتروني — يفتح تطبيق البريد الحقيقي على الجهاز برسالة مُعبَّأة مسبقاً
+        // بمعلومات تشخيصية حقيقية (الإصدار، اللغة، حجم الحفظ) تماماً كما تفعل تقارير الأعطال الاحترافية
+        // ============================================================
+        const SUPPORT_EMAIL = 'support@footballmanagerworld.game';
+        function contactSupportByEmail() {
+            const gd = getGameDate();
+            const subject = encodeURIComponent('طلب دعم فني — Football Manager World');
+            const body = encodeURIComponent(
+                `يرجى وصف المشكلة التي واجهتها هنا:\n\n\n` +
+                `----------------------------------\n` +
+                `معلومات تشخيصية (لا تحذفها، تساعدنا في حل المشكلة أسرع):\n` +
+                `الإصدار: 1.0.0\n` +
+                `اللغة الحالية: ${getLang()}\n` +
+                `تاريخ اللعبة الداخلي: ${gd.day}/${gd.month}/${gd.year}\n` +
+                `المتصفح: ${navigator.userAgent}\n`
+            );
+            window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+        }
+
+        function loadPrefs() {
+            document.getElementById('notifToggle').checked = localStorage.getItem('notificationsEnabled') !== '0';
+            document.getElementById('soundToggle').checked = localStorage.getItem('soundEnabled') === '1';
+            document.getElementById('vibToggle').checked = localStorage.getItem('vibrationEnabled') === '1';
+            document.getElementById('confirmToggle').checked = localStorage.getItem('confirmBeforeAdvance') === '1';
+            document.getElementById('pauseToggle').checked = localStorage.getItem('pauseOnMajorEvent') === '1';
+            document.getElementById('contrastToggle').checked = localStorage.getItem('a11yHighContrast') === '1';
+            document.getElementById('motionToggle').checked = localStorage.getItem('a11yReduceMotion') === '1';
+            document.getElementById('colorblindToggle').checked = localStorage.getItem('a11yColorblind') === '1';
+            renderDifficultyGrid();
+            renderSpeedGrid();
+            renderBoardDifficulty();
+            renderTextSizeGrid();
+        }
+
+        // ============================================================
+        // إمكانية الوصول — قواعد حقيقية فعلية تُطبَّق فوراً عبر سمات HTML، لا مفاتيح بلا أثر
+        // ============================================================
+        const TEXT_SIZE_LABELS = {
+            small: { ar:'صغير', en:'Small', fr:'Petit', es:'Pequeño', de:'Klein', pt:'Pequeno', tr:'Küçük' },
+            normal: { ar:'عادي', en:'Normal', fr:'Normal', es:'Normal', de:'Normal', pt:'Normal', tr:'Normal' },
+            large: { ar:'كبير', en:'Large', fr:'Grand', es:'Grande', de:'Groß', pt:'Grande', tr:'Büyük' },
+        };
+        const TEXT_SIZE_OPTIONS = [
+            { key:'small', get label(){ return TEXT_SIZE_LABELS.small[getLang()]; } },
+            { key:'normal', get label(){ return TEXT_SIZE_LABELS.normal[getLang()]; } },
+            { key:'large', get label(){ return TEXT_SIZE_LABELS.large[getLang()]; } },
+        ];
+        function renderTextSizeGrid() {
+            const active = localStorage.getItem('a11yTextSize') || 'normal';
+            document.getElementById('textSizeGrid').innerHTML = TEXT_SIZE_OPTIONS.map(o => `
+                <div class="lang-chip ${o.key===active?'active':''}" style="flex-direction:column; text-align:center; gap:4px;" onclick="setTextSize('${o.key}')">
+                    <span class="lname" style="font-size:${o.key==='small'?'11px':o.key==='large'?'16px':'13px'};">أ</span>
+                    <div class="lnative">${o.label}</div>
+                </div>
+            `).join('');
+        }
+        function setTextSize(key) {
+            localStorage.setItem('a11yTextSize', key);
+            if (key === 'normal') document.getElementById('htmlRoot').removeAttribute('data-text-size');
+            else document.getElementById('htmlRoot').setAttribute('data-text-size', key);
+            renderTextSizeGrid();
+            showToast('<i class="fas fa-circle-check"></i> تم تغيير حجم النص فعلياً');
+        }
+        const A11Y_ATTR_MAP = { highContrast: ['a11yHighContrast','data-a11y-contrast'], reduceMotion: ['a11yReduceMotion','data-a11y-motion'], colorblindMode: ['a11yColorblind','data-a11y-colorblind'] };
+        function toggleAccessibility(feature, enabled) {
+            const [storeKey, attr] = A11Y_ATTR_MAP[feature];
+            localStorage.setItem(storeKey, enabled ? '1' : '0');
+            if (enabled) document.getElementById('htmlRoot').setAttribute(attr, '1');
+            else document.getElementById('htmlRoot').removeAttribute(attr);
+            showToast('✓');
+        }
+
+        // ============================================================
+        // صرامة المجلس — إعداد حقيقي فعلي يقرأه computeBoardApprovalChance() في stadium.html مباشرة
+        // ============================================================
+        const BOARD_DIFF_LABELS = {
+            lenient: { ar:'متساهل', en:'Lenient', fr:'Indulgent', es:'Indulgente', de:'Nachsichtig', pt:'Indulgente', tr:'Hoşgörülü' },
+            normal: { ar:'عادي', en:'Normal', fr:'Normal', es:'Normal', de:'Normal', pt:'Normal', tr:'Normal' },
+            strict: { ar:'صارم', en:'Strict', fr:'Strict', es:'Estricto', de:'Streng', pt:'Rigoroso', tr:'Sıkı' },
+        };
+        const BOARD_DIFF_OPTIONS = [
+            { key:'lenient', get label(){ return BOARD_DIFF_LABELS.lenient[getLang()]; }, icon:'fa-face-smile', color:'var(--green)' },
+            { key:'normal', get label(){ return BOARD_DIFF_LABELS.normal[getLang()]; }, icon:'fa-scale-balanced', color:'var(--gold)' },
+            { key:'strict', get label(){ return BOARD_DIFF_LABELS.strict[getLang()]; }, icon:'fa-face-frown', color:'var(--red)' },
+        ];
+        function renderBoardDifficulty() {
+            const active = localStorage.getItem('boardDifficulty') || 'normal';
+            document.getElementById('boardDiffGrid').innerHTML = BOARD_DIFF_OPTIONS.map(o => `
+                <div class="lang-chip ${o.key===active?'active':''}" style="flex-direction:column; text-align:center; gap:4px;" onclick="setBoardDifficulty('${o.key}')">
+                    <i class="fas ${o.icon}" style="color:${o.color}; font-size:16px;"></i>
+                    <div class="lname">${o.label}</div>
+                </div>
+            `).join('');
+        }
+        function isSeasonUnderway() {
+            const gd = getGameDate();
+            const startYear = (gd.month >= 8) ? gd.year : gd.year - 1;
+            const seasonStartAbs = new Date(startYear, 7, 15).getTime();
+            const todayAbs = new Date(gd.year, gd.month-1, gd.day).getTime();
+            return todayAbs > seasonStartAbs; // بعد بداية الموسم بيوم واحد على الأقل
+        }
+        function logSettingChange(label, from, to) {
+            try {
+                let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+                inbox.unshift({ id: Date.now(), sender:'إدارة النظام', text:`⚙️ تغيير إعداد أثناء الموسم: ${label} من "${from}" إلى "${to}"`, time:new Date().toLocaleTimeString('en-US',{hour12:false}), read:false, category:'system' });
+                localStorage.setItem('gameInbox', JSON.stringify(inbox));
+            } catch(e) {}
+        }
+        function setBoardDifficulty(key) {
+            const prev = localStorage.getItem('boardDifficulty') || 'normal';
+            if (prev !== key && localStorage.getItem('boardDifficultyEverSet') === '1' && isSeasonUnderway()) {
+                const labels = { lenient:'متساهل', normal:'عادي', strict:'صارم' };
+                if (!confirm(`أنت توشك على تغيير صرامة المجلس في منتصف الموسم الحالي (من "${labels[prev]}" إلى "${labels[key]}"). هذا خيار غير واقعي عادةً في محاكيات الإدارة الحقيقية، وسيُسجَّل هذا التغيير في سجل ناديك. هل تريد المتابعة فعلاً؟`)) return;
+                logSettingChange('صرامة مجلس الإدارة', labels[prev], labels[key]);
+            }
+            localStorage.setItem('boardDifficultyEverSet', '1');
+            localStorage.setItem('boardDifficulty', key);
+            renderBoardDifficulty();
+            showToast('<i class="fas fa-circle-check"></i> تم تحديث صرامة المجلس فعلياً');
+        }
+
+        // ============================================================
+        // صعوبة اللعبة الحقيقية — تقرأها match_center.html (قوة الخصم) و transfers.html (نجاح المفاوضات) مباشرة
+        // ============================================================
+        const GAME_DIFF_LABELS = {
+            easy: { ar:'مساعد', en:'Assisted', fr:'Assisté', es:'Asistido', de:'Assistiert', pt:'Assistido', tr:'Yardımlı' },
+            normal: { ar:'واقعي', en:'Realistic', fr:'Réaliste', es:'Realista', de:'Realistisch', pt:'Realista', tr:'Gerçekçi' },
+            hard: { ar:'محاكاة كاملة', en:'Full Simulation', fr:'Simulation complète', es:'Simulación completa', de:'Vollsimulation', pt:'Simulação completa', tr:'Tam Simülasyon' },
+        };
+        const GAME_DIFF_OPTIONS = [
+            { key:'easy', get label(){ return GAME_DIFF_LABELS.easy[getLang()]; }, icon:'fa-hand-holding-heart', color:'var(--green)' },
+            { key:'normal', get label(){ return GAME_DIFF_LABELS.normal[getLang()]; }, icon:'fa-scale-balanced', color:'var(--gold)' },
+            { key:'hard', get label(){ return GAME_DIFF_LABELS.hard[getLang()]; }, icon:'fa-chess-king', color:'var(--red)' },
+        ];
+        function renderDifficultyGrid() {
+            const active = localStorage.getItem('gameDifficulty') || 'normal';
+            document.getElementById('difficultyGrid').innerHTML = GAME_DIFF_OPTIONS.map(o => `
+                <div class="lang-chip ${o.key===active?'active':''}" style="flex-direction:column; text-align:center; gap:4px;" onclick="setGameDifficulty('${o.key}')">
+                    <i class="fas ${o.icon}" style="color:${o.color}; font-size:16px;"></i>
+                    <div class="lname">${o.label}</div>
+                </div>
+            `).join('');
+        }
+        function setGameDifficulty(key) {
+            const prev = localStorage.getItem('gameDifficulty') || 'normal';
+            if (prev !== key && localStorage.getItem('gameDifficultyEverSet') === '1' && isSeasonUnderway()) {
+                const labels = { easy:'مساعد', normal:'واقعي', hard:'محاكاة كاملة' };
+                if (!confirm(`أنت توشك على تغيير نمط المحاكاة في منتصف الموسم الحالي (من "${labels[prev]}" إلى "${labels[key]}"). هذا التغيير سيُسجَّل في سجل ناديك. هل تريد المتابعة فعلاً؟`)) return;
+                logSettingChange('نمط المحاكاة', labels[prev], labels[key]);
+            }
+            localStorage.setItem('gameDifficultyEverSet', '1');
+            localStorage.setItem('gameDifficulty', key);
+            renderDifficultyGrid();
+            showToast('<i class="fas fa-circle-check"></i> تم تحديث نمط المحاكاة فعلياً');
+        }
+
+        // ============================================================
+        // سرعة محاكاة المباراة الحقيقية — تقرأها match_center.html مباشرة عند تحديد الفاصل الزمني الفعلي للدقائق
+        // ============================================================
+        const SPEED_LABELS = {
+            slow: { ar:'بطيء', en:'Slow', fr:'Lent', es:'Lento', de:'Langsam', pt:'Lento', tr:'Yavaş' },
+            normal: { ar:'عادي', en:'Normal', fr:'Normal', es:'Normal', de:'Normal', pt:'Normal', tr:'Normal' },
+            fast: { ar:'سريع', en:'Fast', fr:'Rapide', es:'Rápido', de:'Schnell', pt:'Rápido', tr:'Hızlı' },
+        };
+        const SPEED_OPTIONS = [
+            { key:'slow', get label(){ return SPEED_LABELS.slow[getLang()]; }, icon:'fa-turtle', color:'var(--blue, #3b82f6)' },
+            { key:'normal', get label(){ return SPEED_LABELS.normal[getLang()]; }, icon:'fa-person-running', color:'var(--gold)' },
+            { key:'fast', get label(){ return SPEED_LABELS.fast[getLang()]; }, icon:'fa-bolt', color:'var(--red)' },
+        ];
+        function renderSpeedGrid() {
+            const active = localStorage.getItem('simulationSpeed') || 'normal';
+            document.getElementById('speedGrid').innerHTML = SPEED_OPTIONS.map(o => `
+                <div class="lang-chip ${o.key===active?'active':''}" style="flex-direction:column; text-align:center; gap:4px;" onclick="setSimSpeed('${o.key}')">
+                    <i class="fas ${o.icon}" style="color:${o.color}; font-size:16px;"></i>
+                    <div class="lname">${o.label}</div>
+                </div>
+            `).join('');
+        }
+        function setSimSpeed(key) {
+            localStorage.setItem('simulationSpeed', key);
+            renderSpeedGrid();
+            showToast('<i class="fas fa-circle-check"></i> تم تحديث سرعة المحاكاة فعلياً');
+        }
+
+        // ============================================================
+        // إدارة بيانات حقيقية — تصدير/استيراد/مسح فعلي لكل بيانات الحفظ الحقيقية في المتصفح
+        // ============================================================
+        const APP_VERSION = '1.0.0';
+        const SAVE_SCHEMA_VERSION = 1;
+        function exportSave() {
+            const data = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                data[key] = localStorage.getItem(key);
+            }
+            // غلاف بيانات وصفية حقيقي (نسخة المخطط، وقت الإنشاء، إصدار التطبيق) — خطوة أولى نحو نظام حفظ احترافي قابل للترقية مستقبلاً بدل بيانات خام غير مُوصَّفة
+            const payload = { save_version: SAVE_SCHEMA_VERSION, app_version: APP_VERSION, created_at: new Date().toISOString(), data };
+            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `fmw_save_${Date.now()}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('<i class="fas fa-circle-check"></i> تم تصدير الحفظ بنجاح');
+        }
+        function importSave(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // 1) تحقّق حقيقي من صحة الملف قبل أي تغيير فعلي — لا نلمس بياناتك الحالية إن كان الملف غير سليم
+                let parsed;
+                try { parsed = JSON.parse(e.target.result); }
+                catch(err) { showToast('<i class="fas fa-triangle-exclamation"></i> الملف ليس JSON صالحاً — لم يُلمَس حفظك الحالي'); event.target.value=''; return; }
+
+                const isWrapped = parsed && typeof parsed === 'object' && parsed.data && parsed.save_version;
+                const data = isWrapped ? parsed.data : parsed;
+                if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
+                    showToast('<i class="fas fa-triangle-exclamation"></i> بنية الملف غير متوافقة — لم يُلمَس حفظك الحالي'); event.target.value=''; return;
+                }
+                // 2) تحقّق من الإصدار إن وُجد — تحذير لا حظر، لأننا لا نملك ترقية Migration حقيقية بعد
+                if (isWrapped && parsed.save_version > SAVE_SCHEMA_VERSION) {
+                    if (!confirm('هذا الملف من إصدار حفظ أحدث من إصدار التطبيق الحالي، وقد لا يعمل بشكل صحيح بالكامل. المتابعة على مسؤوليتك؟')) { event.target.value=''; return; }
+                }
+                if (!confirm('سيتم استبدال كل بيانات لعبتك الحالية بالكامل ببيانات الملف المستورَد (سنأخذ نسخة احتياطية تلقائية من حفظك الحالي أولاً). متابعة؟')) { event.target.value=''; return; }
+
+                // 3) نسخة احتياطية تلقائية حقيقية من الحفظ الحالي قبل أي مسح — استعادة حقيقية ممكنة إن حدث خطأ
+                try {
+                    const backup = {};
+                    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); backup[k] = localStorage.getItem(k); }
+                    sessionStorage.setItem('fmw_pre_import_backup', JSON.stringify(backup));
+                } catch(err) {}
+
+                try {
+                    localStorage.clear();
+                    for (const key in data) localStorage.setItem(key, data[key]);
+                    showToast('<i class="fas fa-circle-check"></i> تم الاستيراد بنجاح — جارٍ إعادة التحميل...');
+                    setTimeout(() => location.reload(), 1200);
+                } catch(err) {
+                    // 4) استعادة تلقائية حقيقية عند فشل الاستيراد فعلياً
+                    try {
+                        const backup = JSON.parse(sessionStorage.getItem('fmw_pre_import_backup') || '{}');
+                        localStorage.clear();
+                        for (const key in backup) localStorage.setItem(key, backup[key]);
+                    } catch(e2) {}
+                    showToast('<i class="fas fa-triangle-exclamation"></i> فشل الاستيراد — تمت استعادة حفظك السابق تلقائياً');
+                }
+            };
+            reader.readAsText(file);
+        }
+        function resetGame() {
+            if (!confirm('سيتم مسح كل بيانات لعبتك الحالية نهائياً بلا رجعة. هل أنت متأكد؟')) return;
+            if (!confirm('تأكيد أخير: كل تقدمك سيُفقَد فعلياً. متابعة؟')) return;
+            localStorage.clear();
+            location.href = 'choose_club.html';
+        }
+        function renderStorageSize() {
+            let total = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                total += (localStorage.getItem(key)||'').length + key.length;
+            }
+            document.getElementById('aboutStorage').innerText = `حجم بيانات الحفظ: ${(total/1024).toFixed(1)} KB`;
+            document.getElementById('aboutVersion').innerText = APP_VERSION;
+        }
+
+        window.onload = function() {
+            applyTheme();
+            renderThemeGrid();
+            renderLangGrid();
+            applyLanguage();
+            loadPrefs();
+            renderStorageSize();
+        };
+    </script>
+</body>
+</html>

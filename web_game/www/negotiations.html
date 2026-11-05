@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <script>
+        // نفس آلية تطبيق المظهر الفوري المستخدمة عبر بقية اللعبة — يمنع وميض المظهر الخاطئ عند التحميل
+        (function() { const t = localStorage.getItem('appTheme'); if (t === 'light') document.documentElement.setAttribute('data-theme','light'); })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>المفاوضات والاجتماعات | Football Manager World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg:#090f1d; --card:#111a2e; --border:#1e293b; --text:#f1f5f9; --muted:#94a3b8;
+            --gold:#c5a059; --green:#10b981; --red:#ef4444;
+        }
+        html[data-theme="light"] {
+            --bg: #f4f5f9;
+            --card: #ffffff;
+            --border: #e2e5ec;
+            --text: #151a24;
+            --muted: #6b7385;
+            --gold: #8a6b28;
+            --green: #16a34a;
+            --red: #dc2626;
+        }
+        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, sans-serif; user-select:none; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); padding:12px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; background:var(--card); padding:10px 12px; border-radius:12px; border:1px solid var(--border); gap:12px; }
+        .back-btn { background:var(--border); color:white; border:none; padding:8px 12px; font-size:12px; border-radius:8px; text-decoration:none; }
+        .page-title { font-size:14px; font-weight:700; color:var(--gold); }
+        .header-spacer { width:34px; }
+
+        .section-title { font-size:12px; color:var(--gold); font-weight:700; padding:12px 14px 6px 14px; display:flex; align-items:center; gap:6px; }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+
+        .meeting-row { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--border); }
+        .meeting-row:last-child { border-bottom:none; }
+        .meeting-row img.crest { width:32px; height:32px; object-fit:contain; border-radius:6px; background:rgba(255,255,255,0.04); }
+        .meeting-row .icon-box { width:32px; height:32px; border-radius:6px; background:rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+        .meeting-row .info { flex:1; min-width:0; }
+        .meeting-row .pname { font-size:13px; font-weight:700; }
+        .meeting-row .psub { font-size:11px; color:var(--muted); margin-top:3px; }
+        .status-chip { font-size:10px; padding:3px 8px; border-radius:999px; font-weight:700; flex:0 0 auto; }
+        .status-chip.club_fee { background:rgba(197,160,89,0.15); color:var(--gold); }
+        .status-chip.personal_terms { background:rgba(59,130,246,0.15); color:#60a5fa; }
+        .action-btn { background:var(--gold); color:var(--bg); border:none; padding:7px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; flex:0 0 auto; }
+
+        .empty-state { text-align:center; padding:30px 16px; color:var(--muted); font-size:13px; line-height:1.7; }
+        .empty-state i { display:block; font-size:24px; margin-bottom:8px; color:var(--border); }
+
+        /* لوحة التفاوض المفتوحة */
+        .neg-panel { display:none; padding:14px; border-top:1px dashed var(--border); background:rgba(255,255,255,0.01); }
+        .neg-panel.open { display:block; }
+        .stat-mini-row { display:flex; gap:8px; margin-bottom:10px; }
+        .stat-mini { flex:1; background:var(--bg); border-radius:8px; padding:8px; text-align:center; }
+        .stat-mini .lbl { font-size:9.5px; color:var(--muted); }
+        .stat-mini .val { font-size:13px; font-weight:700; color:var(--gold); margin-top:2px; }
+
+        .wage-chips { display:flex; gap:6px; margin-bottom:10px; }
+        .wage-chip { flex:1; text-align:center; padding:8px 4px; border-radius:8px; background:var(--bg); border:1px solid var(--border); font-size:11px; cursor:pointer; }
+        .wage-chip.selected { background:var(--gold); color:var(--bg); border-color:var(--gold); font-weight:700; }
+        .detail-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0; font-size:11.5px; }
+        .detail-row input, .detail-row select { width:90px; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:6px 8px; border-radius:6px; font-size:12px; text-align:center; }
+
+        .chance-row { display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; }
+        .chance-track { height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:8px; }
+        .chance-fill { height:100%; background:linear-gradient(90deg, var(--red), var(--gold), var(--green)); }
+        .warn-note { font-size:10.5px; color:#f59e0b; line-height:1.6; margin-bottom:8px; min-height:14px; }
+        .confirm-btn { width:100%; background:var(--green); color:#06251c; border:none; padding:10px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer; }
+        .confirm-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+        .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--card); border:1px solid var(--gold); color:var(--text); padding:10px 16px; border-radius:10px; font-size:12px; transition:transform .3s; z-index:999; max-width:90%; text-align:center; }
+        .toast.show { transform:translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="transfers.html" class="back-btn"><i class="fas fa-arrow-right"></i></a>
+        <div class="page-title">المفاوضات والاجتماعات</div>
+        <div class="header-spacer"></div>
+    </div>
+
+    <div class="card">
+        <div class="section-title"><i class="fas fa-handshake"></i> اجتماعات بانتظارك (تفاوض شخصي على الراتب)</div>
+        <div id="actionableContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="section-title"><i class="fas fa-comments-dollar"></i> عروض مضادة تحتاج ردّك</div>
+        <div id="counterOffersContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="section-title"><i class="fas fa-hourglass-half"></i> مفاوضات جارية مع أندية أخرى</div>
+        <div id="pendingContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="section-title"><i class="fas fa-inbox"></i> عروض شراء واردة على لاعبيك</div>
+        <div id="incomingContainer"></div>
+    </div>
+
+    <div class="card">
+        <div class="section-title"><i class="fas fa-clock-rotate-left"></i> سجل المفاوضات الأخيرة</div>
+        <div id="historyContainer"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const activeClub = localStorage.getItem('presidentialClub') || '';
+        const realLogosPath = 'teams_logos/';
+        function getTeamLogoUrl(name) { return `${realLogosPath}${(name||'').trim()}.png`; }
+        function fmtMoney(m) { return (m/1000000).toFixed(2) + 'M €'; }
+
+        function getGameDate() {
+            return {
+                day: parseInt(localStorage.getItem('game_day')) || 1,
+                month: parseInt(localStorage.getItem('game_month')) || 6,
+                year: parseInt(localStorage.getItem('game_year')) || 2026
+            };
+        }
+        function dateSortKey(d) { return d.year*10000 + d.month*100 + d.day; }
+        function addDaysToGameDate(base, days) {
+            let d = { ...base };
+            for (let i=0;i<days;i++) {
+                d.day++;
+                let dim = 30;
+                if ([1,3,5,7,8,10,12].includes(d.month)) dim = 31;
+                else if (d.month === 2) dim = (d.year % 4 === 0) ? 29 : 28;
+                if (d.day > dim) { d.day = 1; d.month++; }
+                if (d.month > 12) { d.month = 1; d.year++; }
+            }
+            return d;
+        }
+        function daysBetween(aSort, bSort) {
+            // تقريب مبسّط لعدد الأيام (كافٍ لعرض توضيحي، وليس حساباً تقويمياً دقيقاً عبر السنوات)
+            return Math.max(0, Math.round((bSort - aSort)));
+        }
+
+        function getClubBudget() { return parseFloat(localStorage.getItem('clubBudget')) || 0; }
+        function setClubBudget(v) { localStorage.setItem('clubBudget', v.toFixed(3)); }
+        function getClubReputation() { return parseFloat(localStorage.getItem('clubReputation')) || 50; }
+        function getClubTrophyCount() { try { return (JSON.parse(localStorage.getItem('club_trophies'))||[]).length; } catch(e) { return 0; } }
+        function getFederationRules() {
+            try { return JSON.parse(localStorage.getItem('federationRules')) || { tier:1, wageCapPct:70 }; }
+            catch(e) { return { tier:1, wageCapPct:70 }; }
+        }
+        function getClubTierWeight() { const t = getFederationRules().tier; return t===1?20:t===2?5:-10; }
+        function getClubPrestigeScore() { return getClubReputation()*0.55 + Math.min(getClubTrophyCount()*4,30) + getClubTierWeight(); }
+        function estimateWeeklyWageFromRating(rating) { return Math.round(1000 * Math.pow(1.075, rating - 45)); }
+        function getTotalWeeklyWage() {
+            const signed = JSON.parse(localStorage.getItem('signed_players_by_club')||'{}')[activeClub] || [];
+            const playersWage = signed.reduce((s,p)=>s+(parseFloat(p.weekly_wage)||0),0);
+            const staff = (JSON.parse(localStorage.getItem('staff_by_club')||'{}')[activeClub]) || [];
+            const coach = staff.find(s => s.role === 'head_coach');
+            let coachWage = 0;
+            if (coach) {
+                const overall = (coach.tactical + coach.man_management + coach.motivation + coach.judgement_ability + coach.youth_development) / 5;
+                coachWage = Math.round(1000 * Math.pow(1.06, overall));
+            }
+            return playersWage + coachWage;
+        }
+        function projectedFfpPct(extraWeeklyWage) {
+            const budget = getClubBudget();
+            const annualWage = (getTotalWeeklyWage() + extraWeeklyWage) * 52 / 1000000;
+            return budget > 0 ? Math.round(annualWage / budget * 100) : 999;
+        }
+
+        function getPendingNegotiations() {
+            const raw = JSON.parse(localStorage.getItem('club_pending_negotiations')) || [];
+            const seen = new Set(); const clean = [];
+            raw.forEach(n => {
+                const key = (n.tmid ? ('t_'+n.tmid) : ('id_'+n.id)) + '_' + (n.stage||'');
+                if (!seen.has(key)) { seen.add(key); clean.push(n); }
+            });
+            if (clean.length !== raw.length) localStorage.setItem('club_pending_negotiations', JSON.stringify(clean));
+            return clean;
+        }
+        function setPendingNegotiations(l) { localStorage.setItem('club_pending_negotiations', JSON.stringify(l)); }
+        function getPersonalTermsQueue() {
+            const raw = JSON.parse(localStorage.getItem('club_personal_terms_queue')) || [];
+            // تنظيف تلقائي: إزالة أي تكرار لنفس اللاعب/المدرب فعلياً (بمعرّفه الحقيقي tmid)، لا بمعرّف الصف فقط
+            const seen = new Set(); const clean = [];
+            raw.forEach(d => {
+                const key = d.tmid ? ('t_' + d.tmid) : ('id_' + d.id);
+                if (!seen.has(key)) { seen.add(key); clean.push(d); }
+            });
+            if (clean.length !== raw.length) localStorage.setItem('club_personal_terms_queue', JSON.stringify(clean));
+            return clean;
+        }
+        function setPersonalTermsQueue(l) { localStorage.setItem('club_personal_terms_queue', JSON.stringify(l)); }
+        function getPending() { return JSON.parse(localStorage.getItem('pending_registration_by_club')||'{}')[activeClub] || []; }
+        function setPending(list) {
+            const all = JSON.parse(localStorage.getItem('pending_registration_by_club')) || {};
+            all[activeClub] = list;
+            localStorage.setItem('pending_registration_by_club', JSON.stringify(all));
+        }
+        function departmentForRole(role) {
+            const map = { head_coach:'sporting_director', assistant:'sporting_director', gk_coach:'sporting_director',
+                fitness_coach:'fitness', youth_coach:'academy', academy_director:'academy',
+                analyst:'analyst', head_analyst:'analyst', scout:'scouting', chief_scout:'scouting',
+                sporting_director:'sporting_director', doctor:'medical', physio:'medical', admin:'administration' };
+            return map[role] || 'sporting_director';
+        }
+        function finalizeCoachSigning(n) {
+            const nameParts = n.name.split(' ');
+            const newStaff = {
+                id: Date.now(), name: n.name, firstName: nameParts[0]||n.name, lastName: nameParts.slice(1).join(' ')||'',
+                nationality: n.nationality, department: departmentForRole(n.roleCategory), role: n.roleCategory,
+                age: Math.round(n.age)||45, experience: Math.max(1, Math.round((n.age||45)-28)),
+                contract_end: `${new Date().getFullYear()+3}-06-30`,
+                tactical: n.tactical, man_management: n.motivation, motivation: n.motivation, judgement_ability: n.defense,
+                youth_development: n.youth, performance_analysis: n.tactical, opposition_analysis: n.tactical,
+                regional_knowledge: n.defense, negotiation: n.motivation, coaching_attack: n.attack, formation: n.formation || '4-3-3', tacticalStyleRaw: n.style || '', is_active:true
+            };
+            const all = JSON.parse(localStorage.getItem('staff_by_club')) || {};
+            let staff = all[activeClub] || [];
+            if (n.roleCategory === 'head_coach') staff = staff.filter(s => s.role !== 'head_coach');
+            staff.push(newStaff);
+            all[activeClub] = staff;
+            localStorage.setItem('staff_by_club', JSON.stringify(all));
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2600);
+        }
+
+        function addMessageToSystem(sender, text, category) {
+            let inbox = JSON.parse(localStorage.getItem('gameInbox')) || [];
+            inbox.unshift({ id: Date.now(), sender, text, time: new Date().toLocaleTimeString('en-US', { hour12:false }), read:false, category: category || 'transfer' });
+            localStorage.setItem('gameInbox', JSON.stringify(inbox));
+            localStorage.setItem('hasNewMessage', 'true');
+        }
+
+        // ============================================================
+        // حسم أي مفاوضة رسوم (نادٍ-لنادٍ) وصل موعد ردّها فعلياً — نفس منطق transfers.html
+        // ============================================================
+        function resolveClubFeeNegotiations() {
+            const negotiations = getPendingNegotiations();
+            if (!negotiations.length) return;
+            const todaySort = dateSortKey(getGameDate());
+            const stillPending = [];
+            negotiations.forEach(n => {
+                if (n.stage !== 'club_fee' || todaySort < n.resolveDateSort) { stillPending.push(n); return; }
+                const roll = Math.random() * 100;
+                const isCoach = n.dealType === 'coach';
+                if (roll < n.chance) {
+                    const queue = getPersonalTermsQueue();
+                    if (!queue.some(x => x.id === n.id)) {
+                        queue.push(n);
+                        setPersonalTermsQueue(queue);
+                    }
+                    addMessageToSystem('مدير الانتقالات', `✅ وافق ${n.club || 'الطرف البائع'} على التفريط في ${n.name} بعد ${n.negotiationDays} يوم! انتقل الملف هنا لإتمام التفاوض الشخصي على الراتب.`, 'transfer');
+                    logNegotiationHistory({ stage:'club_fee', outcome:'success', dealType:n.dealType||'player', name:n.name, club:n.club, amount:n.offer });
+                } else if (roll < n.chance + 25 && !isCoach) {
+                    const demandedFee = Math.round(n.offer * (1.12 + (seedHash(n.name+'demand') % 15)/100));
+                    const counters = getCounterOffers();
+                    counters.push({ id: n.id, type:'higher_fee', stage:'club_fee', dealType:n.dealType||'player', name:n.name, club:n.club,
+                        position:n.position, nationality:n.nationality, age:n.age, foot:n.foot, height:n.height, jersey:n.jersey,
+                        market_value:n.market_value, market_value_short:n.market_value_short, rating:n.rating,
+                        originalOffer:n.offer, demandedOffer: demandedFee, sellOnPct:n.sellOnPct, installments:n.installments||1 });
+                    setCounterOffers(counters);
+                    addMessageToSystem('مدير الانتقالات', `📩 لم يرفض ${n.club || 'النادي البائع'} صفقة ${n.name}، لكنه يطلب تحسين العرض إلى ${fmtMoney(demandedFee)}. راجع "عروض مضادة" أعلاه.`, 'transfer');
+                    logNegotiationHistory({ stage:'club_fee', outcome:'counter', dealType:n.dealType||'player', name:n.name, club:n.club, amount:n.offer });
+                } else {
+                    setClubBudget(getClubBudget() + reservedAmount(n) / 1000000);
+                    addMessageToSystem('مدير الانتقالات', `❌ رفض ${n.club || 'الطرف الآخر'} إتمام صفقة ${n.name} بعد ${n.negotiationDays} يوم تفاوض. تم إرجاع المبلغ المحجوز.`, 'transfer');
+                    logNegotiationHistory({ stage:'club_fee', outcome:'fail', dealType:n.dealType||'player', name:n.name, club:n.club, amount:n.offer });
+                }
+            });
+            setPendingNegotiations(stillPending);
+        }
+        // المبلغ المحجوز فعلياً هو الدفعة الأولى فقط عند التقسيط، وليس كامل العرض — نفس منطق transfers.html بالضبط
+        function reservedAmount(n) { return (n.offer || 0) / (n.installments || 1); }
+        function seedHash(str) { let h=0; const s=String(str); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+
+        // ============================================================
+        // عروض مضادة: بدل "قبول/رفض" فقط، يطلب الطرف الآخر شرطاً إضافياً (رسوم أعلى، راتب أعلى، مكافأة توقيع)
+        // ============================================================
+        function getCounterOffers() { return JSON.parse(localStorage.getItem('club_counter_offers')) || []; }
+        function setCounterOffers(l) { localStorage.setItem('club_counter_offers', JSON.stringify(l)); }
+
+        const COUNTER_LABELS = {
+            higher_fee: c => `يطلب النادي البائع رفع رسم الانتقال إلى ${fmtMoney(c.demandedOffer)} بدل ${fmtMoney(c.originalOffer)}`,
+            higher_wage: c => `يطلب راتباً أسبوعياً أعلى: ${(c.demandedWage/1000).toFixed(1)}K € بدل العرض السابق`,
+            signing_bonus: c => `مستعد للتوقيع فوراً مقابل مكافأة توقيع: ${(c.demandedBonus/1000000).toFixed(2)}M €`
+        };
+
+        function renderCounterOffers() {
+            const el = document.getElementById('counterOffersContainer');
+            const counters = getCounterOffers();
+            if (!counters.length) { el.innerHTML = `<div class="empty-state" style="padding:16px;"><i class="fas fa-comment-slash"></i>لا توجد عروض مضادة حالياً.</div>`; return; }
+            el.innerHTML = counters.map(c => `
+                <div class="meeting-row" style="border-color:var(--gold);">
+                    <img class="crest" src="${getTeamLogoUrl(c.club)}" onerror="this.style.display='none';">
+                    <div class="info">
+                        <div class="pname">${c.name}</div>
+                        <div class="psub">${COUNTER_LABELS[c.type](c)}</div>
+                    </div>
+                    <button class="action-btn" style="background:var(--green); color:#06251c;" onclick="respondCounterOffer('${c.id}_${c.type}', true)">قبول الشرط</button>
+                    <button class="action-btn" style="background:rgba(239,68,68,0.15); color:var(--red); border:1px solid var(--red); margin-right:4px;" onclick="respondCounterOffer('${c.id}_${c.type}', false)">رفض والانسحاب</button>
+                </div>
+            `).join('');
+        }
+
+        function respondCounterOffer(key, accept) {
+            const counters = getCounterOffers();
+            const c = counters.find(x => `${x.id}_${x.type}` === key);
+            if (!c) return;
+            setCounterOffers(counters.filter(x => `${x.id}_${x.type}` !== key));
+
+            if (!accept) {
+                if (c.stage === 'club_fee') setClubBudget(getClubBudget() + (c.originalOffer / (c.installments || 1)) / 1000000);
+                else if (c.stage === 'personal_terms' && c.offer) setClubBudget(getClubBudget() + reservedAmount(c) / 1000000);
+                addMessageToSystem('مدير الانتقالات', `تم الانسحاب من صفقة ${c.name} بعد رفض الشرط المطلوب.`, 'transfer');
+                logNegotiationHistory({ stage: c.stage, outcome: 'withdrawn', dealType: c.dealType, name: c.name, club: c.club });
+                showToast(`تم الانسحاب من صفقة ${c.name}.`);
+                renderCounterOffers();
+                return;
+            }
+
+            const today = getGameDate();
+            const resolveDate = addDaysToGameDate(today, 1 + (Math.abs(c.name.length) % 3)); // رد سريع نسبياً بعد قبول الشرط المطلوب
+            const negotiations = getPendingNegotiations();
+
+            if (c.type === 'higher_fee') {
+                const installments = c.installments || 1;
+                const extra = (c.demandedOffer - c.originalOffer) / installments / 1000000;
+                if (extra > getClubBudget()) { showToast('الميزانية لا تكفي لتغطية المبلغ الإضافي المطلوب!'); setCounterOffers([...getCounterOffers(), c]); return; }
+                setClubBudget(getClubBudget() - extra);
+                negotiations.push({ id: c.id, stage:'club_fee', dealType:c.dealType, tmid:c.tmid, name:c.name, club:c.club, position:c.position,
+                    nationality:c.nationality, age:c.age, foot:c.foot, height:c.height, jersey:c.jersey, market_value:c.market_value,
+                    market_value_short:c.market_value_short, rating:c.rating, offer:c.demandedOffer, sellOnPct:c.sellOnPct, installments, chance: 92,
+                    submittedDateSort: dateSortKey(today), resolveDateSort: dateSortKey(resolveDate), negotiationDays: 2 });
+                addMessageToSystem('مدير الانتقالات', `تمت الموافقة على الرسم الجديد (${fmtMoney(c.demandedOffer)}) لصفقة ${c.name}. بانتظار التأكيد النهائي.`, 'transfer');
+            } else if (c.type === 'higher_wage') {
+                negotiations.push({ id: c.id, stage:'personal_terms', dealType:c.dealType, tmid:c.tmid, name:c.name, club:c.club, position:c.position,
+                    nationality:c.nationality, age:c.age, foot:c.foot, height:c.height, jersey:c.jersey, market_value:c.market_value,
+                    market_value_short:c.market_value_short, rating:c.rating, roleCategory:c.roleCategory, tactical:c.tactical, motivation:c.motivation,
+                    defense:c.defense, youth:c.youth, attack:c.attack, jobTitle:c.jobTitle, offer:c.offer, wageOffer:c.demandedWage, chance: 92,
+                    submittedDateSort: dateSortKey(today), resolveDateSort: dateSortKey(resolveDate), negotiationDays: 1 });
+                addMessageToSystem('مدير الانتقالات', `تمت الموافقة على الراتب الجديد (${(c.demandedWage/1000).toFixed(1)}K €/أسبوع) لـ${c.name}. بانتظار التأكيد النهائي.`, 'transfer');
+            } else if (c.type === 'signing_bonus') {
+                const bonusM = c.demandedBonus / 1000000;
+                if (bonusM > getClubBudget()) { showToast('الميزانية لا تكفي لدفع مكافأة التوقيع المطلوبة!'); setCounterOffers([...getCounterOffers(), c]); return; }
+                setClubBudget(getClubBudget() - bonusM);
+                const priorPurchases = parseFloat(localStorage.getItem('transferPurchases')) || 0;
+                localStorage.setItem('transferPurchases', (priorPurchases + bonusM).toFixed(3));
+                if (c.dealType === 'coach') {
+                    finalizeCoachSigning({ ...c, wageOffer: c.wageOffer || 0 });
+                    addMessageToSystem('مدير الإدارة الفنية', `🤝 دُفعت مكافأة التوقيع (${bonusM.toFixed(2)}M €) وانضم ${c.name} رسمياً!`, 'transfer');
+                    showToast(`✅ انضم ${c.name} رسمياً!`); setTimeout(()=>{ window.location.href='staff.html'; }, 1400);
+                } else {
+                    const pending = getPending();
+                    pending.push({ tmid:c.tmid, player_name:c.name, main_position:c.position, nationality:c.nationality, age:c.age, foot:c.foot,
+                        height:c.height, jersey:c.jersey, market_value_eur:c.market_value, market_value_cur_short:c.market_value_short,
+                        rating:c.rating, weekly_wage: Math.round(c.wageOffer || 0), contract_until:null, club: activeClub });
+                    setPending(pending);
+                    addMessageToSystem('مدير الانتقالات', `🤝 دُفعت مكافأة التوقيع (${bonusM.toFixed(2)}M €) واتفق ${c.name} رسمياً! الملف بانتظار التسجيل الرسمي.`, 'transfer');
+                    showToast(`✅ اكتملت الصفقة! جارٍ التوجه لصفحة التسجيل...`); setTimeout(()=>{ window.location.href='registration.html'; }, 1400);
+                }
+                logNegotiationHistory({ stage:'personal_terms', outcome:'success', dealType:c.dealType, name:c.name, club:c.club, wage:c.wageOffer||0 });
+                setPendingNegotiations(negotiations);
+                renderCounterOffers(); renderPendingSection();
+                return;
+            }
+            setPendingNegotiations(negotiations);
+            showToast(`تم قبول الشرط — الرد النهائي خلال أيام قليلة.`);
+            renderCounterOffers(); renderPendingSection();
+        }
+
+        function renderPendingSection() {
+            resolveClubFeeNegotiations();
+            resolveMedicalExams();
+            const el = document.getElementById('pendingContainer');
+            const clubFeeOnes = getPendingNegotiations().filter(n => n.stage === 'club_fee');
+            const medicals = JSON.parse(localStorage.getItem('club_medical_pending')) || [];
+
+            let medicalHTML = '';
+            if (medicals.length) {
+                medicalHTML = `<div style="font-size:11px;color:var(--gold);font-weight:700;padding:8px 4px 4px 4px;">🩺 الفحص الطبي (الخطوة الأخيرة)</div>` +
+                    medicals.map(m => `
+                        <div class="meeting-row">
+                            <img class="crest" src="${getTeamLogoUrl(m.club)}" onerror="this.style.display='none';">
+                            <div class="info"><div class="pname">${m.name}</div><div class="psub">نتيجة الفحص خلال يوم واحد قبل التسجيل الرسمي</div></div>
+                        </div>`).join('');
+            }
+
+            if (!clubFeeOnes.length) {
+                el.innerHTML = medicalHTML || `<div class="empty-state"><i class="fas fa-check-circle"></i>لا توجد مفاوضات رسوم جارية حالياً مع أندية أخرى.</div>`;
+                return;
+            }
+            const todaySort = dateSortKey(getGameDate());
+            el.innerHTML = clubFeeOnes.map(n => `
+                <div class="meeting-row">
+                    <img class="crest" src="${getTeamLogoUrl(n.club)}" onerror="this.style.display='none';">
+                    <div class="info">
+                        <div class="pname">${n.name}</div>
+                        <div class="psub">مع ${n.club || '-'} · ${n.dealType === 'coach' ? 'تعويض تعاقدي' : 'رسم انتقال'} ${fmtMoney(n.offer)} · فرصة ${n.chance}%</div>
+                    </div>
+                    <span class="status-chip club_fee">جارٍ التفاوض</span>
+                    <button class="action-btn" style="background:rgba(239,68,68,0.15); color:var(--red); border:1px solid var(--red);" onclick="withdrawNegotiation(${n.id})">سحب</button>
+                </div>
+            `).join('') + medicalHTML;
+        }
+
+        function withdrawNegotiation(id) {
+            const list = getPendingNegotiations();
+            const n = list.find(x => x.id === id);
+            if (!n) return;
+            setClubBudget(getClubBudget() + reservedAmount(n) / 1000000);
+            setPendingNegotiations(list.filter(x => x.id !== id));
+            logNegotiationHistory({ stage: n.stage || 'club_fee', outcome: 'withdrawn', dealType: n.dealType || 'player', name: n.name, club: n.club, amount: n.offer });
+            showToast(`تم سحب العرض بشأن ${n.name} واسترجاع المبلغ.`);
+            renderPendingSection();
+            renderHistorySection();
+        }
+
+        // ============================================================
+        // عروض الشراء الواردة على لاعبيك (نفس مفتاح التخزين المستخدم في transfers.html)
+        // ============================================================
+        function getIncomingOffers() { return JSON.parse(localStorage.getItem('club_incoming_offers')) || []; }
+        function setIncomingOffers(l) { localStorage.setItem('club_incoming_offers', JSON.stringify(l)); }
+        function getSigned() { return JSON.parse(localStorage.getItem('signed_players_by_club')||'{}')[activeClub] || []; }
+        function setSigned(list) {
+            const all = JSON.parse(localStorage.getItem('signed_players_by_club')) || {};
+            all[activeClub] = list;
+            localStorage.setItem('signed_players_by_club', JSON.stringify(all));
+        }
+        function getTransferList() { return JSON.parse(localStorage.getItem('club_transfer_list')) || []; }
+        function setTransferList(l) { localStorage.setItem('club_transfer_list', JSON.stringify(l)); }
+
+        function renderIncomingSection() {
+            const el = document.getElementById('incomingContainer');
+            const offers = getIncomingOffers();
+            if (!offers.length) { el.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i>لا توجد عروض شراء واردة حالياً.</div>`; return; }
+            el.innerHTML = offers.map(o => `
+                <div class="meeting-row">
+                    <div class="info">
+                        <div class="pname">${o.player_name}</div>
+                        <div class="psub">عرض من ${o.buyer} · ${fmtMoney(o.amount)}</div>
+                    </div>
+                    <button class="action-btn" style="background:var(--green); color:#06251c;" onclick="respondIncomingOffer(${o.id}, true)">قبول</button>
+                    <button class="action-btn" style="background:rgba(239,68,68,0.15); color:var(--red); border:1px solid var(--red); margin-right:4px;" onclick="respondIncomingOffer(${o.id}, false)">رفض</button>
+                </div>
+            `).join('');
+        }
+
+        function getBoardRetentionPct() {
+            try {
+                const members = JSON.parse(localStorage.getItem('board_members_' + activeClub));
+                if (members && members.length) {
+                    const profitLeaning = members.filter(m => m.personality === 'profit' || m.personality === 'conservative').length / members.length;
+                    return Math.round(12 + profitLeaning * 18);
+                }
+            } catch(e) {}
+            return 15;
+        }
+
+        function respondIncomingOffer(offerId, accept) {
+            const offers = getIncomingOffers();
+            const offer = offers.find(o => o.id === offerId);
+            if (!offer) return;
+            if (accept) {
+                const squad = getSigned();
+                const idx = squad.findIndex(p => String(p.tmid) === String(offer.tmid));
+                if (idx === -1) { showToast('تعذّر إتمام البيع — اللاعب لم يعد في فريقك.'); }
+                else {
+                    squad.splice(idx, 1); setSigned(squad);
+                    const retentionPct = getBoardRetentionPct();
+                    const netToBudget = offer.amount * (1 - retentionPct/100);
+                    setClubBudget(getClubBudget() + netToBudget/1000000);
+                    const priorSales = parseFloat(localStorage.getItem('transferSales'))||0;
+                    localStorage.setItem('transferSales', (priorSales + offer.amount/1000000).toFixed(3));
+                    setTransferList(getTransferList().filter(t => String(t.tmid) !== String(offer.tmid)));
+                    showToast(`✅ تم بيع ${offer.player_name} مقابل ${fmtMoney(offer.amount)}`);
+                    addMessageToSystem('مدير الانتقالات', `تم إتمام صفقة بيع ${offer.player_name} إلى ${offer.buyer} مقابل ${fmtMoney(offer.amount)}. احتفظ المجلس بنسبة ${retentionPct}%.`, 'transfer');
+                    logNegotiationHistory({ stage: 'sale', outcome: 'success', dealType: 'player', name: offer.player_name, club: offer.buyer, amount: offer.amount });
+                }
+            } else {
+                showToast('تم رفض العرض.');
+                logNegotiationHistory({ stage: 'sale', outcome: 'rejected', dealType: 'player', name: offer.player_name, club: offer.buyer, amount: offer.amount });
+            }
+            setIncomingOffers(offers.filter(o => o.id !== offerId));
+            renderIncomingSection();
+        }
+
+        // ============================================================
+        // سجل المفاوضات (نجاح/فشل/سحب/بيع) — لمتابعة واقعية لتاريخ صفقاتك
+        // ============================================================
+        function getNegotiationHistory() { return JSON.parse(localStorage.getItem('club_negotiation_history')) || []; }
+        function logNegotiationHistory(entry) {
+            const h = getNegotiationHistory();
+            h.unshift({ ...entry, when: getGameDate() });
+            localStorage.setItem('club_negotiation_history', JSON.stringify(h.slice(0, 40)));
+        }
+        function renderHistorySection() {
+            const el = document.getElementById('historyContainer');
+            const history = getNegotiationHistory();
+            if (!history.length) { el.innerHTML = `<div class="empty-state"><i class="fas fa-clock-rotate-left"></i>لا يوجد سجل مفاوضات بعد.</div>`; return; }
+            const stageLabel = { club_fee:'رسوم', personal_terms:'راتب', sale:'بيع' };
+            const outcomeLabel = { success:'✅ نجحت', fail:'❌ فشلت', withdrawn:'↩️ سُحبت', rejected:'🚫 رُفضت' };
+            const outcomeColor = { success:'var(--green)', fail:'var(--red)', withdrawn:'var(--muted)', rejected:'var(--red)' };
+            el.innerHTML = history.map(h => {
+                const amount = h.wage ? `${(h.wage/1000).toFixed(1)}K €/أسبوع` : (h.amount ? fmtMoney(h.amount) : '');
+                const d = h.when || {};
+                return `<div class="meeting-row">
+                    <div class="info">
+                        <div class="pname">${h.name} <span style="color:${outcomeColor[h.outcome]||'var(--muted)'}; font-size:11px;">${outcomeLabel[h.outcome]||h.outcome}</span></div>
+                        <div class="psub">${stageLabel[h.stage]||h.stage} ${amount ? '· '+amount : ''} · ${d.day||''}/${d.month||''}/${d.year||''}</div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderActionableSection() {
+            const el = document.getElementById('actionableContainer');
+            const queue = getPersonalTermsQueue();
+            if (!queue.length) {
+                el.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i>لا توجد اجتماعات بانتظارك حالياً. عندما يوافق نادٍ بائع على صفقة، أو حين تتصل بلاعب/مدرب حر، ستظهر هنا لتتفاوض شخصياً على الراتب.</div>`;
+                return;
+            }
+            el.innerHTML = queue.map(d => {
+                const isCoach = d.dealType === 'coach';
+                const rating = d.rating;
+                const fairWage = estimateWeeklyWageFromRating(rating);
+                return `
+                <div>
+                    <div class="meeting-row" style="cursor:pointer;" onclick="togglePanel(${d.id})">
+                        <div class="icon-box"><i class="fas ${isCoach ? 'fa-user-tie' : 'fa-futbol'}" style="color:var(--muted);"></i></div>
+                        <div class="info">
+                            <div class="pname">${d.name}</div>
+                            <div class="psub">${isCoach ? (d.jobTitle||'مدرب') : (d.position||'-')} · تقييم ${rating} · ${d.offer>0 ? 'وافق ناديه على الرحيل' : 'حر تعاقدياً'}</div>
+                        </div>
+                        <span class="status-chip personal_terms">تفاوض الراتب</span>
+                    </div>
+                    <div class="neg-panel" id="panel-${d.id}">
+                        <div class="stat-mini-row">
+                            <div class="stat-mini"><div class="lbl">الراتب العادل</div><div class="val">${(fairWage/1000).toFixed(1)}K €</div></div>
+                            <div class="stat-mini"><div class="lbl">طموحه</div><div class="val">${rating >= 80 ? 'عالٍ جداً' : rating >= 68 ? 'مرتفع' : 'معقول'}</div></div>
+                        </div>
+                        <div class="wage-chips" id="wageChips-${d.id}"></div>
+                        <div class="chance-row" style="gap:8px;">
+                            <span style="white-space:nowrap; font-size:11px;">راتب مخصَّص (K € / أسبوع)</span>
+                            <input type="number" id="customWage-${d.id}" min="0" step="1" value="${Math.round(fairWage/1000)}" oninput="setCustomWage(${d.id})" style="width:90px; background:var(--card); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:6px; font-size:11px; text-align:center;">
+                        </div>
+                        <div class="chance-row" style="gap:8px;">
+                            <span style="white-space:nowrap; font-size:11px;">مدة العقد</span>
+                            <select id="contractYears-${d.id}" onchange="updatePreview(${d.id})" style="background:var(--card); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:6px; font-size:11px;">
+                                <option value="1">سنة</option><option value="2">سنتان</option><option value="3" selected>3 سنوات</option>
+                                <option value="4">4 سنوات</option><option value="5">5 سنوات</option>
+                            </select>
+                        </div>
+                        <div class="chance-row" style="gap:8px;">
+                            <span style="white-space:nowrap; font-size:11px;">مكافأة توقيع (M €)</span>
+                            <input type="number" id="signingBonus-${d.id}" min="0" step="0.1" value="0" oninput="updatePreview(${d.id})" style="width:80px; background:var(--card); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:6px; font-size:11px; text-align:center;">
+                        </div>
+                        <div class="chance-row" style="gap:8px;">
+                            <span style="white-space:nowrap; font-size:11px;">شرط فسخ (M €)</span>
+                            <input type="number" id="releaseClause-${d.id}" min="0" step="1" value="0" oninput="updatePreview(${d.id})" style="width:80px; background:var(--card); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:6px; font-size:11px; text-align:center;">
+                        </div>
+                        <div class="chance-row"><span>فرصة الموافقة الشخصية</span><strong id="chanceLabel-${d.id}">--%</strong></div>
+                        <div class="chance-track"><div class="chance-fill" id="chanceBar-${d.id}" style="width:0%;"></div></div>
+                        <div class="chance-row" style="font-size:10px; color:var(--muted);"><span>مدة الرد المتوقَّعة</span><strong id="daysLabel-${d.id}" style="color:var(--gold);">--</strong></div>
+                        <div class="warn-note" id="warnNote-${d.id}"></div>
+                        <button class="confirm-btn" id="confirmBtn-${d.id}" onclick="submitPersonalTerms(${d.id})">عرض هذه الشروط رسمياً</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            queue.forEach(d => { wageMultipliers[d.id] = wageMultipliers[d.id] || 1.0; renderWageChips(d.id); updatePreview(d.id); });
+        }
+
+        let openPanelId = null;
+        const wageMultipliers = {};
+
+        function togglePanel(id) {
+            const wasOpen = openPanelId === id;
+            document.querySelectorAll('.neg-panel').forEach(p => p.classList.remove('open'));
+            openPanelId = wasOpen ? null : id;
+            if (openPanelId) document.getElementById('panel-' + id).classList.add('open');
+        }
+
+        function renderWageChips(id) {
+            const el = document.getElementById('wageChips-' + id);
+            const opts = [ {label:'متحفّظ', mult:0.75}, {label:'عادل', mult:1.0}, {label:'سخي', mult:1.35} ];
+            el.innerHTML = opts.map(o => `<div class="wage-chip ${o.mult === wageMultipliers[id] ? 'selected' : ''}" onclick="setWageMultiplier(${id}, ${o.mult})">${o.label}</div>`).join('');
+        }
+        function setWageMultiplier(id, m) {
+            wageMultipliers[id] = m;
+            const d = getPersonalTermsQueue().find(x => x.id === id);
+            if (d) {
+                const fairWage = estimateWeeklyWageFromRating(d.rating);
+                const input = document.getElementById('customWage-' + id);
+                if (input) input.value = Math.round(fairWage * m / 1000);
+            }
+            renderWageChips(id);
+            updatePreview(id);
+        }
+        // إدخال حر بالكامل: أي رقم يكتبه المستخدم مباشرة يُستخدم فوراً كعرض راتب فعلي
+        function setCustomWage(id) {
+            wageMultipliers[id] = null; // إلغاء تحديد أي شريحة سعرية مسبقة عند الكتابة اليدوية
+            renderWageChips(id);
+            updatePreview(id);
+        }
+
+        function updatePreview(id) {
+            const d = getPersonalTermsQueue().find(x => x.id === id);
+            if (!d) return;
+            const fairWage = estimateWeeklyWageFromRating(d.rating);
+            const wageInput = document.getElementById('customWage-'+id);
+            const wageOffer = Math.max(0, Math.round((parseFloat(wageInput ? wageInput.value : '') || 0) * 1000));
+            const contractYears = parseInt(document.getElementById('contractYears-'+id).value) || 3;
+            const signingBonus = Math.max(0, parseFloat(document.getElementById('signingBonus-'+id).value) || 0);
+            const releaseClause = Math.max(0, parseFloat(document.getElementById('releaseClause-'+id).value) || 0);
+
+            const clubAvg = d.clubAvg || d.rating;
+            const myPrestige = getClubPrestigeScore();
+            const ambition = d.dealType === 'coach' ? d.rating : (d.rating * 0.8 + clubAvg * 0.2);
+            const prestigeGap = myPrestige - ambition;
+            const wageRatio = fairWage > 0 ? wageOffer / fairWage : 1;
+            const wageGenerosity = Math.min(45, Math.max(-30, (wageRatio - 0.75) / (1.35 - 0.75) * 45));
+
+            let contractFactor = 0;
+            if (d.age && d.age < 26) contractFactor = (contractYears - 3) * 2.5;
+            else if (d.age && d.age >= 31) contractFactor = (3 - contractYears) * 2;
+            else contractFactor = -Math.abs(contractYears - 3) * 1.5;
+
+            const marketVal = d.market_value || (fairWage * 250);
+            const bonusPct = marketVal > 0 ? (signingBonus * 1000000) / marketVal : 0;
+            const bonusFactor = Math.min(15, bonusPct * 60);
+
+            let clauseFactor = 0;
+            if (releaseClause > 0 && marketVal > 0) {
+                const clauseRatio = (releaseClause*1000000) / marketVal;
+                clauseFactor = (clauseRatio >= 1.5 && clauseRatio <= 4) ? 6 : (clauseRatio < 1.5 ? -4 : 2);
+            }
+
+            let chance = 45 + prestigeGap * 0.9 + wageGenerosity + contractFactor + bonusFactor + clauseFactor;
+            chance = Math.min(97, Math.max(5, Math.round(chance)));
+
+            document.getElementById('chanceLabel-' + id).innerText = chance + '%';
+            document.getElementById('chanceBar-' + id).style.width = chance + '%';
+
+            let extraDays = 0;
+            if (signingBonus > 0) extraDays += 1;
+            if (releaseClause > 0) extraDays += 1;
+            if (Math.abs(contractYears - 3) >= 2) extraDays += 1;
+            const responseDays = 1 + extraDays;
+            document.getElementById('daysLabel-' + id).innerText = responseDays + (responseDays === 1 ? ' يوم' : ' أيام');
+
+            const rules = getFederationRules();
+            const ffpAfter = projectedFfpPct(wageOffer);
+            let warn = '';
+            if (signingBonus > getClubBudget()) warn = '⚠️ الميزانية لا تكفي لمكافأة التوقيع المطلوبة';
+            else if (ffpAfter > rules.wageCapPct) warn = `⚠️ سيرفع هذا الراتب سقف الرواتب إلى ${ffpAfter}% (الحد ${rules.wageCapPct}%)`;
+            else if (prestigeGap < -15) warn = `⚠️ ناديك أقل هيبة من طموحه حالياً — قد يحتاج راتباً استثنائياً ليقتنع`;
+            document.getElementById('warnNote-' + id).innerText = warn;
+
+            const btn = document.getElementById('confirmBtn-' + id);
+            btn.disabled = (wageOffer * 52 / 1000000 > getClubBudget() * 5) || (signingBonus > getClubBudget());
+            d._wageOffer = wageOffer; d._chance = chance; d._contractYears = contractYears;
+            d._signingBonus = signingBonus; d._releaseClause = releaseClause; d._responseDays = responseDays;
+        }
+
+        function submitPersonalTerms(id) {
+            let queue = getPersonalTermsQueue();
+            const d = queue.find(x => x.id === id);
+            if (!d) return;
+            const wageOffer = d._wageOffer || estimateWeeklyWageFromRating(d.rating);
+            const chance = d._chance || 50;
+            const contractYears = d._contractYears || 3;
+            const signingBonus = d._signingBonus || 0;
+            const releaseClause = d._releaseClause || 0;
+            const responseDays = d._responseDays || 1;
+            if (signingBonus > getClubBudget()) { showToast('الميزانية لا تكفي لمكافأة التوقيع!'); return; }
+            if (signingBonus > 0) setClubBudget(getClubBudget() - signingBonus);
+
+            queue = queue.filter(x => x.id !== id);
+            setPersonalTermsQueue(queue);
+
+            const today = getGameDate();
+            const resolveDate = addDaysToGameDate(today, responseDays);
+            const negotiations = getPendingNegotiations();
+            negotiations.push({ ...d, stage: 'personal_terms', wageOffer, chance, contractYears, signingBonus, releaseClause,
+                submittedDateSort: dateSortKey(today), resolveDateSort: dateSortKey(resolveDate), negotiationDays: responseDays });
+            setPendingNegotiations(negotiations);
+
+            const detailsMsg = [`راتب ${(wageOffer/1000).toFixed(1)}K €/أسبوع`, `عقد ${contractYears} سنوات`];
+            if (signingBonus > 0) detailsMsg.push(`مكافأة توقيع ${signingBonus.toFixed(1)}M €`);
+            if (releaseClause > 0) detailsMsg.push(`شرط فسخ ${releaseClause}M €`);
+            showToast(`📨 عُرضت الشروط على ${d.name} — رده متوقَّع خلال ${responseDays} يوم${responseDays>1?'اً':''}.`);
+            addMessageToSystem('وكيل', `تم إبلاغ ${d.name} بالعرض: ${detailsMsg.join(' · ')}. ينتظر رده خلال ${responseDays} يوم${responseDays>1?'اً':''}.`, 'transfer');
+
+            renderActionableSection();
+            renderPendingSection();
+        }
+
+        // ============================================================
+        // حسم مفاوضات الراتب الشخصي (اليوم التالي) — يُنجز التوقيع فعلياً
+        // ============================================================
+        function resolvePersonalTermsNegotiations() {
+            const negotiations = getPendingNegotiations();
+            if (!negotiations.length) return;
+            const todaySort = dateSortKey(getGameDate());
+            const stillPending = [];
+            let redirectToStaff = false;
+
+            negotiations.forEach(n => {
+                if (n.stage !== 'personal_terms' || todaySort < n.resolveDateSort) { stillPending.push(n); return; }
+                const success = Math.random() * 100 < n.chance;
+                const isCoach = n.dealType === 'coach';
+                if (success) {
+                    const priorPurchases = parseFloat(localStorage.getItem('transferPurchases')) || 0;
+                    localStorage.setItem('transferPurchases', (priorPurchases + n.offer / 1000000).toFixed(3));
+                    if (isCoach) {
+                        finalizeCoachSigning(n);
+                        addMessageToSystem('مدير الإدارة الفنية', `🤝 اتفق ${n.name} على راتب ${(n.wageOffer/1000).toFixed(1)}K €/أسبوع! انضم رسمياً لطاقم النادي الفني.`, 'transfer');
+                        redirectToStaff = true;
+                    } else {
+                        const today2 = getGameDate();
+                        const medicalResolve = addDaysToGameDate(today2, 1);
+                        const medicals = JSON.parse(localStorage.getItem('club_medical_pending')) || [];
+                        medicals.push({ id:n.id, tmid:n.tmid, name:n.name, club:n.club, position:n.position, nationality:n.nationality,
+                            age:n.age, foot:n.foot, height:n.height, jersey:n.jersey, market_value:n.market_value,
+                            market_value_short:n.market_value_short, rating:n.rating, wageOffer:n.wageOffer,
+                            contractYears: n.contractYears || 3, releaseClause: n.releaseClause || 0,
+                            dealType: n.dealType || 'buy', installments: n.installments || 1, totalFee: n.offer || 0,
+                            performanceBonus: n.performanceBonus || 0, sellOnPct: n.sellOnPct || 0,
+                            resolveDateSort: dateSortKey(medicalResolve) });
+                        localStorage.setItem('club_medical_pending', JSON.stringify(medicals));
+                        addMessageToSystem('الطاقم الطبي', `🩺 اتفق ${n.name} على راتب ${(n.wageOffer/1000).toFixed(1)}K €/أسبوع! الخطوة الأخيرة: الفحص الطبي الشامل (يوم واحد) قبل التسجيل الرسمي.`, 'transfer');
+                    }
+                    logNegotiationHistory({ stage:'personal_terms', outcome:'success', dealType:n.dealType||'player', name:n.name, club:n.club, wage:n.wageOffer });
+                } else {
+                    setClubBudget(getClubBudget() + reservedAmount(n) / 1000000 + (n.signingBonus || 0));
+                    const refundNote = n.signingBonus > 0 ? ` وتم استرجاع مكافأة التوقيع (${n.signingBonus.toFixed(1)}M €).` : '';
+                    addMessageToSystem('وكيل', `💥 انهارت صفقة ${n.name} — رُفضت الشروط الشخصية المعروضة. تم إرجاع المبلغ المحجوز${refundNote}`, 'transfer');
+                    logNegotiationHistory({ stage:'personal_terms', outcome:'fail', dealType:n.dealType||'player', name:n.name, club:n.club, wage:n.wageOffer });
+                }
+            });
+
+            setPendingNegotiations(stillPending);
+            if (redirectToStaff) {
+                showToast('✅ انضم المدرب رسمياً! جارٍ التوجه لصفحة الموظفين...');
+                setTimeout(() => { window.location.href = 'staff.html'; }, 1400);
+            }
+        }
+
+        // ============================================================
+        // مرحلة الفحص الطبي — آخر مرحلة حقيقية قبل التسجيل الرسمي، بخطر فشل نادر لكنه حقيقي
+        // ============================================================
+        function resolveMedicalExams() {
+            const medicals = JSON.parse(localStorage.getItem('club_medical_pending')) || [];
+            if (!medicals.length) return;
+            const todaySort = dateSortKey(getGameDate());
+            const stillPending = [];
+            let redirectToRegistration = false;
+            medicals.forEach(m => {
+                if (todaySort < m.resolveDateSort) { stillPending.push(m); return; }
+                const failed = (seedHash(m.name + 'medical') % 100) < 5;
+                if (failed) {
+                    addMessageToSystem('الطاقم الطبي', `❌ فشل ${m.name} في الفحص الطبي الشامل! انهارت الصفقة في آخر لحظة رغم الاتفاق على كل الشروط.`, 'transfer');
+                    logNegotiationHistory({ stage:'medical', outcome:'fail', dealType:'player', name:m.name, club:m.club });
+                } else {
+                    const gd = getGameDate();
+                    const years = m.contractYears || 3;
+                    const contractUntil = `${gd.year + years}-06-30`;
+                    const pending = getPending();
+                    const installments = m.installments || 1;
+                    const installmentAmount = installments > 1 ? (m.totalFee || 0) / installments / 1000000 : 0;
+                    pending.push({ tmid:m.tmid, player_name:m.name, main_position:m.position, nationality:m.nationality,
+                        age:m.age, foot:m.foot, height:m.height, jersey:m.jersey, market_value_eur:m.market_value,
+                        market_value_cur_short:m.market_value_short, rating:m.rating, weekly_wage:Math.round(m.wageOffer),
+                        contract_until:contractUntil, release_clause: m.releaseClause || 0, club:activeClub,
+                        dealType: m.dealType || 'buy', isLoan: (m.dealType||'buy') !== 'buy',
+                        performanceBonus: m.performanceBonus || 0, performanceBonusPaid: false, performanceBonusBaseline: 0,
+                        sellOnPct: m.sellOnPct || 0 });
+                    setPending(pending);
+                    // جدولة الأقساط المتبقية كمدفوعات حقيقية مستقبلية — لا تُفقَد بعد الدفعة الأولى
+                    if (installments > 1) {
+                        const schedule = JSON.parse(localStorage.getItem('club_installment_schedule')) || [];
+                        for (let i = 1; i < installments; i++) {
+                            const dueDate = addDaysToGameDate(gd, i * 365);
+                            schedule.push({ playerName:m.name, amount: installmentAmount, dueDateSort: dateSortKey(dueDate), paid:false });
+                        }
+                        localStorage.setItem('club_installment_schedule', JSON.stringify(schedule));
+                    }
+                    const clauseNote = m.releaseClause > 0 ? ` · شرط فسخ ${m.releaseClause}M €` : '';
+                    const installmentNote = installments > 1 ? ` · مقسَّطة على ${installments} سنوات` : '';
+                    addMessageToSystem('مدير الانتقالات', `✅ اجتاز ${m.name} الفحص الطبي بنجاح! عقد ${years} سنوات${clauseNote}${installmentNote}. الملف الآن بانتظار التسجيل الرسمي لدى الاتحاد.`, 'transfer');
+                    logNegotiationHistory({ stage:'medical', outcome:'success', dealType:'player', name:m.name, club:m.club });
+                    redirectToRegistration = true;
+                }
+            });
+            localStorage.setItem('club_medical_pending', JSON.stringify(stillPending));
+            if (redirectToRegistration) {
+                showToast('✅ اجتاز الفحص الطبي! جارٍ التوجه لصفحة التسجيل الرسمي...');
+                setTimeout(() => { window.location.href = 'registration.html'; }, 1400);
+            }
+        }
+
+        // ============================================================
+        // معالجة الأقساط المستحقة الحقيقية — تُخصم من الميزانية فقط عند وصول موعدها الفعلي في تقويم اللعبة
+        // ============================================================
+        function processInstallmentPayments() {
+            const schedule = JSON.parse(localStorage.getItem('club_installment_schedule')) || [];
+            if (!schedule.length) return;
+            const todaySort = dateSortKey(getGameDate());
+            let changed = false;
+            schedule.forEach(inst => {
+                if (inst.paid || todaySort < inst.dueDateSort) return;
+                setClubBudget(getClubBudget() - inst.amount);
+                inst.paid = true;
+                changed = true;
+                addMessageToSystem('الإدارة المالية', `💳 استُحق قسط سنوي من صفقة ${inst.playerName}: ${inst.amount.toFixed(2)}M € خُصم من الميزانية.`, 'finance');
+            });
+            if (changed) {
+                const remaining = schedule.filter(i => !i.paid);
+                localStorage.setItem('club_installment_schedule', JSON.stringify(remaining));
+            }
+        }
+
+        window.onload = function() {
+            resolvePersonalTermsNegotiations();
+            resolveMedicalExams();
+            processInstallmentPayments();
+            renderActionableSection();
+            renderPendingSection();
+            renderCounterOffers();
+            renderIncomingSection();
+            renderHistorySection();
+        };
+    </script>
+</body>
+</html>

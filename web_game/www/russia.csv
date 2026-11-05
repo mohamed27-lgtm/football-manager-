@@ -1,0 +1,31 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+ZEN,Zenit St. Petersburg,زينيت سانت بطرسبرغ,روسيا,197,UEFA,14,RPL,Russian Premier League,First Tier,10,"2007,2010,2012,2015,2019,2020,2021,2022,2023,2024"
+ZEN,Zenit St. Petersburg,زينيت سانت بطرسبرغ,روسيا,197,UEFA,14,RC,Russian Cup,Domestic Cup,5,"1944,1999,2010,2016,2024"
+ZEN,Zenit St. Petersburg,زينيت سانت بطرسبرغ,روسيا,197,UEFA,14,RSC,Russian Super Cup,Domestic Super Cup,8,"2008,2011,2015,2016,2017,2020,2021,2022"
+ZEN,Zenit St. Petersburg,زينيت سانت بطرسبرغ,روسيا,197,UEFA,14,UEL,UEFA Europa League,Continental,1,2008
+ZEN,Zenit St. Petersburg,زينيت سانت بطرسبرغ,روسيا,197,UEFA,14,USC,UEFA Super Cup,Continental,1,2008
+CSK,CSKA Moscow,سسكا موسكو,روسيا,197,UEFA,14,RPL,Russian Premier League,First Tier,6,"2003,2005,2006,2013,2014,2016"
+CSK,CSKA Moscow,سسكا موسكو,روسيا,197,UEFA,14,RC,Russian Cup,Domestic Cup,8,"2002,2005,2006,2008,2009,2011,2013,2023"
+CSK,CSKA Moscow,سسكا موسكو,روسيا,197,UEFA,14,RSC,Russian Super Cup,Domestic Super Cup,7,"2004,2006,2007,2009,2013,2014,2018"
+CSK,CSKA Moscow,سسكا موسكو,روسيا,197,UEFA,14,UEL,UEFA Europa League,Continental,1,2005
+SPA,Spartak Moscow,سبارتاك موسكو,روسيا,197,UEFA,14,RPL,Russian Premier League,First Tier,10,"1992,1993,1994,1996,1997,1998,1999,2000,2001,2017"
+SPA,Spartak Moscow,سبارتاك موسكو,روسيا,197,UEFA,14,RC,Russian Cup,Domestic Cup,4,"1994,1998,2003,2022"
+SPA,Spartak Moscow,سبارتاك موسكو,روسيا,197,UEFA,14,RSC,Russian Super Cup,Domestic Super Cup,1,2017
+LOK,Lokomotiv Moscow,لوكوموتيف موسكو,روسيا,197,UEFA,14,RPL,Russian Premier League,First Tier,3,"2002,2004,2018"
+LOK,Lokomotiv Moscow,لوكوموتيف موسكو,روسيا,197,UEFA,14,RC,Russian Cup,Domestic Cup,11,"1936,1957,1996,1997,2000,2001,2007,2015,2017,2019,2021"
+LOK,Lokomotiv Moscow,لوكوموتيف موسكو,روسيا,197,UEFA,14,RSC,Russian Super Cup,Domestic Super Cup,3,"2003,2005,2019"
+RUB,Rubin Kazan,روبين كازان,روسيا,197,UEFA,14,RPL,Russian Premier League,First Tier,2,"2008,2009"
+RUB,Rubin Kazan,روبين كازان,روسيا,197,UEFA,14,RSC,Russian Super Cup,Domestic Super Cup,2,"2010,2012"
+KRA,Krasnodar,كراسنودار,روسيا,197,UEFA,14,·,·,·,0,·
+DYN,Dynamo Moscow,دينامو موسكو,روسيا,197,UEFA,14,RPL,Russian Premier League,First Tier,0,·
+DYN,Dynamo Moscow,دينامو موسكو,روسيا,197,UEFA,14,RC,Russian Cup,Domestic Cup,1,1995
+ROS,Rostov,روستوف,روسيا,197,UEFA,14,RC,Russian Cup,Domestic Cup,1,2014
+AKH,Akhmat Grozny,أحمد غروزني,روسيا,197,UEFA,14,RC,Russian Cup,Domestic Cup,1,2004
+KRY,Krylia Sovetov,كريليا سوفيتوف,روسيا,197,UEFA,14,·,·,·,0,·
+NIZ,FC Nizhny Novgorod,نيجني نوفغورود,روسيا,197,UEFA,14,·,·,·,0,·
+URA,Ural Yekaterinburg,أورال يكاترينبورغ,روسيا,197,UEFA,14,·,·,·,0,·
+ORE,Orenburg,أورينبورغ,روسيا,197,UEFA,14,·,·,·,0,·
+FAK,Fakel Voronezh,فاكل فورونيج,روسيا,197,UEFA,14,·,·,·,0,·
+KHI,Khimki,خيمكي,روسيا,197,UEFA,14,·,·,·,0,·
+MAK,Makhachkala,مخاتشكالا,روسيا,197,UEFA,14,·,·,·,0,·
+PAR,Paris Nizhny Novgorod,باريس نيجني نوفغورود,روسيا,197,UEFA,14,·,·,·,0,·

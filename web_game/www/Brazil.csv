@@ -1,0 +1,77 @@
+team_id,team_name,team_name_ar,country,country_id,area,area_id,competition_id,competition,competition_type,titles_count,years
+PAL,Palmeiras,بالميراس,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,12,"1960,1967,1969,1972,1973,1993,1994,2016,2018,2022,2023,2024"
+PAL,Palmeiras,بالميراس,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,4,"1998,2012,2015,2020"
+PAL,Palmeiras,بالميراس,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,3,"1999,2020,2021"
+PAL,Palmeiras,بالميراس,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,0,·
+PAL,Palmeiras,بالميراس,البرازيل,207,CONMEBOL,24,REC,Recopa Sudamericana,Continental,1,2022
+PAL,Palmeiras,بالميراس,البرازيل,207,CONMEBOL,24,CWC,FIFA Club World Cup,Global,0,·
+FL,CR Flamengo,فلامنغو,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,9,"1980,1982,1983,1992,2009,2019,2020,2021,2024"
+FL,CR Flamengo,فلامنغو,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,5,"1990,2006,2013,2022,2024"
+FL,CR Flamengo,فلامنغو,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,3,"1981,2019,2022"
+FL,CR Flamengo,فلامنغو,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,0,·
+FL,CR Flamengo,فلامنغو,البرازيل,207,CONMEBOL,24,REC,Recopa Sudamericana,Continental,1,2020
+FL,CR Flamengo,فلامنغو,البرازيل,207,CONMEBOL,24,CWC,FIFA Club World Cup,Global,0,·
+COR,Corinthians,كورينثيانز,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,7,"1990,1998,1999,2005,2011,2015,2017"
+COR,Corinthians,كورينثيانز,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,3,"1995,2002,2009"
+COR,Corinthians,كورينثيانز,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,1,2012
+COR,Corinthians,كورينثيانز,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,0,·
+COR,Corinthians,كورينثيانز,البرازيل,207,CONMEBOL,24,REC,Recopa Sudamericana,Continental,1,2013
+COR,Corinthians,كورينثيانز,البرازيل,207,CONMEBOL,24,CWC,FIFA Club World Cup,Global,2,"2000,2012"
+SAN,Santos FC,سانتوس,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,8,"1961,1962,1963,1964,1965,1968,2002,2004"
+SAN,Santos FC,سانتوس,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,1,2010
+SAN,Santos FC,سانتوس,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,3,"1962,1963,2011"
+SAN,Santos FC,سانتوس,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,0,·
+SAN,Santos FC,سانتوس,البرازيل,207,CONMEBOL,24,REC,Recopa Sudamericana,Continental,1,2012
+SAN,Santos FC,سانتوس,البرازيل,207,CONMEBOL,24,CWC,FIFA Club World Cup,Global,0,·
+SÃO,São Paulo FC,ساو باولو,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,6,"1977,1986,1991,2006,2007,2008"
+SÃO,São Paulo FC,ساو باولو,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,1,2023
+SÃO,São Paulo FC,ساو باولو,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,3,"1992,1993,2005"
+SÃO,São Paulo FC,ساو باولو,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,1,2012
+SÃO,São Paulo FC,ساو باولو,البرازيل,207,CONMEBOL,24,REC,Recopa Sudamericana,Continental,2,"1993,1994"
+SÃO,São Paulo FC,ساو باولو,البرازيل,207,CONMEBOL,24,CWC,FIFA Club World Cup,Global,3,"1992,1993,2005"
+GRE,Grêmio,غريميو,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,2,"1981,1996"
+GRE,Grêmio,غريميو,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,5,"1989,1994,1997,2001,2016"
+GRE,Grêmio,غريميو,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,3,"1983,1995,2017"
+GRE,Grêmio,غريميو,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,0,·
+GRE,Grêmio,غريميو,البرازيل,207,CONMEBOL,24,REC,Recopa Sudamericana,Continental,2,"1996,2018"
+GRE,Grêmio,غريميو,البرازيل,207,CONMEBOL,24,CWC,FIFA Club World Cup,Global,0,·
+CRU,Cruzeiro,كروزيرو,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,4,"1966,2003,2013,2014"
+CRU,Cruzeiro,كروزيرو,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,6,"1993,1996,2000,2003,2017,2018"
+CRU,Cruzeiro,كروزيرو,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,2,"1976,1997"
+CRU,Cruzeiro,كروزيرو,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,0,·
+CRU,Cruzeiro,كروزيرو,البرازيل,207,CONMEBOL,24,REC,Recopa Sudamericana,Continental,1,1998
+INT,Internacional,إنترناسيونال,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,3,"1975,1976,1979"
+INT,Internacional,إنترناسيونال,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,1,1992
+INT,Internacional,إنترناسيونال,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,2,"2006,2010"
+INT,Internacional,إنترناسيونال,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,0,·
+INT,Internacional,إنترناسيونال,البرازيل,207,CONMEBOL,24,REC,Recopa Sudamericana,Continental,2,"2007,2011"
+INT,Internacional,إنترناسيونال,البرازيل,207,CONMEBOL,24,CWC,FIFA Club World Cup,Global,1,2006
+FLA,Fluminense,فلومينينسي,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,4,"1970,1984,2010,2012"
+FLA,Fluminense,فلومينينسي,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,1,2007
+FLA,Fluminense,فلومينينسي,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,1,2023
+FLA,Fluminense,فلومينينسي,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,0,·
+FLA,Fluminense,فلومينينسي,البرازيل,207,CONMEBOL,24,REC,Recopa Sudamericana,Continental,1,2024
+FLA,Fluminense,فلومينينسي,البرازيل,207,CONMEBOL,24,CWC,FIFA Club World Cup,Global,0,·
+BOT,Botafogo,بوتافوغو,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,2,"1968,1995"
+BOT,Botafogo,بوتافوغو,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,1,2024
+BOT,Botafogo,بوتافوغو,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,0,·
+ATL,Atlético Mineiro,أتلتيكو مينيرو,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,3,"1937,1971,2021"
+ATL,Atlético Mineiro,أتلتيكو مينيرو,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,2,"2014,2021"
+ATL,Atlético Mineiro,أتلتيكو مينيرو,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,1,2013
+ATL,Atlético Mineiro,أتلتيكو مينيرو,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,0,·
+ATL,Atlético Mineiro,أتلتيكو مينيرو,البرازيل,207,CONMEBOL,24,REC,Recopa Sudamericana,Continental,1,2014
+VAS,Vasco da Gama,فاسكو دا غاما,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,4,"1974,1989,1997,2000"
+VAS,Vasco da Gama,فاسكو دا غاما,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,1,2011
+VAS,Vasco da Gama,فاسكو دا غاما,البرازيل,207,CONMEBOL,24,LIB,Copa Libertadores,Continental,1,1998
+VAS,Vasco da Gama,فاسكو دا غاما,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,0,·
+VAS,Vasco da Gama,فاسكو دا غاما,البرازيل,207,CONMEBOL,24,REC,Recopa Sudamericana,Continental,0,·
+BAH,Bahia,باهيا,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,2,"1959,1988"
+CUI,Cuiabá,كويابا,البرازيل,207,CONMEBOL,24,·,·,·,0,·
+FOR,Fortaleza,فورتاليزا,البرازيل,207,CONMEBOL,24,·,·,·,0,·
+JUV,Juventude,جوفنتودي,البرازيل,207,CONMEBOL,24,·,·,·,0,·
+BBA,Red Bull Bragantino,ريد بول براغانتينو,البرازيل,207,CONMEBOL,24,·,·,·,0,·
+ATH,Athletico Paranaense,أتلتيكو باراناينسي,البرازيل,207,CONMEBOL,24,BRA,Brasileirão,First Tier,1,2001
+ATH,Athletico Paranaense,أتلتيكو باراناينسي,البرازيل,207,CONMEBOL,24,CDB,Copa do Brasil,Domestic Cup,1,2019
+ATH,Athletico Paranaense,أتلتيكو باراناينسي,البرازيل,207,CONMEBOL,24,SUD,Copa Sudamericana,Continental,2,"2018,2021"
+CRI,Criciúma,كريسيوما,البرازيل,207,CONMEBOL,24,·,·,·,0,·
+GOI,Goiás,غوياس,البرازيل,207,CONMEBOL,24,·,·,·,0,·
