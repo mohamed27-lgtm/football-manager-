@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<script src="common.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title> Football club president- القائمة الرئيسية</title>
@@ -161,9 +162,13 @@
     <script>
         // التأكد من تسجيل الدخول لحماية الصفحة
         window.onload = function() {
-            if (!localStorage.getItem('currentUser')) {
-                window.location.href = 'index.html';
-            }
+            // لا يوجد نظام حسابات في هذه النسخة: نعتبر اللاعب مسجّلاً دائماً (منع حلقة إعادة توجيه لا نهائية)
+            try { if (!localStorage.getItem('currentUser')) localStorage.setItem('currentUser', 'coach'); } catch (e) {}
+            // «إكمال المسيرة» بدون مسيرة محفوظة => ابدأ لعبة جديدة بدل فتح نادٍ افتراضي
+            var cont = document.querySelector('a[href="game_main.html"]');
+            if (cont) cont.addEventListener('click', function (ev) {
+                try { if (!localStorage.getItem('presidentialClub')) { ev.preventDefault(); window.location.href = 'choose_club.html'; } } catch (e) {}
+            });
         };
     </script>
 </body>
