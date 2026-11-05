@@ -5,6 +5,7 @@ import 'bundled.dart';
 import 'data_screen.dart';
 import 'importer.dart';
 import 'league_store.dart';
+import 'models.dart';
 import 'pack_service.dart';
 import 'widgets.dart';
 
@@ -102,9 +103,26 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
     final local = await LeagueStore.load(d.id, d.season);
     final data = local ?? d;
     if (!mounted) return;
-    final teams = teamsFromLeague(data, Random());
+    final rng = Random();
+    final teams = teamsFromLeague(data, rng);
+    final same = (leagues ?? const <LeagueData>[]).where((x) => x.country == d.country && x.teams.length >= 8).toList();
+    LeagueData? near(int dv) {
+      final c = same.where((x) => x.div == dv).toList();
+      return c.isEmpty ? null : c.first;
+    }
+
+    Future<List<Team>> load(LeagueData x) async => teamsFromLeague(await LeagueStore.load(x.id, x.season) ?? x, rng);
+    final up = near(d.div - 1), lo = near(d.div + 1);
+    final pyramid = Pyramid(
+      div: d.div,
+      upper: up == null ? const [] : await load(up),
+      upperName: up?.name ?? '',
+      lower: lo == null ? const [] : await load(lo),
+      lowerName: lo?.name ?? '',
+    );
+    if (!mounted) return;
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => ClubPickerScreen(teams: teams, leagueName: data.name, onStart: widget.onStart),
+      builder: (_) => ClubPickerScreen(teams: teams, leagueName: data.name, onStart: widget.onStart, pyramid: pyramid),
     ));
   }
 
@@ -138,12 +156,20 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
                       label: Text('تنزيل صور كل الدوريات ($missing)'),
                     ),
                   ),
-                for (final d in l)
+                for (final d in _ordered(l)) ...[
+                  if (_firstOfCountry(l, d)) sectionTitle(d.country),
                   Panel(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(d.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      Row(children: [
+                        Expanded(child: Text(d.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16))),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(8)),
+                          child: Text(_divLabel(d.div), style: const TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w700)),
+                        ),
+                      ]),
                       const SizedBox(height: 2),
-                      Text('${d.country} • ${d.teams.length} فريقاً • ${d.playerCount} لاعباً',
+                      Text('${d.teams.length} فريقاً • ${d.playerCount} لاعباً',
                           style: const TextStyle(color: kMuted, fontSize: 12)),
                       const SizedBox(height: 10),
                       if (downloading == _k(d))
@@ -172,8 +198,32 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
                         ]),
                     ]),
                   ),
+                ],
               ]),
       ),
     );
+  }
+
+  static String _divLabel(int d) => d == 1 ? 'الدرجة الأولى' : (d == 2 ? 'الدرجة الثانية' : 'الدرجة الثالثة');
+
+  /// ترتيب: الدولة الأقوى أولاً ثم الدرجات
+  List<LeagueData> _ordered(List<LeagueData> l) {
+    final best = <String, int>{};
+    for (final d in l) {
+      final t = d.tier;
+      if (!best.containsKey(d.country) || t < best[d.country]!) best[d.country] = t;
+    }
+    return [...l]..sort((a, b) {
+        final c = best[a.country]!.compareTo(best[b.country]!);
+        if (c != 0) return c;
+        final n = a.country.compareTo(b.country);
+        return n != 0 ? n : a.div.compareTo(b.div);
+      });
+  }
+
+  bool _firstOfCountry(List<LeagueData> l, LeagueData d) {
+    final o = _ordered(l);
+    final i = o.indexOf(d);
+    return i == 0 || o[i - 1].country != d.country;
   }
 }

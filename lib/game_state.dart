@@ -33,7 +33,13 @@ class GameState extends ChangeNotifier {
   static String get _key => 'fm_save_v2$slot';
 
   final Random rng = Random();
-  late final List<Team> teams;
+  late List<Team> teams;
+  List<Team> upper = [], lower = []; // الدرجة الأعلى والأدنى
+  String upperName = '', lowerName = '';
+  int div = 1; // درجة نادي المستخدم الحالية
+
+  /// معامل الدخل حسب الدرجة (البث والجوائز أقل في الدرجات الدنيا)
+  double get divFactor => div <= 1 ? 1.0 : (div == 2 ? 0.6 : 0.4);
   late final Team user;
   late List<List<Fixture>> rounds;
 
@@ -76,8 +82,15 @@ class GameState extends ChangeNotifier {
   Set<Player> _suspBefore = {};
   Set<Player> _injBefore = {};
 
-  GameState.fromData(List<Team> t, int userId, this.leagueName) {
+  GameState.fromData(List<Team> t, int userId, this.leagueName, {Pyramid? pyramid}) {
     teams = t;
+    if (pyramid != null) {
+      div = pyramid.div;
+      upper = pyramid.upper;
+      upperName = pyramid.upperName;
+      lower = pyramid.lower;
+      lowerName = pyramid.lowerName;
+    }
     user = teams.firstWhere((x) => x.id == userId);
     _buildFixtures();
     _setupCups(null);
@@ -93,6 +106,11 @@ class GameState extends ChangeNotifier {
       for (final t in j['teams'] as List) Team.fromJson(t as Map<String, dynamic>)
     ];
     user = teams.firstWhere((t) => t.id == j['user']);
+    div = (j['div'] as int?) ?? 1;
+    upperName = (j['upN'] as String?) ?? '';
+    lowerName = (j['loN'] as String?) ?? '';
+    upper = [for (final t in (j['upper'] as List?) ?? const []) Team.fromJson(t as Map<String, dynamic>)];
+    lower = [for (final t in (j['lower'] as List?) ?? const []) Team.fromJson(t as Map<String, dynamic>)];
     season = j['season'] as int;
     week = j['week'] as int;
     objective = j['objective'] as int;
@@ -198,6 +216,11 @@ class GameState extends ChangeNotifier {
         'honours': honours,
         'staff': staff,
         'bk': boardKind,
+        'div': div,
+        'upN': upperName,
+        'loN': lowerName,
+        'upper': [for (final t in upper) t.toJson()],
+        'lower': [for (final t in lower) t.toJson()],
         'bp': boardPledge,
         'lxi': lastXI,
         'fans': fans,
@@ -516,7 +539,7 @@ class GameState extends ChangeNotifier {
     final home = f.home == user.id;
     final mk = staff['marketing'] ?? 0;
     final gate = home ? (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (0.75 + 0.5 * fans / 100) * (1 + 0.04 * mk) : 0.0;
-    final broadcast = 0.35 + 0.1 * user.reputation;
+    final broadcast = (0.35 + 0.1 * user.reputation) * divFactor;
     final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +
         dealsIncome * (0.9 + 0.2 * fans / 100);
     final sponsorX = sponsor * (1 + 0.05 * mk);
@@ -1014,10 +1037,12 @@ class GameState extends ChangeNotifier {
 
   void startNewSeason() {
     final pos = position;
-    final qual = [for (final t in table.take(3)) t.id];
-    final champId = table.first.id;
-    final runnerId = table.length > 1 ? table[1].id : table.first.id;
+    final finalTable = table;
+    final qualT = finalTable.take(3).toList();
+    final champT = finalTable.first;
+    final runnerT = finalTable.length > 1 ? finalTable[1] : finalTable.first;
     final cupWinner = domestic?.champion;
+    final cupT = cupWinner == null ? null : team(cupWinner);
     final aw = _seasonAwards(pos);
     _recordSeason(pos, aw);
     _ffpReview();
@@ -1065,12 +1090,12 @@ class GameState extends ChangeNotifier {
       confidence = max(0, confidence - (pos > objective + 2 ? 15 : 10));
       news.insert(0, '😕 لم تحقق هدف الإدارة (المركز $pos بدل $objective)');
     }
-    final prize = max(0.0, (teams.length + 1 - pos) * 0.9 * 12 / teams.length);
+    final prize = max(0.0, (teams.length + 1 - pos) * 0.9 * 12 / teams.length) * divFactor;
     user.budget += prize;
     fin.add('prize', prize);
     news.insert(0, '🏆 أنهيت الموسم $season في المركز $pos — جائزة ${prize.toStringAsFixed(1)}M');
 
-    for (final t in teams) {
+    for (final t in [...teams, ...upper, ...lower]) {
       for (final p in [...t.squad]) {
         p.age++;
         p.contract--;
@@ -1142,6 +1167,7 @@ class GameState extends ChangeNotifier {
       news.insert(0, '📄 انتهى عقد الرعاية مع ${d.brand}');
     }
     deals.removeWhere((d) => d.years <= 0);
+    _movePyramid(finalTable, pos);
     season++;
     week = 0;
     if (pointsPenaltyNext > 0) {
@@ -1154,8 +1180,13 @@ class GameState extends ChangeNotifier {
     seasonOver = false;
     roundResults.clear();
     _buildFixtures();
-    _setupCups(qual);
-    _setupSuper(champId, cupWinner, runnerId);
+    final qualIds = qualT.every(teams.contains) ? [for (final t in qualT) t.id] : null;
+    _setupCups(qualIds);
+    if (div == 1 && teams.contains(champT) && teams.contains(runnerT) && (cupT == null || teams.contains(cupT))) {
+      _setupSuper(champT.id, cupT?.id, runnerT.id);
+    } else {
+      superCup = null;
+    }
     market = _scoutedMarket();
     _setObjective();
     if (confidence <= 0) fired = true;
@@ -1163,6 +1194,112 @@ class GameState extends ChangeNotifier {
     news.insert(0, '📋 هدف الإدارة للموسم $season: المركز $objective أو أفضل');
     unawaited(save());
     notifyListeners();
+  }
+
+  // ───────── الصعود والهبوط بين الدرجات ─────────
+  int _pois(double l) {
+    final lim = exp(-l);
+    var k = 0;
+    var p = 1.0;
+    do {
+      k++;
+      p *= rng.nextDouble();
+    } while (p > lim);
+    return k - 1;
+  }
+
+  /// محاكاة سريعة لموسم دوري لا يلعبه المستخدم، وإرجاع ترتيبه النهائي
+  List<Team> _quickRank(List<Team> ts) {
+    final pts = <Team, int>{for (final t in ts) t: 0};
+    final gd = <Team, int>{for (final t in ts) t: 0};
+    for (final h in ts) {
+      for (final a in ts) {
+        if (identical(h, a)) continue;
+        final r = (h.strength / a.strength).clamp(0.6, 1.6).toDouble();
+        final hg = _pois((1.45 * pow(r, 2.2) * 1.08).clamp(0.3, 4.0).toDouble());
+        final ag = _pois((1.2 * pow(1 / r, 2.2) / 1.08).clamp(0.3, 4.0).toDouble());
+        gd[h] = gd[h]! + hg - ag;
+        gd[a] = gd[a]! + ag - hg;
+        if (hg > ag) {
+          pts[h] = pts[h]! + 3;
+        } else if (hg < ag) {
+          pts[a] = pts[a]! + 3;
+        } else {
+          pts[h] = pts[h]! + 1;
+          pts[a] = pts[a]! + 1;
+        }
+      }
+    }
+    return [...ts]..sort((x, y) {
+        final c = pts[y]!.compareTo(pts[x]!);
+        if (c != 0) return c;
+        final g = gd[y]!.compareTo(gd[x]!);
+        return g != 0 ? g : y.strength.compareTo(x.strength);
+      });
+  }
+
+  /// نهاية الموسم: يصعد أول الفرق من الدرجة الأدنى ويهبط آخر الفرق من الأعلى (وفي الاتجاه المعاكس)
+  void _movePyramid(List<Team> finalTable, int pos) {
+    final k = max(1, min(3, teams.length ~/ 6));
+    final hasLow = lower.length >= k * 2;
+    final hasUp = upper.length >= k * 2;
+    if (!hasLow && !hasUp) return;
+    final down = hasLow ? finalTable.sublist(finalTable.length - k) : <Team>[];
+    final up = hasLow ? _quickRank(lower).take(k).toList() : <Team>[];
+    final goUp = hasUp ? finalTable.take(k).toList() : <Team>[];
+    final fall = hasUp ? _quickRank(upper).reversed.take(k).toList() : <Team>[];
+    final mid = [...teams.where((t) => !down.contains(t) && !goUp.contains(t)), ...up, ...fall];
+    final newUpper = [...upper.where((t) => !fall.contains(t)), ...goUp];
+    final newLower = [...lower.where((t) => !up.contains(t)), ...down];
+    final oldName = leagueName;
+    if (goUp.contains(user)) {
+      news.insert(0, '🔼 صعدت إلى $upperName! أنهيت الموسم في المركز $pos');
+      confidence = min(100, confidence + 20);
+      user.budget += 4;
+      fin.add('prize', 4);
+      teams = newUpper;
+      leagueName = upperName;
+      lower = mid;
+      lowerName = oldName;
+      upper = [];
+      upperName = '';
+      div = max(1, div - 1);
+    } else if (down.contains(user)) {
+      news.insert(0, '🔽 هبطت إلى $lowerName بعد إنهاء الموسم في المركز $pos');
+      confidence = max(0, confidence - 25);
+      teams = newLower;
+      leagueName = lowerName;
+      upper = mid;
+      upperName = oldName;
+      lower = [];
+      lowerName = '';
+      div++;
+    } else {
+      teams = mid;
+      upper = newUpper;
+      lower = newLower;
+      if (up.isNotEmpty || fall.isNotEmpty) {
+        news.insert(0, '🔁 صعد ${up.map((t) => t.name).join('، ')} وهبط ${down.map((t) => t.name).join('، ')} في ${hasLow ? lowerName : upperName}');
+      }
+    }
+    for (final l in [teams, upper, lower]) {
+      for (var i = 0; i < l.length; i++) {
+        l[i].id = i;
+        l[i]
+          ..played = 0
+          ..won = 0
+          ..drawn = 0
+          ..lost = 0
+          ..gf = 0
+          ..ga = 0
+          ..penalty = 0
+          ..form = [];
+      }
+    }
+    for (final t in teams) {
+      if (t != user) t.autoPick();
+    }
+    _setObjective();
   }
 
   // ───────── البطولات (كأس محلي + بطولة قارية) ─────────
@@ -1206,10 +1343,13 @@ class GameState extends ChangeNotifier {
     _draw(domestic!);
 
     foreign.clear();
-    for (var i = 0; i < foreignClubNames.length; i++) {
-      foreign[1000 + i] = createTeam(rng, 1000 + i, foreignClubNames[i], 3 + rng.nextInt(3));
+    const extraNames = ['سبارتا الشمال', 'فيورينتينا الهضاب', 'أنتويرب الميناء'];
+    final extra = div > 1 ? extraNames.length : 0;
+    for (var i = 0; i < foreignClubNames.length + extra; i++) {
+      final nm = i < foreignClubNames.length ? foreignClubNames[i] : extraNames[i - foreignClubNames.length];
+      foreign[1000 + i] = createTeam(rng, 1000 + i, nm, 3 + rng.nextInt(3));
     }
-    final q = qual ?? [for (final t in ([...teams]..sort((a, b) => b.strength.compareTo(a.strength))).take(3)) t.id];
+    final q = div > 1 ? <int>[] : qual ?? [for (final t in ([...teams]..sort((a, b) => b.strength.compareTo(a.strength))).take(3)) t.id];
     continental = Cup(
       key: 'con',
       name: 'دوري الأبطال القاري',

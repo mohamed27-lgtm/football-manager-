@@ -138,6 +138,7 @@ class LeagueData {
   final String name;
   final String country;
   final int tier;
+  final int div; // 1 الأولى، 2 الثانية، 3 الثالثة
   final int season;
   final List<ApiTeam> teams;
   final DateTime fetchedAt;
@@ -147,6 +148,7 @@ class LeagueData {
     required this.name,
     required this.country,
     required this.tier,
+    this.div = 1,
     required this.season,
     required this.teams,
     required this.fetchedAt,
@@ -161,6 +163,7 @@ class LeagueData {
         'name': name,
         'country': country,
         'tier': tier,
+        'div': div,
         'season': season,
         'at': fetchedAt.toIso8601String(),
         'teams': [for (final t in teams) t.toJson()],
@@ -171,6 +174,7 @@ class LeagueData {
         name: j['name'] as String,
         country: j['country'] as String,
         tier: j['tier'] as int,
+        div: (j['div'] as int?) ?? 1,
         season: j['season'] as int,
         fetchedAt: DateTime.tryParse((j['at'] as String?) ?? '') ?? DateTime.now(),
         teams: [

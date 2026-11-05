@@ -96,8 +96,8 @@ class _ManagerAppState extends State<ManagerApp> {
         onLogout: _logout,
         hasSave: hasSave,
         onContinue: _continue,
-        onStartReal: (List<Team> teams, int id, String name) {
-          final g = GameState.fromData(teams, id, name);
+        onStartReal: (List<Team> teams, int id, String name, {Pyramid? pyramid}) {
+          final g = GameState.fromData(teams, id, name, pyramid: pyramid);
           g.save();
           setState(() => gs = g);
         },

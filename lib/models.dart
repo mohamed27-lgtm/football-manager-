@@ -168,7 +168,7 @@ const formations = <Formation>[
 ];
 
 class Team {
-  final int id;
+  int id;
   final String name;
   final int reputation;
   List<Player> squad;
@@ -352,4 +352,14 @@ class Team {
     t.form = [for (final x in (j['form'] as List?) ?? const []) x as String];
     return t;
   }
+}
+
+/// الهرم الكروي للدولة: الدرجة الأعلى والأدنى من درجة المستخدم (إن توفرت بياناتهما)
+class Pyramid {
+  final int div;
+  final List<Team> upper;
+  final String upperName;
+  final List<Team> lower;
+  final String lowerName;
+  const Pyramid({this.div = 1, this.upper = const [], this.upperName = '', this.lower = const [], this.lowerName = ''});
 }

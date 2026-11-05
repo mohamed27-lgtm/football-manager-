@@ -144,7 +144,7 @@ def fetch_league(api, l):
             raise RuntimeError("لا توجد فرق")
         d = {
             "id": l["id"], "name": l["name"], "country": l["country"], "tier": l["tier"],
-            "season": SEASON, "at": datetime.now(timezone.utc).isoformat(),
+            "div": l.get("div", 1), "season": SEASON, "at": datetime.now(timezone.utc).isoformat(),
             "logo": l.get("logo"),
             "teams": [
                 {

@@ -6,7 +6,7 @@ import 'league_store.dart';
 import 'models.dart';
 import 'widgets.dart';
 
-typedef StartReal = void Function(List<Team> teams, int userId, String leagueName);
+typedef StartReal = void Function(List<Team> teams, int userId, String leagueName, {Pyramid? pyramid});
 
 class DataScreen extends StatefulWidget {
   final StartReal onStart;
@@ -238,7 +238,8 @@ class ClubPickerScreen extends StatelessWidget {
   final List<Team> teams;
   final String leagueName;
   final StartReal onStart;
-  const ClubPickerScreen({super.key, required this.teams, required this.leagueName, required this.onStart});
+  final Pyramid? pyramid;
+  const ClubPickerScreen({super.key, required this.teams, required this.leagueName, required this.onStart, this.pyramid});
 
   @override
   Widget build(BuildContext context) {
@@ -255,7 +256,7 @@ class ClubPickerScreen extends StatelessWidget {
                 subtitle: Text('${'★' * t.reputation} • قوة ${t.strength.toStringAsFixed(1)}${t.venue != null ? ' • ${t.venue}' : ''}'),
                 trailing: const Icon(Icons.chevron_left),
                 onTap: () {
-                  onStart(teams, t.id, leagueName);
+                  onStart(teams, t.id, leagueName, pyramid: pyramid);
                   Navigator.of(context).popUntil((r) => r.isFirst);
                 },
               ),
