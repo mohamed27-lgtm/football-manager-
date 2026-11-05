@@ -3,10 +3,8 @@ import 'facilities_screen.dart';
 import 'business_screens.dart';
 import 'club_screens.dart';
 import 'settings_screen.dart';
-import 'cups_screen.dart';
 import 'finance_screen.dart';
 import 'game_state.dart';
-import 'table_tab.dart';
 import 'widgets.dart';
 
 class TrophyScreen extends StatelessWidget {
