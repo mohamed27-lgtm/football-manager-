@@ -44,9 +44,9 @@ class _MatchesTabState extends State<MatchesTab> {
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
-          child: FilledButton.icon(
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('ادخل المباراة'),
+          child: GradientButton(
+            icon: Icons.play_arrow_rounded,
+            label: 'ادخل المباراة',
             onPressed: () => playMatch(context, gs),
           ),
         ),
@@ -55,7 +55,7 @@ class _MatchesTabState extends State<MatchesTab> {
   }
 
   Widget _teamCol(Team t) => Column(children: [
-        teamBadge(t, size: 40),
+        teamBadge(t, size: 52),
         const SizedBox(height: 6),
         Text(t.name, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
         Text('قوة ${t.strength.toStringAsFixed(1)}', style: const TextStyle(color: kMuted, fontSize: 12)),

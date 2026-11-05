@@ -45,40 +45,46 @@ class StartScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: ListView(padding: const EdgeInsets.all(16), children: [
-          const Text('⚽ مدرب كرة القدم',
-              textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
-          const SizedBox(height: 6),
-          const Text('قُد ناديك نحو المجد', textAlign: TextAlign.center, style: TextStyle(color: kMuted)),
-          const SizedBox(height: 22),
-          if (hasSave)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: FilledButton.icon(
-                onPressed: onContinue,
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('متابعة المسيرة المحفوظة'),
+        child: ListView(padding: const EdgeInsets.all(18), children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 34, horizontal: 20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              gradient: const LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, colors: [Color(0xFF0E3B24), Color(0xFF071A12), kBg]),
+              border: Border.all(color: kLine),
+              boxShadow: const [BoxShadow(color: Color(0x4400E676), blurRadius: 30, offset: Offset(0, 10))],
+            ),
+            child: Column(children: [
+              Container(
+                width: 84,
+                height: 84,
+                decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF00E676), Color(0xFF00A152)])),
+                child: const Icon(Icons.sports_soccer, size: 48, color: Colors.black),
               ),
-            ),
-          hasSave
-              ? FilledButton.tonalIcon(
-                  onPressed: () => _newCareer(context),
-                  icon: const Icon(Icons.public),
-                  label: const Text('مسيرة جديدة — اختر دوري وفريق حقيقي'),
-                )
-              : FilledButton.icon(
-                  onPressed: () => _newCareer(context),
-                  icon: const Icon(Icons.public),
-                  label: const Text('ابدأ مسيرتك — اختر دوري وفريق حقيقي'),
-                ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => DataScreen(onStart: onStartReal)),
-            ),
-            icon: const Icon(Icons.key),
-            label: const Text('استيراد مباشر بمفتاح API'),
+              const SizedBox(height: 16),
+              const Text('مدرب كرة القدم', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 6),
+              const Text('قُد ناديك نحو المجد', style: TextStyle(color: kMuted, fontSize: 15)),
+            ]),
           ),
+          const SizedBox(height: 24),
+          if (hasSave) ...[
+            GradientButton(label: 'متابعة المسيرة المحفوظة', icon: Icons.play_arrow_rounded, onPressed: onContinue),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => _newCareer(context),
+              icon: const Icon(Icons.public),
+              label: const Text('مسيرة جديدة — اختر دوري وفريق'),
+              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+            ),
+          ] else
+            GradientButton(label: 'ابدأ مسيرتك', icon: Icons.public, onPressed: () => _newCareer(context)),
+          const SizedBox(height: 18),
+          const Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+            _Perk(Icons.groups_2_outlined, 'لاعبون حقيقيون'),
+            _Perk(Icons.account_balance_outlined, 'إدارة وانتقالات'),
+            _Perk(Icons.emoji_events_outlined, 'بطولات وكؤوس'),
+          ]),
         ]),
       ),
     );
@@ -87,6 +93,23 @@ class StartScreen extends StatelessWidget {
   void _newCareer(BuildContext context) => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => LeaguesScreen(onStart: onStartReal)),
       );
+}
+
+class _Perk extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _Perk(this.icon, this.label);
+  @override
+  Widget build(BuildContext context) => Column(children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+          child: Icon(icon, color: kAccent),
+        ),
+        const SizedBox(height: 6),
+        Text(label, style: const TextStyle(color: kMuted, fontSize: 11)),
+      ]);
 }
 
 class HomeShell extends StatefulWidget {

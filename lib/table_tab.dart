@@ -33,10 +33,24 @@ class TableTab extends StatelessWidget {
           const Divider(height: 12),
           for (var i = 0; i < table.length; i++)
             Container(
-              color: table[i] == gs.user ? const Color(0x2200E676) : null,
+              decoration: BoxDecoration(
+                color: table[i] == gs.user ? const Color(0x2200E676) : null,
+                border: Border(
+                  right: BorderSide(
+                    width: 3,
+                    color: i < 4
+                        ? kAccent
+                        : i < 6
+                            ? kBlue
+                            : i >= table.length - 3
+                                ? const Color(0xFFFF5252)
+                                : Colors.transparent,
+                  ),
+                ),
+              ),
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(children: [
-                SizedBox(width: 24, child: Text('${i + 1}', style: const TextStyle(fontSize: 12))),
+                SizedBox(width: 24, child: Text('${i + 1}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
                 teamBadge(table[i], size: 18),
                 const SizedBox(width: 8),
                 Expanded(child: Text(table[i].name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
@@ -44,6 +58,21 @@ class TableTab extends StatelessWidget {
                 _c('${table[i].gd}', w: 34), _c('${table[i].points}', bold: true, w: 34),
               ]),
             ),
+        ]),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Wrap(spacing: 14, runSpacing: 4, children: [
+          for (final e in const [
+            (kAccent, 'دوري الأبطال'),
+            (kBlue, 'الدوري الأوروبي'),
+            (Color(0xFFFF5252), 'الهبوط'),
+          ])
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              Container(width: 10, height: 10, decoration: BoxDecoration(color: e.$1, borderRadius: BorderRadius.circular(3))),
+              const SizedBox(width: 5),
+              Text(e.$2, style: const TextStyle(color: kMuted, fontSize: 11)),
+            ]),
         ]),
       ),
       sectionTitle('الهدافون'),
