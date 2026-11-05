@@ -211,7 +211,7 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
                   child: Text('إعارة ${money(gs.loanFee(p))}'),
                 ),
               ),
-            ])
+            ]),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(
