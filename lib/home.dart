@@ -11,6 +11,7 @@ import 'more_screen.dart';
 import 'squad.dart';
 import 'business_screens.dart';
 import 'club_screens.dart';
+import 'activity_screen.dart';
 import 'team_tab.dart';
 import 'facilities_screen.dart';
 import 'widgets.dart';
@@ -124,6 +125,26 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int tab = 0;
 
+  /// تنفيذ مهمة: ينقل المستخدم مباشرة إلى مكان القرار
+  void _openTask(GameTask t) {
+    switch (t.action) {
+      case TaskAction.offers:
+        setState(() => tab = 2);
+        break;
+      case TaskAction.board:
+      case TaskAction.match:
+        setState(() => tab = 0);
+        break;
+      case TaskAction.injuries:
+        setState(() => tab = 1);
+        break;
+      case TaskAction.contracts:
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => Scaffold(appBar: AppBar(title: const Text('العقود')), body: ContractsView(gs: widget.gs))));
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -164,7 +185,7 @@ class _HomeShellState extends State<HomeShell> {
           });
         }
         final pages = <Widget>[
-          DashboardTab(gs: gs, onRestart: widget.onRestart, onNavigate: (i) => setState(() => tab = i)),
+          DashboardTab(gs: gs, onRestart: widget.onRestart, onNavigate: (i) => setState(() => tab = i), onTask: _openTask),
           TeamTab(gs: gs),
           TransfersTab(gs: gs),
           MatchesTab(gs: gs),
@@ -180,6 +201,22 @@ class _HomeShellState extends State<HomeShell> {
               Expanded(child: Text(gs.user.name, overflow: TextOverflow.ellipsis)),
             ]),
             actions: [
+              Builder(builder: (ctx) {
+                final n = gs.tasks.length;
+                return IconButton(
+                  tooltip: 'مركز الإدارة',
+                  onPressed: () => Navigator.of(ctx).push(MaterialPageRoute(
+                      builder: (_) => ActivityScreen(gs: gs, onOpen: (t) {
+                            Navigator.of(ctx).pop();
+                            _openTask(t);
+                          }))),
+                  icon: Badge(
+                    isLabelVisible: n > 0,
+                    label: Text('$n'),
+                    child: const Icon(Icons.notifications_outlined),
+                  ),
+                );
+              }),
               GestureDetector(
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs))),
                 child: Container(
@@ -221,8 +258,10 @@ class DashboardTab extends StatelessWidget {
   final GameState gs;
   final VoidCallback onRestart;
   final void Function(int) onNavigate;
-  const DashboardTab({super.key, required this.gs, required this.onRestart, required this.onNavigate});
+  final void Function(GameTask) onTask;
+  const DashboardTab({super.key, required this.gs, required this.onRestart, required this.onNavigate, required this.onTask});
 
+  BuildContext? ctxRef;
   void _push(BuildContext c, Widget w) => Navigator.of(c).push(MaterialPageRoute(builder: (_) => w));
 
   Widget _hero() {
@@ -300,6 +339,86 @@ class DashboardTab extends StatelessWidget {
         ]),
       ]),
     );
+  }
+
+  Widget _resources() {
+    Widget chip(IconData i, String v, String l, Color c, VoidCallback f) => Expanded(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: f,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+              child: Column(children: [
+                Icon(i, color: c, size: 18),
+                const SizedBox(height: 4),
+                Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: c)),
+                Text(l, style: const TextStyle(color: kMuted, fontSize: 11)),
+              ]),
+            ),
+          ),
+        );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(children: [
+        chip(Icons.account_balance_wallet_outlined, money(gs.user.budget), 'الميزانية', gs.user.budget < 0 ? const Color(0xFFFF7043) : kAccent, () => Navigator.of(ctxRef!).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs)))),
+        const SizedBox(width: 8),
+        chip(Icons.payments_outlined, money(gs.weeklyWages), 'رواتب/أسبوع', kGold, () => Navigator.of(ctxRef!).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs)))),
+        const SizedBox(width: 8),
+        chip(Icons.groups_outlined, '${gs.user.squad.length}', 'لاعباً', kBlue, () => onNavigate(1)),
+      ]),
+    );
+  }
+
+  /// تنبيه عاجل بزر ينقل المستخدم مباشرة إلى الحدث
+  Widget _urgent(BuildContext context) {
+    final u = gs.tasks.where((t) => t.urgent).toList();
+    if (u.isEmpty) return const SizedBox.shrink();
+    final t = u.first;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFF5252).withOpacity(0.10),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFF5252).withOpacity(0.6)),
+        ),
+        child: Row(children: [
+          const Icon(Icons.priority_high, color: Color(0xFFFF5252)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(t.title, style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text(t.body, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 12)),
+            ]),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFF5252), foregroundColor: Colors.white, minimumSize: const Size(64, 40)),
+            onPressed: () => onTask(t),
+            child: const Text('افتح'),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _tasksPanel(BuildContext context) {
+    final t = gs.tasks;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      sectionTitle('المهام', trailing: TextButton(
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => ActivityScreen(gs: gs, onOpen: (x) {
+                  Navigator.of(context).pop();
+                  onTask(x);
+                }))),
+        child: Text(t.isEmpty ? 'مركز الإدارة' : 'عرض الكل (${t.length})'),
+      )),
+      if (t.isEmpty)
+        const Panel(child: EmptyState(icon: Icons.task_alt, title: 'لا مهام مفتوحة', subtitle: 'لا قرارات تنتظرك الآن.'))
+      else
+        for (final x in t.take(3)) TaskCard(task: x, onOpen: () => onTask(x)),
+    ]);
   }
 
   Widget _offersCard() => Padding(
@@ -484,11 +603,14 @@ class DashboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ctxRef = context;
     final u = gs.user;
     final exp = gs.expiring;
     final showExp = exp.isNotEmpty && !gs.seasonOver && !gs.fired && gs.rounds.length - gs.week <= 8;
     return ListView(padding: const EdgeInsets.all(14), children: [
       _hero(),
+      _resources(),
+      _urgent(context),
       if (gs.fired)
         Panel(
           color: const Color(0xFF2A1414),
@@ -518,13 +640,12 @@ class DashboardTab extends StatelessWidget {
         )
       else
         _nextMatch(context),
-      if (gs.offers.isNotEmpty) _offersCard(),
-      _actions(context),
-      if (gs.boardKind != null) _board(context),
-      _stats(),
       _recent(),
       sectionTitle('الترتيب', trailing: TextButton(onPressed: () => onNavigate(3), child: const Text('الجدول كاملاً'))),
       _miniTable(),
+      _tasksPanel(context),
+      _actions(context),
+      if (gs.boardKind != null) _board(context),
       Panel(
         child: Column(children: [
           Row(children: [

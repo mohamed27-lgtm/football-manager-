@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -79,10 +80,10 @@ class Panel extends StatelessWidget {
 }
 
 /// زر رئيسي متدرّج
-class GradientButton extends StatelessWidget {
+class GradientButton extends StatefulWidget {
   final String label;
   final IconData? icon;
-  final VoidCallback? onPressed;
+  final FutureOr<void> Function()? onPressed;
   final List<Color> colors;
   const GradientButton({
     super.key,
@@ -93,26 +94,50 @@ class GradientButton extends StatelessWidget {
   });
 
   @override
+  State<GradientButton> createState() => _GradientButtonState();
+}
+
+class _GradientButtonState extends State<GradientButton> {
+  bool busy = false;
+
+  Future<void> _tap() async {
+    if (busy || widget.onPressed == null) return; // منع الضغط المتكرر
+    setState(() => busy = true);
+    try {
+      final r = widget.onPressed!();
+      if (r is Future) await r;
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final on = onPressed != null;
+    final on = widget.onPressed != null;
     return Opacity(
-      opacity: on ? 1 : 0.5,
+      opacity: on ? 1 : 0.45,
       child: Container(
+        constraints: const BoxConstraints(minHeight: 52),
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: colors),
+          gradient: LinearGradient(colors: widget.colors),
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: colors.first.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))],
+          boxShadow: on ? [BoxShadow(color: widget.colors.first.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))] : null,
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
-            onTap: onPressed,
+            onTap: on ? _tap : null,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 18),
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                if (icon != null) ...[Icon(icon, color: Colors.black, size: 22), const SizedBox(width: 8)],
-                Text(label, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w900)),
+                if (busy)
+                  const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.black))
+                else ...[
+                  if (widget.icon != null) ...[Icon(widget.icon, color: Colors.black, size: 22), const SizedBox(width: 8)],
+                  Text(widget.label, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w900)),
+                ],
               ]),
             ),
           ),
@@ -431,4 +456,28 @@ class AnimatedMoney extends StatelessWidget {
         curve: Curves.easeOutCubic,
         builder: (_, v, __) => Text(money(v), style: style),
       );
+}
+
+
+/// نافذة تأكيد للعمليات الحساسة: تعرض الأثر المالي قبل التنفيذ
+Future<bool> confirmDialog(BuildContext context,
+    {required String title, required String body, String confirm = 'تأكيد', bool danger = false}) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: kCard,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18), side: BorderSide(color: danger ? const Color(0xFFFF5252) : kLine)),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+      content: Text(body, style: const TextStyle(height: 1.5)),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: danger ? const Color(0xFFFF5252) : kAccent, foregroundColor: danger ? Colors.white : Colors.black),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(confirm),
+        ),
+      ],
+    ),
+  );
+  return ok == true;
 }

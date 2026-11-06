@@ -27,6 +27,15 @@ const trainingModes = <String, String>{
   'rest': 'راحة',
 };
 
+enum TaskAction { offers, board, contracts, injuries, match }
+
+class GameTask {
+  final String id, title, body, reason, due;
+  final bool urgent;
+  final TaskAction action;
+  const GameTask({required this.id, required this.title, required this.body, required this.reason, required this.due, required this.urgent, required this.action});
+}
+
 class GameState extends ChangeNotifier {
   /// يُضبط عند تسجيل الدخول ليكون لكل حساب حفظه الخاص
   static String slot = '';
@@ -58,6 +67,62 @@ class GameState extends ChangeNotifier {
   Finance fin = Finance();
   final List<Offer> offers = [];
   final Set<int> watch = {};
+  final List<String> oplog = [];
+  void logOp(String m) {
+    oplog.insert(0, 'الأسبوع ${week + 1} • $m');
+    if (oplog.length > 120) oplog.removeLast();
+  }
+
+  /// مهام تحتاج قرار الرئيس — تُشتق من حالة المسيرة الفعلية فلا تتكرر ولا تضيع، وتختفي فور معالجتها
+  List<GameTask> get tasks {
+    final t = <GameTask>[];
+    if (fired) return t;
+    for (final o in offers) {
+      t.add(GameTask(
+        id: 'offer-${o.player.id}',
+        title: 'عرض شراء ${o.player.name}',
+        body: '${o.club} يعرض ${money1(o.amount)} (قيمته ${money1(o.player.value)})',
+        reason: 'عرض وارد على لاعب في تشكيلتك',
+        due: 'ينتهي بعد ${o.weeksLeft} جولات',
+        urgent: o.weeksLeft <= 1,
+        action: TaskAction.offers,
+      ));
+    }
+    if (boardKind != null) {
+      t.add(GameTask(
+        id: 'board', title: 'طلب من مجلس الإدارة', body: 'ينتظر المجلس قرارك', reason: 'قرار إداري', due: 'الآن', urgent: true, action: TaskAction.board));
+    }
+    if (!seasonOver && rounds.length - week <= 8 && expiring.isNotEmpty) {
+      t.add(GameTask(
+        id: 'contracts',
+        title: '${expiring.length} عقود تنتهي هذا الموسم',
+        body: expiring.take(3).map((p) => p.name).join('، '),
+        reason: 'سيغادرون مجاناً إن لم تجدّد',
+        due: 'قبل نهاية الموسم',
+        urgent: false,
+        action: TaskAction.contracts,
+      ));
+    }
+    final inj = user.squad.where((p) => p.injuredWeeks > 0).toList();
+    if (inj.isNotEmpty) {
+      t.add(GameTask(
+        id: 'injuries',
+        title: '${inj.length} إصابات في الفريق',
+        body: inj.take(3).map((p) => '${p.name} (${p.injuredWeeks} أسابيع)').join('، '),
+        reason: 'تؤثر على التشكيلة الأساسية',
+        due: 'قبل المباراة',
+        urgent: false,
+        action: TaskAction.injuries,
+      ));
+    }
+    if (seasonOver) {
+      t.add(GameTask(id: 'season', title: 'انتهى الموسم', body: 'ابدأ موسماً جديداً', reason: 'نهاية الموسم', due: 'الآن', urgent: true, action: TaskAction.match));
+    } else if (user.lineup.length < 11) {
+      t.add(GameTask(id: 'lineup', title: 'التشكيلة غير مكتملة', body: 'اختر 11 لاعباً قبل المباراة', reason: 'لا يمكن لعب مباراة بأقل من 11', due: 'قبل المباراة', urgent: true, action: TaskAction.injuries));
+    }
+    return t;
+  }
+
   String? celebration;
   void toggleWatch(Player p) {
     if (!watch.remove(p.id)) watch.add(p.id);
@@ -167,6 +232,7 @@ class GameState extends ChangeNotifier {
       foreign[tm.id] = tm;
     }
     honours.addAll(((j['honours'] as List?) ?? const []).cast<String>());
+    oplog.addAll(((j['oplog'] as List?) ?? const []).cast<String>());
     watch.addAll(((j['watch'] as List?) ?? const []).cast<int>());
     final st = j['staff'] as Map<String, dynamic>?;
     if (st != null) st.forEach((k, v) => staff[k] = v as int);
@@ -234,6 +300,7 @@ class GameState extends ChangeNotifier {
         'offers': [for (final o in offers) o.toJson()],
         'foreign': [for (final t in foreign.values) t.toJson()],
         'honours': honours,
+        'oplog': oplog,
         'watch': watch.toList(),
         'staff': staff,
         'bk': boardKind,
@@ -776,6 +843,7 @@ class GameState extends ChangeNotifier {
     _registerNew(p);
     market.remove(p);
     news.insert(0, '💼 تعاقدت مع ${p.name} مقابل ${money1(price)} + عمولة وكيل ${money1(fee)}$note');
+    logOp('تعاقد مع ${p.name} (-${money1(price + fee)})');
     unawaited(save());
     notifyListeners();
     return null;
@@ -890,6 +958,7 @@ class GameState extends ChangeNotifier {
     offers.remove(o);
     user.repairLineup();
     news.insert(0, '💰 بعت ${o.player.name} إلى ${o.club} مقابل ${money1(o.amount)}');
+    logOp('بيع ${o.player.name} إلى ${o.club} (+${money1(o.amount)})');
     unawaited(save());
     notifyListeners();
     return null;
@@ -941,6 +1010,7 @@ class GameState extends ChangeNotifier {
     user.budget += price;
     fin.add('sales', price);
     news.insert(0, '💰 بعت ${p.name} مقابل ${price.toStringAsFixed(1)}M');
+    logOp('بيع ${p.name} (+${money1(price)})');
     unawaited(save());
     notifyListeners();
     return null;
@@ -953,6 +1023,7 @@ class GameState extends ChangeNotifier {
     fin.add('renewals', cost);
     p.contract = 3;
     news.insert(0, '✍️ جدّدت عقد ${p.name} لـ 3 سنوات');
+    logOp('تجديد عقد ${p.name} 3 سنوات (-${money1(cost)})');
     unawaited(save());
     notifyListeners();
     return null;
@@ -1030,6 +1101,7 @@ class GameState extends ChangeNotifier {
     user.squad.remove(p);
     user.repairLineup();
     news.insert(0, '📄 أنهيت عقد ${p.name} (تعويض ${money1(cost)})');
+    logOp('إنهاء عقد ${p.name} (-${money1(cost)})');
     unawaited(save());
     notifyListeners();
     return null;

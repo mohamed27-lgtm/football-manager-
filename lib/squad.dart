@@ -282,7 +282,12 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
               Row(children: [
                 Expanded(
                   child: FilledButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      final ok = await confirmDialog(ctx,
+                          title: 'بيع ${p.name}؟',
+                          body: 'ستستلم ${money(gs.sellPrice(p))} وتخسر لاعباً تقييمه ${p.overall} وراتبه ${money(p.wage)}/أسبوع.',
+                          confirm: 'بيع', danger: true);
+                      if (!ok || !ctx.mounted) return;
                       final err = gs.sell(p);
                       Navigator.pop(ctx);
                       snack(err, 'تم البيع ✅');
@@ -527,7 +532,12 @@ class _TransfersTabState extends State<TransfersTab> {
             Row(children: [
               Expanded(
                 child: FilledButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final ok = await confirmDialog(context,
+                        title: 'قبول عرض ${o.club}؟',
+                        body: 'ستبيع ${o.player.name} مقابل ${money(o.amount)} (قيمته السوقية ${money(o.player.value)}).',
+                        confirm: 'قبول وبيع', danger: true);
+                    if (!ok || !context.mounted) return;
                     final err = gs.acceptOffer(o);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تم البيع ✅')));
                   },
