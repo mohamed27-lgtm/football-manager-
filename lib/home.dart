@@ -261,7 +261,6 @@ class DashboardTab extends StatelessWidget {
   final void Function(GameTask) onTask;
   const DashboardTab({super.key, required this.gs, required this.onRestart, required this.onNavigate, required this.onTask});
 
-  BuildContext? ctxRef;
   void _push(BuildContext c, Widget w) => Navigator.of(c).push(MaterialPageRoute(builder: (_) => w));
 
   Widget _hero() {
@@ -341,7 +340,7 @@ class DashboardTab extends StatelessWidget {
     );
   }
 
-  Widget _resources() {
+  Widget _resources(BuildContext context) {
     Widget chip(IconData i, String v, String l, Color c, VoidCallback f) => Expanded(
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
@@ -361,9 +360,9 @@ class DashboardTab extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(children: [
-        chip(Icons.account_balance_wallet_outlined, money(gs.user.budget), 'الميزانية', gs.user.budget < 0 ? const Color(0xFFFF7043) : kAccent, () => Navigator.of(ctxRef!).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs)))),
+        chip(Icons.account_balance_wallet_outlined, money(gs.user.budget), 'الميزانية', gs.user.budget < 0 ? const Color(0xFFFF7043) : kAccent, () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs)))),
         const SizedBox(width: 8),
-        chip(Icons.payments_outlined, money(gs.weeklyWages), 'رواتب/أسبوع', kGold, () => Navigator.of(ctxRef!).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs)))),
+        chip(Icons.payments_outlined, money(gs.weeklyWages), 'رواتب/أسبوع', kGold, () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs)))),
         const SizedBox(width: 8),
         chip(Icons.groups_outlined, '${gs.user.squad.length}', 'لاعباً', kBlue, () => onNavigate(1)),
       ]),
@@ -603,13 +602,12 @@ class DashboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ctxRef = context;
     final u = gs.user;
     final exp = gs.expiring;
     final showExp = exp.isNotEmpty && !gs.seasonOver && !gs.fired && gs.rounds.length - gs.week <= 8;
     return ListView(padding: const EdgeInsets.all(14), children: [
       _hero(),
-      _resources(),
+      _resources(context),
       _urgent(context),
       if (gs.fired)
         Panel(
