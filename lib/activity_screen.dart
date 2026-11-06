@@ -11,11 +11,11 @@ class ActivityScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('مركز الإدارة'),
-          bottom: const TabBar(tabs: [Tab(text: 'المهام'), Tab(text: 'الأخبار'), Tab(text: 'سجل العمليات')]),
+          bottom: const TabBar(tabs: [Tab(text: 'المهام'), Tab(text: 'الأخبار'), Tab(text: 'سجل العمليات'), Tab(text: 'التحديات')]),
         ),
         body: ListenableBuilder(
           listenable: gs,
@@ -41,6 +41,24 @@ class ActivityScreen extends StatelessWidget {
                           Expanded(child: Text(n, style: const TextStyle(height: 1.4))),
                         ])),
                     ]),
+              ListView(padding: const EdgeInsets.all(14), children: [
+                for (final c in _challenges(gs))
+                  Panel(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(children: [
+                        Icon(c.$4 >= 1 ? Icons.emoji_events : Icons.flag, color: c.$4 >= 1 ? kGold : kBlue, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(c.$1, style: const TextStyle(fontWeight: FontWeight.w800))),
+                        Text(c.$3, style: const TextStyle(color: kMuted, fontSize: 12)),
+                      ]),
+                      const SizedBox(height: 4),
+                      Text(c.$2, style: const TextStyle(color: kMuted, fontSize: 12)),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(value: c.$4.clamp(0.0, 1.0), minHeight: 6, borderRadius: BorderRadius.circular(4)),
+                    ]),
+                  ),
+              ]),
             ]);
           },
         ),
@@ -99,4 +117,20 @@ class TaskCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// تحديات طويلة المدى مشتقة من حالة اللعبة: (العنوان، الوصف، التقدم نصاً، النسبة)
+List<(String, String, String, double)> _challenges(GameState gs) {
+  final titles = gs.history.where((h) => h['pos'] == 1).length;
+  final seasons = gs.history.length;
+  final young = gs.user.squad.where((p) => p.age <= 21 && p.overall >= 70).length;
+  final cups = gs.honours.where((h) => !h.contains('الدوري')).length;
+  return [
+    ('بطل الدوري', 'افز بلقب الدوري مرة واحدة', '${titles.clamp(0, 1)}/1', titles / 1),
+    ('هيمنة محلية', 'افز بالدوري 3 مرات', '${titles.clamp(0, 3)}/3', titles / 3),
+    ('مسيرة طويلة', 'أكمل 5 مواسم مع النادي', '${seasons.clamp(0, 5)}/5', seasons / 5),
+    ('بطولة كأس', 'افز بأي كأس', '${cups.clamp(0, 1)}/1', cups / 1.0),
+    ('جيل المستقبل', 'امتلك 3 لاعبين تحت 22 بتقييم 70+', '${young.clamp(0, 3)}/3', young / 3),
+    ('خزينة آمنة', 'ارفع الميزانية إلى 100M', '${gs.money1(gs.user.budget)}/100M', gs.user.budget / 100),
+  ];
 }
