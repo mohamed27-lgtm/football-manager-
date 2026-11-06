@@ -152,6 +152,8 @@ class GameState extends ChangeNotifier {
   bool boardPledge = false; // تعهّد للإدارة بإنهاء الدوري ضمن الثلاثة الأوائل
   List<int> lastXI = [];
   double fans = 50;
+  int difficulty = 1; // 0 سهل، 1 عادي، 2 صعب
+  bool introSeen = false;
   final List<Map<String, dynamic>> history = [];
   String bigWin = '', bigLoss = '';
   int bigWinD = 0, bigLossD = 0;
@@ -240,6 +242,8 @@ class GameState extends ChangeNotifier {
     boardPledge = (j['bp'] as bool?) ?? false;
     lastXI = [for (final x in (j['lxi'] as List?) ?? const []) x as int];
     fans = (j['fans'] as num?)?.toDouble() ?? (20.0 + user.reputation * 12);
+    difficulty = (j['diff'] as int?) ?? 1;
+    introSeen = (j['intro'] as bool?) ?? true;
     for (final h in (j['history'] as List?) ?? const []) {
       history.add(Map<String, dynamic>.from(h as Map));
     }
@@ -312,6 +316,8 @@ class GameState extends ChangeNotifier {
         'bp': boardPledge,
         'lxi': lastXI,
         'fans': fans,
+        'diff': difficulty,
+        'intro': introSeen,
         'history': history,
         'bigWin': bigWin,
         'bigLoss': bigLoss,
@@ -452,6 +458,20 @@ class GameState extends ChangeNotifier {
   int get position => table.indexOf(user) + 1;
 
   double get weeklyWages => user.squad.fold(0.0, (a, p) => a + p.wage);
+
+  static const diffNames = ['سهل', 'عادي', 'صعب'];
+
+  /// يُطبَّق مرة واحدة عند بدء المسيرة: يغيّر الميزانية الابتدائية وثقة الإدارة
+  void startCareer(int d) {
+    difficulty = d;
+    final m = [1.3, 1.0, 0.7][d];
+    user.budget = user.budget * m;
+    confidence = [75.0, 60.0, 45.0][d];
+    introSeen = true;
+    logOp('بدء المسيرة بمستوى ${diffNames[d]}');
+    unawaited(save());
+    notifyListeners();
+  }
 
   List<Player> get expiring => user.squad.where((p) => p.contract <= 1).toList();
 

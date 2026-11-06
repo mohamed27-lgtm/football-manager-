@@ -12,6 +12,7 @@ import 'squad.dart';
 import 'business_screens.dart';
 import 'club_screens.dart';
 import 'activity_screen.dart';
+import 'reports.dart';
 import 'team_tab.dart';
 import 'facilities_screen.dart';
 import 'widgets.dart';
@@ -124,6 +125,16 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int tab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.gs.introSeen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) showOpeningReport(context, widget.gs);
+      });
+    }
+  }
 
   /// تنفيذ مهمة: ينقل المستخدم مباشرة إلى مكان القرار
   void _openTask(GameTask t) {
@@ -633,6 +644,12 @@ class DashboardTab extends StatelessWidget {
             const SizedBox(height: 8),
             Text('أنهيت الدوري في المركز ${gs.position} (الهدف: ${gs.objective})', style: const TextStyle(color: kMuted)),
             const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => showSeasonReport(context, gs),
+              icon: const Icon(Icons.assessment),
+              label: const Text('تقرير نهاية الموسم'),
+            ),
+            const SizedBox(height: 8),
             GradientButton(label: 'ابدأ موسماً جديداً', icon: Icons.play_arrow, onPressed: gs.startNewSeason),
           ]),
         )
