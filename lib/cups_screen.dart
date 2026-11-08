@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'cup_tree.dart';
 import 'cups.dart';
 import 'game_state.dart';
 import 'match_screen.dart';
@@ -90,42 +91,6 @@ class CupView extends StatelessWidget {
   final GameState gs;
   final Cup cup;
 
-  /// شجرة الأدوار: عمود لكل دور مع بطاقة لكل مباراة (من سجل البطولة)
-  Widget _bracket(Map<String, List<String>> logs) {
-    final rounds = logs.entries.where((e) => !e.key.contains('مجموعات')).toList();
-    if (rounds.isEmpty) return const SizedBox.shrink();
-    final re = RegExp(r'^(.*?) (\d+)-(\d+) (.*?)( \(ر\.ج .*\))?$');
-    return SizedBox(
-      height: 20.0 + 86.0 * rounds.map((e) => e.value.length).reduce((a, b) => a > b ? a : b),
-      child: ListView(scrollDirection: Axis.horizontal, reverse: true, padding: const EdgeInsets.symmetric(vertical: 8), children: [
-        for (final e in rounds)
-          Container(
-            width: 190,
-            margin: const EdgeInsets.only(left: 10),
-            child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              Text(e.key, style: const TextStyle(color: kMuted, fontSize: 11, fontWeight: FontWeight.w700)),
-              for (final r in e.value)
-                Builder(builder: (_) {
-                  final m = re.firstMatch(r);
-                  if (m == null) return Panel(padding: const EdgeInsets.all(8), child: Text(r, style: const TextStyle(fontSize: 11)));
-                  final hg = int.parse(m[2]!), ag = int.parse(m[3]!);
-                  Widget row(String n, int g, bool win) => Row(children: [
-                        Expanded(child: Text(n, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, fontWeight: win ? FontWeight.w800 : FontWeight.w400, color: n == gs.user.name ? kAccent : null))),
-                        Text('$g', style: TextStyle(fontWeight: FontWeight.w900, color: win ? kAccent : kMuted)),
-                      ]);
-                  final homeWin = hg > ag || (hg == ag && (m[5] ?? '').isNotEmpty && RegExp(r'(\d+)-(\d+)').firstMatch(m[5]!)!.let((x) => int.parse(x[1]!) > int.parse(x[2]!)));
-                  return Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLine)),
-                    child: Column(children: [row(m[1]!, hg, homeWin), const Divider(height: 8), row(m[4]!, ag, !homeWin), if (m[5] != null) Text(m[5]!.trim(), style: const TextStyle(color: kMuted, fontSize: 10))]),
-                  );
-                }),
-            ]),
-          ),
-      ]),
-    );
-  }
-
   const CupView({super.key, required this.gs, required this.cup});
 
   @override
@@ -160,7 +125,7 @@ class CupView extends StatelessWidget {
           Text('${cup.alive.length} فرق متبقية', style: const TextStyle(color: kMuted, fontSize: 12)),
         ]),
       ),
-      _bracket(logs),
+      if (!cup.inGroups) CupTree(gs: gs, cup: cup),
       if (cup.groups.isNotEmpty)
         for (var gi = 0; gi < cup.groups.length; gi++) ...[
           sectionTitle('المجموعة ${String.fromCharCode(65 + gi)}'),
