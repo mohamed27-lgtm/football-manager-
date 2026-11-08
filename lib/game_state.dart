@@ -164,6 +164,26 @@ class GameState extends ChangeNotifier {
   Cup? domestic, continental, superCup;
   Cup? activeCup;
   final Map<int, Team> foreign = {};
+  /// تصنيف Elo للأندية (الترتيب العالمي) بالاسم؛ يبدأ من قوة الفريق ويتغير بالنتائج
+  final Map<String, double> elo = {};
+  double eloOf(Team t) => elo[t.name] ?? 1500 + (t.strength - 65) * 18;
+
+  void _eloUpdate(Team h, Team a, int hg, int ag) {
+    final eh = eloOf(h), ea = eloOf(a);
+    final exp = 1 / (1 + pow(10, (ea - (eh + 50)) / 400));
+    final res = hg > ag ? 1.0 : (hg == ag ? 0.5 : 0.0);
+    final k = 22.0 * (1 + (hg - ag).abs().clamp(0, 4) * 0.25);
+    elo[h.name] = eh + k * (res - exp);
+    elo[a.name] = ea - k * (res - exp);
+  }
+
+  /// كل الأندية المعروفة مرتبة عالمياً
+  List<Team> get worldRanking {
+    final all = {for (final t in [...teams, ...upper, ...lower, ...foreign.values]) t.name: t}.values.toList();
+    all.sort((a, b) => eloOf(b).compareTo(eloOf(a)));
+    return all;
+  }
+
   bool realWorld = false; // أندية قارية حقيقية
   int userSlots = 3;
   final List<String> honours = [];
@@ -260,6 +280,9 @@ class GameState extends ChangeNotifier {
       loanedOut.add(Player.fromJson(p as Map<String, dynamic>));
     }
     realWorld = (j['rw'] as bool?) ?? false;
+    for (final e in ((j['elo'] as Map?) ?? const {}).entries) {
+      elo[e.key as String] = (e.value as num).toDouble();
+    }
     country = (j['ctry'] as String?) ?? '';
     leagueId = (j['lid'] as int?) ?? 0;
     userSlots = (j['uslots'] as int?) ?? 3;
@@ -338,6 +361,7 @@ class GameState extends ChangeNotifier {
         'offers': [for (final o in offers) o.toJson()],
         'foreign': [for (final t in foreign.values) t.toJson()],
         'rw': realWorld,
+        'elo': elo,
         'ctry': country,
         'lid': leagueId,
         'uslots': userSlots,
@@ -652,6 +676,7 @@ class GameState extends ChangeNotifier {
     f.hg = hg;
     f.ag = ag;
     final h = team(f.home), a = team(f.away);
+    _eloUpdate(h, a, hg, ag);
     h.played++;
     a.played++;
     h.gf += hg;
@@ -942,6 +967,17 @@ class GameState extends ChangeNotifier {
       notifyListeners();
       return 'فشل اللاعب في الفحص الطبي — أُلغيت الصفقة';
     }
+    if (!p.free && p.club != null) {
+      final owner = _ownerOf(p);
+      if (owner == null) {
+        market.remove(p);
+        notifyListeners();
+        return 'اللاعب لم يعد متاحاً — انتقل إلى نادٍ آخر';
+      }
+      owner.squad.removeWhere((x) => x.id == p.id);
+      owner.budget += price;
+      owner.repairLineup();
+    }
     user.budget -= price + fee;
     fin.add('purchases', price);
     fin.add('agents', fee);
@@ -950,6 +986,7 @@ class GameState extends ChangeNotifier {
       p.injuredWeeks = 1 + rng.nextInt(3);
       note = ' (إصابة طفيفة اكتُشفت في الفحص الطبي)';
     }
+    p.club = null;
     p.contract = 3;
     p.free = false;
     p.listed = false;
@@ -1655,6 +1692,7 @@ class GameState extends ChangeNotifier {
   void _setTie(Tie t, int hg, int ag, {bool pens = true}) {
     t.hg = hg;
     t.ag = ag;
+    _eloUpdate(team(t.home), team(t.away), hg, ag);
     if (hg == ag && pens) {
       final pHome = (0.5 + (team(t.home).strength - team(t.away).strength) * 0.01).clamp(0.35, 0.65).toDouble();
       final homeWins = rng.nextDouble() < pHome;
@@ -1864,15 +1902,39 @@ class GameState extends ChangeNotifier {
     return null;
   }
 
+  /// سوق حقيقي: لاعبون من أندية الدوريات الأخرى (بالنادي والقيمة الحقيقية) + أحرار
   List<Player> _scoutedMarket() {
-    final m = generateMarket(rng);
+    final m = generateMarket(rng).where((p) => p.free).toList();
+    final pool = <Player>[];
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+      if (t == user) continue;
+      for (final p in t.squad) {
+        if (p.overall >= 58 && !p.onLoan && p.injuredWeeks == 0) {
+          p.club = t.name;
+          pool.add(p);
+        }
+      }
+    }
+    pool.shuffle(rng);
+    // الأفضلية للأقوى لكن بتنوع: نأخذ 45 عشوائياً ونرتّبهم
+    for (final p in pool.take(45)) {
+      m.add(Player.fromJson(p.toJson())..club = p.club);
+    }
     final lvl = staff['scout'] ?? 0;
-    for (var i = 0; i < lvl; i++) {
-      final p = makePlayer(rng, Pos.values[rng.nextInt(4)], 66 + rng.nextInt(10) + lvl, 19 + rng.nextInt(8));
-      p.potential = min(95, max(p.potential, p.overall + 4 + rng.nextInt(8)));
-      m.add(p);
+    if (lvl > 0) {
+      final top = pool.where((p) => p.age <= 23 && p.potential >= 78).take(lvl * 3);
+      for (final p in top) {
+        if (!m.any((x) => x.id == p.id)) m.add(Player.fromJson(p.toJson())..club = p.club);
+      }
     }
     return m;
+  }
+
+  Team? _ownerOf(Player p) {
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+      if (t != user && t.squad.any((x) => x.id == p.id)) return t;
+    }
+    return null;
   }
 
   void _pressHeadline(String opp, int my, int op) {

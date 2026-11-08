@@ -5,6 +5,7 @@ import 'club_screens.dart';
 import 'settings_screen.dart';
 import 'finance_screen.dart';
 import 'game_state.dart';
+import 'ranking_screen.dart';
 import 'widgets.dart';
 
 class TrophyScreen extends StatelessWidget {
@@ -158,6 +159,7 @@ class MoreTab extends StatelessWidget {
         _tile(context, Icons.campaign_outlined, 'الإعلام والجماهير', 'شعبية النادي والصحافة', () => _push(context, MediaScreen(gs: gs)), color: const Color(0xFFFF8A65)),
       ]),
       _group('الإرث', [
+        _tile(context, Icons.public, 'الترتيب العالمي', '#${gs.worldRanking.indexOf(gs.user) + 1} عالمياً', () => _push(context, RankingScreen(gs: gs)), color: kBlue),
         _tile(context, Icons.emoji_events_outlined, 'خزانة البطولات', '${gs.honours.length} لقباً', () => _push(context, TrophyScreen(gs: gs)), color: kGold),
         _tile(context, Icons.history_edu_outlined, 'تاريخ النادي', 'المواسم والأرقام القياسية', () => _push(context, HistoryScreen(gs: gs)), color: const Color(0xFFBA68C8)),
       ]),

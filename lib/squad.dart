@@ -519,6 +519,7 @@ class _TransfersTabState extends State<TransfersTab> {
                     style: const TextStyle(fontWeight: FontWeight.w700, color: kAccent),
                   ),
                   if (gs.watch.contains(p.id)) const Text('⭐', style: TextStyle(fontSize: 12)),
+                  if (p.club != null && mode < 2) Text(p.club!, style: const TextStyle(color: kMuted, fontSize: 11)),
                   if (p.listed) const Text('معروض للبيع', style: TextStyle(color: Color(0xFFFFCA28), fontSize: 11)),
                   if (p.onLoan) const Text('معار', style: TextStyle(color: kMuted, fontSize: 11)),
                 ]),

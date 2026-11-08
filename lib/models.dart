@@ -32,6 +32,7 @@ class Player {
   int contract; // سنوات متبقية
   String? photo;
   String? nat, sub, foot; // الجنسية، المركز الدقيق، القدم
+  String? club; // ناديه الحالي (لاعبو السوق الحقيقيون)
   int? height;
   double? mv0; // القيمة السوقية الحقيقية عند الاستيراد (M€)
   int? ov0, age0; // التقييم والعمر عند الاستيراد
@@ -125,7 +126,7 @@ class Player {
         'opt': optionFee,
         'obl': obligation,
         'career': career,
-        'nat': nat, 'sub': sub, 'ft': foot, 'ht': height, 'mv0': mv0, 'ov0': ov0, 'age0': age0,
+        'club': club, 'nat': nat, 'sub': sub, 'ft': foot, 'ht': height, 'mv0': mv0, 'ov0': ov0, 'age0': age0,
       };
 
   factory Player.fromJson(Map<String, dynamic> j) => Player(
@@ -159,6 +160,7 @@ class Player {
         ..injuryCount = (j['ic'] as int?) ?? 0
         ..optionFee = (j['opt'] as num?)?.toDouble()
         ..obligation = (j['obl'] as bool?) ?? false
+        ..club = j['club'] as String?
         ..nat = j['nat'] as String?
         ..sub = j['sub'] as String?
         ..foot = j['ft'] as String?
