@@ -508,3 +508,28 @@ class Unfilter extends StatelessWidget {
             AppSettings.i.lightFor(MediaQuery.platformBrightnessOf(ctx)) ? ColorFiltered(colorFilter: kLightFilter, child: child) : child,
       );
 }
+
+
+/// شريط خطوات المعالج (مثل 1/3)
+class WizardBar extends StatelessWidget implements PreferredSizeWidget {
+  final int step, total;
+  const WizardBar(this.step, {super.key, this.total = 3});
+  @override
+  Size get preferredSize => const Size.fromHeight(18);
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        child: Row(children: [
+          for (var i = 1; i <= total; i++) ...[
+            Expanded(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                height: 4,
+                decoration: BoxDecoration(color: i <= step ? kAccent : kCard2, borderRadius: BorderRadius.circular(4)),
+              ),
+            ),
+            if (i < total) const SizedBox(width: 6),
+          ],
+        ]),
+      );
+}

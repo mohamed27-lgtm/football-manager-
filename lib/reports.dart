@@ -13,13 +13,11 @@ Widget _row(String k, String v, {Color? c}) => Padding(
 
 /// التقرير الافتتاحي بعد اختيار النادي + اختيار مستوى الصعوبة
 Future<void> showOpeningReport(BuildContext context, GameState gs) {
-  int d = gs.difficulty;
   return showDialog(
     context: context,
     barrierDismissible: false,
     builder: (c) => StatefulBuilder(
       builder: (c, set) {
-        final m = [1.3, 1.0, 0.7][d];
         final u = gs.user;
         return Dialog(
           backgroundColor: kCard,
@@ -34,30 +32,17 @@ Future<void> showOpeningReport(BuildContext context, GameState gs) {
               Text('مرحباً بك رئيساً/مدرباً للنادي. هذا وضعك قبل أول مباراة:',
                   textAlign: TextAlign.center, style: const TextStyle(color: kMuted)),
               const Divider(height: 24),
-              _row('الميزانية', gs.money1(u.budget * m), c: kAccent),
+              _row('الميزانية', gs.money1(u.budget), c: kAccent),
               _row('حجم التشكيلة', '${u.squad.length} لاعباً'),
               _row('عقود تنتهي قريباً', '${gs.expiring.length} لاعب'),
               _row('المسابقة', gs.leagueName),
               _row('هدف الإدارة', 'المركز ${gs.objective} أو أفضل', c: kGold),
-              const Divider(height: 24),
-              const Text('مستوى الصعوبة', style: TextStyle(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 8),
-              SegmentedButton<int>(
-                segments: [for (var i = 0; i < 3; i++) ButtonSegment(value: i, label: Text(GameState.diffNames[i]))],
-                selected: {d},
-                onSelectionChanged: (s) => set(() => d = s.first),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                ['ميزانية أكبر بـ30٪ وثقة إدارة عالية.', 'ميزانية وثقة قياسيتان.', 'ميزانية أقل بـ30٪ وإدارة متشككة.'][d],
-                style: const TextStyle(color: kMuted, fontSize: 12),
-              ),
               const SizedBox(height: 16),
               GradientButton(
                 label: 'ادخل إدارة النادي',
                 icon: Icons.arrow_back,
                 onPressed: () {
-                  gs.startCareer(d);
+                  gs.startCareer(1);
                   Navigator.pop(c);
                 },
               ),

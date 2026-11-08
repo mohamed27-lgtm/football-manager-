@@ -9,10 +9,9 @@ import 'flags.dart';
 import 'importer.dart';
 import 'league_store.dart';
 import 'models.dart';
-import 'pack_service.dart';
 import 'widgets.dart';
 
-/// الدوريات الحقيقية المضمّنة في اللعبة؛ الصور تُنزَّل اختيارياً (مثل Super Kickoff)
+/// معالج لعبة جديدة: 1) الدولة  2) الدرجة والدوري  3) الفريق
 class LeaguesScreen extends StatefulWidget {
   final StartReal onStart;
   const LeaguesScreen({super.key, required this.onStart});
@@ -22,17 +21,9 @@ class LeaguesScreen extends StatefulWidget {
 
 class _LeaguesScreenState extends State<LeaguesScreen> {
   List<LeagueData>? leagues;
-  final Map<String, PackInfo> packs = {};
-  final Set<String> withImages = {};
-  bool manifestFailed = false;
   bool busy = false;
-  String? downloading;
-  double progress = 0;
-  String? error;
-  String? country; // الدولة المفتوحة
+  String? country; // الدولة المختارة (الخطوة 2)
   String query = '';
-
-  String _k(LeagueData d) => '${d.id}_${d.season}';
 
   @override
   void initState() {
@@ -46,68 +37,20 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
 
   Future<void> _init() async {
     final l = await Bundled.list();
-    final h = <String>{};
-    for (final d in l) {
-      if (await LeagueStore.load(d.id, d.season) != null) h.add(_k(d));
-    }
-    _set(() {
-      leagues = l;
-      withImages
-        ..clear()
-        ..addAll(h);
-    });
-    try {
-      final m = await PackService.manifest(await PackService.getBase());
-      _set(() {
-        for (final p in m) {
-          packs['${p.id}_${p.season}'] = p;
-        }
-      });
-    } catch (_) {
-      _set(() => manifestFailed = true);
-    }
-  }
-
-  LeagueData? _last;
-
-  Future<void> _downloadImages(LeagueData d) async {
-    _last = d;
-    final p = packs[_k(d)];
-    if (p == null) {
-      _set(() => error = 'تنزيل الصور غير متاح لهذا الدوري حالياً، حاول لاحقاً.');
-      return;
-    }
-    _set(() {
-      busy = true;
-      downloading = _k(d);
-      progress = 0;
-      error = null;
-    });
-    try {
-      await PackService.download(await PackService.getBase(), p, (v) => _set(() => progress = v));
-      _set(() => withImages.add(_k(d)));
-    } on ApiException catch (e) {
-      _set(() => error = e.message);
-    } catch (_) {
-      _set(() => error = 'فشل تنزيل الصور. تحقق من الإنترنت وحاول مجدداً.');
-    } finally {
-      _set(() {
-        busy = false;
-        downloading = null;
-      });
-    }
-  }
-
-  Future<void> _downloadAll() async {
-    for (final d in leagues ?? const <LeagueData>[]) {
-      if (!withImages.contains(_k(d)) && packs.containsKey(_k(d))) {
-        await _downloadImages(d);
-        if (error != null) break;
-      }
-    }
+    _set(() => leagues = l);
   }
 
   Future<void> _pick(LeagueData d) async {
+    if (busy) return;
+    _set(() => busy = true);
+    try {
+      await _pickInner(d);
+    } finally {
+      _set(() => busy = false);
+    }
+  }
+
+  Future<void> _pickInner(LeagueData d) async {
     final local = await LeagueStore.load(d.id, d.season);
     final data = local ?? d;
     if (!mounted) return;
@@ -199,104 +142,76 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
   @override
   Widget build(BuildContext context) {
     final l = leagues;
-    final missing = l?.where((d) => !withImages.contains(_k(d)) && packs.containsKey(_k(d))).length ?? 0;
     return PopScope(
       canPop: country == null,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) setState(() => country = null);
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: country == null
-            ? const Text('اختر الدولة')
-            : Row(children: [FlagBadge(country!, size: 30), const SizedBox(width: 10), Text(country!)]),
-        backgroundColor: kBg,
-      ),
-      body: SafeArea(
-        child: l == null
-            ? ListView(padding: const EdgeInsets.all(14), children: [
-                for (var i = 0; i < 7; i++) const Padding(padding: EdgeInsets.only(bottom: 10), child: SkeletonBox(height: 64)),
-              ])
-            : ListView(padding: const EdgeInsets.all(14), children: [
-                const Panel(
-                  child: Text(
-                    'الأندية واللاعبون الحقيقيون جاهزون للعب فوراً بدون إنترنت. '
-                    'يمكنك اختيارياً تنزيل الصور (شعارات الأندية وصور اللاعبين) لكل دوري.',
-                    style: TextStyle(fontSize: 12.5, color: kMuted, height: 1.5),
-                  ),
-                ),
-                if (error != null)
-                  Panel(
-                    color: const Color(0xFF2A1414),
-                    child: Column(children: [
-                      Text(error!, style: const TextStyle(color: Color(0xFFFF8A65))),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: _last == null ? () => _set(() => error = null) : () => _downloadImages(_last!),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('إعادة المحاولة'),
-                      ),
+        appBar: AppBar(
+          title: const Text('لعبة جديدة'),
+          centerTitle: true,
+          actions: [Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Center(child: Text('${country == null ? 1 : 2}/3', style: const TextStyle(color: kMuted))))],
+          bottom: WizardBar(country == null ? 1 : 2),
+        ),
+        body: SafeArea(
+          child: l == null
+              ? ListView(padding: const EdgeInsets.all(14), children: [
+                  for (var i = 0; i < 7; i++) const Padding(padding: EdgeInsets.only(bottom: 10), child: SkeletonBox(height: 64)),
+                ])
+              : l.isEmpty
+                  ? const Center(child: Text('لا توجد دوريات في هذه النسخة بعد. حدّث التطبيق لاحقاً.', style: TextStyle(color: kMuted)))
+                  : ListView(padding: const EdgeInsets.all(16), children: [
+                      if (busy) const Padding(padding: EdgeInsets.only(bottom: 12), child: LinearProgressIndicator()),
+                      if (country == null) ..._countryGrid(l) else ..._leagueList(l),
                     ]),
-                  ),
-                if (l.isEmpty)
-                  const Panel(child: Text('لا توجد دوريات في هذه النسخة بعد. حدّث التطبيق لاحقاً.', style: TextStyle(color: kMuted))),
-                if (missing > 1)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: FilledButton.tonalIcon(
-                      onPressed: busy ? null : _downloadAll,
-                      icon: const Icon(Icons.download),
-                      label: Text('تنزيل صور كل الدوريات ($missing)'),
-                    ),
-                  ),
-                if (country == null) ..._countryGrid(l) else ...[
-                for (final d in _ordered(l).where((x) => x.country == country)) ...[
-                  Panel(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Row(children: [
-                        Expanded(child: Text(d.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16))),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(8)),
-                          child: Text(_divLabel(d.div), style: const TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w700)),
-                        ),
-                      ]),
-                      const SizedBox(height: 2),
-                      Text('${d.teams.length} فريقاً • ${d.playerCount} لاعباً',
-                          style: const TextStyle(color: kMuted, fontSize: 12)),
-                      const SizedBox(height: 10),
-                      if (downloading == _k(d))
-                        Column(children: [
-                          LinearProgressIndicator(value: progress == 0 ? null : progress, color: kAccent, backgroundColor: kCard2),
-                          const SizedBox(height: 4),
-                          Text('تنزيل الصور ${(progress * 100).round()}%', style: const TextStyle(fontSize: 12, color: kMuted)),
-                        ])
-                      else
-                        Row(children: [
-                          Expanded(
-                            child: FilledButton(
-                              onPressed: busy ? null : () => _pick(d),
-                              child: const Text('اختر فريقك'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          if (withImages.contains(_k(d)))
-                            const Chip(label: Text('✅ الصور'), visualDensity: VisualDensity.compact)
-                          else
-                            OutlinedButton.icon(
-                              onPressed: busy || (manifestFailed && !packs.containsKey(_k(d))) ? null : () => _downloadImages(d),
-                              icon: const Icon(Icons.image_outlined, size: 18),
-                              label: Text(packs[_k(d)] != null ? 'الصور ${packs[_k(d)]!.sizeLabel}' : 'تنزيل الصور'),
-                            ),
-                        ]),
-                    ]),
-                  ),
-                ],
-                ],
-              ]),
-      ),
+        ),
       ),
     );
+  }
+
+  List<Widget> _leagueList(List<LeagueData> l) {
+    final mine = _ordered(l).where((x) => x.country == country).toList();
+    final out = <Widget>[
+      Row(children: [
+        FlagBadge(country!, size: 40),
+        const SizedBox(width: 12),
+        Expanded(child: Text(country!, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900))),
+        TextButton(onPressed: () => setState(() => country = null), child: const Text('تغيير')),
+      ]),
+      const SizedBox(height: 8),
+      const Text('اختر الدوري', style: TextStyle(color: kMuted, fontSize: 13)),
+    ];
+    int? lastDiv;
+    for (final d in mine) {
+      if (lastDiv != d.div) {
+        lastDiv = d.div;
+        out.add(Padding(
+          padding: const EdgeInsets.only(top: 16, bottom: 4),
+          child: Text(_divLabel(d.div), style: const TextStyle(color: kAccent, fontWeight: FontWeight.w800, fontSize: 13)),
+        ));
+      }
+      out.add(InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: busy ? null : () => _pick(d),
+        child: Container(
+          margin: const EdgeInsets.only(top: 8),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+          child: Row(children: [
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(d.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                const SizedBox(height: 2),
+                Text('${d.teams.length} فريقاً • ${d.playerCount} لاعباً', style: const TextStyle(color: kMuted, fontSize: 12)),
+              ]),
+            ),
+            const Icon(Icons.chevron_left),
+          ]),
+        ),
+      ));
+    }
+    return out;
   }
 
   List<Widget> _countryGrid(List<LeagueData> l) {
@@ -306,6 +221,8 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
     }
     final names = by.keys.where((c) => query.isEmpty || c.contains(query)).toList();
     return [
+      const Text('اختر الدولة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+      const SizedBox(height: 10),
       TextField(
         onChanged: (v) => setState(() => query = v.trim()),
         decoration: InputDecoration(
@@ -360,11 +277,5 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
         final n = a.country.compareTo(b.country);
         return n != 0 ? n : a.div.compareTo(b.div);
       });
-  }
-
-  bool _firstOfCountry(List<LeagueData> l, LeagueData d) {
-    final o = _ordered(l);
-    final i = o.indexOf(d);
-    return i == 0 || o[i - 1].country != d.country;
   }
 }

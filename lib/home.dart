@@ -19,6 +19,7 @@ import 'team_tab.dart';
 import 'facilities_screen.dart';
 import 'i18n.dart';
 import 'images_screen.dart';
+import 'sections_page.dart';
 import 'lang_sheet.dart';
 import 'settings.dart';
 import 'widgets.dart';
@@ -47,6 +48,7 @@ class StartScreen extends StatefulWidget {
 
 class _StartScreenState extends State<StartScreen> {
   int sel = 0;
+  int tab = 0; // 0 الرئيسية، 1 التنزيلات، 2 الأقسام
 
   String _mb(int chars) => '${(chars / 1e6).toStringAsFixed(1)} MB';
 
@@ -121,7 +123,28 @@ class _StartScreenState extends State<StartScreen> {
       body: SafeArea(
         child: Column(children: [
           Expanded(
-            child: ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 16), children: [
+            child: tab == 1
+                ? const ImagesScreen()
+                : tab == 2
+                    ? SectionsPage(name: name, email: widget.email, saves: saves, onLogout: widget.onLogout)
+                    : _homeList(saves, name, initial, total, cur, dark),
+          ),
+          Container(
+            decoration: const BoxDecoration(color: kCard, border: Border(top: BorderSide(color: kLine))),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(children: [
+              Expanded(child: _nav(Icons.home_rounded, 'الرئيسية', tab == 0, () => setState(() => tab = 0))),
+              Expanded(child: _nav(Icons.cloud_download_outlined, 'التنزيلات', tab == 1, () => setState(() => tab = 1))),
+              Expanded(child: _nav(Icons.grid_view_rounded, 'الأقسام', tab == 2, () => setState(() => tab = 2))),
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _homeList(List<SaveMeta> saves, String name, String initial, int total, int cur, bool dark) =>
+      ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 16), children: [
               Row(children: [
                 CircleAvatar(
                   radius: 26,
@@ -229,21 +252,7 @@ class _StartScreenState extends State<StartScreen> {
                   ),
                 ),
               ),
-            ]),
-          ),
-          Container(
-            decoration: const BoxDecoration(color: kCard, border: Border(top: BorderSide(color: kLine))),
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(children: [
-              Expanded(child: _nav(Icons.home_rounded, 'الرئيسية', true, () {})),
-              Expanded(child: _nav(Icons.cloud_download_outlined, 'التنزيلات', false, _images)),
-              Expanded(child: _nav(Icons.more_horiz_rounded, 'المزيد', false, _more)),
-            ]),
-          ),
-        ]),
-      ),
-    );
-  }
+            ]);
 
   Widget _nav(IconData i, String label, bool on, VoidCallback f) => InkWell(
         onTap: f,

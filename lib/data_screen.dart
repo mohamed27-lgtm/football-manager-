@@ -235,33 +235,88 @@ class _DataScreenState extends State<DataScreen> {
   }
 }
 
-class ClubPickerScreen extends StatelessWidget {
+class ClubPickerScreen extends StatefulWidget {
   final List<Team> teams;
   final String leagueName;
   final StartReal onStart;
   final Pyramid? pyramid;
   const ClubPickerScreen({super.key, required this.teams, required this.leagueName, required this.onStart, this.pyramid});
+  @override
+  State<ClubPickerScreen> createState() => _ClubPickerScreenState();
+}
+
+class _ClubPickerScreenState extends State<ClubPickerScreen> {
+  String q = '';
+  Team? chosen;
 
   @override
   Widget build(BuildContext context) {
+    final shown = widget.teams.where((t) => q.isEmpty || t.name.toLowerCase().contains(q.toLowerCase())).toList();
     return Scaffold(
-      appBar: AppBar(title: Text('اختر ناديك — $leagueName'), backgroundColor: kBg),
+      appBar: AppBar(
+        title: Text(widget.leagueName),
+        centerTitle: true,
+        actions: [Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Center(child: Text('3/3', style: const TextStyle(color: kMuted))))],
+        bottom: const WizardBar(3),
+      ),
       body: SafeArea(
-        child: ListView(padding: const EdgeInsets.all(14), children: [
-          for (final t in teams)
-            Panel(
-              padding: EdgeInsets.zero,
-              child: ListTile(
-                leading: teamBadge(t, size: 34),
-                title: Text(t.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text('${'★' * t.reputation} • قوة ${t.strength.toStringAsFixed(1)}${t.venue != null ? ' • ${t.venue}' : ''}'),
-                trailing: const Icon(Icons.chevron_left),
-                onTap: () {
-                  onStart(teams, t.id, leagueName, pyramid: pyramid);
-                  Navigator.of(context).popUntil((r) => r.isFirst);
-                },
+        child: Column(children: [
+          Expanded(
+            child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 12), children: [
+              const Text('اختر فريقك', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 10),
+              TextField(
+                onChanged: (v) => setState(() => q = v.trim()),
+                decoration: InputDecoration(
+                  hintText: tr('ابحث عن ناد'),
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: kCard2,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                ),
               ),
+              const SizedBox(height: 6),
+              for (final t in shown)
+                InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () => setState(() => chosen = t),
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: chosen?.id == t.id ? const Color(0x2200E676) : kCard,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: chosen?.id == t.id ? kAccent : kLine, width: chosen?.id == t.id ? 1.6 : 1),
+                    ),
+                    child: Row(children: [
+                      teamBadge(t, size: 38),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(t.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
+                          Text('${'★' * t.reputation} • قوة ${t.strength.toStringAsFixed(1)}${t.venue != null ? ' • ${t.venue}' : ''}',
+                              maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 12)),
+                        ]),
+                      ),
+                      if (chosen?.id == t.id) const Icon(Icons.check_circle, color: kAccent),
+                    ]),
+                  ),
+                ),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+            child: GradientButton(
+              label: 'ابدأ اللعبة',
+              icon: Icons.sports_soccer,
+              onPressed: chosen == null
+                  ? null
+                  : () {
+                      widget.onStart(widget.teams, chosen!.id, widget.leagueName, pyramid: widget.pyramid);
+                      Navigator.of(context).popUntil((r) => r.isFirst);
+                    },
             ),
+          ),
         ]),
       ),
     );
