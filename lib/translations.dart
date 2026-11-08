@@ -1051,4 +1051,11 @@ const Map<String, List<String>> kTr = {
   'المخضرم': ['Veteran', 'Vétéran', 'Veterano'],
   'مقفل': ['Locked', 'Verrouillé', 'Bloqueado'],
   'الأقسام': ['Sections', 'Sections', 'Secciones'],
+  'المباراة القادمة': ['Next match', 'Prochain match', 'Próximo partido'],
+  'ضد': ['vs', 'contre', 'vs'],
+  'الثقة': ['Confidence', 'Confiance', 'Confianza'],
+  'القائمة': ['Lineup', 'Composition', 'Alineación'],
+  'تدريب': ['Training', 'Entraînement', 'Entrenamiento'],
+  'العب': ['Play', 'Jouer', 'Jugar'],
+  'الجولة': ['Round', 'Journée', 'Jornada'],
 };

@@ -16,6 +16,7 @@ import 'club_screens.dart';
 import 'activity_screen.dart';
 import 'reports.dart';
 import 'team_tab.dart';
+import 'tactics.dart';
 import 'facilities_screen.dart';
 import 'i18n.dart';
 import 'images_screen.dart';
@@ -492,7 +493,7 @@ class _HomeShellState extends State<HomeShell> {
           MoreTab(gs: gs, onRestart: widget.onRestart, onLogout: widget.onLogout),
         ];
         return Scaffold(
-          appBar: AppBar(
+          appBar: tab == 0 ? null : AppBar(
             backgroundColor: kBg,
             titleSpacing: 14,
             title: Row(children: [
@@ -903,129 +904,243 @@ class DashboardTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final u = gs.user;
-    final exp = gs.expiring;
-    final showExp = exp.isNotEmpty && !gs.seasonOver && !gs.fired && gs.rounds.length - gs.week <= 8;
-    return ListView(padding: const EdgeInsets.all(14), children: [
-      _hero(),
-      _resources(context),
-      _urgent(context),
-      if (gs.fired)
-        Panel(
-          color: const Color(0xFF2A1414),
-          child: Column(children: [
-            const Text('🚫 تمت إقالتك', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 8),
-            const Text('فقدت ثقة مجلس الإدارة.', style: TextStyle(color: kMuted)),
-            const SizedBox(height: 12),
-            GradientButton(
-              label: 'ابدأ مسيرة جديدة',
-              onPressed: () async {
-                await GameState.clearSave();
-                onRestart();
-              },
+    final order = {for (var i = 0; i < Pos.values.length; i++) Pos.values[i]: i};
+    // الفرز الحقيقي: حسب المركز (حارس ← دفاع ← وسط ← هجوم) ثم الأعلى تقييماً
+    final players = [...u.squad]..sort((x, y) {
+        final c = order[x.pos]!.compareTo(order[y.pos]!);
+        return c != 0 ? c : y.overall.compareTo(x.overall);
+      });
+    return Column(children: [
+      Expanded(
+        child: ListView(padding: const EdgeInsets.fromLTRB(14, 10, 14, 10), children: [
+          _header(context),
+          const SizedBox(height: 12),
+          _urgent(context),
+          if (gs.fired)
+            Panel(
+              color: const Color(0xFF2A1414),
+              child: Column(children: [
+                const Text('🚫 تمت إقالتك', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                const Text('فقدت ثقة مجلس الإدارة.', style: TextStyle(color: kMuted)),
+                const SizedBox(height: 12),
+                GradientButton(
+                  label: 'ابدأ مسيرة جديدة',
+                  onPressed: () async {
+                    await GameState.clearSave();
+                    onRestart();
+                  },
+                ),
+              ]),
+            )
+          else if (gs.seasonOver)
+            Panel(
+              child: Column(children: [
+                Text('🏁 انتهى الموسم ${gs.season}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                Text('أنهيت الدوري في المركز ${gs.position} (الهدف: ${gs.objective})', style: const TextStyle(color: kMuted)),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => showSeasonReport(context, gs),
+                  icon: const Icon(Icons.assessment),
+                  label: const Text('تقرير نهاية الموسم'),
+                ),
+              ]),
+            )
+          else
+            _nextMatch(context),
+          if (gs.boardKind != null) _board(context),
+          const SizedBox(height: 4),
+          Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Expanded(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs))),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('الميزانية', style: TextStyle(color: kMuted, fontSize: 12.5)),
+                    const SizedBox(height: 6),
+                    AnimatedMoney(u.budget, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: u.budget < 0 ? const Color(0xFFFF7043) : kGold)),
+                  ]),
+                ),
+              ),
             ),
-          ]),
-        )
-      else if (gs.seasonOver)
-        Panel(
-          child: Column(children: [
-            Text('🏁 انتهى الموسم ${gs.season}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 8),
-            Text('أنهيت الدوري في المركز ${gs.position} (الهدف: ${gs.objective})', style: const TextStyle(color: kMuted)),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => showSeasonReport(context, gs),
-              icon: const Icon(Icons.assessment),
-              label: const Text('تقرير نهاية الموسم'),
-            ),
-            const SizedBox(height: 8),
-            GradientButton(label: 'ابدأ موسماً جديداً', icon: Icons.play_arrow, onPressed: gs.startNewSeason),
-          ]),
-        )
-      else
-        _nextMatch(context),
-      _recent(),
-      sectionTitle('الترتيب', trailing: TextButton(onPressed: () => onNavigate(3), child: const Text('الجدول كاملاً'))),
-      _miniTable(),
-      _tasksPanel(context),
-      _actions(context),
-      if (gs.boardKind != null) _board(context),
-      Panel(
-        child: Column(children: [
-          Row(children: [
-            const Icon(Icons.verified_user_outlined, size: 18, color: kMuted),
-            const SizedBox(width: 8),
-            const Text('ثقة الإدارة', style: TextStyle(fontWeight: FontWeight.w700)),
-            const Spacer(),
-            Text('${gs.confidence.round()}%', style: TextStyle(fontWeight: FontWeight.w900, color: ratingColor(gs.confidence))),
-          ]),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: gs.confidence / 100,
-              minHeight: 10,
-              color: ratingColor(gs.confidence),
-              backgroundColor: kCard2,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text('🎯 هدف الموسم: المركز ${gs.objective} أو أفضل',
-                style: TextStyle(color: gs.position <= gs.objective ? kAccent : kGold, fontSize: 13, fontWeight: FontWeight.w600)),
-          ),
-        ]),
-      ),
-      if (showExp) ...[
-        sectionTitle('عقود تنتهي هذا الموسم'),
-        Panel(
-          child: Column(children: [
-            for (final p in exp)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(children: [
-                  RatingBadge(p.overall, size: 30),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(p.name)),
-                  TextButton(
-                    onPressed: () {
-                      final err = gs.renew(p);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تم تجديد العقد ✅')));
-                    },
-                    child: Text('جدّد ${money(gs.renewCost(p))}'),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    const Text('الثقة', style: TextStyle(color: kMuted, fontSize: 12.5)),
+                    const Spacer(),
+                    Text('${gs.confidence.round()}', style: TextStyle(fontWeight: FontWeight.w900, color: ratingColor(gs.confidence))),
+                  ]),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(value: gs.confidence / 100, minHeight: 7, color: ratingColor(gs.confidence), backgroundColor: kCard2),
                   ),
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    const Text('اللاعبون', style: TextStyle(color: kMuted, fontSize: 12.5)),
+                    const Spacer(),
+                    Text('${u.squad.length}/30', style: const TextStyle(fontWeight: FontWeight.w800)),
+                  ]),
                 ]),
               ),
+            ),
           ]),
-        ),
-      ],
-      sectionTitle('التدريب الأسبوعي'),
-      Panel(
-        child: Wrap(spacing: 8, runSpacing: 4, children: [
-          for (final e in trainingModes.entries)
-            ChoiceChip(
-              label: Text(e.value),
-              selected: gs.training == e.key,
-              onSelected: (_) => gs.setTraining(e.key),
-            ),
+          const SizedBox(height: 14),
+          for (final pl in players) _playerRow(context, pl),
         ]),
       ),
-      sectionTitle('آخر الأخبار'),
-      Panel(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          for (final n in gs.news.take(6))
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Container(width: 6, height: 6, margin: const EdgeInsets.only(top: 7, left: 8), decoration: const BoxDecoration(color: kAccent, shape: BoxShape.circle)),
-                Expanded(child: Text(n, style: const TextStyle(height: 1.4))),
-              ]),
-            ),
-        ]),
-      ),
-      SizedBox(height: u.budget < 0 ? 0 : 6),
+      _actionBar(context),
     ]);
+  }
+
+  Widget _header(BuildContext context) {
+    final u = gs.user;
+    final n = gs.tasks.length;
+    return Row(children: [
+      teamBadge(u, size: 46),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(u.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+          Text(gs.leagueName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 12.5)),
+        ]),
+      ),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+        child: Text(gs.seasonOver ? '🏁' : '${tr('الجولة')} ${gs.week + 1}', style: const TextStyle(color: kGold, fontWeight: FontWeight.w800, fontSize: 12.5)),
+      ),
+      const SizedBox(width: 8),
+      InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => ActivityScreen(gs: gs, onOpen: (t) {
+                  Navigator.of(context).pop();
+                  onTask(t);
+                }))),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(color: kCard, shape: BoxShape.circle, border: Border.all(color: kLine)),
+          child: Badge(isLabelVisible: n > 0, label: Text('$n'), child: const Icon(Icons.notifications_outlined)),
+        ),
+      ),
+    ]);
+  }
+
+  Widget _playerRow(BuildContext context, Player p) {
+    final st = statusOf(p);
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => showPlayerSheet(context, gs, p),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+        child: Row(children: [
+          PlayerAvatar(p),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              const SizedBox(height: 4),
+              Row(children: [
+                PosChip(p.pos),
+                const SizedBox(width: 8),
+                if (st != null)
+                  Text(st, style: const TextStyle(color: Color(0xFFFF7043), fontSize: 11.5))
+                else
+                  Text('${p.fitness.round()}%', style: TextStyle(color: p.fitness < 70 ? const Color(0xFFFF8A65) : kMuted, fontSize: 11.5)),
+              ]),
+            ]),
+          ),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text('${p.age}', style: const TextStyle(fontWeight: FontWeight.w800)),
+            const Text('العمر', style: TextStyle(color: kMuted, fontSize: 10.5)),
+          ]),
+          const SizedBox(width: 14),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text(money(p.value), style: const TextStyle(fontWeight: FontWeight.w800)),
+            const Text('القيمة', style: TextStyle(color: kMuted, fontSize: 10.5)),
+          ]),
+          const SizedBox(width: 12),
+          RatingBadge(p.overall, size: 48),
+        ]),
+      ),
+    );
+  }
+
+  Widget _actionBar(BuildContext context) {
+    Widget sq(IconData i, String label, VoidCallback f) => InkWell(
+          onTap: f,
+          borderRadius: BorderRadius.circular(18),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+              child: Icon(i, size: 26),
+            ),
+            const SizedBox(height: 3),
+            Text(label, style: const TextStyle(color: kMuted, fontSize: 11)),
+          ]),
+        );
+    final over = gs.seasonOver && !gs.fired;
+    return Container(
+      decoration: const BoxDecoration(color: kBg, border: Border(top: BorderSide(color: kLine))),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        sq(Icons.view_list_rounded, 'القائمة', () {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: const Text('التشكيلة والتكتيك')), body: TacticsTab(gs: gs))));
+        }),
+        const SizedBox(width: 10),
+        sq(Icons.bolt_rounded, 'تدريب', () => _training(context)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 0),
+            child: SizedBox(
+              height: 56,
+              child: GradientButton(
+                label: over ? 'ابدأ موسماً جديداً' : 'العب',
+                icon: Icons.play_arrow_rounded,
+                onPressed: gs.fired ? null : (over ? gs.startNewSeason : () => playMatch(context, gs)),
+              ),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  void _training(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => ListenableBuilder(
+        listenable: gs,
+        builder: (ctx, _) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('التدريب الأسبوعي', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 12),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                for (final e in trainingModes.entries)
+                  ChoiceChip(label: Text(e.value), selected: gs.training == e.key, onSelected: (_) => gs.setTraining(e.key)),
+              ]),
+            ]),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _nextMatch(BuildContext context) {
@@ -1039,25 +1154,30 @@ class DashboardTab extends StatelessWidget {
     final absent = u.squad.where((p) => !p.available).length;
     final my = u.strength, op = opp.strength;
     final share = (my / (my + op)).clamp(0.2, 0.8).toDouble();
-    return Panel(
-      padding: const EdgeInsets.all(16),
-      child: Column(children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(20)),
-          child: Text('الجولة ${gs.week + 1} من ${gs.rounds.length} • ${isHome ? 'على أرضك' : 'خارج أرضك'}',
-              style: const TextStyle(color: kMuted, fontSize: 12, fontWeight: FontWeight.w600)),
-        ),
-        const SizedBox(height: 16),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(child: _teamBox(isHome ? u : opp, strong: isHome)),
-          const Padding(
-            padding: EdgeInsets.only(top: 24),
-            child: Text('VS', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: kGold)),
-          ),
-          Expanded(child: _teamBox(isHome ? opp : u, strong: !isHome)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0x1F00E676),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0x5500E676)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Text('المباراة القادمة', style: TextStyle(color: kMuted, fontSize: 12.5)),
+          const Spacer(),
+          Text('${gs.week + 1}/${gs.rounds.length} • ${isHome ? 'على أرضك' : 'خارج أرضك'}', style: const TextStyle(color: kMuted, fontSize: 12)),
         ]),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
+        Row(children: [
+          const Text('ضد', style: TextStyle(color: kMuted)),
+          const SizedBox(width: 10),
+          teamBadge(opp, size: 40),
+          const SizedBox(width: 10),
+          Expanded(child: Text(opp.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900))),
+          FormDots(opp.form),
+        ]),
+        const SizedBox(height: 12),
         Row(children: [
           Text(my.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w800, color: kAccent)),
           const SizedBox(width: 8),
@@ -1065,16 +1185,14 @@ class DashboardTab extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: Row(children: [
-                Expanded(flex: (share * 100).round(), child: Container(height: 8, color: kAccent)),
-                Expanded(flex: 100 - (share * 100).round(), child: Container(height: 8, color: const Color(0xFFFF5252))),
+                Expanded(flex: (share * 100).round(), child: Container(height: 7, color: kAccent)),
+                Expanded(flex: 100 - (share * 100).round(), child: Container(height: 7, color: const Color(0xFFFF5252))),
               ]),
             ),
           ),
           const SizedBox(width: 8),
           Text(op.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFFFF5252))),
         ]),
-        const SizedBox(height: 4),
-        const Text('القوة: أنت (أخضر) / الخصم (أحمر)', style: TextStyle(color: kMuted, fontSize: 11)),
         if (lineupFit < 80) ...[
           const SizedBox(height: 8),
           Text('⚠️ متوسط لياقة التشكيلة ${lineupFit.round()}% — فكّر في التدوير', style: const TextStyle(color: kGold, fontSize: 12)),
@@ -1083,11 +1201,6 @@ class DashboardTab extends StatelessWidget {
           const SizedBox(height: 4),
           Text('🚑 $absent لاعبين غائبين (إصابة/إيقاف)', style: const TextStyle(color: Color(0xFFFF8A65), fontSize: 12)),
         ],
-        const SizedBox(height: 14),
-        SizedBox(
-          width: double.infinity,
-          child: GradientButton(label: 'ادخل المباراة', icon: Icons.play_arrow_rounded, onPressed: () => playMatch(context, gs)),
-        ),
       ]),
     );
   }
