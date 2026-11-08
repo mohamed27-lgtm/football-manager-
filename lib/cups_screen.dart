@@ -65,15 +65,11 @@ class CupsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cups = [gs.domestic!, gs.continental!, if (gs.superCup != null) gs.superCup!];
+    final cups = gs.allCups;
     return DefaultTabController(
       length: cups.length,
       child: Column(children: [
-        TabBar(tabs: [
-          const Tab(text: 'كأس الدوري'),
-          const Tab(text: 'القاري'),
-          if (cups.length > 2) const Tab(text: 'السوبر'),
-        ]),
+        TabBar(isScrollable: true, tabs: [for (final c in cups) Tab(text: c.name)]),
         Expanded(
           child: ListenableBuilder(
             listenable: gs,
@@ -106,7 +102,7 @@ class CupView extends StatelessWidget {
     } else if (everIn) {
       status = 'خرجت من البطولة';
     } else {
-      status = cup.continental ? 'لم تتأهل هذا الموسم (يتأهل أول 3 في الدوري)' : (cup.key == 'sup' ? 'لا تشارك في السوبر' : 'خرجت من البطولة');
+      status = cup.continental ? 'لم تتأهل هذا الموسم (التأهل حسب مركزك في الدوري)' : (cup.key == 'sup' ? 'لا تشارك في السوبر' : 'خرجت من البطولة');
     }
     final due = cup.dueWeek;
     final logs = <String, List<String>>{};

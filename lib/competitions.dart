@@ -23,6 +23,8 @@ class _CompetitionsViewState extends State<CompetitionsView> {
       (gs.leagueName, Icons.emoji_events, kGold, gs.leagueId),
       ('كأس الدوري', Icons.military_tech, const Color(0xFFE53935), kDomesticCupId[gs.leagueId]),
       ('دوري الأبطال', Icons.stars, const Color(0xFF3D8BFF), 2),
+      if (gs.europa != null) ('الدوري الأوروبي', Icons.star_half, const Color(0xFFFF8F00), 3),
+      if (gs.conference != null) ('دوري المؤتمر', Icons.star_border, const Color(0xFF43A047), 848),
       if (gs.superCup != null) ('كأس السوبر', Icons.workspace_premium, const Color(0xFF00BFA5), kSuperCupId[gs.leagueId] ?? 531),
     ];
     if (sel >= items.length) sel = 0;
@@ -66,12 +68,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
       Expanded(
         child: ListenableBuilder(
           listenable: gs,
-          builder: (context, _) => switch (sel) {
-            0 => TableTab(gs: gs),
-            1 => CupView(gs: gs, cup: gs.domestic!),
-            2 => CupView(gs: gs, cup: gs.continental!),
-            _ => CupView(gs: gs, cup: gs.superCup!),
-          },
+          builder: (context, _) => sel == 0 ? TableTab(gs: gs) : CupView(gs: gs, cup: gs.allCups[sel - 1]),
         ),
       ),
     ]);

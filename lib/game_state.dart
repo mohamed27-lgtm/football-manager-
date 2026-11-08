@@ -161,7 +161,9 @@ class GameState extends ChangeNotifier {
 
   final List<Player> loanedOut = [];
   final Map<int, double> _reserve = {};
-  Cup? domestic, continental, superCup;
+  Cup? domestic, continental, europa, conference, superCup;
+  int userSlotsEl = 0, userSlotsCo = 0;
+  List<Cup> get allCups => [for (final c in [domestic, continental, europa, conference, superCup]) if (c != null) c];
   Cup? activeCup;
   final Map<int, Team> foreign = {};
   /// تصنيف Elo للأندية (الترتيب العالمي) بالاسم؛ يبدأ من قوة الفريق ويتغير بالنتائج
@@ -221,10 +223,18 @@ class GameState extends ChangeNotifier {
       if (pyramid.world.isNotEmpty) {
         realWorld = true;
         userSlots = pyramid.userSlots;
-        for (var i = 0; i < pyramid.world.length; i++) {
-          pyramid.world[i].id = 1000 + i;
-          foreign[1000 + i] = pyramid.world[i];
+        userSlotsEl = pyramid.userSlotsEl;
+        userSlotsCo = pyramid.userSlotsCo;
+        void reg(List<Team> l, int base) {
+          for (var i = 0; i < l.length; i++) {
+            l[i].id = base + i;
+            foreign[base + i] = l[i];
+          }
         }
+
+        reg(pyramid.world, 1000);
+        reg(pyramid.worldEl, 1100);
+        reg(pyramid.worldCo, 1200);
       }
     }
     user = teams.firstWhere((x) => x.id == userId);
@@ -286,6 +296,8 @@ class GameState extends ChangeNotifier {
     country = (j['ctry'] as String?) ?? '';
     leagueId = (j['lid'] as int?) ?? 0;
     userSlots = (j['uslots'] as int?) ?? 3;
+    userSlotsEl = (j['uel'] as int?) ?? 0;
+    userSlotsCo = (j['uco'] as int?) ?? 0;
     for (final t in (j['foreign'] as List?) ?? const []) {
       final tm = Team.fromJson(t as Map<String, dynamic>);
       foreign[tm.id] = tm;
@@ -330,6 +342,8 @@ class GameState extends ChangeNotifier {
     if (cj != null) {
       domestic = Cup.fromJson(cj['dom'] as Map<String, dynamic>);
       continental = Cup.fromJson(cj['con'] as Map<String, dynamic>);
+      if (cj['eur'] != null) europa = Cup.fromJson(cj['eur'] as Map<String, dynamic>);
+      if (cj['uecl'] != null) conference = Cup.fromJson(cj['uecl'] as Map<String, dynamic>);
       if (cj['sup'] != null) superCup = Cup.fromJson(cj['sup'] as Map<String, dynamic>);
     } else {
       _setupCups(null);
@@ -365,6 +379,8 @@ class GameState extends ChangeNotifier {
         'ctry': country,
         'lid': leagueId,
         'uslots': userSlots,
+        'uel': userSlotsEl,
+        'uco': userSlotsCo,
         'honours': honours,
         'oplog': oplog,
         'watch': watch.toList(),
@@ -393,7 +409,7 @@ class GameState extends ChangeNotifier {
         'ffpB': ffpBreaches,
         'ban': transferBan,
         'ppn': pointsPenaltyNext,
-        'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson(), 'sup': superCup?.toJson()},
+        'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson(), 'eur': europa?.toJson(), 'uecl': conference?.toJson(), 'sup': superCup?.toJson()},
         'loanedOut': [for (final p in loanedOut) p.toJson()],
         'conf': confidence,
         'training': training,
@@ -1310,7 +1326,7 @@ class GameState extends ChangeNotifier {
   void startNewSeason() {
     final pos = position;
     final finalTable = table;
-    final qualT = finalTable.take(3).toList();
+    final qualT = finalTable.take(realWorld ? userSlots + userSlotsEl + userSlotsCo : 3).toList();
     final champT = finalTable.first;
     final runnerT = finalTable.length > 1 ? finalTable[1] : finalTable.first;
     final cupWinner = domestic?.champion;
@@ -1463,7 +1479,7 @@ class GameState extends ChangeNotifier {
     seasonOver = false;
     roundResults.clear();
     _buildFixtures();
-    final qualIds = qualT.every(teams.contains) ? [for (final t in qualT.take(realWorld ? userSlots : 3)) t.id] : null;
+    final qualIds = qualT.every(teams.contains) ? [for (final t in qualT) t.id] : null;
     _setupCups(qualIds);
     if (div == 1 && teams.contains(champT) && teams.contains(runnerT) && (cupT == null || teams.contains(cupT))) {
       _setupSuper(champT.id, cupT?.id, runnerT.id);
@@ -1634,36 +1650,52 @@ class GameState extends ChangeNotifier {
         foreign[1000 + i] = createTeam(rng, 1000 + i, nm, 3 + rng.nextInt(3));
       }
     }
-    final take = realWorld ? userSlots : 3;
-    final q = div > 1 ? <int>[] : qual ?? [for (final t in ([...teams]..sort((a, b) => b.strength.compareTo(a.strength))).take(take)) t.id];
-    continental = Cup(
-      key: 'con',
-      name: 'دوري الأبطال القاري',
-      continental: true,
-      schedule: sched(6, 3),
-      size: 16,
-      alive: [...q, ...foreign.keys],
-    );
-    // ضمان 16 فريقاً بالضبط (قد ينقص الحقيقي أو يزيد)
+    final take = realWorld ? userSlots + userSlotsEl + userSlotsCo : 3;
+    final order = div > 1
+        ? <int>[]
+        : qual ?? [for (final t in ([...teams]..sort((a, b) => b.strength.compareTo(a.strength))).take(take)) t.id];
+    final nU = realWorld ? userSlots : 3;
+    final qU = order.take(nU).toList();
+    final qE = realWorld ? order.skip(nU).take(userSlotsEl).toList() : <int>[];
+    final qC = realWorld ? order.skip(nU + userSlotsEl).take(userSlotsCo).toList() : <int>[];
+
     var extraId = 1500;
-    while (continental!.alive.length < 16) {
-      foreign[extraId] = createTeam(rng, extraId, 'نادٍ ضيف ${extraId - 1499}', 3);
-      continental!.alive.add(extraId++);
+    Cup euro(String key, String name, List<int> uq, int lo) {
+      final c = Cup(
+        key: key,
+        name: name,
+        continental: true,
+        schedule: sched(6, 3),
+        size: 16,
+        alive: [...uq, ...foreign.keys.where((k) => k >= lo && k < lo + 100)],
+      );
+      // ضمان 16 فريقاً بالضبط (قد ينقص الحقيقي أو يزيد)
+      while (c.alive.length < 16) {
+        foreign[extraId] = createTeam(rng, extraId, 'نادٍ ضيف ${extraId - 1499}', 3);
+        c.alive.add(extraId++);
+      }
+      if (c.alive.length > 16) {
+        final keep = c.alive.where(uq.contains).toList();
+        final rest = c.alive.where((x) => !uq.contains(x)).toList()..sort((a, b) => team(b).strength.compareTo(team(a).strength));
+        c.alive = [...keep, ...rest].take(16).toList();
+      }
+      final sorted = [...c.alive]..sort((a, b) => team(b).strength.compareTo(team(a).strength));
+      final pots = [for (var k = 0; k < 4; k++) (sorted.sublist(k * 4, k * 4 + 4)..shuffle(rng))];
+      c.groups = [
+        for (var gI = 0; gI < 4; gI++) [for (final pot in pots) pot[gI]]
+      ];
+      _draw(c);
+      return c;
     }
-    if (continental!.alive.length > 16) {
-      final keep = continental!.alive.where(q.contains).toList();
-      final rest = continental!.alive.where((x) => !q.contains(x)).toList()
-        ..sort((a, b) => team(b).strength.compareTo(team(a).strength));
-      continental!.alive = [...keep, ...rest].take(16).toList();
+
+    continental = euro('con', 'دوري أبطال أوروبا', qU, 1000);
+    if (realWorld) {
+      europa = euro('uel', 'الدوري الأوروبي', qE, 1100);
+      conference = euro('uecl', 'دوري المؤتمر الأوروبي', qC, 1200);
+    } else {
+      europa = null;
+      conference = null;
     }
-    final sorted = [...continental!.alive]..sort((a, b) => team(b).strength.compareTo(team(a).strength));
-    final pots = [
-      for (var k = 0; k < 4; k++) (sorted.sublist(k * 4, k * 4 + 4)..shuffle(rng))
-    ];
-    continental!.groups = [
-      for (var gI = 0; gI < 4; gI++) [for (final pot in pots) pot[gI]]
-    ];
-    _draw(continental!);
   }
 
   void _draw(Cup c) {
@@ -1777,8 +1809,7 @@ class GameState extends ChangeNotifier {
   }
 
   void _advanceCups() {
-    for (final c in [domestic, continental, superCup]) {
-      if (c == null) continue;
+    for (final c in allCups) {
       while (!c.done && c.dueWeek != null && c.dueWeek! <= week) {
         if (c.userTie(user.id) != null) break;
         for (final t in c.ties.where((t) => !t.played)) {
@@ -1792,8 +1823,8 @@ class GameState extends ChangeNotifier {
   /// بطولة تنتظر مباراتك الآن (تُلعب قبل مباراة الدوري)
   Cup? get pendingCup {
     if (seasonOver || fired) return null;
-    for (final c in [domestic, continental, superCup]) {
-      if (c != null && !c.done && c.dueWeek != null && c.dueWeek! <= week && c.userTie(user.id) != null) {
+    for (final c in allCups) {
+      if (!c.done && c.dueWeek != null && c.dueWeek! <= week && c.userTie(user.id) != null) {
         return c;
       }
     }

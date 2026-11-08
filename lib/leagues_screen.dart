@@ -120,42 +120,68 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
 
     Future<List<Team>> load(LeagueData x) async => teamsFromLeague(await LeagueStore.load(x.id, x.season) ?? x, rng);
     final up = near(d.div - 1), lo = near(d.div + 1);
-    // أندية قارية حقيقية حسب مقاعد كل دولة (دوري الأبطال)
-    final world = <Team>[];
+    // أندية قارية حقيقية حسب مقاعد كل دولة: أبطال أوروبا ثم الدوري الأوروبي ثم المؤتمر
     final userSlots = d.div == 1 ? continentalSlots(d.country) : 0;
-    final need = 16 - userSlots;
+    final userEl = d.div == 1 ? europaSlots(d.country) : 0;
+    final userCo = d.div == 1 ? conferenceSlots(d.country) : 0;
     final tops = <String, LeagueData>{};
     for (final x in (leagues ?? const <LeagueData>[])) {
       if (x.div == 1 && x.country != d.country && x.teams.length >= 8) tops[x.country] = x;
     }
     final order = [...kContinentalOrder.where(tops.containsKey), ...tops.keys.where((c) => !kContinentalOrder.contains(c))];
-    Future<void> addFrom(String c, int n) async {
+    final loaded = <String, List<ApiTeam>>{};
+    Future<List<ApiTeam>> ranked(String c) async {
+      if (loaded.containsKey(c)) return loaded[c]!;
       final src = tops[c]!;
       final full = await LeagueStore.load(src.id, src.season) ?? src;
-      final sub = [...full.teams]..sort((a, b) => a.rank.compareTo(b.rank));
-      // teamsFromLeague يتطلب عدداً زوجياً من الفرق
-      final m = min(sub.length, n.isOdd ? n + 1 : n);
-      final copy = LeagueData(id: full.id, name: full.name, country: full.country, tier: full.tier, div: 1, season: full.season, teams: sub.take(m).toList(), fetchedAt: full.fetchedAt);
-      var added = 0;
-      for (final t in teamsFromLeague(copy, rng)) {
-        if (added >= n || world.length >= need) break;
-        if (world.any((w) => w.name == t.name)) continue;
-        world.add(t);
-        added++;
+      return loaded[c] = [...full.teams]..sort((a, b) => a.rank.compareTo(b.rank));
+    }
+
+    // tier: 0 أبطال، 1 أوروبي، 2 مؤتمر — كل دولة تعطي أندية من نطاق مراكز مختلف فلا تتكرر
+    Future<List<Team>> pool(int tier, int need) async {
+      final out = <Team>[];
+      final used = <String>{};
+      Future<void> addFrom(String c, int n, int offset) async {
+        final sub = await ranked(c);
+        final src = tops[c]!;
+        final slice = sub.skip(offset).take(n.isOdd ? n + 1 : n).toList();
+        if (slice.isEmpty) return;
+        final copy = LeagueData(id: src.id, name: src.name, country: src.country, tier: src.tier, div: 1, season: src.season, teams: slice, fetchedAt: src.fetchedAt);
+        var added = 0;
+        for (final t in teamsFromLeague(copy, rng)) {
+          if (added >= n || out.length >= need) break;
+          if (used.contains(t.name)) continue;
+          used.add(t.name);
+          out.add(t);
+          added++;
+        }
       }
+
+      int off(String c) => tier == 0 ? 0 : (tier == 1 ? continentalSlots(c) : continentalSlots(c) + europaSlots(c));
+      int cnt(String c) => tier == 0 ? continentalSlots(c) : (tier == 1 ? europaSlots(c) : conferenceSlots(c));
+      for (final c in order) {
+        if (out.length >= need) break;
+        final n = cnt(c);
+        if (n > 0) await addFrom(c, min(need - out.length, n), off(c));
+      }
+      for (final c in order) { // إكمال النقص بمراكز لاحقة
+        if (out.length >= need) break;
+        await addFrom(c, min(need - out.length, 1), off(c) + cnt(c));
+      }
+      return out;
     }
-    for (final c in order) {
-      if (world.length >= need) break;
-      await addFrom(c, min(need - world.length, continentalSlots(c)));
-    }
-    for (final c in order) { // إكمال النقص بمقعد إضافي من الدول الأقوى
-      if (world.length >= need) break;
-      await addFrom(c, min(need - world.length, continentalSlots(c) + 1));
-    }
+
+    final world = await pool(0, 16 - userSlots);
+    final worldEl = await pool(1, 16 - userEl);
+    final worldCo = await pool(2, 16 - userCo);
     final pyramid = Pyramid(
       country: d.country,
       leagueId: d.id,
       world: world,
+      worldEl: worldEl,
+      worldCo: worldCo,
+      userSlotsEl: userEl,
+      userSlotsCo: userCo,
       userSlots: userSlots == 0 ? 3 : userSlots,
       div: d.div,
       upper: up == null ? const [] : await load(up),

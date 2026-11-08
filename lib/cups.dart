@@ -168,3 +168,12 @@ int continentalSlots(String country) {
   if (i < 0) return 1; // دول خارج أوروبا/غير مصنّفة: البطل فقط
   return i < 4 ? 2 : 1;
 }
+
+/// مقاعد الدولة في الدوري الأوروبي (الأربع الكبرى 2، الباقي 1) ودوري المؤتمر (1)
+int europaSlots(String country) {
+  final i = kContinentalOrder.indexOf(country);
+  if (i < 0) return 0;
+  return i < 4 ? 2 : 1;
+}
+
+int conferenceSlots(String country) => kContinentalOrder.contains(country) ? 1 : 0;
