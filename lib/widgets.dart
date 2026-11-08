@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'settings.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'models.dart';
 
@@ -318,6 +319,10 @@ class PosChip extends StatelessWidget {
 
 /// صورة من ملف محلي (حزمة منزّلة) أو من الشبكة
 Widget appImage(String path,
+    {required double w, required double h, BoxFit fit = BoxFit.contain, required Widget fallback}) =>
+    Unfilter(child: _appImage(path, w: w, h: h, fit: fit, fallback: fallback));
+
+Widget _appImage(String path,
     {required double w, required double h, BoxFit fit = BoxFit.contain, required Widget fallback}) {
   if (path.startsWith('/')) {
     return Image.file(
@@ -480,4 +485,25 @@ Future<bool> confirmDialog(BuildContext context,
     ),
   );
   return ok == true;
+}
+
+
+/// مرشّح قلب الإضاءة مع الحفاظ على الألوان (يُستخدم للوضع الفاتح)
+const ColorFilter kLightFilter = ColorFilter.matrix(<double>[
+  0.574, -1.430, -0.144, 0, 255, //
+  -0.426, -0.430, -0.144, 0, 255,
+  -0.426, -1.430, 0.856, 0, 255,
+  0, 0, 0, 1, 0,
+]);
+
+/// يعكس المرشّح على الصور (شعارات/أعلام) كي تبقى بألوانها الأصلية في الوضع الفاتح
+class Unfilter extends StatelessWidget {
+  final Widget child;
+  const Unfilter({super.key, required this.child});
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+        listenable: AppSettings.i,
+        builder: (ctx, _) =>
+            AppSettings.i.lightFor(MediaQuery.platformBrightnessOf(ctx)) ? ColorFiltered(colorFilter: kLightFilter, child: child) : child,
+      );
 }

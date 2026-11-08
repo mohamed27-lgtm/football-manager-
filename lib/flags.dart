@@ -45,11 +45,13 @@ class FlagBadge extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: iso == null
           ? fallback
-          : CachedNetworkImage(
-              imageUrl: 'https://flagcdn.com/w160/$iso.png',
-              fit: BoxFit.cover,
-              placeholder: (_, __) => fallback,
-              errorWidget: (_, __, ___) => fallback,
+          : Unfilter(
+              child: CachedNetworkImage(
+                imageUrl: 'https://flagcdn.com/w160/$iso.png',
+                fit: BoxFit.cover,
+                placeholder: (_, __) => fallback,
+                errorWidget: (_, __, ___) => fallback,
+              ),
             ),
     );
   }
@@ -71,6 +73,6 @@ class CompLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = Icon(fallback, color: color, size: size);
     if (id == null || id == 0) return icon;
-    return Image.asset('assets/logos/$id.png', width: size, height: size, fit: BoxFit.contain, errorBuilder: (_, __, ___) => icon);
+    return Unfilter(child: Image.asset('assets/logos/$id.png', width: size, height: size, fit: BoxFit.contain, errorBuilder: (_, __, ___) => icon));
   }
 }

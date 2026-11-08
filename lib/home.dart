@@ -16,6 +16,7 @@ import 'activity_screen.dart';
 import 'reports.dart';
 import 'team_tab.dart';
 import 'facilities_screen.dart';
+import 'i18n.dart';
 import 'widgets.dart';
 
 class StartScreen extends StatelessWidget {
@@ -85,7 +86,7 @@ class StartScreen extends StatelessWidget {
             ] else
               const EmptyState(icon: Icons.sports_soccer, title: 'لا توجد مسيرة بعد', subtitle: 'ابدأ لعبة جديدة واختر دولتك ونادي أحلامك.'),
             const SizedBox(height: 14),
-            GradientButton(label: 'لعبة جديدة', icon: Icons.add_circle_outline, onPressed: () => _newCareer(context)),
+            GradientButton(label: tr('لعبة جديدة'), icon: Icons.add_circle_outline, onPressed: () => _newCareer(context)),
             const SizedBox(height: 22),
             const Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
               _Perk(Icons.groups_2_outlined, 'لاعبون حقيقيون'),
@@ -113,7 +114,7 @@ class StartScreen extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           child: m.badge == null
               ? const Icon(Icons.shield, color: Color(0xFF0B6B3A))
-              : CachedNetworkImage(imageUrl: m.badge!, errorWidget: (_, __, ___) => const Icon(Icons.shield, color: Color(0xFF0B6B3A))),
+              : Unfilter(child: CachedNetworkImage(imageUrl: m.badge!, errorWidget: (_, __, ___) => const Icon(Icons.shield, color: Color(0xFF0B6B3A)))),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -307,12 +308,12 @@ class _HomeShellState extends State<HomeShell> {
           bottomNavigationBar: NavigationBar(
             selectedIndex: tab,
             onDestinationSelected: (i) => setState(() => tab = i),
-            destinations: const [
-              NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
-              NavigationDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups), label: 'الفريق'),
-              NavigationDestination(icon: Icon(Icons.swap_horiz), selectedIcon: Icon(Icons.swap_horiz), label: 'الانتقالات'),
-              NavigationDestination(icon: Icon(Icons.emoji_events_outlined), selectedIcon: Icon(Icons.emoji_events), label: 'المسابقات'),
-              NavigationDestination(icon: Icon(Icons.shield_outlined), selectedIcon: Icon(Icons.shield), label: 'النادي'),
+            destinations: [
+              NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: tr('الرئيسية')),
+              NavigationDestination(icon: const Icon(Icons.groups_outlined), selectedIcon: const Icon(Icons.groups), label: tr('الفريق')),
+              NavigationDestination(icon: const Icon(Icons.swap_horiz), selectedIcon: const Icon(Icons.swap_horiz), label: tr('الانتقالات')),
+              NavigationDestination(icon: const Icon(Icons.emoji_events_outlined), selectedIcon: const Icon(Icons.emoji_events), label: tr('المسابقات')),
+              NavigationDestination(icon: const Icon(Icons.shield_outlined), selectedIcon: const Icon(Icons.shield), label: tr('النادي')),
             ],
           ),
         );

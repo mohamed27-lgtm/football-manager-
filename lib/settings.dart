@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show Brightness;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// إعدادات التطبيق (تُحفظ على الجهاز)
@@ -11,6 +12,9 @@ class AppSettings extends ChangeNotifier {
   bool haptics = true;
   bool goalFlash = true;
   bool pitchAnim = true;
+  String themeMode = 'dark'; // dark | light | system
+  String lang = 'ar'; // ar | en | fr | es
+  bool lightFor(Brightness b) => themeMode == 'light' || (themeMode == 'system' && b == Brightness.light);
 
   Future<void> load() async {
     try {
@@ -20,6 +24,8 @@ class AppSettings extends ChangeNotifier {
       haptics = p.getBool('s_haptics') ?? true;
       goalFlash = p.getBool('s_flash') ?? true;
       pitchAnim = p.getBool('s_pitch') ?? true;
+      themeMode = p.getString('s_theme') ?? 'dark';
+      lang = p.getString('s_lang') ?? 'ar';
     } catch (_) {}
   }
 
@@ -32,15 +38,19 @@ class AppSettings extends ChangeNotifier {
       await p.setBool('s_haptics', haptics);
       await p.setBool('s_flash', goalFlash);
       await p.setBool('s_pitch', pitchAnim);
+      await p.setString('s_theme', themeMode);
+      await p.setString('s_lang', lang);
     } catch (_) {}
   }
 
-  void set({int? speed, double? textScale, bool? haptics, bool? goalFlash, bool? pitchAnim}) {
+  void set({int? speed, double? textScale, bool? haptics, bool? goalFlash, bool? pitchAnim, String? themeMode, String? lang}) {
     this.speed = speed ?? this.speed;
     this.textScale = textScale ?? this.textScale;
     this.haptics = haptics ?? this.haptics;
     this.goalFlash = goalFlash ?? this.goalFlash;
     this.pitchAnim = pitchAnim ?? this.pitchAnim;
+    this.themeMode = themeMode ?? this.themeMode;
+    this.lang = lang ?? this.lang;
     _save();
   }
 }

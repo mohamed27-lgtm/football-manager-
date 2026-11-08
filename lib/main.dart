@@ -116,7 +116,7 @@ class _ManagerAppState extends State<ManagerApp> {
     } else {
       home = HomeShell(gs: gs!, onRestart: _menu, onLogout: _logout);
     }
-    return MaterialApp(
+    return ListenableBuilder(listenable: AppSettings.i, builder: (context, _) => MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'مدرب كرة القدم',
       theme: ThemeData(
@@ -176,10 +176,16 @@ class _ManagerAppState extends State<ManagerApp> {
         listenable: AppSettings.i,
         builder: (context, _) => MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(AppSettings.i.textScale)),
-          child: Directionality(textDirection: TextDirection.rtl, child: child!),
+          child: Directionality(
+          textDirection: AppSettings.i.lang == 'ar' ? TextDirection.rtl : TextDirection.ltr,
+          child: Builder(builder: (ctx) {
+            final light = AppSettings.i.lightFor(MediaQuery.platformBrightnessOf(ctx));
+            return light ? ColorFiltered(colorFilter: kLightFilter, child: child!) : child!;
+          }),
+        ),
         ),
       ),
       home: home,
-    );
+    ));
   }
 }
