@@ -41,6 +41,7 @@ class SaveMeta {
   final String club, league;
   final String? badge;
   final int at;
+  int bytes = 0; // حجم الحفظ على الجهاز (تقريبي)
   SaveMeta(this.id, this.club, this.league, this.season, this.week, this.badge, this.at, this.difficulty);
   Map<String, dynamic> toJson() => {'id': id, 'club': club, 'league': league, 's': season, 'w': week, 'b': badge, 'at': at, 'd': difficulty};
   factory SaveMeta.fromJson(Map<String, dynamic> j) => SaveMeta(j['id'] as int, j['club'] as String, j['league'] as String,
@@ -472,6 +473,9 @@ class GameState extends ChangeNotifier {
     try {
       final p = await SharedPreferences.getInstance();
       final l = await _readIdx(p);
+      for (final m in l) {
+        m.bytes = (p.getString(_kOf(m.id)) ?? '').length;
+      }
       l.sort((a, b) => b.at.compareTo(a.at));
       return l;
     } catch (_) {

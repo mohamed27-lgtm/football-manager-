@@ -17,14 +17,18 @@ import 'reports.dart';
 import 'team_tab.dart';
 import 'facilities_screen.dart';
 import 'i18n.dart';
+import 'images_screen.dart';
+import 'lang_sheet.dart';
+import 'settings.dart';
 import 'widgets.dart';
 
-class StartScreen extends StatelessWidget {
+class StartScreen extends StatefulWidget {
   final List<SaveMeta> saves;
   final ValueChanged<SaveMeta> onOpen;
   final ValueChanged<SaveMeta> onDelete;
   final StartReal onStartReal;
   final String coachName;
+  final String email;
   final VoidCallback onLogout;
   const StartScreen({
     super.key,
@@ -33,67 +37,132 @@ class StartScreen extends StatelessWidget {
     required this.onDelete,
     required this.onStartReal,
     required this.coachName,
+    this.email = '',
     required this.onLogout,
   });
+  @override
+  State<StartScreen> createState() => _StartScreenState();
+}
+
+class _StartScreenState extends State<StartScreen> {
+  final PageController _pc = PageController(viewportFraction: 0.74);
+  int page = 0;
+  bool showEmail = true;
+
+  @override
+  void dispose() {
+    _pc.dispose();
+    super.dispose();
+  }
+
+  String _mb(int chars) => '${(chars / 1e6).toStringAsFixed(1)} MB';
 
   @override
   Widget build(BuildContext context) {
-    final initial = coachName.trim().isEmpty ? '⚽' : coachName.trim().characters.first.toUpperCase();
+    final saves = widget.saves;
+    final name = widget.coachName;
+    final initial = name.trim().isEmpty ? '⚽' : name.trim().characters.first.toUpperCase();
+    final total = saves.fold<int>(0, (a, m) => a + m.bytes);
+    final st = AppSettings.i;
+    final dark = !st.lightFor(MediaQuery.platformBrightnessOf(context));
     return Scaffold(
       body: Column(children: [
-        // رأس بطابع Super Kickoff لكن بهوية خضراء داكنة
         Container(
-          padding: EdgeInsets.fromLTRB(18, MediaQuery.of(context).padding.top + 10, 18, 18),
+          padding: EdgeInsets.fromLTRB(14, MediaQuery.of(context).padding.top + 6, 14, 16),
           decoration: const BoxDecoration(
             gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, colors: [Color(0xFF0B6B3A), Color(0xFF08361F)]),
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
           ),
           child: Column(children: [
             Row(children: [
-              IconButton(tooltip: tr('تسجيل الخروج'), icon: const Icon(Icons.logout), onPressed: onLogout),
+              const Text('مدرب كرة القدم', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 19, color: Colors.white)),
               const Spacer(),
-              const Text('مدرب كرة القدم', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+              IconButton(
+                tooltip: tr('الوضع'),
+                icon: Icon(dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined, color: Colors.white),
+                onPressed: () => st.set(themeMode: dark ? 'light' : 'dark'),
+              ),
+              IconButton(tooltip: tr('اللغة'), icon: const Icon(Icons.language, color: Colors.white), onPressed: () => showLanguageSheet(context)),
+              PopupMenuButton<int>(
+                icon: const Icon(Icons.more_vert, color: Colors.white),
+                onSelected: (v) {
+                  if (v == 1) {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ImagesScreen()));
+                  } else if (v == 2) {
+                    widget.onLogout();
+                  }
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(value: 1, child: Text('تحميل الصور')),
+                  PopupMenuItem(value: 2, child: Text('تسجيل الخروج')),
+                ],
+              ),
             ]),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Row(children: [
               CircleAvatar(
-                radius: 34,
+                radius: 30,
                 backgroundColor: Colors.white,
-                child: Text(initial, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Color(0xFF0B6B3A))),
+                child: Text(initial, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF0B6B3A))),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('المدرب', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text(coachName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+                  if (widget.email.isNotEmpty)
+                    Text(showEmail ? widget.email : '••••••••••', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
+                  Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: Colors.white)),
                 ]),
               ),
+              IconButton(
+                icon: Icon(showEmail ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.white70),
+                onPressed: () => setState(() => showEmail = !showEmail),
+              ),
             ]),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Row(children: [
               Expanded(child: _statCard(Icons.save_outlined, 'مسيرة محفوظة', '${saves.length}')),
               const SizedBox(width: 10),
-              Expanded(child: _statCard(Icons.public, 'دول متاحة', '30+')),
+              Expanded(child: _statCard(Icons.sd_storage_outlined, 'التخزين', _mb(total))),
             ]),
           ]),
         ),
         Expanded(
-          child: ListView(padding: const EdgeInsets.all(18), children: [
-            if (saves.isNotEmpty) ...[
-              const Text('مسيراتك المحفوظة', style: TextStyle(color: kMuted, fontSize: 12)),
-              const SizedBox(height: 8),
-              for (final m in saves) _saveCard(context, m),
-            ] else
-              const EmptyState(icon: Icons.sports_soccer, title: 'لا توجد مسيرة بعد', subtitle: 'ابدأ لعبة جديدة واختر دولتك ونادي أحلامك.'),
-            const SizedBox(height: 14),
-            GradientButton(label: tr('لعبة جديدة'), icon: Icons.add_circle_outline, onPressed: () => _newCareer(context)),
-            const SizedBox(height: 22),
-            const Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              _Perk(Icons.groups_2_outlined, 'لاعبون حقيقيون'),
-              _Perk(Icons.account_balance_outlined, 'إدارة وانتقالات'),
-              _Perk(Icons.emoji_events_outlined, 'بطولات وكؤوس'),
+          child: saves.isEmpty
+              ? const Center(child: EmptyState(icon: Icons.sports_soccer, title: 'لا توجد مسيرة بعد', subtitle: 'ابدأ لعبة جديدة واختر دولتك ونادي أحلامك.'))
+              : Column(children: [
+                  const Spacer(),
+                  SizedBox(
+                    height: 340,
+                    child: PageView.builder(
+                      controller: _pc,
+                      itemCount: saves.length,
+                      onPageChanged: (i) => setState(() => page = i),
+                      itemBuilder: (_, i) => AnimatedScale(
+                        duration: const Duration(milliseconds: 200),
+                        scale: i == page ? 1 : 0.92,
+                        child: _saveCard(context, saves[i]),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text('${(page + 1).clamp(1, saves.length)}/${saves.length}', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w300, color: kAccent)),
+                  const Spacer(),
+                ]),
+        ),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 4, 18, 14),
+            child: Row(children: [
+              Expanded(flex: 3, child: GradientButton(label: tr('لعبة جديدة'), icon: Icons.add_circle_outline, onPressed: () => _newCareer(context))),
+              const SizedBox(width: 12),
+              IconButton.filledTonal(
+                tooltip: tr('تحميل الصور'),
+                iconSize: 28,
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ImagesScreen())),
+                icon: const Icon(Icons.cloud_download_outlined),
+              ),
             ]),
-          ]),
+          ),
         ),
       ]),
     );
@@ -103,72 +172,75 @@ class StartScreen extends StatelessWidget {
     final d = m.at == 0 ? null : DateTime.fromMillisecondsSinceEpoch(m.at);
     final date = d == null ? '' : '${d.day}/${d.month}/${d.year}';
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
-      child: Row(children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-          padding: const EdgeInsets.all(8),
-          child: m.badge == null
-              ? const Icon(Icons.shield, color: Color(0xFF0B6B3A))
-              : Unfilter(child: CachedNetworkImage(imageUrl: m.badge!, errorWidget: (_, __, ___) => const Icon(Icons.shield, color: Color(0xFF0B6B3A)))),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(m.club, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
-            Text('${m.league} • الموسم ${m.season} • الأسبوع ${m.week}', style: const TextStyle(color: kMuted, fontSize: 12)),
-            Text('${GameState.diffNames[m.difficulty.clamp(0, 2)]}${date.isEmpty ? '' : ' • $date'}', style: const TextStyle(color: kMuted, fontSize: 11)),
-          ]),
-        ),
-        Column(children: [
-          FilledButton(onPressed: () => onOpen(m), child: const Text('تحميل')),
-          TextButton(
-            onPressed: () async {
-              final ok = await confirmDialog(context, title: 'حذف المسيرة', body: 'سيُحذف حفظ ${m.club} نهائياً.', confirm: 'حذف', danger: true);
-              if (ok == true) onDelete(m);
-            },
-            child: const Text('حذف', style: TextStyle(color: Color(0xFFFF8A65), fontSize: 12)),
+      decoration: BoxDecoration(
+        color: kCard,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: kLine),
+        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 14, offset: Offset(0, 6))],
+      ),
+      child: Column(children: [
+        Row(children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(8)),
+            child: Text('${tr('الموسم')} ${m.season}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+          ),
+          const Spacer(),
+          Text(_mb(m.bytes), style: const TextStyle(color: kMuted, fontSize: 12)),
+          SizedBox(
+            width: 30,
+            child: PopupMenuButton<int>(
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.more_vert, size: 20),
+              onSelected: (_) async {
+                final ok = await confirmDialog(context, title: 'حذف المسيرة', body: 'سيُحذف حفظ ${m.club} نهائياً.', confirm: 'حذف', danger: true);
+                if (ok == true) widget.onDelete(m);
+              },
+              itemBuilder: (_) => [PopupMenuItem(value: 1, child: Text('حذف'))],
+            ),
           ),
         ]),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 108,
+          child: m.badge == null
+              ? const Icon(Icons.shield, size: 84, color: Color(0xFF0B6B3A))
+              : Unfilter(child: CachedNetworkImage(imageUrl: m.badge!, errorWidget: (_, __, ___) => const Icon(Icons.shield, size: 84, color: Color(0xFF0B6B3A)))),
+        ),
+        const SizedBox(height: 8),
+        Text(m.club, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: kAccent)),
+        Text(widget.coachName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
+        Text('${m.league} • ${tr('الأسبوع')} ${m.week}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 12)),
+        Text('${GameState.diffNames[m.difficulty.clamp(0, 2)]}${date.isEmpty ? '' : ' • $date'}', style: const TextStyle(color: kMuted, fontSize: 11.5)),
+        const Spacer(),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: () => widget.onOpen(m),
+            icon: const Icon(Icons.sports_esports),
+            label: const Text('تحميل'),
+          ),
+        ),
       ]),
     );
   }
 
   Widget _statCard(IconData i, String label, String v) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
         child: Row(children: [
           Icon(i, color: const Color(0xFF0B6B3A)),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(child: Text(label, style: const TextStyle(color: Colors.black54, fontSize: 12))),
-          Text(v, style: const TextStyle(color: Color(0xFF0B6B3A), fontWeight: FontWeight.w900, fontSize: 18)),
+          Text(v, style: const TextStyle(color: Color(0xFF0B6B3A), fontWeight: FontWeight.w900, fontSize: 16)),
         ]),
       );
 
   void _newCareer(BuildContext context) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => LeaguesScreen(onStart: onStartReal)),
+        MaterialPageRoute(builder: (_) => LeaguesScreen(onStart: widget.onStartReal)),
       );
-}
-
-class _Perk extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _Perk(this.icon, this.label);
-  @override
-  Widget build(BuildContext context) => Column(children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
-          child: Icon(icon, color: kAccent),
-        ),
-        const SizedBox(height: 6),
-        Text(label, style: const TextStyle(color: kMuted, fontSize: 11)),
-      ]);
 }
 
 class HomeShell extends StatefulWidget {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Text;
 import 'auth.dart';
 import 'game_state.dart';
 import 'i18n.dart';
+import 'lang_sheet.dart';
 import 'settings.dart';
 import 'widgets.dart';
 
@@ -100,16 +101,11 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 14),
                   Text(tr('اللغة')),
                   const SizedBox(height: 6),
-                  Wrap(spacing: 8, runSpacing: 8, children: [
-                    for (final e in const {'ar': 'العربية', 'en': 'English', 'fr': 'Français', 'es': 'Español'}.entries)
-                      ChoiceChip(
-                        label: Text(e.value),
-                        selected: s.lang == e.key,
-                        onSelected: (_) => s.set(lang: e.key),
-                      ),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(tr('الترجمة الحالية تشمل الإعدادات والتنقل الرئيسي؛ بقية الشاشات تُترجم تدريجياً.'), style: const TextStyle(color: kMuted, fontSize: 11, height: 1.5)),
+                  OutlinedButton.icon(
+                    onPressed: () => showLanguageSheet(context),
+                    icon: const Icon(Icons.language),
+                    label: Text(const {'ar': 'العربية', 'en': 'English', 'fr': 'Français', 'es': 'Español'}[s.lang] ?? ''),
+                  ),
                 ]),
               ),
               sectionTitle(tr('العرض')),

@@ -101,6 +101,7 @@ class _ManagerAppState extends State<ManagerApp> {
     } else if (gs == null) {
       home = StartScreen(
         coachName: acct!.name,
+        email: acct!.email,
         onLogout: _logout,
         saves: saves,
         onOpen: _continue,

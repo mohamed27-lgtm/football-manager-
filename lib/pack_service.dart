@@ -42,6 +42,16 @@ class PackInfo {
 }
 
 class PackService {
+  /// يحذف صور دوري منزّلة ويعيد الدوري للنسخة المضمّنة (بلا صور)
+  static Future<void> remove(PackInfo p) async {
+    try {
+      final docs = await getApplicationDocumentsDirectory();
+      final dir = Directory('${docs.path}/packs/${p.id}_${p.season}');
+      if (await dir.exists()) await dir.delete(recursive: true);
+    } catch (_) {}
+    await LeagueStore.delete(p.id, p.season);
+  }
+
   /// رابط الحزم ثابت داخل التطبيق: المستخدم لا يرى ولا يكتب أي رابط
   static Future<String> getBase() async => defaultPackBase;
 
