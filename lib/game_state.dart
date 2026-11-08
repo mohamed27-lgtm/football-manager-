@@ -2036,6 +2036,8 @@ class GameState extends ChangeNotifier {
       'ga': user.ga,
       'cup': domestic == null ? '-' : _cupResult(domestic!),
       'con': continental == null ? '-' : _cupResult(continental!),
+      'eur': europa == null ? '-' : _cupResult(europa!),
+      'uecl': conference == null ? '-' : _cupResult(conference!),
       'scorer': top.isEmpty || top.first.goals == 0 ? '-' : '${top.first.name} (${top.first.goals})',
       'awards': awards,
     });
@@ -2239,14 +2241,38 @@ class GameState extends ChangeNotifier {
     final out = <String>[];
     final tb = table;
     int rankOf(Team t) => tb.indexOf(t) + 1;
+    // نجوم الأندية القارية والدرجات الأخرى: نقدّر إحصاءاتهم لأنهم لا يلعبون في دوريك
+    for (final t in [...foreign.values, ...upper, ...lower]) {
+      for (final p in t.squad) {
+        if (p.apps > 0 || p.overall < 66) continue;
+        final q = (p.overall - 60).clamp(0, 30) / 30.0;
+        p.apps = 22 + rng.nextInt(14);
+        switch (p.pos) {
+          case Pos.att:
+            p.goals = (q * 26 * (0.55 + rng.nextDouble() * 0.6)).round();
+            p.assists = (q * 11 * rng.nextDouble()).round();
+          case Pos.mid:
+            p.goals = (q * 11 * rng.nextDouble()).round();
+            p.assists = (q * 14 * (0.4 + rng.nextDouble() * 0.6)).round();
+          case Pos.def:
+            p.goals = (q * 4 * rng.nextDouble()).round();
+            p.assists = (q * 5 * rng.nextDouble()).round();
+          case Pos.gk:
+            break;
+        }
+      }
+    }
     final all = <(Player, Team)>[
-      for (final t in teams)
+      for (final t in [...teams, ...foreign.values])
         for (final p in t.squad)
           if (p.apps > 0) (p, t)
     ];
     if (all.isEmpty) return out;
-    double sc((Player, Team) e) =>
-        e.$1.goals * 2.0 + e.$1.assists * 1.5 + e.$1.overall * 0.25 + (teams.length - rankOf(e.$2)) * 0.2;
+    double sc((Player, Team) e) {
+      final r = rankOf(e.$2);
+      final eloBonus = (eloOf(e.$2) - 1500) / 40.0;
+      return e.$1.goals * 2.0 + e.$1.assists * 1.5 + e.$1.overall * 0.25 + (r == 0 ? eloBonus : (teams.length - r) * 0.2);
+    }
     (Player, Team) best(Iterable<(Player, Team)> l, double Function((Player, Team)) f) =>
         l.reduce((a, b) => f(b) > f(a) ? b : a);
 

@@ -176,7 +176,10 @@ class HistoryScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text('فوز ${h['w']} • تعادل ${h['d']} • خسارة ${h['l']} • له ${h['gf']} / عليه ${h['ga']}',
                       style: const TextStyle(color: kMuted, fontSize: 12)),
-                  Text('الكأس: ${h['cup']} • القاري: ${h['con']}', style: const TextStyle(fontSize: 13)),
+                  Text('الكأس: ${h['cup']}', style: const TextStyle(fontSize: 13)),
+                  Text('أبطال أوروبا: ${h['con']}', style: const TextStyle(fontSize: 13)),
+                  if ((h['eur'] ?? '-') != '-' && h['eur'] != 'لم يتأهل') Text('الدوري الأوروبي: ${h['eur']}', style: const TextStyle(fontSize: 13)),
+                  if ((h['uecl'] ?? '-') != '-' && h['uecl'] != 'لم يتأهل') Text('دوري المؤتمر: ${h['uecl']}', style: const TextStyle(fontSize: 13)),
                   Text('هداف الفريق: ${h['scorer']}', style: const TextStyle(fontSize: 13)),
                   if ((h['awards'] as List?)?.isNotEmpty ?? false) ...[
                     const Divider(),
