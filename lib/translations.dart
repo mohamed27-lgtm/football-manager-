@@ -1030,4 +1030,10 @@ const Map<String, List<String>> kTr = {
   'اللعبة تعمل بدون الصور، وتنزيلها اختياري ويُحفظ على جهازك.': ['The game works without images; downloading is optional and saved on your device.', 'Le jeu fonctionne sans images ; le téléchargement est facultatif et stocké sur votre appareil.', 'El juego funciona sin imágenes; descargarlas es opcional y se guardan en tu dispositivo.'],
   'الأسبوع': ['Week', 'Semaine', 'Semana'],
   'الموسم': ['Season', 'Saison', 'Temporada'],
+  'مرحباً بعودتك': ['Welcome back', 'Bon retour', 'Bienvenido de nuevo'],
+  'ألعابك المحفوظة': ['Your saved games', 'Vos parties sauvegardées', 'Tus partidas guardadas'],
+  'مشاركة': ['Share', 'Partager', 'Compartir'],
+  'التنزيلات': ['Downloads', 'Téléchargements', 'Descargas'],
+  'المزيد': ['More', 'Plus', 'Más'],
+  'تم نسخ رابط اللعبة': ['Game link copied', 'Lien du jeu copié', 'Enlace del juego copiado'],
 };

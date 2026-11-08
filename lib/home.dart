@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide Text;
+import 'package:flutter/services.dart';
 import 'data_screen.dart';
 import 'cups_screen.dart';
 import 'game_state.dart';
@@ -45,17 +46,68 @@ class StartScreen extends StatefulWidget {
 }
 
 class _StartScreenState extends State<StartScreen> {
-  final PageController _pc = PageController(viewportFraction: 0.74);
-  int page = 0;
-  bool showEmail = true;
-
-  @override
-  void dispose() {
-    _pc.dispose();
-    super.dispose();
-  }
+  int sel = 0;
 
   String _mb(int chars) => '${(chars / 1e6).toStringAsFixed(1)} MB';
+
+  void _images() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ImagesScreen()));
+
+  void _newCareer() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => LeaguesScreen(onStart: widget.onStartReal)));
+
+  Future<void> _share() async {
+    await Clipboard.setData(const ClipboardData(text: 'https://github.com/mohamed27-lgtm/football-manager-/releases/latest'));
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم نسخ رابط اللعبة')));
+  }
+
+  void _toggleTheme() {
+    final st = AppSettings.i;
+    final dark = !st.lightFor(MediaQuery.platformBrightnessOf(context));
+    st.set(themeMode: dark ? 'light' : 'dark');
+  }
+
+  void _more() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(height: 8),
+          ListTile(
+            leading: const Icon(Icons.language),
+            title: Text('اللغة'),
+            onTap: () {
+              Navigator.pop(ctx);
+              showLanguageSheet(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.brightness_6_outlined),
+            title: Text('الوضع'),
+            onTap: () {
+              Navigator.pop(ctx);
+              _toggleTheme();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.cloud_download_outlined),
+            title: Text('تحميل الصور'),
+            onTap: () {
+              Navigator.pop(ctx);
+              _images();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Color(0xFFFF8A65)),
+            title: Text('تسجيل الخروج'),
+            onTap: () {
+              Navigator.pop(ctx);
+              widget.onLogout();
+            },
+          ),
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,163 +115,228 @@ class _StartScreenState extends State<StartScreen> {
     final name = widget.coachName;
     final initial = name.trim().isEmpty ? '⚽' : name.trim().characters.first.toUpperCase();
     final total = saves.fold<int>(0, (a, m) => a + m.bytes);
-    final st = AppSettings.i;
-    final dark = !st.lightFor(MediaQuery.platformBrightnessOf(context));
+    final cur = saves.isEmpty ? 0 : sel.clamp(0, saves.length - 1);
+    final dark = !AppSettings.i.lightFor(MediaQuery.platformBrightnessOf(context));
     return Scaffold(
-      body: Column(children: [
-        Container(
-          padding: EdgeInsets.fromLTRB(14, MediaQuery.of(context).padding.top + 6, 14, 16),
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, colors: [Color(0xFF0B6B3A), Color(0xFF08361F)]),
-          ),
-          child: Column(children: [
-            Row(children: [
-              const Text('مدرب كرة القدم', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 19, color: Colors.white)),
-              const Spacer(),
-              IconButton(
-                tooltip: tr('الوضع'),
-                icon: Icon(dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined, color: Colors.white),
-                onPressed: () => st.set(themeMode: dark ? 'light' : 'dark'),
-              ),
-              IconButton(tooltip: tr('اللغة'), icon: const Icon(Icons.language, color: Colors.white), onPressed: () => showLanguageSheet(context)),
-              PopupMenuButton<int>(
-                icon: const Icon(Icons.more_vert, color: Colors.white),
-                onSelected: (v) {
-                  if (v == 1) {
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ImagesScreen()));
-                  } else if (v == 2) {
-                    widget.onLogout();
-                  }
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem(value: 1, child: Text('تحميل الصور')),
-                  PopupMenuItem(value: 2, child: Text('تسجيل الخروج')),
-                ],
-              ),
-            ]),
-            const SizedBox(height: 4),
-            Row(children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.white,
-                child: Text(initial, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF0B6B3A))),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  if (widget.email.isNotEmpty)
-                    Text(showEmail ? widget.email : '••••••••••', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
-                  Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: Colors.white)),
-                ]),
-              ),
-              IconButton(
-                icon: Icon(showEmail ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.white70),
-                onPressed: () => setState(() => showEmail = !showEmail),
-              ),
-            ]),
-            const SizedBox(height: 12),
-            Row(children: [
-              Expanded(child: _statCard(Icons.save_outlined, 'مسيرة محفوظة', '${saves.length}')),
-              const SizedBox(width: 10),
-              Expanded(child: _statCard(Icons.sd_storage_outlined, 'التخزين', _mb(total))),
-            ]),
-          ]),
-        ),
-        Expanded(
-          child: saves.isEmpty
-              ? const Center(child: EmptyState(icon: Icons.sports_soccer, title: 'لا توجد مسيرة بعد', subtitle: 'ابدأ لعبة جديدة واختر دولتك ونادي أحلامك.'))
-              : Column(children: [
-                  const Spacer(),
-                  SizedBox(
-                    height: 340,
-                    child: PageView.builder(
-                      controller: _pc,
-                      itemCount: saves.length,
-                      onPageChanged: (i) => setState(() => page = i),
-                      itemBuilder: (_, i) => AnimatedScale(
-                        duration: const Duration(milliseconds: 200),
-                        scale: i == page ? 1 : 0.92,
-                        child: _saveCard(context, saves[i]),
-                      ),
-                    ),
+      body: SafeArea(
+        child: Column(children: [
+          Expanded(
+            child: ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 16), children: [
+              Row(children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: kAccent,
+                  child: Text(initial, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.black)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('مرحباً بعودتك', style: TextStyle(color: kMuted, fontSize: 12.5)),
+                    Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                  ]),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.sd_storage_outlined, size: 18, color: kGold),
+                    const SizedBox(width: 6),
+                    Text(_mb(total), style: const TextStyle(fontWeight: FontWeight.w800, color: kGold)),
+                  ]),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: _more,
+                  borderRadius: BorderRadius.circular(22),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(color: kCard, shape: BoxShape.circle, border: Border.all(color: kLine)),
+                    child: const Icon(Icons.menu),
                   ),
-                  const SizedBox(height: 10),
-                  Text('${(page + 1).clamp(1, saves.length)}/${saves.length}', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w300, color: kAccent)),
-                  const Spacer(),
-                ]),
-        ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 4, 18, 14),
-            child: Row(children: [
-              Expanded(flex: 3, child: GradientButton(label: tr('لعبة جديدة'), icon: Icons.add_circle_outline, onPressed: () => _newCareer(context))),
-              const SizedBox(width: 12),
-              IconButton.filledTonal(
-                tooltip: tr('تحميل الصور'),
-                iconSize: 28,
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ImagesScreen())),
-                icon: const Icon(Icons.cloud_download_outlined),
+                ),
+              ]),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: _images,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0x2200E676),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0x5500E676)),
+                  ),
+                  child: Row(children: [
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        const Text('شعارات الأندية وصور اللاعبين', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                        const SizedBox(height: 2),
+                        const Text('اللعبة تعمل بدون الصور، وتنزيلها اختياري ويُحفظ على جهازك.', style: TextStyle(color: kMuted, fontSize: 11.5, height: 1.4)),
+                      ]),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: const BoxDecoration(color: kAccent, shape: BoxShape.circle),
+                      child: const Icon(Icons.cloud_download_rounded, color: Colors.black),
+                    ),
+                  ]),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(children: [
+                Expanded(child: _chip(Icons.language, 'اللغة', () => showLanguageSheet(context))),
+                const SizedBox(width: 8),
+                Expanded(child: _chip(dark ? Icons.dark_mode_outlined : Icons.light_mode_outlined, 'الوضع', _toggleTheme)),
+                const SizedBox(width: 8),
+                Expanded(child: _chip(Icons.share_outlined, 'مشاركة', _share)),
+              ]),
+              const SizedBox(height: 22),
+              Row(children: [
+                const Text('ألعابك المحفوظة', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+                const Spacer(),
+                if (saves.isNotEmpty) Text('${cur + 1}/${saves.length}', style: const TextStyle(color: kMuted)),
+              ]),
+              const SizedBox(height: 10),
+              if (saves.isEmpty)
+                const EmptyState(icon: Icons.sports_soccer, title: 'لا توجد مسيرة بعد', subtitle: 'ابدأ لعبة جديدة واختر دولتك ونادي أحلامك.')
+              else
+                for (var i = 0; i < saves.length; i++) i == cur ? _expanded(saves[i]) : _collapsed(saves[i], i),
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: _newCareer,
+                borderRadius: BorderRadius.circular(22),
+                child: CustomPaint(
+                  painter: _DashedRRect(const Color(0x8800E676)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Row(children: [
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(tr('لعبة جديدة'), style: const TextStyle(color: kAccent, fontWeight: FontWeight.w900, fontSize: 17)),
+                          const Text('ابدأ مسيرة جديدة', style: TextStyle(color: kMuted, fontSize: 12)),
+                        ]),
+                      ),
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(color: kAccent, shape: BoxShape.circle),
+                        child: const Icon(Icons.add, color: Colors.black),
+                      ),
+                    ]),
+                  ),
+                ),
               ),
             ]),
           ),
-        ),
-      ]),
+          Container(
+            decoration: const BoxDecoration(color: kCard, border: Border(top: BorderSide(color: kLine))),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(children: [
+              Expanded(child: _nav(Icons.home_rounded, 'الرئيسية', true, () {})),
+              Expanded(child: _nav(Icons.cloud_download_outlined, 'التنزيلات', false, _images)),
+              Expanded(child: _nav(Icons.more_horiz_rounded, 'المزيد', false, _more)),
+            ]),
+          ),
+        ]),
+      ),
     );
   }
 
-  Widget _saveCard(BuildContext context, SaveMeta m) {
+  Widget _nav(IconData i, String label, bool on, VoidCallback f) => InkWell(
+        onTap: f,
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(height: 3, width: 28, margin: const EdgeInsets.only(bottom: 6), decoration: BoxDecoration(color: on ? kAccent : Colors.transparent, borderRadius: BorderRadius.circular(3))),
+          Icon(i, color: on ? kAccent : kMuted),
+          Text(label, style: TextStyle(fontSize: 11, color: on ? kAccent : kMuted, fontWeight: on ? FontWeight.w800 : FontWeight.w500)),
+        ]),
+      );
+
+  Widget _chip(IconData i, String label, VoidCallback f) => InkWell(
+        onTap: f,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(i, size: 19),
+            const SizedBox(width: 6),
+            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          ]),
+        ),
+      );
+
+  Widget _badge(SaveMeta m, double size) {
+    final fb = Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: const Color(0xFF0B6B3A), borderRadius: BorderRadius.circular(size * 0.28)),
+      alignment: Alignment.center,
+      child: Text(m.club.trim().isEmpty ? '⚽' : m.club.trim().characters.first, style: TextStyle(fontSize: size * 0.45, fontWeight: FontWeight.w900, color: Colors.white)),
+    );
+    if (m.badge == null) return fb;
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(size * 0.1),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(size * 0.28)),
+      child: Unfilter(child: CachedNetworkImage(imageUrl: m.badge!, errorWidget: (_, __, ___) => fb)),
+    );
+  }
+
+  Future<void> _confirmDelete(SaveMeta m) async {
+    final ok = await confirmDialog(context, title: 'حذف المسيرة', body: 'سيُحذف حفظ ${m.club} نهائياً.', confirm: 'حذف', danger: true);
+    if (ok == true) widget.onDelete(m);
+  }
+
+  Widget _expanded(SaveMeta m) {
     final d = m.at == 0 ? null : DateTime.fromMillisecondsSinceEpoch(m.at);
     final date = d == null ? '' : '${d.day}/${d.month}/${d.year}';
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: kCard,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: kLine),
-        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 14, offset: Offset(0, 6))],
-      ),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kLine)),
       child: Column(children: [
         Row(children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(8)),
-            child: Text('${tr('الموسم')} ${m.season}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+          _badge(m, 74),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(m.club, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
+              Text(widget.coachName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 13)),
+              Text('${m.league} • ${tr('الأسبوع')} ${m.week}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 12)),
+              if (date.isNotEmpty) Text(date, style: const TextStyle(color: kMuted, fontSize: 12)),
+            ]),
           ),
-          const Spacer(),
-          Text(_mb(m.bytes), style: const TextStyle(color: kMuted, fontSize: 12)),
-          SizedBox(
-            width: 30,
-            child: PopupMenuButton<int>(
-              padding: EdgeInsets.zero,
-              icon: const Icon(Icons.more_vert, size: 20),
-              onSelected: (_) async {
-                final ok = await confirmDialog(context, title: 'حذف المسيرة', body: 'سيُحذف حفظ ${m.club} نهائياً.', confirm: 'حذف', danger: true);
-                if (ok == true) widget.onDelete(m);
-              },
-              itemBuilder: (_) => [PopupMenuItem(value: 1, child: Text('حذف'))],
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: const Color(0x3300E676), borderRadius: BorderRadius.circular(10)),
+              child: Text('${tr('الموسم')} ${m.season}', style: const TextStyle(color: kAccent, fontSize: 11.5, fontWeight: FontWeight.w800)),
             ),
-          ),
+            const SizedBox(height: 8),
+            Text(_mb(m.bytes), style: const TextStyle(color: kMuted, fontSize: 12.5)),
+            SizedBox(
+              height: 30,
+              width: 30,
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                tooltip: tr('حذف'),
+                icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFFFF8A65)),
+                onPressed: () => _confirmDelete(m),
+              ),
+            ),
+          ]),
         ]),
-        const SizedBox(height: 6),
-        SizedBox(
-          height: 108,
-          child: m.badge == null
-              ? const Icon(Icons.shield, size: 84, color: Color(0xFF0B6B3A))
-              : Unfilter(child: CachedNetworkImage(imageUrl: m.badge!, errorWidget: (_, __, ___) => const Icon(Icons.shield, size: 84, color: Color(0xFF0B6B3A)))),
-        ),
-        const SizedBox(height: 8),
-        Text(m.club, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: kAccent)),
-        Text(widget.coachName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
-        Text('${m.league} • ${tr('الأسبوع')} ${m.week}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 12)),
-        Text('${GameState.diffNames[m.difficulty.clamp(0, 2)]}${date.isEmpty ? '' : ' • $date'}', style: const TextStyle(color: kMuted, fontSize: 11.5)),
-        const Spacer(),
+        const SizedBox(height: 14),
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
+            style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
             onPressed: () => widget.onOpen(m),
-            icon: const Icon(Icons.sports_esports),
+            icon: const Icon(Icons.play_arrow_rounded, size: 26),
             label: const Text('تحميل'),
           ),
         ),
@@ -227,20 +344,54 @@ class _StartScreenState extends State<StartScreen> {
     );
   }
 
-  Widget _statCard(IconData i, String label, String v) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-        child: Row(children: [
-          Icon(i, color: const Color(0xFF0B6B3A)),
-          const SizedBox(width: 8),
-          Expanded(child: Text(label, style: const TextStyle(color: Colors.black54, fontSize: 12))),
-          Text(v, style: const TextStyle(color: Color(0xFF0B6B3A), fontWeight: FontWeight.w900, fontSize: 16)),
-        ]),
+  Widget _collapsed(SaveMeta m, int i) => InkWell(
+        onTap: () => setState(() => sel = i),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
+          child: Row(children: [
+            _badge(m, 46),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(m.club, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                Text('${tr('الموسم')} ${m.season} • ${_mb(m.bytes)}', style: const TextStyle(color: kMuted, fontSize: 12)),
+              ]),
+            ),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: kAccent.withOpacity(0.6), width: 1.5)),
+              child: const Icon(Icons.expand_more_rounded, color: kAccent),
+            ),
+          ]),
+        ),
       );
+}
 
-  void _newCareer(BuildContext context) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => LeaguesScreen(onStart: widget.onStartReal)),
-      );
+class _DashedRRect extends CustomPainter {
+  final Color color;
+  _DashedRRect(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()..addRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(22)));
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6;
+    for (final metric in path.computeMetrics()) {
+      var d = 0.0;
+      while (d < metric.length) {
+        canvas.drawPath(metric.extractPath(d, d + 7), paint);
+        d += 12;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedRRect old) => old.color != color;
 }
 
 class HomeShell extends StatefulWidget {
