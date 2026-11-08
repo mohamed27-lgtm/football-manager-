@@ -15,6 +15,11 @@ class TableTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final table = gs.table;
+    final cl = gs.div == 1 ? gs.userSlots : 0;
+    final el = gs.div == 1 ? 2 : 0;
+    final relegZone = table.length >= 12 ? 3 : 2;
+    const clC = Color(0xFF1B8F6A), elC = Color(0xFF6B4FBB), relC = Color(0xFFC62828);
+    Color? zone(int i) => i < cl ? clC : (i < cl + el ? elC : (i >= table.length - relegZone && gs.div >= 1 ? relC : null));
     final scorers = <Player, Team>{
       for (final t in gs.teams)
         for (final p in t.squad) p: t
@@ -34,26 +39,22 @@ class TableTab extends StatelessWidget {
           for (var i = 0; i < table.length; i++)
             Container(
               decoration: BoxDecoration(
-                color: table[i] == gs.user ? const Color(0x2200E676) : null,
-                border: Border(
-                  right: BorderSide(
-                    width: 3,
-                    color: i < 4
-                        ? kAccent
-                        : i < 6
-                            ? kBlue
-                            : i >= table.length - 3
-                                ? const Color(0xFFFF5252)
-                                : Colors.transparent,
-                  ),
-                ),
+                color: table[i] == gs.user ? const Color(0x3300E676) : zone(i)?.withOpacity(0.16),
+                borderRadius: BorderRadius.circular(8),
+                border: Border(right: BorderSide(width: 4, color: zone(i) ?? Colors.transparent)),
               ),
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(children: [
                 SizedBox(width: 24, child: Text('${i + 1}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
                 teamBadge(table[i], size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text(table[i].name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(table[i].name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 3),
+                    Transform.scale(scale: 0.62, alignment: Alignment.centerRight, child: FormDots(table[i].form)),
+                  ]),
+                ),
                 _c('${table[i].played}'), _c('${table[i].won}'), _c('${table[i].drawn}'), _c('${table[i].lost}'),
                 _c('${table[i].gd}', w: 34), _c('${table[i].points}', bold: true, w: 34),
               ]),
@@ -63,10 +64,10 @@ class TableTab extends StatelessWidget {
       Padding(
         padding: const EdgeInsets.only(bottom: 4),
         child: Wrap(spacing: 14, runSpacing: 4, children: [
-          for (final e in const [
-            (kAccent, 'دوري الأبطال'),
-            (kBlue, 'الدوري الأوروبي'),
-            (Color(0xFFFF5252), 'الهبوط'),
+          for (final e in [
+            if (cl > 0) (clC, 'دوري الأبطال'),
+            if (el > 0) (elC, 'الدوري الأوروبي'),
+            (relC, 'الهبوط'),
           ])
             Row(mainAxisSize: MainAxisSize.min, children: [
               Container(width: 10, height: 10, decoration: BoxDecoration(color: e.$1, borderRadius: BorderRadius.circular(3))),
