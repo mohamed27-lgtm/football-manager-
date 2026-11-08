@@ -66,7 +66,7 @@ jobs:
           git add assets/logos
           if ! git diff --cached --quiet; then
             git commit -qm "Add competition logos [skip ci]"
-            git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" || echo "push skipped"
+            git push origin "HEAD:${GITHUB_REF_NAME}" 2>&1 | tee -a logs/logos.txt || echo "push failed" | tee -a logs/logos.txt
           fi
 
       - name: Add Arabic font (Tajawal)
