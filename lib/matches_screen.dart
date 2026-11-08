@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+import 'i18n.dart';
 import 'competitions.dart';
 import 'cups_screen.dart';
 import 'game_state.dart';

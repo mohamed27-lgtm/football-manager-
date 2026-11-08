@@ -1,5 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
 import 'data_screen.dart';
 import 'cups_screen.dart';
 import 'game_state.dart';
@@ -50,7 +50,7 @@ class StartScreen extends StatelessWidget {
           ),
           child: Column(children: [
             Row(children: [
-              IconButton(tooltip: 'تسجيل الخروج', icon: const Icon(Icons.logout), onPressed: onLogout),
+              IconButton(tooltip: tr('تسجيل الخروج'), icon: const Icon(Icons.logout), onPressed: onLogout),
               const Spacer(),
               const Text('مدرب كرة القدم', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
             ]),
@@ -272,7 +272,7 @@ class _HomeShellState extends State<HomeShell> {
               Builder(builder: (ctx) {
                 final n = gs.tasks.length;
                 return IconButton(
-                  tooltip: 'مركز الإدارة',
+                  tooltip: tr('مركز الإدارة'),
                   onPressed: () => Navigator.of(ctx).push(MaterialPageRoute(
                       builder: (_) => ActivityScreen(gs: gs, onOpen: (t) {
                             Navigator.of(ctx).pop();

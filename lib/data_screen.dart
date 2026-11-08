@@ -1,5 +1,6 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+import 'i18n.dart';
 import 'api_football.dart';
 import 'importer.dart';
 import 'league_store.dart';
@@ -158,7 +159,7 @@ class _DataScreenState extends State<DataScreen> {
             IconButton(
               onPressed: busy ? null : () => _delete(l),
               icon: const Icon(Icons.delete_outline, size: 20),
-              tooltip: 'حذف البيانات',
+              tooltip: tr('حذف البيانات'),
             ),
         ]),
         const SizedBox(height: 8),
@@ -194,7 +195,7 @@ class _DataScreenState extends State<DataScreen> {
           TextField(
             controller: _keyCtl,
             enabled: !busy,
-            decoration: const InputDecoration(labelText: 'مفتاح API-Football', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: tr('مفتاح API-Football'), border: OutlineInputBorder()),
             onChanged: (v) => LeagueStore.setKey(v.trim()),
           ),
           const SizedBox(height: 10),

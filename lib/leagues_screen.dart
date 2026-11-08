@@ -1,5 +1,6 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+import 'i18n.dart';
 import 'api_football.dart';
 import 'bundled.dart';
 import 'cups.dart';
@@ -308,7 +309,7 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
       TextField(
         onChanged: (v) => setState(() => query = v.trim()),
         decoration: InputDecoration(
-          hintText: 'ابحث عن دولة',
+          hintText: tr('ابحث عن دولة'),
           prefixIcon: const Icon(Icons.search),
           filled: true,
           fillColor: kCard2,

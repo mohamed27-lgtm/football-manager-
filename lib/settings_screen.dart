@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
 import 'auth.dart';
 import 'game_state.dart';
 import 'i18n.dart';
@@ -62,7 +62,7 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 6),
                   SegmentedButton<int>(
                     showSelectedIcon: false,
-                    segments: const [
+                    segments: [
                       ButtonSegment(value: 1, label: Text(tr('عادية'))),
                       ButtonSegment(value: 2, label: Text(tr('سريعة'))),
                       ButtonSegment(value: 4, label: Text(tr('أسرع'))),
@@ -136,7 +136,7 @@ class SettingsScreen extends StatelessWidget {
                         onPressed: () async {
                           await gs.save();
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(tr('تم الحفظ ✅'))));
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('تم الحفظ ✅'))));
                           }
                         },
                         child: Text(tr('حفظ الآن')),

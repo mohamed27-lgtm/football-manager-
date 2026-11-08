@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+import 'i18n.dart';
 import 'package:flutter/services.dart';
 import 'engine.dart';
 import 'game_state.dart';
@@ -615,16 +616,16 @@ class _MatchScreenState extends State<MatchScreen> {
                         child: Text('${speed}x'),
                       ),
                       const Spacer(),
-                      IconButton(onPressed: _infoSheet, tooltip: 'الإحصاءات', icon: const Icon(Icons.bar_chart)),
-                      IconButton(onPressed: _tactics, tooltip: 'التكتيك', icon: const Icon(Icons.tune)),
-                      IconButton(onPressed: _subs, tooltip: 'التبديلات', icon: const Icon(Icons.swap_vert)),
+                      IconButton(onPressed: _infoSheet, tooltip: tr('الإحصاءات'), icon: const Icon(Icons.bar_chart)),
+                      IconButton(onPressed: _tactics, tooltip: tr('التكتيك'), icon: const Icon(Icons.tune)),
+                      IconButton(onPressed: _subs, tooltip: tr('التبديلات'), icon: const Icon(Icons.swap_vert)),
                       IconButton(
                         onPressed: () {
                           _pause();
                           sim.simulateAll();
                           setState(() {});
                         },
-                        tooltip: 'إنهاء',
+                        tooltip: tr('إنهاء'),
                         icon: const Icon(Icons.fast_forward),
                       ),
                     ]),

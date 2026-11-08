@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+import 'i18n.dart';
 import 'settings.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'models.dart';

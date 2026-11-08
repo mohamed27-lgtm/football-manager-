@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+import 'i18n.dart';
 import 'auth.dart';
 import 'widgets.dart';
 
@@ -115,8 +116,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     TextField(
                       controller: _name,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                          labelText: 'اسم المدرب', prefixIcon: Icon(Icons.person_outline), border: OutlineInputBorder()),
+                      decoration: InputDecoration(
+                          labelText: tr('اسم المدرب'), prefixIcon: Icon(Icons.person_outline), border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -126,8 +127,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     textDirection: TextDirection.ltr,
                     autofillHints: const [AutofillHints.email],
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                        labelText: 'البريد الإلكتروني', prefixIcon: Icon(Icons.mail_outline), border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                        labelText: tr('البريد الإلكتروني'), prefixIcon: Icon(Icons.mail_outline), border: OutlineInputBorder()),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -136,7 +137,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     textDirection: TextDirection.ltr,
                     onSubmitted: (_) => busy ? null : _submit(),
                     decoration: InputDecoration(
-                      labelText: 'كلمة المرور',
+                      labelText: tr('كلمة المرور'),
                       prefixIcon: const Icon(Icons.lock_outline),
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(

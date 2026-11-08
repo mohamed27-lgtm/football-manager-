@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+import 'i18n.dart';
 import 'compare.dart';
 import 'game_state.dart';
 import 'models.dart';
@@ -625,12 +626,12 @@ class ContractsView extends StatelessWidget {
                   Text('${money(p.wage)}/أسبوع', style: const TextStyle(color: kMuted, fontSize: 11)),
                 ]),
                 IconButton(
-                  tooltip: 'تجديد',
+                  tooltip: tr('تجديد'),
                   icon: const Icon(Icons.autorenew, size: 20),
                   onPressed: () => showRenewal(context, gs, p),
                 ),
                 IconButton(
-                  tooltip: 'إنهاء العقد',
+                  tooltip: tr('إنهاء العقد'),
                   icon: const Icon(Icons.logout, size: 20, color: Color(0xFFFF8A65)),
                   onPressed: () => _release(context, p),
                 ),

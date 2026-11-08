@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+import 'i18n.dart';
 import 'facilities_screen.dart';
 import 'business_screens.dart';
 import 'club_screens.dart';
