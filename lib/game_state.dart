@@ -1008,6 +1008,7 @@ class GameState extends ChangeNotifier {
         }
       }
     }
+    if (windowOpen) _aiTransfers();
     if (windowOpen && market.length > 8 && rng.nextDouble() < 0.25) {
       final top = [...market]..sort((a, b) => b.overall.compareTo(a.overall));
       final pick = top[rng.nextInt(min(6, top.length))];
@@ -1015,6 +1016,30 @@ class GameState extends ChangeNotifier {
       market.remove(pick);
       news.insert(0, '🏃 سبقك ${club.name} إلى ${pick.free ? 'توقيع' : 'ضم'} ${pick.name}');
     }
+  }
+
+  /// صفقات بين الأندية الأخرى: تتحرك النجوم فتتغير قوة الفرق خلال الموسم
+  void _aiTransfers() {
+    final pool = teams.where((t) => t != user).toList();
+    if (pool.length < 4) return;
+    final n = rng.nextDouble() < 0.4 ? 2 : 1;
+    for (var i = 0; i < n; i++) {
+      final from = pool[rng.nextInt(pool.length)];
+      final cands = from.squad.where((p) => p.overall >= 62 && !p.onLoan).toList();
+      if (cands.isEmpty || from.squad.length <= 18) continue;
+      final p = cands[rng.nextInt(cands.length)];
+      final buyers = pool.where((t) => t != from && t.squad.length < 28 && t.budget >= p.value && t.strength + 4 >= p.overall).toList();
+      if (buyers.isEmpty) continue;
+      final to = buyers[rng.nextInt(buyers.length)];
+      final fee = (p.value * (0.9 + rng.nextDouble() * 0.4) * 10).round() / 10;
+      from.squad.remove(p);
+      to.squad.add(p);
+      from.budget += fee;
+      to.budget -= fee;
+      from.repairLineup();
+      news.insert(0, '🔁 ${p.name} ينتقل من ${from.name} إلى ${to.name} (${money1(fee)})');
+    }
+    if (news.length > 150) news.removeRange(150, news.length);
   }
 
   String? sell(Player p) {
