@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'api_football.dart';
 import 'bundled.dart';
 import 'data_screen.dart';
+import 'flags.dart';
 import 'importer.dart';
 import 'league_store.dart';
 import 'models.dart';
@@ -26,6 +27,8 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
   String? downloading;
   double progress = 0;
   String? error;
+  String? country; // الدولة المفتوحة
+  String query = '';
 
   String _k(LeagueData d) => '${d.id}_${d.season}';
 
@@ -133,8 +136,18 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
   Widget build(BuildContext context) {
     final l = leagues;
     final missing = l?.where((d) => !withImages.contains(_k(d)) && packs.containsKey(_k(d))).length ?? 0;
-    return Scaffold(
-      appBar: AppBar(title: const Text('⚽ اختر الدوري'), backgroundColor: kBg),
+    return PopScope(
+      canPop: country == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) setState(() => country = null);
+      },
+      child: Scaffold(
+      appBar: AppBar(
+        title: country == null
+            ? const Text('اختر الدولة')
+            : Row(children: [FlagBadge(country!, size: 30), const SizedBox(width: 10), Text(country!)]),
+        backgroundColor: kBg,
+      ),
       body: SafeArea(
         child: l == null
             ? ListView(padding: const EdgeInsets.all(14), children: [
@@ -172,8 +185,8 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
                       label: Text('تنزيل صور كل الدوريات ($missing)'),
                     ),
                   ),
-                for (final d in _ordered(l)) ...[
-                  if (_firstOfCountry(l, d)) sectionTitle(d.country),
+                if (country == null) ..._countryGrid(l) else ...[
+                for (final d in _ordered(l).where((x) => x.country == country)) ...[
                   Panel(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Row(children: [
@@ -215,9 +228,57 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
                     ]),
                   ),
                 ],
+                ],
               ]),
       ),
+      ),
     );
+  }
+
+  List<Widget> _countryGrid(List<LeagueData> l) {
+    final by = <String, List<LeagueData>>{};
+    for (final d in _ordered(l)) {
+      by.putIfAbsent(d.country, () => []).add(d);
+    }
+    final names = by.keys.where((c) => query.isEmpty || c.contains(query)).toList();
+    return [
+      TextField(
+        onChanged: (v) => setState(() => query = v.trim()),
+        decoration: InputDecoration(
+          hintText: 'ابحث عن دولة',
+          prefixIcon: const Icon(Icons.search),
+          filled: true,
+          fillColor: kCard2,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        ),
+      ),
+      const SizedBox(height: 14),
+      GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 3,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 0.92,
+        children: [
+          for (final c in names)
+            InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () => setState(() => country = c),
+              child: Container(
+                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+                padding: const EdgeInsets.all(8),
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  FlagBadge(c, size: 52),
+                  const SizedBox(height: 8),
+                  Text(c, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                  Text('${by[c]!.length} دوري', style: const TextStyle(color: kMuted, fontSize: 11)),
+                ]),
+              ),
+            ),
+        ],
+      ),
+    ];
   }
 
   static String _divLabel(int d) => d == 1 ? 'الدرجة الأولى' : (d == 2 ? 'الدرجة الثانية' : 'الدرجة الثالثة');

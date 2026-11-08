@@ -34,63 +34,83 @@ class StartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final initial = coachName.trim().isEmpty ? '⚽' : coachName.trim().characters.first.toUpperCase();
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: kBg,
-        title: Text('أهلاً $coachName 👋', style: const TextStyle(fontSize: 16)),
-        actions: [
-          IconButton(
-            tooltip: 'تسجيل الخروج',
-            icon: const Icon(Icons.logout),
-            onPressed: onLogout,
+      body: Column(children: [
+        // رأس بطابع Super Kickoff لكن بهوية خضراء داكنة
+        Container(
+          padding: EdgeInsets.fromLTRB(18, MediaQuery.of(context).padding.top + 10, 18, 18),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, colors: [Color(0xFF0B6B3A), Color(0xFF08361F)]),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: ListView(padding: const EdgeInsets.all(18), children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 34, horizontal: 20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              gradient: const LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, colors: [Color(0xFF0E3B24), Color(0xFF071A12), kBg]),
-              border: Border.all(color: kLine),
-              boxShadow: const [BoxShadow(color: Color(0x4400E676), blurRadius: 30, offset: Offset(0, 10))],
-            ),
-            child: Column(children: [
-              Container(
-                width: 84,
-                height: 84,
-                decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF00E676), Color(0xFF00A152)])),
-                child: const Icon(Icons.sports_soccer, size: 48, color: Colors.black),
-              ),
-              const SizedBox(height: 16),
-              const Text('مدرب كرة القدم', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 6),
-              const Text('قُد ناديك نحو المجد', style: TextStyle(color: kMuted, fontSize: 15)),
+          child: Column(children: [
+            Row(children: [
+              IconButton(tooltip: 'تسجيل الخروج', icon: const Icon(Icons.logout), onPressed: onLogout),
+              const Spacer(),
+              const Text('مدرب كرة القدم', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
             ]),
-          ),
-          const SizedBox(height: 24),
-          if (hasSave) ...[
-            GradientButton(label: 'متابعة المسيرة المحفوظة', icon: Icons.play_arrow_rounded, onPressed: onContinue),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => _newCareer(context),
-              icon: const Icon(Icons.public),
-              label: const Text('مسيرة جديدة — اختر دوري وفريق'),
-              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-            ),
-          ] else
-            GradientButton(label: 'ابدأ مسيرتك', icon: Icons.public, onPressed: () => _newCareer(context)),
-          const SizedBox(height: 18),
-          const Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-            _Perk(Icons.groups_2_outlined, 'لاعبون حقيقيون'),
-            _Perk(Icons.account_balance_outlined, 'إدارة وانتقالات'),
-            _Perk(Icons.emoji_events_outlined, 'بطولات وكؤوس'),
+            const SizedBox(height: 6),
+            Row(children: [
+              CircleAvatar(
+                radius: 34,
+                backgroundColor: Colors.white,
+                child: Text(initial, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Color(0xFF0B6B3A))),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('المدرب', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  Text(coachName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+                ]),
+              ),
+            ]),
+            const SizedBox(height: 14),
+            Row(children: [
+              Expanded(child: _statCard(Icons.save_outlined, 'مسيرة محفوظة', hasSave ? '1' : '0')),
+              const SizedBox(width: 10),
+              Expanded(child: _statCard(Icons.public, 'دول متاحة', '30+')),
+            ]),
           ]),
-        ]),
-      ),
+        ),
+        Expanded(
+          child: ListView(padding: const EdgeInsets.all(18), children: [
+            if (hasSave)
+              Panel(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('مسيرتك المحفوظة', style: TextStyle(color: kMuted, fontSize: 12)),
+                  const SizedBox(height: 4),
+                  const Text('أكمل من حيث توقفت', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 12),
+                  GradientButton(label: 'متابعة', icon: Icons.play_arrow_rounded, onPressed: onContinue),
+                ]),
+              )
+            else
+              const EmptyState(icon: Icons.sports_soccer, title: 'لا توجد مسيرة بعد', subtitle: 'ابدأ لعبة جديدة واختر دولتك ونادي أحلامك.'),
+            const SizedBox(height: 14),
+            GradientButton(label: 'لعبة جديدة', icon: Icons.add_circle_outline, onPressed: () => _newCareer(context)),
+            const SizedBox(height: 22),
+            const Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              _Perk(Icons.groups_2_outlined, 'لاعبون حقيقيون'),
+              _Perk(Icons.account_balance_outlined, 'إدارة وانتقالات'),
+              _Perk(Icons.emoji_events_outlined, 'بطولات وكؤوس'),
+            ]),
+          ]),
+        ),
+      ]),
     );
   }
+
+  Widget _statCard(IconData i, String label, String v) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+        child: Row(children: [
+          Icon(i, color: const Color(0xFF0B6B3A)),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label, style: const TextStyle(color: Colors.black54, fontSize: 12))),
+          Text(v, style: const TextStyle(color: Color(0xFF0B6B3A), fontWeight: FontWeight.w900, fontSize: 18)),
+        ]),
+      );
 
   void _newCareer(BuildContext context) => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => LeaguesScreen(onStart: onStartReal)),
