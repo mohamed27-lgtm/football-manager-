@@ -154,6 +154,7 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
     }
     final pyramid = Pyramid(
       country: d.country,
+      leagueId: d.id,
       world: world,
       userSlots: userSlots == 0 ? 3 : userSlots,
       div: d.div,

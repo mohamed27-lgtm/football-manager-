@@ -54,3 +54,23 @@ class FlagBadge extends StatelessWidget {
     );
   }
 }
+
+/// كأس محلي وسوبر لكل دوري (معرّفات API-Sports)
+const kDomesticCupId = <int, int>{39: 45, 140: 143, 135: 137, 78: 81, 61: 66, 94: 96, 88: 90, 203: 206, 144: 147};
+const kSuperCupId = <int, int>{39: 528, 140: 556, 135: 547, 78: 529, 61: 526};
+
+/// شعار بطولة محفوظ في المستودع (assets/logos) مع أيقونة بديلة
+class CompLogo extends StatelessWidget {
+  final int? id;
+  final IconData fallback;
+  final Color color;
+  final double size;
+  const CompLogo(this.id, {super.key, required this.fallback, required this.color, this.size = 34});
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = Icon(fallback, color: color, size: size);
+    if (id == null || id == 0) return icon;
+    return Image.asset('assets/logos/$id.png', width: size, height: size, fit: BoxFit.contain, errorBuilder: (_, __, ___) => icon);
+  }
+}

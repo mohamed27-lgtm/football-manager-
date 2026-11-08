@@ -382,6 +382,7 @@ class Pyramid {
   final String lowerName;
   final List<Team> world; // أندية قارية حقيقية بلاعبيها
   final String country;
+  final int leagueId;
   final int userSlots; // عدد مقاعد دوري الأبطال لدوري المستخدم
-  const Pyramid({this.div = 1, this.upper = const [], this.upperName = '', this.lower = const [], this.lowerName = '', this.world = const [], this.userSlots = 3, this.country = ''});
+  const Pyramid({this.div = 1, this.upper = const [], this.upperName = '', this.lower = const [], this.lowerName = '', this.world = const [], this.userSlots = 3, this.country = '', this.leagueId = 0});
 }

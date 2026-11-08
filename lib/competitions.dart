@@ -19,11 +19,11 @@ class _CompetitionsViewState extends State<CompetitionsView> {
   @override
   Widget build(BuildContext context) {
     final gs = widget.gs;
-    final items = <(String, IconData, Color)>[
-      (gs.leagueName, Icons.emoji_events, kGold),
-      ('كأس الدوري', Icons.military_tech, const Color(0xFFE53935)),
-      ('دوري الأبطال', Icons.stars, const Color(0xFF3D8BFF)),
-      if (gs.superCup != null) ('كأس السوبر', Icons.workspace_premium, const Color(0xFF00BFA5)),
+    final items = <(String, IconData, Color, int?)>[
+      (gs.leagueName, Icons.emoji_events, kGold, gs.leagueId),
+      ('كأس الدوري', Icons.military_tech, const Color(0xFFE53935), kDomesticCupId[gs.leagueId]),
+      ('دوري الأبطال', Icons.stars, const Color(0xFF3D8BFF), 2),
+      if (gs.superCup != null) ('كأس السوبر', Icons.workspace_premium, const Color(0xFF00BFA5), kSuperCupId[gs.leagueId] ?? 531),
     ];
     if (sel >= items.length) sel = 0;
     return Column(children: [
@@ -53,7 +53,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
                   border: Border.all(color: sel == i ? items[i].$3 : kLine, width: sel == i ? 1.6 : 1),
                 ),
                 child: Row(children: [
-                  Icon(items[i].$2, color: items[i].$3, size: 28),
+                  CompLogo(items[i].$4, fallback: items[i].$2, color: items[i].$3, size: 34),
                   if (sel == i) ...[
                     const SizedBox(width: 8),
                     Text(items[i].$1, style: const TextStyle(fontWeight: FontWeight.w800)),

@@ -8,6 +8,8 @@ on:
       - 'pubspec.yaml'
       - 'tools/make_assets.py'
       - 'tools/tm_leagues.json.gz'
+      - 'tools/fetch_logos.py'
+      - 'assets/logos/**'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 
@@ -53,6 +55,18 @@ jobs:
 
       - name: Bundle league data into the app
         run: python3 tools/make_assets.py
+
+      - name: Fetch competition logos and store them in the repo
+        continue-on-error: true
+        run: |
+          python3 tools/fetch_logos.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/logos
+          if ! git diff --cached --quiet; then
+            git commit -qm "Add competition logos [skip ci]"
+            git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" || echo "push skipped"
+          fi
 
       - name: Add Arabic font (Tajawal)
         continue-on-error: true
