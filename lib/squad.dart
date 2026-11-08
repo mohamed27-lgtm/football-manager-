@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'compare.dart';
 import 'game_state.dart';
 import 'models.dart';
 import 'negotiation.dart';
@@ -176,6 +177,17 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
               ),
             ),
           const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => showCompare(context, gs, p),
+                icon: const Icon(Icons.compare_arrows),
+                label: const Text('قارن مع لاعب آخر'),
+              ),
+            ),
+          ),
           if (market)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
