@@ -72,6 +72,7 @@ class GameState extends ChangeNotifier {
   int week = 0;
   int objective = 6;
   String leagueName = 'الدوري الافتراضي';
+  String country = '';
   double confidence = 60;
   String training = 'balanced';
   bool fired = false;
@@ -194,6 +195,7 @@ class GameState extends ChangeNotifier {
       upperName = pyramid.upperName;
       lower = pyramid.lower;
       lowerName = pyramid.lowerName;
+      country = pyramid.country;
       if (pyramid.world.isNotEmpty) {
         realWorld = true;
         userSlots = pyramid.userSlots;
@@ -256,6 +258,7 @@ class GameState extends ChangeNotifier {
       loanedOut.add(Player.fromJson(p as Map<String, dynamic>));
     }
     realWorld = (j['rw'] as bool?) ?? false;
+    country = (j['ctry'] as String?) ?? '';
     userSlots = (j['uslots'] as int?) ?? 3;
     for (final t in (j['foreign'] as List?) ?? const []) {
       final tm = Team.fromJson(t as Map<String, dynamic>);
@@ -332,6 +335,7 @@ class GameState extends ChangeNotifier {
         'offers': [for (final o in offers) o.toJson()],
         'foreign': [for (final t in foreign.values) t.toJson()],
         'rw': realWorld,
+        'ctry': country,
         'uslots': userSlots,
         'honours': honours,
         'oplog': oplog,

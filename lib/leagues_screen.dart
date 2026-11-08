@@ -153,6 +153,7 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
       await addFrom(c, min(need - world.length, continentalSlots(c) + 1));
     }
     final pyramid = Pyramid(
+      country: d.country,
       world: world,
       userSlots: userSlots == 0 ? 3 : userSlots,
       div: d.div,
