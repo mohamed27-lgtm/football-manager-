@@ -24,6 +24,7 @@ class ManagerApp extends StatefulWidget {
 class _ManagerAppState extends State<ManagerApp> {
   GameState? gs;
   bool hasSave = false;
+  List<SaveMeta> saves = [];
   bool loading = true;
   Account? acct;
 
@@ -47,6 +48,7 @@ class _ManagerAppState extends State<ManagerApp> {
         acct = null;
         gs = null;
         hasSave = false;
+        saves = [];
       });
     }
   }
@@ -59,18 +61,24 @@ class _ManagerAppState extends State<ManagerApp> {
         acct = a;
       }
     }
-    final h = await GameState.hasSave();
+    final l = await GameState.listSaves();
     if (mounted) {
       setState(() {
-        hasSave = h;
+        saves = l;
+        hasSave = l.isNotEmpty;
         loading = false;
       });
     }
   }
 
-  Future<void> _continue() async {
-    final g = await GameState.load();
+  Future<void> _continue(SaveMeta m) async {
+    final g = await GameState.load(m.id);
     if (g != null && mounted) setState(() => gs = g);
+  }
+
+  Future<void> _delete(SaveMeta m) async {
+    await GameState.deleteSave(m.id);
+    await _refresh();
   }
 
   void _menu() {
@@ -94,12 +102,15 @@ class _ManagerAppState extends State<ManagerApp> {
       home = StartScreen(
         coachName: acct!.name,
         onLogout: _logout,
-        hasSave: hasSave,
-        onContinue: _continue,
-        onStartReal: (List<Team> teams, int id, String name, {Pyramid? pyramid}) {
-          final g = GameState.fromData(teams, id, name, pyramid: pyramid);
-          g.save();
-          setState(() => gs = g);
+        saves: saves,
+        onOpen: _continue,
+        onDelete: _delete,
+        onStartReal: (List<Team> teams, int id, String name, {Pyramid? pyramid}) async {
+          final sid = await GameState.newSaveId();
+          GameState.activeId = sid;
+          final g = GameState.fromData(teams, id, name, pyramid: pyramid)..saveId = sid;
+          await g.save();
+          if (mounted) setState(() => gs = g);
         },
       );
     } else {

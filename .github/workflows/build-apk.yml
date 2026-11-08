@@ -7,6 +7,7 @@ on:
       - 'lib/**'
       - 'pubspec.yaml'
       - 'tools/make_assets.py'
+      - 'tools/tm_leagues.json.gz'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 

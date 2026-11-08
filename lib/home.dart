@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'data_screen.dart';
 import 'cups_screen.dart';
@@ -18,15 +19,17 @@ import 'facilities_screen.dart';
 import 'widgets.dart';
 
 class StartScreen extends StatelessWidget {
-  final bool hasSave;
-  final VoidCallback onContinue;
+  final List<SaveMeta> saves;
+  final ValueChanged<SaveMeta> onOpen;
+  final ValueChanged<SaveMeta> onDelete;
   final StartReal onStartReal;
   final String coachName;
   final VoidCallback onLogout;
   const StartScreen({
     super.key,
-    required this.hasSave,
-    required this.onContinue,
+    required this.saves,
+    required this.onOpen,
+    required this.onDelete,
     required this.onStartReal,
     required this.coachName,
     required this.onLogout,
@@ -67,7 +70,7 @@ class StartScreen extends StatelessWidget {
             ]),
             const SizedBox(height: 14),
             Row(children: [
-              Expanded(child: _statCard(Icons.save_outlined, 'مسيرة محفوظة', hasSave ? '1' : '0')),
+              Expanded(child: _statCard(Icons.save_outlined, 'مسيرة محفوظة', '${saves.length}')),
               const SizedBox(width: 10),
               Expanded(child: _statCard(Icons.public, 'دول متاحة', '30+')),
             ]),
@@ -75,17 +78,11 @@ class StartScreen extends StatelessWidget {
         ),
         Expanded(
           child: ListView(padding: const EdgeInsets.all(18), children: [
-            if (hasSave)
-              Panel(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('مسيرتك المحفوظة', style: TextStyle(color: kMuted, fontSize: 12)),
-                  const SizedBox(height: 4),
-                  const Text('أكمل من حيث توقفت', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 12),
-                  GradientButton(label: 'متابعة', icon: Icons.play_arrow_rounded, onPressed: onContinue),
-                ]),
-              )
-            else
+            if (saves.isNotEmpty) ...[
+              const Text('مسيراتك المحفوظة', style: TextStyle(color: kMuted, fontSize: 12)),
+              const SizedBox(height: 8),
+              for (final m in saves) _saveCard(context, m),
+            ] else
               const EmptyState(icon: Icons.sports_soccer, title: 'لا توجد مسيرة بعد', subtitle: 'ابدأ لعبة جديدة واختر دولتك ونادي أحلامك.'),
             const SizedBox(height: 14),
             GradientButton(label: 'لعبة جديدة', icon: Icons.add_circle_outline, onPressed: () => _newCareer(context)),
@@ -97,6 +94,45 @@ class StartScreen extends StatelessWidget {
             ]),
           ]),
         ),
+      ]),
+    );
+  }
+
+  Widget _saveCard(BuildContext context, SaveMeta m) {
+    final d = m.at == 0 ? null : DateTime.fromMillisecondsSinceEpoch(m.at);
+    final date = d == null ? '' : '${d.day}/${d.month}/${d.year}';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
+      child: Row(children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+          padding: const EdgeInsets.all(8),
+          child: m.badge == null
+              ? const Icon(Icons.shield, color: Color(0xFF0B6B3A))
+              : CachedNetworkImage(imageUrl: m.badge!, errorWidget: (_, __, ___) => const Icon(Icons.shield, color: Color(0xFF0B6B3A))),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(m.club, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+            Text('${m.league} • الموسم ${m.season} • الأسبوع ${m.week}', style: const TextStyle(color: kMuted, fontSize: 12)),
+            Text('${GameState.diffNames[m.difficulty.clamp(0, 2)]}${date.isEmpty ? '' : ' • $date'}', style: const TextStyle(color: kMuted, fontSize: 11)),
+          ]),
+        ),
+        Column(children: [
+          FilledButton(onPressed: () => onOpen(m), child: const Text('تحميل')),
+          TextButton(
+            onPressed: () async {
+              final ok = await confirmDialog(context, title: 'حذف المسيرة', body: 'سيُحذف حفظ ${m.club} نهائياً.', confirm: 'حذف', danger: true);
+              if (ok == true) onDelete(m);
+            },
+            child: const Text('حذف', style: TextStyle(color: Color(0xFFFF8A65), fontSize: 12)),
+          ),
+        ]),
       ]),
     );
   }

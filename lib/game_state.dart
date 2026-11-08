@@ -36,10 +36,26 @@ class GameTask {
   const GameTask({required this.id, required this.title, required this.body, required this.reason, required this.due, required this.urgent, required this.action});
 }
 
+class SaveMeta {
+  final int id, season, week, difficulty;
+  final String club, league;
+  final String? badge;
+  final int at;
+  SaveMeta(this.id, this.club, this.league, this.season, this.week, this.badge, this.at, this.difficulty);
+  Map<String, dynamic> toJson() => {'id': id, 'club': club, 'league': league, 's': season, 'w': week, 'b': badge, 'at': at, 'd': difficulty};
+  factory SaveMeta.fromJson(Map<String, dynamic> j) => SaveMeta(j['id'] as int, j['club'] as String, j['league'] as String,
+      j['s'] as int, j['w'] as int, j['b'] as String?, (j['at'] as num).toInt(), (j['d'] as int?) ?? 1);
+}
+
 class GameState extends ChangeNotifier {
   /// يُضبط عند تسجيل الدخول ليكون لكل حساب حفظه الخاص
   static String slot = '';
-  static String get _key => 'fm_save_v2$slot';
+  /// رقم خانة الحفظ الحالية (0 = الحفظ القديم)؛ كل مسيرة لها خانة مستقلة
+  static int activeId = 0;
+  int saveId = 0;
+  static String _kOf(int id) => id == 0 ? 'fm_save_v2$slot' : 'fm_save_v2${slot}_g$id';
+  static String get _key => _kOf(activeId);
+  static String get _idxKey => 'fm_idx$slot';
 
   final Random rng = Random();
   late List<Team> teams;
@@ -352,11 +368,69 @@ class GameState extends ChangeNotifier {
   Future<void> save() async {
     try {
       final p = await SharedPreferences.getInstance();
-      final old = p.getString(_key);
+      final key = _kOf(saveId);
+      final old = p.getString(key);
       // نسخة احتياطية: تُحفظ نسخة سابقة كل 6 حفظات حتى لا تضيع المسيرة عند خلل
       _saves++;
-      if (old != null && _saves % 6 == 1) await p.setString('${_key}_bak', old);
-      await p.setString(_key, jsonEncode(toJson()));
+      if (old != null && _saves % 6 == 1) await p.setString('${key}_bak', old);
+      await p.setString(key, jsonEncode(toJson()));
+      await _writeMeta(p);
+    } catch (_) {}
+  }
+
+  Future<void> _writeMeta(SharedPreferences p) async {
+    final list = await _readIdx(p);
+    list.removeWhere((m) => m.id == saveId);
+    list.add(SaveMeta(saveId, user.name, leagueName, season, week, user.badge, DateTime.now().millisecondsSinceEpoch, difficulty));
+    await p.setString(_idxKey, jsonEncode([for (final m in list) m.toJson()]));
+  }
+
+  static Future<List<SaveMeta>> _readIdx(SharedPreferences p) async {
+    final raw = p.getString(_idxKey);
+    final out = <SaveMeta>[];
+    if (raw != null) {
+      try {
+        for (final e in jsonDecode(raw) as List) {
+          final m = SaveMeta.fromJson(Map<String, dynamic>.from(e as Map));
+          if (p.containsKey(_kOf(m.id))) out.add(m);
+        }
+      } catch (_) {}
+    }
+    // ترحيل الحفظ القديم (قبل الخانات المتعددة)
+    if (!out.any((m) => m.id == 0) && p.containsKey(_kOf(0))) {
+      try {
+        final g = GameState.fromJson(jsonDecode(p.getString(_kOf(0))!) as Map<String, dynamic>);
+        out.add(SaveMeta(0, g.user.name, g.leagueName, g.season, g.week, g.user.badge, 0, g.difficulty));
+      } catch (_) {}
+    }
+    return out;
+  }
+
+  static Future<List<SaveMeta>> listSaves() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      final l = await _readIdx(p);
+      l.sort((a, b) => b.at.compareTo(a.at));
+      return l;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// معرّف جديد لمسيرة جديدة
+  static Future<int> newSaveId() async {
+    final l = await listSaves();
+    return l.fold<int>(0, (a, m) => m.id > a ? m.id : a) + 1;
+  }
+
+  static Future<void> deleteSave(int id) async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      await p.remove(_kOf(id));
+      await p.remove('${_kOf(id)}_bak');
+      final l = await _readIdx(p);
+      l.removeWhere((m) => m.id == id);
+      await p.setString(_idxKey, jsonEncode([for (final m in l) m.toJson()]));
     } catch (_) {}
   }
 
@@ -393,12 +467,13 @@ class GameState extends ChangeNotifier {
     }
   }
 
-  static Future<GameState?> load() async {
+  static Future<GameState?> load([int? id]) async {
     try {
+      if (id != null) activeId = id;
       final p = await SharedPreferences.getInstance();
       final s = p.getString(_key);
       if (s == null) return null;
-      return GameState.fromJson(jsonDecode(s) as Map<String, dynamic>);
+      return GameState.fromJson(jsonDecode(s) as Map<String, dynamic>)..saveId = activeId;
     } catch (_) {
       return null;
     }
