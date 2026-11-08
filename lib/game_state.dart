@@ -162,6 +162,8 @@ class GameState extends ChangeNotifier {
   Cup? domestic, continental, superCup;
   Cup? activeCup;
   final Map<int, Team> foreign = {};
+  bool realWorld = false; // أندية قارية حقيقية
+  int userSlots = 3;
   final List<String> honours = [];
   final Map<String, int> staff = {'coach': 0, 'scout': 0, 'doctor': 0, 'analyst': 0, 'marketing': 0, 'director': 0};
   int? boardKind; // اجتماع إدارة معلّق
@@ -192,6 +194,14 @@ class GameState extends ChangeNotifier {
       upperName = pyramid.upperName;
       lower = pyramid.lower;
       lowerName = pyramid.lowerName;
+      if (pyramid.world.isNotEmpty) {
+        realWorld = true;
+        userSlots = pyramid.userSlots;
+        for (var i = 0; i < pyramid.world.length; i++) {
+          pyramid.world[i].id = 1000 + i;
+          foreign[1000 + i] = pyramid.world[i];
+        }
+      }
     }
     user = teams.firstWhere((x) => x.id == userId);
     _buildFixtures();
@@ -245,6 +255,8 @@ class GameState extends ChangeNotifier {
     for (final p in (j['loanedOut'] as List?) ?? const []) {
       loanedOut.add(Player.fromJson(p as Map<String, dynamic>));
     }
+    realWorld = (j['rw'] as bool?) ?? false;
+    userSlots = (j['uslots'] as int?) ?? 3;
     for (final t in (j['foreign'] as List?) ?? const []) {
       final tm = Team.fromJson(t as Map<String, dynamic>);
       foreign[tm.id] = tm;
@@ -319,6 +331,8 @@ class GameState extends ChangeNotifier {
         'fin': fin.toJson(),
         'offers': [for (final o in offers) o.toJson()],
         'foreign': [for (final t in foreign.values) t.toJson()],
+        'rw': realWorld,
+        'uslots': userSlots,
         'honours': honours,
         'oplog': oplog,
         'watch': watch.toList(),
@@ -1308,7 +1322,7 @@ class GameState extends ChangeNotifier {
     fin.add('prize', prize);
     news.insert(0, '🏆 أنهيت الموسم $season في المركز $pos — جائزة ${prize.toStringAsFixed(1)}M');
 
-    for (final t in [...teams, ...upper, ...lower]) {
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
       for (final p in [...t.squad]) {
         p.age++;
         p.contract--;
@@ -1404,7 +1418,7 @@ class GameState extends ChangeNotifier {
     seasonOver = false;
     roundResults.clear();
     _buildFixtures();
-    final qualIds = qualT.every(teams.contains) ? [for (final t in qualT) t.id] : null;
+    final qualIds = qualT.every(teams.contains) ? [for (final t in qualT.take(realWorld ? userSlots : 3)) t.id] : null;
     _setupCups(qualIds);
     if (div == 1 && teams.contains(champT) && teams.contains(runnerT) && (cupT == null || teams.contains(cupT))) {
       _setupSuper(champT.id, cupT?.id, runnerT.id);
@@ -1566,14 +1580,17 @@ class GameState extends ChangeNotifier {
     );
     _draw(domestic!);
 
-    foreign.clear();
-    const extraNames = ['سبارتا الشمال', 'فيورينتينا الهضاب', 'أنتويرب الميناء'];
-    final extra = div > 1 ? extraNames.length : 0;
-    for (var i = 0; i < foreignClubNames.length + extra; i++) {
-      final nm = i < foreignClubNames.length ? foreignClubNames[i] : extraNames[i - foreignClubNames.length];
-      foreign[1000 + i] = createTeam(rng, 1000 + i, nm, 3 + rng.nextInt(3));
+    if (!realWorld) {
+      foreign.clear();
+      const extraNames = ['سبارتا الشمال', 'فيورينتينا الهضاب', 'أنتويرب الميناء'];
+      final extra = div > 1 ? extraNames.length : 0;
+      for (var i = 0; i < foreignClubNames.length + extra; i++) {
+        final nm = i < foreignClubNames.length ? foreignClubNames[i] : extraNames[i - foreignClubNames.length];
+        foreign[1000 + i] = createTeam(rng, 1000 + i, nm, 3 + rng.nextInt(3));
+      }
     }
-    final q = div > 1 ? <int>[] : qual ?? [for (final t in ([...teams]..sort((a, b) => b.strength.compareTo(a.strength))).take(3)) t.id];
+    final take = realWorld ? userSlots : 3;
+    final q = div > 1 ? <int>[] : qual ?? [for (final t in ([...teams]..sort((a, b) => b.strength.compareTo(a.strength))).take(take)) t.id];
     continental = Cup(
       key: 'con',
       name: 'دوري الأبطال القاري',
@@ -1582,6 +1599,18 @@ class GameState extends ChangeNotifier {
       size: 16,
       alive: [...q, ...foreign.keys],
     );
+    // ضمان 16 فريقاً بالضبط (قد ينقص الحقيقي أو يزيد)
+    var extraId = 1500;
+    while (continental!.alive.length < 16) {
+      foreign[extraId] = createTeam(rng, extraId, 'نادٍ ضيف ${extraId - 1499}', 3);
+      continental!.alive.add(extraId++);
+    }
+    if (continental!.alive.length > 16) {
+      final keep = continental!.alive.where(q.contains).toList();
+      final rest = continental!.alive.where((x) => !q.contains(x)).toList()
+        ..sort((a, b) => team(b).strength.compareTo(team(a).strength));
+      continental!.alive = [...keep, ...rest].take(16).toList();
+    }
     final sorted = [...continental!.alive]..sort((a, b) => team(b).strength.compareTo(team(a).strength));
     final pots = [
       for (var k = 0; k < 4; k++) (sorted.sublist(k * 4, k * 4 + 4)..shuffle(rng))

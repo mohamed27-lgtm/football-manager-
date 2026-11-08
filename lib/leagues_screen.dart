@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'api_football.dart';
 import 'bundled.dart';
+import 'cups.dart';
 import 'data_screen.dart';
 import 'flags.dart';
 import 'importer.dart';
@@ -119,7 +120,41 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
 
     Future<List<Team>> load(LeagueData x) async => teamsFromLeague(await LeagueStore.load(x.id, x.season) ?? x, rng);
     final up = near(d.div - 1), lo = near(d.div + 1);
+    // أندية قارية حقيقية حسب مقاعد كل دولة (دوري الأبطال)
+    final world = <Team>[];
+    final userSlots = d.div == 1 ? continentalSlots(d.country) : 0;
+    final need = 16 - userSlots;
+    final tops = <String, LeagueData>{};
+    for (final x in (leagues ?? const <LeagueData>[])) {
+      if (x.div == 1 && x.country != d.country && x.teams.length >= 8) tops[x.country] = x;
+    }
+    final order = [...kContinentalOrder.where(tops.containsKey), ...tops.keys.where((c) => !kContinentalOrder.contains(c))];
+    Future<void> addFrom(String c, int n) async {
+      final src = tops[c]!;
+      final full = await LeagueStore.load(src.id, src.season) ?? src;
+      final sub = [...full.teams]..sort((a, b) => a.rank.compareTo(b.rank));
+      // teamsFromLeague يتطلب عدداً زوجياً من الفرق
+      final m = min(sub.length, n.isOdd ? n + 1 : n);
+      final copy = LeagueData(id: full.id, name: full.name, country: full.country, tier: full.tier, div: 1, season: full.season, teams: sub.take(m).toList(), fetchedAt: full.fetchedAt);
+      var added = 0;
+      for (final t in teamsFromLeague(copy, rng)) {
+        if (added >= n || world.length >= need) break;
+        if (world.any((w) => w.name == t.name)) continue;
+        world.add(t);
+        added++;
+      }
+    }
+    for (final c in order) {
+      if (world.length >= need) break;
+      await addFrom(c, min(need - world.length, continentalSlots(c)));
+    }
+    for (final c in order) { // إكمال النقص بمقعد إضافي من الدول الأقوى
+      if (world.length >= need) break;
+      await addFrom(c, min(need - world.length, continentalSlots(c) + 1));
+    }
     final pyramid = Pyramid(
+      world: world,
+      userSlots: userSlots == 0 ? 3 : userSlots,
       div: d.div,
       upper: up == null ? const [] : await load(up),
       upperName: up?.name ?? '',
