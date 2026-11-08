@@ -213,7 +213,10 @@ class MatchSim {
     }
 
     _discipline(d);
-    if (rng.nextDouble() < 0.0015) _injury(rng.nextBool() ? home : away);
+    // خطر الإصابة يرتفع مع إرهاق التشكيلة (متوسط اللياقة)
+    double tire(Side x) => x.slots.isEmpty ? 0.0 : 1 - x.slots.fold<double>(0, (a, e) => a + e.p.fitness) / (100.0 * x.slots.length);
+    final hs = 1 + 1.6 * tire(home), as = 1 + 1.6 * tire(away);
+    if (rng.nextDouble() < 0.0015 * (hs + as) / 2) _injury(rng.nextDouble() * (hs + as) < hs ? home : away);
 
     if (minute == 45) _log('info', '⏸ نهاية الشوط الأول', true);
     if (minute == 90) {
