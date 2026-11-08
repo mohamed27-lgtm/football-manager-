@@ -64,6 +64,11 @@ List<Team> teamsFromLeague(LeagueData d, Random rng) {
       ..badge = t.logo
       ..venue = t.venue;
     topUpSquad(team, rng);
+    // ميزانية واقعية من القيمة السوقية الحقيقية للتشكيلة (نحو 12٪ منها)
+    if (t.players.any((x) => x.ov != null)) {
+      final sv = team.squad.fold<double>(0, (a, x) => a + x.value);
+      team.budget = (0.12 * sv).clamp(5.0, 220.0).toDouble();
+    }
     team.autoPick();
     out.add(team);
   }
