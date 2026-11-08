@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'cups.dart';
 import 'cups_screen.dart';
 import 'flags.dart';
 import 'game_state.dart';

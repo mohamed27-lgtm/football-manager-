@@ -4,7 +4,6 @@ import 'cups_screen.dart';
 import 'game_state.dart';
 import 'match_screen.dart';
 import 'models.dart';
-import 'table_tab.dart';
 import 'widgets.dart';
 
 /// مركز المباريات: الجدول والنتائج • الترتيب والهدافون
