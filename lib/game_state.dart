@@ -966,15 +966,16 @@ class GameState extends ChangeNotifier {
   String? buy(Player p) => completeSigning(p, buyPrice(p));
 
   /// إتمام الصفقة: عمولة الوكيل + الفحص الطبي (قد يُلغي الصفقة أو يكشف إصابة)
-  String? completeSigning(Player p, double price) {
+  String? completeSigning(Player p, double price, {double? wage, int? years, double bonus = 0}) {
     final werr = _incomingErr(p.free);
     if (werr != null) return werr;
     if (user.squad.length >= 30) return 'التشكيلة ممتلئة (30 لاعباً كحد أقصى)';
     final refused = _refusal(p);
     if (refused != null) return refused;
     final fee = agentFee(price);
-    if (price + fee > user.budget) {
-      return 'الميزانية غير كافية (السعر + العمولة ${money1(price + fee)})';
+    final extra = bonus + agentFee(bonus);
+    if (price + fee + extra > user.budget) {
+      return 'الميزانية غير كافية (السعر + العمولات ${money1(price + fee + extra)})';
     }
     if (rng.nextDouble() < 0.06) {
       market.remove(p);
@@ -994,7 +995,8 @@ class GameState extends ChangeNotifier {
       owner.budget += price;
       owner.repairLineup();
     }
-    user.budget -= price + fee;
+    user.budget -= price + fee + extra;
+    if (bonus > 0) fin.add('renewals', bonus);
     fin.add('purchases', price);
     fin.add('agents', fee);
     var note = '';
@@ -1003,12 +1005,12 @@ class GameState extends ChangeNotifier {
       note = ' (إصابة طفيفة اكتُشفت في الفحص الطبي)';
     }
     p.club = null;
-    p.contract = 3;
+    p.contract = years ?? 3;
     p.free = false;
     p.listed = false;
     p.onLoan = false;
     p.morale = 75;
-    p.salary = null;
+    p.salary = wage;
     user.squad.add(p);
     _registerNew(p);
     market.remove(p);
@@ -2189,6 +2191,29 @@ class GameState extends ChangeNotifier {
     if (p.morale < 50) m += 0.2;
     if (p.overall >= 72) m += 0.15;
     return max(p.wage, p.baseWage) * m;
+  }
+
+  /// المرحلة الثانية من الصفقة: شروط اللاعب الشخصية (راتب ومدة)
+  double signDemand(Player p) {
+    var m = 1.15;
+    if (user.reputation < 3) m += 0.15;
+    if (p.age <= 25) m += 0.1;
+    if (p.overall >= 78) m += 0.15;
+    final avg = user.squad.isEmpty ? 60.0 : user.squad.fold<double>(0, (a, x) => a + x.overall) / user.squad.length;
+    if (p.overall < avg - 4) m -= 0.1; // يرضى بأقل لأنه سيحصل على دقائق لعب أقل
+    return max(p.wage, p.baseWage) * m;
+  }
+
+  NegoResult playerSignOffer(Player p, double wage, int years, int tries) {
+    final dem = signDemand(p);
+    var score = wage / dem;
+    if (p.age <= 24 && years >= 4) score += 0.04; // الشاب يحب الأمان
+    if (p.age >= 31 && years >= 4) score -= 0.04;
+    if (score >= 1.0) return const NegoResult('accept', null, 'وافق اللاعب على الشروط الشخصية');
+    if (score >= 0.8 && tries < 2) {
+      return NegoResult('counter', (dem * 0.98 * 1000).round() / 1000, 'اللاعب يطلب راتباً أعلى: ${(dem * 980).round()}K أسبوعياً.');
+    }
+    return const NegoResult('reject', null, 'رفض اللاعب الشروط الشخصية وانسحب من الصفقة.');
   }
 
   double renewBonus(double wage) => (wage * 10 * 100).round() / 100;
