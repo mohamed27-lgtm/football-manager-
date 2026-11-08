@@ -98,6 +98,9 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(p.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 Text('${p.pos.label} • ${p.age} سنة', style: const TextStyle(color: kMuted)),
+                if (p.nat != null || p.sub != null)
+                  Text([if (p.sub != null) p.sub!, if (p.nat != null) p.nat!, if (p.height != null) '${p.height} سم', if (p.foot != null) 'قدم ${p.foot}'].join(' • '),
+                      style: const TextStyle(color: kMuted, fontSize: 12)),
               ]),
             ),
           ]),

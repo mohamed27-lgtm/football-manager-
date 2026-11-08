@@ -64,6 +64,10 @@ class ApiPlayer {
   final String position;
   final String? photo;
   final int? number;
+  // بيانات Transfermarkt الحقيقية (اختيارية)
+  final String? sub, nat, foot;
+  final double? value; // مليون يورو
+  final int? ov, pot, contract, height;
   const ApiPlayer({
     required this.id,
     required this.name,
@@ -71,10 +75,20 @@ class ApiPlayer {
     this.position = '',
     this.photo,
     this.number,
+    this.sub,
+    this.nat,
+    this.foot,
+    this.value,
+    this.ov,
+    this.pot,
+    this.contract,
+    this.height,
   });
 
-  Map<String, dynamic> toJson() =>
-      {'id': id, 'n': name, 'a': age, 'p': position, 'ph': photo, 'no': number};
+  Map<String, dynamic> toJson() => {
+        'id': id, 'n': name, 'a': age, 'p': position, 'ph': photo, 'no': number,
+        'sub': sub, 'nat': nat, 'ft': foot, 'v': value, 'ov': ov, 'pot': pot, 'ct': contract, 'h': height,
+      };
 
   factory ApiPlayer.fromJson(Map<String, dynamic> j) => ApiPlayer(
         id: j['id'] as int,
@@ -83,6 +97,14 @@ class ApiPlayer {
         position: (j['p'] as String?) ?? '',
         photo: j['ph'] as String?,
         number: j['no'] as int?,
+        sub: j['sub'] as String?,
+        nat: j['nat'] as String?,
+        foot: j['ft'] as String?,
+        value: (j['v'] as num?)?.toDouble(),
+        ov: (j['ov'] as num?)?.toInt(),
+        pot: (j['pot'] as num?)?.toInt(),
+        contract: (j['ct'] as num?)?.toInt(),
+        height: (j['h'] as num?)?.toInt(),
       );
 }
 

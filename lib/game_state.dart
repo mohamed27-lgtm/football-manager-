@@ -1237,10 +1237,21 @@ class GameState extends ChangeNotifier {
       for (final p in [...t.squad]) {
         p.age++;
         p.contract--;
-        if (p.age <= 24 && p.overall < p.potential) {
-          _grow(p, 1 + rng.nextInt(3));
-        } else if (p.age >= 31) {
-          _grow(p, -rng.nextInt(3));
+        // تطور اللاعب: العمر + الأداء الموسمي (التقييم والمشاركات) + مستوى التدريب
+        final played = p.apps >= 15;
+        final form = p.rated == 0 ? 0 : (p.avgRating >= 7.3 ? 1 : (p.avgRating <= 6.2 && played ? -1 : 0));
+        final train = t == user ? (user.trainingLvl >= 3 ? 1 : 0) : 0;
+        if (p.age <= 24) {
+          if (p.overall < p.potential) {
+            var g = 1 + rng.nextInt(3) + (p.apps >= 18 ? 1 : (p.apps < 5 ? -1 : 0)) + (form > 0 ? 1 : 0) + train;
+            _grow(p, max(0, min(g, p.potential - p.overall)));
+          }
+        } else if (p.age <= 30) {
+          // قمة العطاء: يتغير قليلاً حسب الأداء فقط
+          if (form > 0 && p.overall < p.potential + 2 && rng.nextDouble() < 0.5) _grow(p, 1);
+          if (form < 0 && rng.nextDouble() < 0.5) _grow(p, -1);
+        } else {
+          _grow(p, -(rng.nextInt(3) + (p.age >= 34 ? 1 : 0)) + (form > 0 ? 1 : 0));
         }
         if (p.apps > 0) {
           p.career.add({

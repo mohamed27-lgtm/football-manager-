@@ -14,6 +14,22 @@ Pos _pos(String s) => switch (s.toLowerCase()) {
 /// مع تباين ثابت لكل لاعب (يعتمد على معرّفه) فتبقى القيم نفسها في كل مرة.
 Player playerFromApi(ApiPlayer ap, int teamBase) {
   final h = Random(ap.id);
+  if (ap.ov != null) {
+    // لاعب حقيقي من Transfermarkt: التقييم مشتق من قيمته السوقية
+    final age = (ap.age ?? 25).clamp(15, 43).toInt();
+    final p = makePlayer(h, _pos(ap.position), ap.ov!, age, name: ap.name, photo: ap.photo);
+    p
+      ..potential = max(ap.pot ?? p.overall, p.overall)
+      ..contract = (ap.contract ?? 2).clamp(1, 5).toInt()
+      ..nat = ap.nat
+      ..sub = ap.sub
+      ..foot = ap.foot
+      ..height = ap.height
+      ..mv0 = ap.value
+      ..ov0 = p.overall
+      ..age0 = age;
+    return p;
+  }
   final age = (ap.age ?? 25).clamp(16, 42).toInt();
   final adj = age <= 20 ? -4 : age <= 23 ? -1 : age <= 30 ? 1 : age <= 33 ? 0 : -3;
   final ov = (teamBase + h.nextInt(15) - 7 + adj).clamp(40, 92).toInt();

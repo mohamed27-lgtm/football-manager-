@@ -31,6 +31,10 @@ class Player {
   int atk, def, pas, gk, potential;
   int contract; // سنوات متبقية
   String? photo;
+  String? nat, sub, foot; // الجنسية، المركز الدقيق، القدم
+  int? height;
+  double? mv0; // القيمة السوقية الحقيقية عند الاستيراد (M€)
+  int? ov0, age0; // التقييم والعمر عند الاستيراد
   bool free = false, onLoan = false, listed = false, registered = true;
   double? salary;
   double fitness = 100;
@@ -72,7 +76,14 @@ class Player {
 
   bool get available => injuredWeeks == 0 && suspendedMatches == 0 && registered;
 
+  static double _ageF(int a) => a <= 21 ? 1.25 : a <= 24 ? 1.1 : a <= 28 ? 1.0 : a <= 31 ? 0.8 : a <= 34 ? 0.5 : 0.3;
+
+  /// القيمة السوقية: تعتمد على قيمة Transfermarkt الحقيقية وتتحرك مع تطور تقييم اللاعب وعمره
   double get value {
+    if (mv0 != null && ov0 != null) {
+      final v = mv0! * pow(10, (overall - ov0!) / 9.3) * _ageF(age) / _ageF(age0 ?? age);
+      return max(0.1, (v * 10).round() / 10);
+    }
     var m = 1.0;
     if (age <= 23) m += max(0, potential - overall) / 25;
     if (age >= 31) m *= 0.6;
@@ -114,6 +125,7 @@ class Player {
         'opt': optionFee,
         'obl': obligation,
         'career': career,
+        'nat': nat, 'sub': sub, 'ft': foot, 'ht': height, 'mv0': mv0, 'ov0': ov0, 'age0': age0,
       };
 
   factory Player.fromJson(Map<String, dynamic> j) => Player(
@@ -147,6 +159,13 @@ class Player {
         ..injuryCount = (j['ic'] as int?) ?? 0
         ..optionFee = (j['opt'] as num?)?.toDouble()
         ..obligation = (j['obl'] as bool?) ?? false
+        ..nat = j['nat'] as String?
+        ..sub = j['sub'] as String?
+        ..foot = j['ft'] as String?
+        ..height = (j['ht'] as num?)?.toInt()
+        ..mv0 = (j['mv0'] as num?)?.toDouble()
+        ..ov0 = (j['ov0'] as num?)?.toInt()
+        ..age0 = (j['age0'] as num?)?.toInt()
         ..career = [
           for (final c in (j['career'] as List?) ?? const [])
             Map<String, dynamic>.from(c as Map)
