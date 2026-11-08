@@ -20,7 +20,9 @@ for i in sorted(ids):
             if d[:4] == b'\x89PNG' and len(d) > 200:
                 f.write_bytes(d); ok += 1; break
         except Exception as e:
+            err = repr(e)[:150]
             time.sleep(1)
     else:
         fail += 1
+        if fail <= 3: print('FAIL', i, locals().get('err'))
 print(f'logos downloaded={ok} failed={fail} total_files={len(list(OUT.glob("*.png")))}')
