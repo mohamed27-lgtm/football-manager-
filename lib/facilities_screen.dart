@@ -8,35 +8,56 @@ class FacilitiesScreen extends StatelessWidget {
   final GameState gs;
   const FacilitiesScreen({super.key, required this.gs});
 
-  Widget _fac(BuildContext context, String kind, String title, String desc, int lvl) {
-    return Panel(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-          const Spacer(),
-          Text('المستوى $lvl/5', style: const TextStyle(color: kAccent, fontWeight: FontWeight.w700)),
+  Widget _fac(BuildContext context, String kind, IconData icon, Color color, String title, String desc, int lvl) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+      child: Row(children: [
+        Column(children: [
+          FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size(64, 34), padding: const EdgeInsets.symmetric(horizontal: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            onPressed: lvl >= 5
+                ? null
+                : () {
+                    final err = gs.upgrade(kind);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تمت الترقية ✅')));
+                  },
+            child: Text(lvl >= 5 ? 'أقصى' : 'ترقية'),
+          ),
+          const SizedBox(height: 4),
+          if (lvl < 5) Text(money(gs.upgradeCost(lvl)), style: const TextStyle(color: kMuted, fontSize: 12)),
         ]),
-        const SizedBox(height: 4),
-        Text(desc, style: const TextStyle(color: kMuted, fontSize: 12)),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(value: lvl / 5, minHeight: 8, color: kAccent, backgroundColor: kCard2),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Text('مستوى $lvl/5', style: const TextStyle(color: kMuted, fontSize: 12)),
+              const Spacer(),
+              Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+            ]),
+            const SizedBox(height: 6),
+            Row(children: [
+              for (var i = 0; i < 5; i++)
+                Expanded(
+                  child: Container(
+                    height: 8,
+                    margin: const EdgeInsetsDirectional.only(end: 4),
+                    decoration: BoxDecoration(color: i < lvl ? color : kCard2, borderRadius: BorderRadius.circular(4)),
+                  ),
+                ),
+            ]),
+            const SizedBox(height: 6),
+            Text(desc, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+          ]),
         ),
-        const SizedBox(height: 10),
-        if (lvl < 5)
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () {
-                final err = gs.upgrade(kind);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تمت الترقية ✅')));
-              },
-              child: Text('ترقية مقابل ${money(gs.upgradeCost(lvl))}'),
-            ),
-          )
-        else
-          const Text('أقصى مستوى ✅', style: TextStyle(color: kMuted)),
+        const SizedBox(width: 12),
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(16)),
+          child: Icon(icon, color: color, size: 26),
+        ),
       ]),
     );
   }
@@ -44,7 +65,7 @@ class FacilitiesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('🏗️ المنشآت')),
+      appBar: AppBar(title: const Text('المنشآت')),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: gs,
@@ -56,9 +77,9 @@ class FacilitiesScreen extends StatelessWidget {
                 Text(money(gs.user.budget), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: kAccent)),
               ]),
             ),
-            _fac(context, 'stadium', '🏟️ الملعب', 'يرفع دخل التذاكر في المباريات على أرضك.', gs.user.stadium),
-            _fac(context, 'training', '🏋️ مركز التدريب', 'يسرّع تطور اللاعبين ويحسّن التعافي الأسبوعي.', gs.user.trainingLvl),
-            _fac(context, 'academy', '🌱 الأكاديمية', 'تنتج مواهب شابة بإمكانات عالية في نهاية كل موسم.', gs.user.academy),
+            _fac(context, 'stadium', Icons.stadium_rounded, const Color(0xFFE5533D), 'الملعب', 'يرفع دخل التذاكر في المباريات على أرضك', gs.user.stadium),
+            _fac(context, 'training', Icons.fitness_center_rounded, const Color(0xFF1FA58A), 'مركز التدريب', 'تطور اللاعبين وتعافٍ أسرع', gs.user.trainingLvl),
+            _fac(context, 'academy', Icons.school_rounded, const Color(0xFF6A6FC4), 'الأكاديمية', 'مواهب شابة بإمكانات أعلى كل موسم', gs.user.academy),
             const Text('كل مستوى يزيد مصاريف الصيانة الأسبوعية قليلاً.', style: TextStyle(color: kMuted, fontSize: 12)),
           ]),
         ),
