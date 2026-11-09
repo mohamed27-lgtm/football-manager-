@@ -490,52 +490,58 @@ class _HomeShellState extends State<HomeShell> {
           TeamTab(gs: gs),
           TransfersTab(gs: gs),
           MatchesTab(gs: gs),
-          MoreTab(gs: gs, onRestart: widget.onRestart, onLogout: widget.onLogout),
+          MoreTab(gs: gs, onRestart: widget.onRestart, onLogout: widget.onLogout, onNavigate: (i) => setState(() => tab = i)),
         ];
         return Scaffold(
-          appBar: tab == 0 ? null : AppBar(
-            backgroundColor: kBg,
-            titleSpacing: 14,
-            title: Row(children: [
-              teamBadge(gs.user, size: 26),
-              const SizedBox(width: 10),
-              Expanded(child: Text(gs.user.name, overflow: TextOverflow.ellipsis)),
-            ]),
-            actions: [
-              Builder(builder: (ctx) {
-                final n = gs.tasks.length;
-                return IconButton(
-                  tooltip: tr('مركز الإدارة'),
-                  onPressed: () => Navigator.of(ctx).push(MaterialPageRoute(
-                      builder: (_) => ActivityScreen(gs: gs, onOpen: (t) {
-                            Navigator.of(ctx).pop();
-                            _openTask(t);
-                          }))),
-                  icon: Badge(
-                    isLabelVisible: n > 0,
-                    label: Text('$n'),
-                    child: const Icon(Icons.notifications_outlined),
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(58),
+            child: Unfilter(
+              child: Container(
+                color: kNavy,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Row(children: [
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs))),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+                          child: Row(children: [
+                            const Icon(Icons.circle, size: 11, color: Color(0xFFFFC857)),
+                            const SizedBox(width: 7),
+                            AnimatedMoney(gs.user.budget,
+                                style: TextStyle(fontWeight: FontWeight.w900, color: gs.user.budget < 0 ? const Color(0xFFFF8A65) : Colors.white)),
+                          ]),
+                        ),
+                      ),
+                      const Spacer(),
+                      Builder(builder: (ctx) {
+                        final n = gs.tasks.length;
+                        return IconButton(
+                          tooltip: tr('مركز الإدارة'),
+                          onPressed: () => Navigator.of(ctx).push(MaterialPageRoute(
+                              builder: (_) => ActivityScreen(gs: gs, onOpen: (t) {
+                                    Navigator.of(ctx).pop();
+                                    _openTask(t);
+                                  }))),
+                          icon: Stack(clipBehavior: Clip.none, children: [
+                            const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 26),
+                            if (n > 0)
+                              Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: Container(
+                                      width: 10, height: 10, decoration: const BoxDecoration(color: Color(0xFFFF3D3D), shape: BoxShape.circle))),
+                          ]),
+                        );
+                      }),
+                    ]),
                   ),
-                );
-              }),
-              GestureDetector(
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs))),
-                child: Container(
-                  margin: const EdgeInsets.only(left: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: kCard2,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: kLine),
-                  ),
-                  child: Row(children: [
-                    const Text('💰 ', style: TextStyle(fontSize: 13)),
-                    AnimatedMoney(gs.user.budget,
-                        style: TextStyle(fontWeight: FontWeight.w900, color: gs.user.budget < 0 ? const Color(0xFFFF7043) : kAccent)),
-                  ]),
                 ),
               ),
-            ],
+            ),
           ),
           body: SafeArea(child: pages[tab]),
           bottomNavigationBar: NavigationBar(
@@ -546,7 +552,7 @@ class _HomeShellState extends State<HomeShell> {
               NavigationDestination(icon: const Icon(Icons.groups_outlined), selectedIcon: const Icon(Icons.groups), label: tr('الفريق')),
               NavigationDestination(icon: const Icon(Icons.swap_horiz), selectedIcon: const Icon(Icons.swap_horiz), label: tr('الانتقالات')),
               NavigationDestination(icon: const Icon(Icons.emoji_events_outlined), selectedIcon: const Icon(Icons.emoji_events), label: tr('المسابقات')),
-              NavigationDestination(icon: const Icon(Icons.shield_outlined), selectedIcon: const Icon(Icons.shield), label: tr('النادي')),
+              NavigationDestination(icon: const Icon(Icons.grid_view_rounded), selectedIcon: const Icon(Icons.grid_view_rounded), label: tr('المزيد')),
             ],
           ),
         );
@@ -901,103 +907,231 @@ class DashboardTab extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _card({required Widget child, EdgeInsets pad = const EdgeInsets.all(14), Color? color}) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: pad,
+        decoration: BoxDecoration(color: color ?? kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
+        child: child,
+      );
+
+  Widget _clubHeader() {
     final u = gs.user;
-    final order = {for (var i = 0; i < Pos.values.length; i++) Pos.values[i]: i};
-    // الفرز الحقيقي: حسب المركز (حارس ← دفاع ← وسط ← هجوم) ثم الأعلى تقييماً
-    final players = [...u.squad]..sort((x, y) {
-        final c = order[x.pos]!.compareTo(order[y.pos]!);
-        return c != 0 ? c : y.overall.compareTo(x.overall);
-      });
-    return Column(children: [
-      Expanded(
-        child: ListView(padding: const EdgeInsets.fromLTRB(14, 10, 14, 10), children: [
-          _header(context),
-          const SizedBox(height: 12),
-          _urgent(context),
-          if (gs.fired)
-            Panel(
-              color: const Color(0xFF2A1414),
-              child: Column(children: [
-                const Text('🚫 تمت إقالتك', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                const Text('فقدت ثقة مجلس الإدارة.', style: TextStyle(color: kMuted)),
-                const SizedBox(height: 12),
-                GradientButton(
-                  label: 'ابدأ مسيرة جديدة',
-                  onPressed: () async {
-                    await GameState.clearSave();
-                    onRestart();
-                  },
-                ),
-              ]),
-            )
-          else if (gs.seasonOver)
-            Panel(
-              child: Column(children: [
-                Text('🏁 انتهى الموسم ${gs.season}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                Text('أنهيت الدوري في المركز ${gs.position} (الهدف: ${gs.objective})', style: const TextStyle(color: kMuted)),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: () => showSeasonReport(context, gs),
-                  icon: const Icon(Icons.assessment),
-                  label: const Text('تقرير نهاية الموسم'),
-                ),
-              ]),
-            )
-          else
-            _nextMatch(context),
-          if (gs.boardKind != null) _board(context),
-          const SizedBox(height: 4),
-          Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Expanded(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs))),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('الميزانية', style: TextStyle(color: kMuted, fontSize: 12.5)),
-                    const SizedBox(height: 6),
-                    AnimatedMoney(u.budget, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: u.budget < 0 ? const Color(0xFFFF7043) : kGold)),
-                  ]),
-                ),
-              ),
+    return _card(
+      child: Row(children: [
+        teamBadge(u, size: 52),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(u.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 3),
+            Text('${gs.leagueName} • المركز ${gs.position}', style: const TextStyle(color: kMuted, fontSize: 12.5)),
+          ]),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(color: kPrimary.withOpacity(0.12), borderRadius: BorderRadius.circular(14)),
+          child: Column(children: [
+            Text('${gs.position}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: kPrimary)),
+            const Text('المركز', style: TextStyle(fontSize: 10.5, color: kMuted)),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  Widget _matchCard(BuildContext context) {
+    final pc = gs.pendingCup;
+    if (pc != null) return CupMatchCard(gs: gs, cup: pc);
+    final f = gs.userFixture;
+    if (f == null) return const SizedBox.shrink();
+    final u = gs.user;
+    final isHome = f.home == u.id;
+    final opp = gs.team(isHome ? f.away : f.home);
+    Widget side(Team t) => Expanded(
+          child: Column(children: [
+            teamBadge(t, size: 54),
+            const SizedBox(height: 6),
+            Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
+          ]),
+        );
+    return _card(
+      child: Column(children: [
+        Row(children: [
+          Text('المباراة القادمة', style: const TextStyle(color: kMuted, fontSize: 12.5)),
+          const Spacer(),
+          Text('${gs.week + 1}/${gs.rounds.length} • ${isHome ? 'على أرضك' : 'خارج أرضك'}', style: const TextStyle(color: kMuted, fontSize: 12)),
+        ]),
+        const SizedBox(height: 12),
+        Row(children: [
+          side(isHome ? u : opp),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(12)),
+            child: const Text('VS', style: TextStyle(fontWeight: FontWeight.w900, color: kMuted)),
+          ),
+          side(isHome ? opp : u),
+        ]),
+        const SizedBox(height: 14),
+        Row(children: [
+          Expanded(
+            flex: 3,
+            child: GradientButton(
+              label: 'لعب',
+              icon: Icons.play_arrow_rounded,
+              onPressed: gs.fired ? null : () => playMatch(context, gs),
             ),
-            const SizedBox(width: 10),
-            Expanded(
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 2,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(minimumSize: const Size(0, 52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+              onPressed: () => _push(context, Scaffold(appBar: AppBar(title: const Text('التشكيلة والتكتيك')), body: TacticsTab(gs: gs))),
+              child: const Text('التشكيلة'),
+            ),
+          ),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _quickGrid(BuildContext context) {
+    final u = gs.user;
+    final injured = u.squad.where((p) => p.injuredWeeks > 0).length;
+    final offers = gs.offers.length;
+    final items = <(IconData, String, int, VoidCallback)>[
+      (Icons.groups_rounded, 'الفريق', injured, () => onNavigate(1)),
+      (Icons.account_tree_rounded, 'التكتيك', 0, () => _push(context, Scaffold(appBar: AppBar(title: const Text('التشكيلة والتكتيك')), body: TacticsTab(gs: gs)))),
+      (Icons.bolt_rounded, 'التدريب', 0, () => _training(context)),
+      (Icons.swap_horiz_rounded, 'الانتقالات', offers, () => onNavigate(2)),
+      (Icons.search_rounded, 'الكشافة', 0, () => onNavigate(2)),
+      (Icons.school_rounded, 'الأكاديمية', 0, () => _push(context, AcademyScreen(gs: gs))),
+      (Icons.account_balance_wallet_rounded, 'المالية', 0, () => _push(context, FinanceScreen(gs: gs))),
+      (Icons.stadium_rounded, 'المنشآت', 0, () => _push(context, FacilitiesScreen(gs: gs))),
+      (Icons.emoji_events_rounded, 'المسابقات', 0, () => onNavigate(3)),
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Padding(padding: EdgeInsets.only(bottom: 8, top: 2), child: Text('الوصول السريع', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+      GridView.count(
+        crossAxisCount: 3,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.15,
+        children: [
+          for (final it in items)
+            InkWell(
+              onTap: it.$4,
+              borderRadius: BorderRadius.circular(18),
               child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    const Text('الثقة', style: TextStyle(color: kMuted, fontSize: 12.5)),
-                    const Spacer(),
-                    Text('${gs.confidence.round()}', style: TextStyle(fontWeight: FontWeight.w900, color: ratingColor(gs.confidence))),
-                  ]),
-                  const SizedBox(height: 6),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(value: gs.confidence / 100, minHeight: 7, color: ratingColor(gs.confidence), backgroundColor: kCard2),
+                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+                child: Stack(children: [
+                  Center(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(it.$1, size: 28, color: kPrimary),
+                      const SizedBox(height: 6),
+                      Text(it.$2, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                    ]),
                   ),
-                  const SizedBox(height: 8),
-                  Row(children: [
-                    const Text('اللاعبون', style: TextStyle(color: kMuted, fontSize: 12.5)),
-                    const Spacer(),
-                    Text('${u.squad.length}/30', style: const TextStyle(fontWeight: FontWeight.w800)),
-                  ]),
+                  if (it.$3 > 0)
+                    Positioned(
+                      top: 6,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(color: const Color(0xFFFF3D3D), borderRadius: BorderRadius.circular(10)),
+                        child: Text('${it.$3}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+                      ),
+                    ),
                 ]),
               ),
             ),
-          ]),
-          const SizedBox(height: 14),
-          for (final pl in players) _playerRow(context, pl),
-        ]),
+        ],
       ),
-      _actionBar(context),
+    ]);
+  }
+
+  Widget _attention(BuildContext context) {
+    final t = gs.tasks;
+    if (t.isEmpty) return const SizedBox.shrink();
+    String btn(GameTask x) => switch (x.action) {
+          TaskAction.injuries => 'علاج',
+          TaskAction.match => 'لعب',
+          _ => 'عرض',
+        };
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Padding(padding: EdgeInsets.only(top: 14, bottom: 8), child: Text('يحتاج انتباهك', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+      for (final x in t.take(5))
+        _card(
+          pad: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(color: (x.urgent ? const Color(0xFFFF3D3D) : kGold).withOpacity(0.15), shape: BoxShape.circle),
+              child: Icon(x.urgent ? Icons.priority_high_rounded : Icons.info_outline_rounded, color: x.urgent ? const Color(0xFFFF3D3D) : kGold, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(x.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
+                Text(x.body, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 12)),
+              ]),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: kPrimary, foregroundColor: Colors.white, minimumSize: const Size(64, 38)),
+              onPressed: () => onTask(x),
+              child: Text(btn(x)),
+            ),
+          ]),
+        ),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(padding: const EdgeInsets.fromLTRB(14, 12, 14, 20), children: [
+      _clubHeader(),
+      if (gs.fired)
+        Panel(
+          color: const Color(0xFF2A1414),
+          child: Column(children: [
+            const Text('🚫 تمت إقالتك', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            const Text('فقدت ثقة مجلس الإدارة.', style: TextStyle(color: kMuted)),
+            const SizedBox(height: 12),
+            GradientButton(
+              label: 'ابدأ مسيرة جديدة',
+              onPressed: () async {
+                await GameState.clearSave();
+                onRestart();
+              },
+            ),
+          ]),
+        )
+      else if (gs.seasonOver)
+        Panel(
+          child: Column(children: [
+            Text('🏁 انتهى الموسم ${gs.season}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            Text('أنهيت الدوري في المركز ${gs.position} (الهدف: ${gs.objective})', style: const TextStyle(color: kMuted)),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => showSeasonReport(context, gs),
+              icon: const Icon(Icons.assessment),
+              label: const Text('تقرير نهاية الموسم'),
+            ),
+            const SizedBox(height: 10),
+            GradientButton(label: 'ابدأ موسماً جديداً', icon: Icons.play_arrow_rounded, onPressed: gs.startNewSeason),
+          ]),
+        )
+      else
+        _matchCard(context),
+      if (gs.boardKind != null) _board(context),
+      _quickGrid(context),
+      _attention(context),
     ]);
   }
 

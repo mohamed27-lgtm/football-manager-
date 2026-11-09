@@ -10,6 +10,8 @@ const kBg = Color(0xFF070B12);
 const kCard = Color(0xFF0F1620);
 const kCard2 = Color(0xFF172130);
 const kAccent = Color(0xFF00E676);
+const kPrimary = Color(0xFFF0593C);
+const kNavy = Color(0xFF14223F);
 const kGold = Color(0xFFFFC857);
 const kBlue = Color(0xFF3D8BFF);
 const kMuted = Color(0xFF8593A6);
@@ -92,7 +94,7 @@ class GradientButton extends StatefulWidget {
     required this.label,
     this.icon,
     required this.onPressed,
-    this.colors = const [Color(0xFF00E676), Color(0xFF00C853)],
+    this.colors = const [Color(0xFFFF6B3D), Color(0xFFF0593C)],
   });
 
   @override
@@ -124,7 +126,7 @@ class _GradientButtonState extends State<GradientButton> {
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: widget.colors),
           borderRadius: BorderRadius.circular(16),
-          boxShadow: on ? [BoxShadow(color: widget.colors.first.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))] : null,
+          boxShadow: on ? [BoxShadow(color: widget.colors.last.withOpacity(0.55), blurRadius: 0, offset: const Offset(0, 4)), BoxShadow(color: widget.colors.first.withOpacity(0.25), blurRadius: 14, offset: const Offset(0, 8))] : null,
         ),
         child: Material(
           color: Colors.transparent,
@@ -135,10 +137,10 @@ class _GradientButtonState extends State<GradientButton> {
               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 if (busy)
-                  const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.black))
+                  const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
                 else ...[
-                  if (widget.icon != null) ...[Icon(widget.icon, color: Colors.black, size: 22), const SizedBox(width: 8)],
-                  Text(widget.label, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w900)),
+                  if (widget.icon != null) ...[Icon(widget.icon, color: Colors.white, size: 22), const SizedBox(width: 8)],
+                  Text(widget.label, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
                 ],
               ]),
             ),

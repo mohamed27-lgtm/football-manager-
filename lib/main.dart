@@ -90,8 +90,8 @@ class _ManagerAppState extends State<ManagerApp> {
   Widget build(BuildContext context) {
     final scheme = ColorScheme.fromSeed(seedColor: kAccent, brightness: Brightness.dark).copyWith(
       surface: kBg,
-      primary: kAccent,
-      onPrimary: Colors.black,
+      primary: kPrimary,
+      onPrimary: Colors.white,
     );
     Widget home;
     if (loading) {
@@ -163,14 +163,14 @@ class _ManagerAppState extends State<ManagerApp> {
           backgroundColor: kCard,
           surfaceTintColor: Colors.transparent,
           height: 68,
-          indicatorColor: const Color(0x3300E676),
+          indicatorColor: const Color(0x33F0593C),
           labelTextStyle: WidgetStateProperty.resolveWith((st) => TextStyle(
                 fontFamily: 'Tajawal',
                 fontSize: 11,
                 fontWeight: st.contains(WidgetState.selected) ? FontWeight.w800 : FontWeight.w500,
-                color: st.contains(WidgetState.selected) ? kAccent : kMuted,
+                color: st.contains(WidgetState.selected) ? kPrimary : kMuted,
               )),
-          iconTheme: WidgetStateProperty.resolveWith((st) => IconThemeData(color: st.contains(WidgetState.selected) ? kAccent : kMuted)),
+          iconTheme: WidgetStateProperty.resolveWith((st) => IconThemeData(color: st.contains(WidgetState.selected) ? kPrimary : kMuted)),
         ),
       ),
       builder: (context, child) => ListenableBuilder(

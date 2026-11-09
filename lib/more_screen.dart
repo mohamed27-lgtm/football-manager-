@@ -8,6 +8,8 @@ import 'finance_screen.dart';
 import 'game_state.dart';
 import 'ranking_screen.dart';
 import 'widgets.dart';
+import 'squad.dart';
+import 'tactics.dart';
 
 class TrophyScreen extends StatelessWidget {
   final GameState gs;
@@ -76,96 +78,158 @@ class TrophyScreen extends StatelessWidget {
   }
 }
 
-class MoreTab extends StatelessWidget {
+class TrainingScreen extends StatelessWidget {
+  final GameState gs;
+  const TrainingScreen({super.key, required this.gs});
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: const Text('التدريب')),
+        body: ListenableBuilder(
+          listenable: gs,
+          builder: (ctx, _) => ListView(padding: const EdgeInsets.all(14), children: [
+            const Text('التركيز الأسبوعي', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+            const SizedBox(height: 10),
+            for (final e in trainingModes.entries)
+              InkWell(
+                onTap: () => gs.setTraining(e.key),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: kCard,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: gs.training == e.key ? kPrimary : kLine, width: gs.training == e.key ? 2 : 1),
+                  ),
+                  child: Row(children: [
+                    Expanded(child: Text(e.value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
+                    if (gs.training == e.key) const Icon(Icons.check_circle_rounded, color: kPrimary),
+                  ]),
+                ),
+              ),
+          ]),
+        ),
+      );
+}
+
+class MoreTab extends StatefulWidget {
   final GameState gs;
   final VoidCallback onRestart;
   final VoidCallback onLogout;
-  const MoreTab({super.key, required this.gs, required this.onRestart, required this.onLogout});
+  final void Function(int)? onNavigate;
+  const MoreTab({super.key, required this.gs, required this.onRestart, required this.onLogout, this.onNavigate});
+  @override
+  State<MoreTab> createState() => _MoreTabState();
+}
 
-  Widget _tile(BuildContext c, IconData icon, String title, String sub, VoidCallback onTap, {Color color = kAccent}) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        child: Row(children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [color.withOpacity(0.35), color.withOpacity(0.1)]),
-              borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: color.withOpacity(0.45)),
-            ),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
-              const SizedBox(height: 2),
-              Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 12)),
-            ]),
-          ),
-          const Icon(Icons.chevron_left, color: kMuted),
-        ]),
-      ),
-    );
-  }
+class _MoreTabState extends State<MoreTab> {
+  String q = '';
+  GameState get gs => widget.gs;
 
-  Widget _group(String title, List<Widget> tiles) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        sectionTitle(title),
-        Panel(
-          padding: EdgeInsets.zero,
-          child: Column(children: [
-            for (var i = 0; i < tiles.length; i++) ...[
-              tiles[i],
-              if (i < tiles.length - 1) const Divider(height: 1, indent: 68),
-            ],
-          ]),
-        ),
-      ]);
-
-  void _push(BuildContext c, Widget w) => Navigator.of(c).push(MaterialPageRoute(builder: (_) => w));
+  void _push(Widget w) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => w));
+  void _tab(int i) => widget.onNavigate?.call(i);
 
   @override
   Widget build(BuildContext context) {
-    final u = gs.user;
+    final groups = <(String, List<(IconData, String, VoidCallback)>)>[
+      ('الفريق', [
+        (Icons.groups_rounded, 'مركز الفريق', () => _tab(1)),
+        (Icons.account_tree_rounded, 'التكتيك والتشكيلة', () => _push(Scaffold(appBar: AppBar(title: const Text('التشكيلة والتكتيك')), body: TacticsTab(gs: gs)))),
+        (Icons.bolt_rounded, 'التدريب', () => _push(TrainingScreen(gs: gs))),
+        (Icons.healing_rounded, 'الإصابات والعلاج', () => _tab(1)),
+      ]),
+      ('السوق', [
+        (Icons.swap_horiz_rounded, 'الانتقالات', () => _tab(2)),
+        (Icons.search_rounded, 'الكشافة', () => _push(StaffScreen(gs: gs))),
+        (Icons.compare_arrows_rounded, 'الإعارات', () => _tab(2)),
+        (Icons.description_rounded, 'العقود', () => _push(Scaffold(appBar: AppBar(title: const Text('العقود')), body: ContractsView(gs: gs)))),
+      ]),
+      ('النادي', [
+        (Icons.account_balance_wallet_rounded, 'المالية', () => _push(FinanceScreen(gs: gs))),
+        (Icons.handshake_rounded, 'الرعاة', () => _push(SponsorsScreen(gs: gs))),
+        (Icons.campaign_rounded, 'الجماهير', () => _push(MediaScreen(gs: gs))),
+        (Icons.stadium_rounded, 'المنشآت', () => _push(FacilitiesScreen(gs: gs))),
+        (Icons.school_rounded, 'الأكاديمية', () => _push(AcademyScreen(gs: gs))),
+        (Icons.gavel_rounded, 'اللعب المالي النظيف', () => _push(FfpScreen(gs: gs))),
+        (Icons.history_edu_rounded, 'تاريخ النادي', () => _push(HistoryScreen(gs: gs))),
+      ]),
+      ('المنافسات', [
+        (Icons.leaderboard_rounded, 'الدوري والترتيب', () => _tab(3)),
+        (Icons.emoji_events_rounded, 'الكؤوس', () => _tab(3)),
+        (Icons.calendar_month_rounded, 'الجدول', () => _tab(3)),
+        (Icons.public_rounded, 'العالم', () => _push(RankingScreen(gs: gs))),
+      ]),
+    ];
+    final ql = q.trim().toLowerCase();
+    bool match(String t) => ql.isEmpty || t.toLowerCase().contains(ql) || tr(t).toLowerCase().contains(ql);
     return ListView(padding: const EdgeInsets.fromLTRB(14, 12, 14, 20), children: [
-      Panel(
-        child: Row(children: [
-          teamBadge(u, size: 52),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(u.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-              Text('${gs.leagueName} • الموسم ${gs.season}', style: const TextStyle(color: kMuted, fontSize: 12.5)),
-              if (u.venue != null) Text(u.venue!, style: const TextStyle(color: kMuted, fontSize: 12)),
-            ]),
-          ),
-          Column(children: [
-            Text('${gs.honours.length}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: kGold)),
-            const Text('لقب', style: TextStyle(color: kMuted, fontSize: 11)),
-          ]),
-        ]),
+      const Text('كل الصفحات', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+      const SizedBox(height: 10),
+      TextField(
+        onChanged: (v) => setState(() => q = v),
+        decoration: InputDecoration(
+          hintText: tr('ابحث عن صفحة'),
+          prefixIcon: const Icon(Icons.search_rounded),
+          filled: true,
+          fillColor: kCard,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        ),
       ),
-      _group('الإدارة والمال', [
-        _tile(context, Icons.account_balance_wallet_outlined, 'المالية', 'الرصيد ${money(gs.user.budget)} • الديون ${money(gs.fin.debt)}', () => _push(context, FinanceScreen(gs: gs)), color: kAccent),
-        _tile(context, Icons.handshake_outlined, 'الرعاة', 'دخل الرعاة ${wageK(gs.dealsIncome)}/جولة', () => _push(context, SponsorsScreen(gs: gs)), color: kGold),
-        _tile(context, Icons.gavel_outlined, 'اللعب المالي النظيف', 'الرواتب ${(gs.ffpRatio * 100).round()}% من الإيرادات', () => _push(context, FfpScreen(gs: gs)), color: const Color(0xFFFF5252)),
-      ]),
-      _group('النادي', [
-        _tile(context, Icons.badge_outlined, 'الموظفون', 'المدربون والكشافة والأطباء والمحللون', () => _push(context, StaffScreen(gs: gs)), color: kGold),
-        _tile(context, Icons.stadium_outlined, 'المنشآت', 'الملعب ومركز التدريب والأكاديمية', () => _push(context, FacilitiesScreen(gs: gs)), color: const Color(0xFF26C6DA)),
-        _tile(context, Icons.school_outlined, 'الأكاديمية', 'المواهب الشابة وترقية الأكاديمية', () => _push(context, AcademyScreen(gs: gs)), color: kBlue),
-        _tile(context, Icons.campaign_outlined, 'الإعلام والجماهير', 'شعبية النادي والصحافة', () => _push(context, MediaScreen(gs: gs)), color: const Color(0xFFFF8A65)),
-      ]),
-      _group('الإرث', [
-        _tile(context, Icons.public, 'الترتيب العالمي', '#${gs.worldRanking.indexOf(gs.user) + 1} عالمياً', () => _push(context, RankingScreen(gs: gs)), color: kBlue),
-        _tile(context, Icons.emoji_events_outlined, 'خزانة البطولات', '${gs.honours.length} لقباً', () => _push(context, TrophyScreen(gs: gs)), color: kGold),
-        _tile(context, Icons.history_edu_outlined, 'تاريخ النادي', 'المواسم والأرقام القياسية', () => _push(context, HistoryScreen(gs: gs)), color: const Color(0xFFBA68C8)),
-      ]),
-      _group('النظام', [
-        _tile(context, Icons.settings_outlined, 'الإعدادات', 'الحفظ والخروج والعرض', () => _push(context, SettingsScreen(gs: gs, onRestart: onRestart, onLogout: onLogout)), color: kMuted),
+      const SizedBox(height: 6),
+      for (final g in groups)
+        if (g.$2.any((i) => match(i.$2))) ...[
+          Padding(padding: const EdgeInsets.only(top: 14, bottom: 8), child: Text(g.$1, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 2.6,
+            children: [
+              for (final it in g.$2)
+                if (match(it.$2))
+                  InkWell(
+                    onTap: it.$3,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+                      child: Row(children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(color: kPrimary.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+                          child: Icon(it.$1, color: kPrimary, size: 19),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(it.$2, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13))),
+                      ]),
+                    ),
+                  ),
+            ],
+          ),
+        ],
+      const SizedBox(height: 18),
+      Row(children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+            onPressed: () => _push(SettingsScreen(gs: gs, onRestart: widget.onRestart, onLogout: widget.onLogout)),
+            icon: const Icon(Icons.settings_rounded),
+            label: const Text('الإعدادات'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+            onPressed: () => _push(TrophyScreen(gs: gs)),
+            icon: const Icon(Icons.military_tech_rounded),
+            label: const Text('الأوسمة والإنجازات'),
+          ),
+        ),
       ]),
     ]);
   }
