@@ -75,38 +75,48 @@ class PlayerTile extends StatelessWidget {
 }
 
 void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market = false}) {
-  Widget chip(String l, String v) => Expanded(
-        child: Column(children: [
-          Text(v, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          Text(l, style: const TextStyle(color: kMuted, fontSize: 12)),
-        ]),
-      );
-  void snack(String? err, String ok) => ScaffoldMessenger.of(context)
-      .showSnackBar(SnackBar(content: Text(err ?? ok)));
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: kCard,
-    isScrollControlled: true,
-    showDragHandle: true,
-    builder: (ctx) => SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            PlayerAvatar(p, size: 56),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(p.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                Text('${p.pos.label} • ${p.age} سنة', style: const TextStyle(color: kMuted)),
-                if (p.nat != null || p.sub != null)
-                  Text([if (p.sub != null) p.sub!, if (p.nat != null) p.nat!, if (p.height != null) '${p.height} سم', if (p.foot != null) 'قدم ${p.foot}'].join(' • '),
-                      style: const TextStyle(color: kMuted, fontSize: 12)),
-              ]),
-            ),
-            ratingRing(p.overall, size: 54),
+  Navigator.of(context).push(MaterialPageRoute(builder: (_) => _PlayerCard(gs: gs, p: p, market: market, outer: context)));
+}
+
+class _PlayerCard extends StatefulWidget {
+  final GameState gs;
+  final Player p;
+  final bool market;
+  final BuildContext outer;
+  const _PlayerCard({required this.gs, required this.p, required this.market, required this.outer});
+  @override
+  State<_PlayerCard> createState() => _PlayerCardState();
+}
+
+class _PlayerCardState extends State<_PlayerCard> {
+  int tab = 0;
+
+  @override
+  Widget build(BuildContext ctx) {
+    final gs = widget.gs, p = widget.p, market = widget.market;
+    final context = widget.outer;
+    Widget chip(String l, String v) => Expanded(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+            child: Column(children: [
+              Text(v, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
+              Text(l, style: const TextStyle(color: kMuted, fontSize: 12)),
+            ]),
+          ),
+        );
+    Widget info(String l, String v) => Expanded(
+          child: Column(children: [
+            Text(l, style: const TextStyle(color: kMuted, fontSize: 11)),
+            const SizedBox(height: 3),
+            Text(v, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
           ]),
-          const SizedBox(height: 14),
+        );
+    void snack(String? err, String ok) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? ok)));
+    final tabs = ['السمات', 'الإحصاءات', 'العقد', 'المسيرة', 'إجراءات'];
+    final body = <Widget>[
+      if (tab == 0) ...[
           if (p.pos == Pos.gk)
             StatBar('حراسة', p.gk)
           else ...[
@@ -117,7 +127,8 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
           StatBar('الإمكانات', p.potential, color: const Color(0xFF7C4DFF)),
           StatBar('اللياقة', p.fitness, color: const Color(0xFF29B6F6)),
           StatBar('المعنويات', p.morale, color: const Color(0xFFFFCA28)),
-          const SizedBox(height: 10),
+      ],
+      if (tab == 1) ...[
           Row(children: [
             chip('مباريات', '${p.apps}'),
             chip('أهداف', '${p.goals}'),
@@ -140,22 +151,8 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
               padding: const EdgeInsets.only(top: 6),
               child: Text('🟥 موقوف ${p.suspendedMatches} مباراة', style: const TextStyle(color: Color(0xFFEF5350), fontSize: 13)),
             ),
-          if (p.career.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            const Text('مسيرته', style: TextStyle(color: kMuted, fontSize: 13)),
-            const SizedBox(height: 4),
-            for (final c in p.career.reversed.take(6))
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(children: [
-                  SizedBox(width: 56, child: Text('موسم ${c['s']}', style: const TextStyle(color: kMuted, fontSize: 12))),
-                  Expanded(child: Text('${c['t']}', overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
-                  Text('${c['a']} م • ${c['g']} ه • ${c['as']} ص • ${(c['r'] as num).toStringAsFixed(1)}',
-                      style: const TextStyle(fontSize: 12, color: kMuted)),
-                ]),
-              ),
-          ],
-          const SizedBox(height: 10),
+      ],
+      if (tab == 2) ...[
           Text('القيمة السوقية: ${money(p.value)}   •   الراتب الأسبوعي: ${money(p.wage)}',
               style: const TextStyle(color: kMuted, fontSize: 13)),
           if (!market)
@@ -181,6 +178,23 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
                 ),
               ),
             ),
+      ],
+      if (tab == 3) ...[
+        if (p.career.isEmpty) const Text('لا توجد مسيرة مسجّلة بعد', style: TextStyle(color: kMuted)),
+          if (p.career.isNotEmpty) ...[
+            for (final c in p.career.reversed.take(6))
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(children: [
+                  SizedBox(width: 56, child: Text('موسم ${c['s']}', style: const TextStyle(color: kMuted, fontSize: 12))),
+                  Expanded(child: Text('${c['t']}', overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+                  Text('${c['a']} م • ${c['g']} ه • ${c['as']} ص • ${(c['r'] as num).toStringAsFixed(1)}',
+                      style: const TextStyle(fontSize: 12, color: kMuted)),
+                ]),
+              ),
+          ],
+      ],
+      if (tab == 4) ...[
           const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -360,10 +374,58 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
                 ),
               ]),
             ]),
+      ],
+    ];
+    return Scaffold(
+      appBar: AppBar(title: const Text('بطاقة اللاعب')),
+      body: SafeArea(
+        child: ListView(padding: const EdgeInsets.all(14), children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
+            child: Row(children: [
+              ratingRing(p.overall, size: 62),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(p.name, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: kPrimary)),
+                  const SizedBox(height: 3),
+                  Text([if (p.club != null) p.club!, if (p.nat != null) p.nat!].join(' • '), style: const TextStyle(color: kMuted, fontSize: 12.5)),
+                  const SizedBox(height: 6),
+                  Row(children: [PosChip(p.pos), if (p.sub != null) ...[const SizedBox(width: 6), Text(p.sub!, style: const TextStyle(color: kMuted, fontSize: 12))]]),
+                ]),
+              ),
+              PlayerAvatar(p, size: 56),
+            ]),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+            child: Row(children: [
+              info('القيمة', money(p.value)),
+              info('الراتب', money(p.wage)),
+              info('العمر', '${p.age}'),
+              if (p.height != null) info('الطول', '${p.height} سم'),
+              if (p.foot != null) info('القدم', '${p.foot}'),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SegmentedButton<int>(
+              showSelectedIcon: false,
+              segments: [for (var i = 0; i < tabs.length; i++) ButtonSegment(value: i, label: Text(tabs[i]))],
+              selected: {tab},
+              onSelectionChanged: (v) => setState(() => tab = v.first),
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...body,
         ]),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class SquadTab extends StatefulWidget {

@@ -1091,4 +1091,12 @@ const Map<String, List<String>> kTr = {
   'واسع': ['Wide','Large','Ancho'],
   'تبديل': ['Sub','Remplacer','Cambio'],
   'تكتيك': ['Tactics','Tactique','Táctica'],
+  'بطاقة اللاعب': ['Player card','Fiche joueur','Ficha del jugador'],
+  'السمات': ['Attributes','Attributs','Atributos'],
+  'المسيرة': ['Career','Carrière','Carrera'],
+  'إجراءات': ['Actions','Actions','Acciones'],
+  'الراتب': ['Wage','Salaire','Salario'],
+  'الطول': ['Height','Taille','Altura'],
+  'القدم': ['Foot','Pied','Pie'],
+  'لا توجد مسيرة مسجّلة بعد': ['No career recorded yet','Aucune carrière enregistrée','Aún sin carrera registrada'],
 };
