@@ -464,7 +464,7 @@ class _TransfersTabState extends State<TransfersTab> {
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: gs.user.budget < 0 ? const Color(0xFFFF7043) : kAccent)),
+                  color: gs.user.budget < 0 ? const Color(0xFFFF7043) : kPrimary)),
         ]),
       ),
       SegmentedButton<int>(
@@ -480,7 +480,7 @@ class _TransfersTabState extends State<TransfersTab> {
       ),
       const SizedBox(height: 8),
       Text('${gs.windowOpen ? '🟢' : '🔴'} ${gs.windowLabel}${gs.transferBan ? ' • ⛔ حظر انتقالات' : ''}',
-          style: TextStyle(color: gs.windowOpen ? kAccent : const Color(0xFFFF8A65), fontSize: 12)),
+          style: TextStyle(color: gs.windowOpen ? const Color(0xFF1FA58A) : const Color(0xFFFF8A65), fontSize: 12)),
       const SizedBox(height: 8),
       if (mode == 3) ..._offers(context, gs) else ...[
         SingleChildScrollView(
@@ -537,15 +537,20 @@ class _TransfersTabState extends State<TransfersTab> {
               PlayerTile(
                 p: p,
                 onTap: () => showPlayerSheet(context, gs, p, market: mode < 2),
-                trailing: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                trailing: Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
                   Text(
                     money(mode < 2 ? gs.buyPrice(p) : gs.sellPrice(p)),
-                    style: const TextStyle(fontWeight: FontWeight.w700, color: kAccent),
+                    style: const TextStyle(fontWeight: FontWeight.w900, color: kPrimary),
                   ),
-                  if (gs.watch.contains(p.id)) const Text('⭐', style: TextStyle(fontSize: 12)),
                   if (p.club != null && mode < 2) Text(p.club!, style: const TextStyle(color: kMuted, fontSize: 11)),
                   if (p.listed) const Text('معروض للبيع', style: TextStyle(color: Color(0xFFFFCA28), fontSize: 11)),
                   if (p.onLoan) const Text('معار', style: TextStyle(color: kMuted, fontSize: 11)),
+                  const SizedBox(height: 3),
+                  FilledButton(
+                    style: FilledButton.styleFrom(minimumSize: const Size(60, 28), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                    onPressed: () => showPlayerSheet(context, gs, p, market: mode < 2),
+                    child: Text(mode < 2 ? 'تفاوض' : 'بيع'),
+                  ),
                 ]),
               ),
           ]),
@@ -648,10 +653,11 @@ class ContractsView extends StatelessWidget {
                       style: TextStyle(fontWeight: FontWeight.w700, color: p.contract <= 1 ? const Color(0xFFFFCA28) : null)),
                   Text('${money(p.wage)}/أسبوع', style: const TextStyle(color: kMuted, fontSize: 11)),
                 ]),
-                IconButton(
-                  tooltip: tr('تجديد'),
-                  icon: const Icon(Icons.autorenew, size: 20),
+                const SizedBox(width: 6),
+                FilledButton(
+                  style: FilledButton.styleFrom(minimumSize: const Size(56, 30), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
                   onPressed: () => showRenewal(context, gs, p),
+                  child: const Text('تفاوض'),
                 ),
                 IconButton(
                   tooltip: tr('إنهاء العقد'),
