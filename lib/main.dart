@@ -15,6 +15,12 @@ Future<void> main() async {
   runApp(const ManagerApp());
 }
 
+/// نصوص بلون الحبر الكحلي (يظهر #15233D في الوضع الفاتح بعد المرشّح)
+ThemeData _fixText(ThemeData t) {
+  const c = Color(0xFFD0DEF8);
+  return t.copyWith(textTheme: t.textTheme.apply(bodyColor: c, displayColor: c), colorScheme: t.colorScheme.copyWith(onSurface: c));
+}
+
 class ManagerApp extends StatefulWidget {
   const ManagerApp({super.key});
   @override
@@ -121,7 +127,7 @@ class _ManagerAppState extends State<ManagerApp> {
     return ListenableBuilder(listenable: AppSettings.i, builder: (context, _) => MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'مدرب كرة القدم',
-      theme: ThemeData(
+      theme: _fixText(ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         fontFamily: 'Tajawal',
@@ -146,7 +152,7 @@ class _ManagerAppState extends State<ManagerApp> {
           style: ButtonStyle(
             shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
             side: const WidgetStatePropertyAll(BorderSide(color: kPrimary, width: 1.5)),
-            backgroundColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? kPrimary : Colors.transparent),
+            backgroundColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? kPrimary : kCard),
             foregroundColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? Colors.white : kPrimary),
             textStyle: const WidgetStatePropertyAll(TextStyle(fontFamily: 'Tajawal', fontWeight: FontWeight.w800)),
           ),
@@ -200,7 +206,7 @@ class _ManagerAppState extends State<ManagerApp> {
               )),
           iconTheme: WidgetStateProperty.resolveWith((st) => IconThemeData(color: st.contains(WidgetState.selected) ? kPrimary : kMuted)),
         ),
-      ),
+      )),
       builder: (context, child) => ListenableBuilder(
         listenable: AppSettings.i,
         builder: (context, _) => MediaQuery(

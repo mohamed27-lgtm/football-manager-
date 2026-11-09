@@ -6,15 +6,15 @@ import 'settings.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'models.dart';
 
-const kBg = Color(0xFF070B12);
-const kCard = Color(0xFF0F1620);
-const kCard2 = Color(0xFF172130);
-const kAccent = Color(0xFF1FA58A);
-const kPrimary = Color(0xFFF0593C);
+const kBg = Color(0xFF0D0F14);
+const kCard = Color(0xFF000000);
+const kCard2 = Color(0xFF0D0F14);
+const kAccent = Color(0xFF11977C);
+const kPrimary = Color(0xFFFF6B4D);
 const kNavy = Color(0xFF14223F);
 const kGold = Color(0xFFFFC857);
 const kBlue = Color(0xFF3D8BFF);
-const kMuted = Color(0xFF8593A6);
+const kMuted = Color(0xFF6E788B);
 const kLine = Color(0x1AFFFFFF);
 
 const _teamColors = [
