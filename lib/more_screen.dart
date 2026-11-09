@@ -8,6 +8,7 @@ import 'finance_screen.dart';
 import 'game_state.dart';
 import 'ranking_screen.dart';
 import 'widgets.dart';
+import 'trophies.dart';
 import 'squad.dart';
 import 'tactics.dart';
 
@@ -37,29 +38,23 @@ class TrophyScreen extends StatelessWidget {
             Panel(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [g.$3.withOpacity(0.4), g.$3.withOpacity(0.1)]),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: g.$3.withOpacity(0.5)),
-                    ),
-                    child: Icon(g.$2, color: g.$3, size: 26),
-                  ),
+                  trophyImage(trophyKey(g.$1 == 'الدوري' ? gs.leagueName : (g.$1 == 'البطولة القارية' ? 'دوري أبطال أوروبا' : g.$1), gs.leagueName, isLeague: g.$1 == 'الدوري'), size: 52),
                   const SizedBox(width: 12),
                   Expanded(child: Text(g.$1, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16))),
                   Text('${g.$4.length}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: g.$4.isEmpty ? kMuted : g.$3)),
                 ]),
                 if (g.$4.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Wrap(spacing: 6, runSpacing: 6, children: [
+                  Wrap(spacing: 14, runSpacing: 10, children: [
                     for (final x in g.$4)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(10)),
-                        child: Text(x.replaceAll('🏆 ', '').replaceAll('—', '•'), style: const TextStyle(fontSize: 12)),
-                      ),
+                      Builder(builder: (_) {
+                        final ph = parseHonour(x);
+                        final comp = ph?.$1 ?? g.$1;
+                        return Column(mainAxisSize: MainAxisSize.min, children: [
+                          trophyImage(trophyKey(comp == 'الدوري' ? gs.leagueName : comp, gs.leagueName, isLeague: comp == 'الدوري'), size: 46),
+                          Text(ph == null ? x : 'م${ph.$2}', style: const TextStyle(color: kMuted, fontSize: 11)),
+                        ]);
+                      }),
                   ]),
                 ],
               ]),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
 import 'game_state.dart';
 import 'widgets.dart';
+import 'trophies.dart';
 
 void _snack(BuildContext c, String? err, String ok) =>
     ScaffoldMessenger.of(c).showSnackBar(SnackBar(content: Text(err ?? ok)));
@@ -155,8 +156,16 @@ class HistoryScreen extends StatelessWidget {
             Panel(
               child: gs.honours.isEmpty
                   ? const Text('لا ألقاب بعد — الطريق طويل!', style: TextStyle(color: kMuted))
-                  : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      for (final h in gs.honours) Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Text(h)),
+                  : Wrap(spacing: 14, runSpacing: 10, children: [
+                      for (final h in gs.honours)
+                        Builder(builder: (_) {
+                          final ph = parseHonour(h);
+                          if (ph == null) return Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Text(h));
+                          return Column(mainAxisSize: MainAxisSize.min, children: [
+                            trophyImage(trophyKey(ph.$1 == 'الدوري' ? gs.leagueName : ph.$1, gs.leagueName, isLeague: ph.$1 == 'الدوري'), size: 46),
+                            Text('م${ph.$2}', style: const TextStyle(color: kMuted, fontSize: 11)),
+                          ]);
+                        }),
                     ]),
             ),
             sectionTitle('أرقام قياسية'),
@@ -173,7 +182,18 @@ class HistoryScreen extends StatelessWidget {
             for (final h in gs.history.reversed)
               Panel(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('الموسم ${h['s']} — المركز ${h['pos']} (${h['pts']} نقطة)', style: const TextStyle(fontWeight: FontWeight.w800)),
+                  Row(children: [
+                    Expanded(child: Text('الموسم ${h['s']} — المركز ${h['pos']} (${h['pts']} نقطة)', style: const TextStyle(fontWeight: FontWeight.w800))),
+                    for (final x in gs.honours)
+                      Builder(builder: (_) {
+                        final ph = parseHonour(x);
+                        if (ph == null || ph.$2 != h['s']) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsetsDirectional.only(start: 6),
+                          child: trophyImage(trophyKey(ph.$1 == 'الدوري' ? gs.leagueName : ph.$1, gs.leagueName, isLeague: ph.$1 == 'الدوري'), size: 34),
+                        );
+                      }),
+                  ]),
                   const SizedBox(height: 4),
                   Text('فوز ${h['w']} • تعادل ${h['d']} • خسارة ${h['l']} • له ${h['gf']} / عليه ${h['ga']}',
                       style: const TextStyle(color: kMuted, fontSize: 12)),
