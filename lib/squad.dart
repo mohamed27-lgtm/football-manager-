@@ -104,6 +104,7 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
                       style: const TextStyle(color: kMuted, fontSize: 12)),
               ]),
             ),
+            ratingRing(p.overall, size: 54),
           ]),
           const SizedBox(height: 14),
           if (p.pos == Pos.gk)
