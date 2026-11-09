@@ -91,6 +91,19 @@ class _PlayerCard extends StatefulWidget {
 class _PlayerCardState extends State<_PlayerCard> {
   int tab = 0;
 
+  Widget _compLogo(String name, bool indiv) {
+    const files = {
+      'دوري أبطال أوروبا': 'uefa_champions_league',
+      'الدوري الأوروبي': 'uefa_europa_league',
+      'دوري المؤتمر الأوروبي': 'uefa_conference_league',
+      'كأس السوبر': 'uefa_super_cup',
+    };
+    final f = files[name];
+    final fallback = Icon(indiv ? Icons.military_tech_rounded : Icons.shield_rounded, color: kMuted, size: 34);
+    if (f == null) return fallback;
+    return Unfilter(child: Image.asset('assets/competitions/$f.png', width: 40, height: 40, fit: BoxFit.contain, errorBuilder: (_, __, ___) => fallback));
+  }
+
   /// الجوائز: صف لكل بطولة، كأس لكل موسم فاز به اللاعب
   List<Widget> _awardsRows(Player p) {
     if (p.awards.isEmpty) {
@@ -130,7 +143,7 @@ class _PlayerCardState extends State<_PlayerCard> {
                 ]),
               ]),
             ),
-            Icon(by[n]!.first['k'] == 'indiv' ? Icons.military_tech_rounded : Icons.shield_rounded, color: kMuted, size: 30),
+            _compLogo(n, by[n]!.first['k'] == 'indiv'),
           ]),
         ),
     ];
