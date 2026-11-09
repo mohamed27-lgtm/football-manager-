@@ -19,33 +19,49 @@ class RankingScreen extends StatelessWidget {
         itemCount: all.length + 1,
         itemBuilder: (c, i) {
           if (i == 0) {
-            return Panel(
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: kPrimary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: kPrimary.withOpacity(0.35)),
+              ),
               child: Row(children: [
+                Text('#$mine', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: kPrimary)),
+                const SizedBox(width: 14),
                 teamBadge(gs.user, size: 44),
                 const SizedBox(width: 12),
-                Expanded(child: Text(gs.user.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
-                Column(children: [
-                  Text('#$mine', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: kAccent)),
-                  Text('من ${all.length}', style: const TextStyle(color: kMuted, fontSize: 11)),
-                ]),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(gs.user.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                    Text('${gs.eloOf(gs.user).round()} نقطة • من ${all.length}', style: const TextStyle(color: kMuted, fontSize: 12)),
+                  ]),
+                ),
               ]),
             );
           }
           final t = all[i - 1];
           final me = t == gs.user;
+          final medal = i == 1 ? const Color(0xFFE6B422) : i == 2 ? const Color(0xFFB8BECB) : i == 3 ? const Color(0xFFC98B5B) : null;
           return Container(
-            margin: const EdgeInsets.only(bottom: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             decoration: BoxDecoration(
-              color: me ? const Color(0x331FA58A) : kCard,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: me ? kAccent : kLine),
+              color: me ? kPrimary.withOpacity(0.1) : kCard,
+              border: const Border(bottom: BorderSide(color: kLine)),
             ),
             child: Row(children: [
-              SizedBox(width: 32, child: Text('$i', style: TextStyle(fontWeight: FontWeight.w900, color: i <= 3 ? kGold : kMuted))),
-              teamBadge(t, size: 28),
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: medal == null ? null : BoxDecoration(color: medal, shape: BoxShape.circle),
+                child: Text('$i', style: TextStyle(fontWeight: FontWeight.w900, color: medal == null ? kMuted : Colors.white)),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))),
+              teamBadge(t, size: 30),
+              const SizedBox(width: 10),
+              Expanded(child: Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: me ? FontWeight.w900 : FontWeight.w700))),
               Text('${gs.eloOf(t).round()}', style: const TextStyle(fontWeight: FontWeight.w900)),
             ]),
           );
