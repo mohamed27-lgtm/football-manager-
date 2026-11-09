@@ -44,7 +44,7 @@ class StaffScreen extends StatelessWidget {
                   if (gs.staff[e.key]! < 5)
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton.tonal(
+                      child: FilledButton(
                         onPressed: () => _snack(context, gs.upgradeStaff(e.key), 'تم ✅'),
                         child: Text(gs.staff[e.key] == 0 ? 'تعيين مقابل ${money(gs.staffCost(e.key))}' : 'ترقية مقابل ${money(gs.staffCost(e.key))}'),
                       ),

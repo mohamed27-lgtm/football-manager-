@@ -124,8 +124,8 @@ class FinanceScreen extends StatelessWidget {
                       style: const TextStyle(color: kMuted, fontSize: 12)),
                   const SizedBox(height: 10),
                   Wrap(spacing: 8, runSpacing: 8, children: [
-                    FilledButton.tonal(onPressed: () => _snack(context, gs.takeLoan(5), 'تم اقتراض 5.0M'), child: const Text('اقتراض 5M')),
-                    FilledButton.tonal(onPressed: () => _snack(context, gs.takeLoan(10), 'تم اقتراض 10.0M'), child: const Text('اقتراض 10M')),
+                    FilledButton(onPressed: () => _snack(context, gs.takeLoan(5), 'تم اقتراض 5.0M'), child: const Text('اقتراض 5M')),
+                    FilledButton(onPressed: () => _snack(context, gs.takeLoan(10), 'تم اقتراض 10.0M'), child: const Text('اقتراض 10M')),
                     OutlinedButton(onPressed: () => _snack(context, gs.repay(5), 'تم سداد 5.0M'), child: const Text('سداد 5M')),
                     OutlinedButton(onPressed: () => _snack(context, gs.repay(f.debt), 'تم سداد كل الديون'), child: const Text('سداد الكل')),
                   ]),

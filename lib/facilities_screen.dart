@@ -27,7 +27,7 @@ class FacilitiesScreen extends StatelessWidget {
         if (lvl < 5)
           SizedBox(
             width: double.infinity,
-            child: FilledButton.tonal(
+            child: FilledButton(
               onPressed: () {
                 final err = gs.upgrade(kind);
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تمت الترقية ✅')));
@@ -97,7 +97,7 @@ class AcademyScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
-                    child: FilledButton.tonal(
+                    child: FilledButton(
                       onPressed: a >= 5
                           ? null
                           : () {
