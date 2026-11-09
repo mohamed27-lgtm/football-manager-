@@ -6,6 +6,7 @@ import 'models.dart';
 import 'negotiation.dart';
 import 'transfers.dart';
 import 'widgets.dart';
+import 'trophies.dart';
 
 String? statusOf(Player p) => p.injuredWeeks > 0
     ? 'مصاب (${p.injuredWeeks} أسبوع)'
@@ -136,8 +137,9 @@ class _PlayerCardState extends State<_PlayerCard> {
                 Wrap(spacing: 12, runSpacing: 8, children: [
                   for (final a in by[n]!)
                     Column(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(a['k'] == 'indiv' ? Icons.star_rounded : Icons.emoji_events_rounded,
-                          size: 30, color: a['k'] == 'league' ? kGold : (a['k'] == 'indiv' ? const Color(0xFF6A6FC4) : const Color(0xFFB8BECB))),
+                      a['k'] == 'indiv'
+                          ? const Icon(Icons.star_rounded, size: 40, color: Color(0xFF6A6FC4))
+                          : trophyImage(trophyKey(n, widget.gs.leagueName, isLeague: a['k'] == 'league'), size: 46),
                       Text('${a['s']}', style: const TextStyle(color: kMuted, fontSize: 11)),
                     ]),
                 ]),
