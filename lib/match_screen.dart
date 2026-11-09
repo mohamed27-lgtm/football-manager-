@@ -219,39 +219,36 @@ class _MatchScreenState extends State<MatchScreen> {
     final s = sim;
     Widget side(Team t, {required bool home}) => Expanded(
           child: Column(children: [
-            teamBadge(t, size: 40),
+            teamBadge(t, size: 44),
             const SizedBox(height: 6),
-            Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-            Text(home ? 'المضيف' : 'الضيف', style: const TextStyle(color: kMuted, fontSize: 10)),
+            Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Colors.white)),
           ]),
         );
-    final hc = teamColor(s.home.team.id), ac = teamColor(s.away.team.id);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [hc.withOpacity(0.35), kCard, ac.withOpacity(0.35)]),
-        border: const Border(bottom: BorderSide(color: kLine)),
-      ),
-      child: Column(children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          side(s.home.team, home: true),
-          Column(children: [
-            Text('${s.home.goals} - ${s.away.goals}', style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: 1)),
-            Container(
-              margin: const EdgeInsets.only(top: 2),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-              decoration: BoxDecoration(color: s.finished ? kCard2 : const Color(0x3300E676), borderRadius: BorderRadius.circular(12)),
-              child: Text(s.finished ? 'انتهت' : "${s.minute}'", style: TextStyle(color: s.finished ? kMuted : kAccent, fontSize: 13, fontWeight: FontWeight.w900)),
-            ),
+    return Unfilter(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        color: kNavy,
+        child: Column(children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            side(s.home.team, home: true),
+            Column(children: [
+              Text('${s.home.goals} : ${s.away.goals}', style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 1, color: Colors.white)),
+              Container(
+                margin: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                decoration: BoxDecoration(color: s.finished ? Colors.white24 : kPrimary, borderRadius: BorderRadius.circular(12)),
+                child: Text(s.finished ? 'انتهت' : "${s.minute}'", style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900)),
+              ),
+            ]),
+            side(s.away.team, home: false),
           ]),
-          side(s.away.team, home: false),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(value: (s.minute / 90).clamp(0.0, 1.0).toDouble(), minHeight: 3, color: kPrimary, backgroundColor: Colors.white24),
+          ),
         ]),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(value: (s.minute / 90).clamp(0.0, 1.0).toDouble(), minHeight: 3, color: kAccent, backgroundColor: kCard2),
-        ),
-      ]),
+      ),
     );
   }
 
@@ -600,25 +597,41 @@ class _MatchScreenState extends State<MatchScreen> {
                     )
                   : Row(children: [
                       IconButton.filled(
+                        style: IconButton.styleFrom(backgroundColor: kPrimary, foregroundColor: Colors.white),
                         onPressed: running ? () => setState(_pause) : _start,
                         icon: Icon(running ? Icons.pause : Icons.play_arrow),
                       ),
-                      const SizedBox(width: 6),
-                      OutlinedButton(
-                        onPressed: () {
-                          speed = speed == 1 ? 2 : (speed == 2 ? 4 : 1);
-                          if (running) {
-                            _start();
-                          } else {
-                            setState(() {});
-                          }
-                        },
-                        child: Text('${speed}x'),
-                      ),
+                      const SizedBox(width: 8),
+                      for (final x in const [1, 2, 4])
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(end: 6),
+                          child: ChoiceChip(
+                            label: Text('x$x'),
+                            selected: speed == x,
+                            showCheckmark: false,
+                            onSelected: (_) {
+                              speed = x;
+                              if (running) {
+                                _start();
+                              } else {
+                                setState(() {});
+                              }
+                            },
+                          ),
+                        ),
                       const Spacer(),
+                      FilledButton(
+                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFFA9D4F8), foregroundColor: const Color(0xFF15233D), minimumSize: const Size(0, 42), padding: const EdgeInsets.symmetric(horizontal: 14)),
+                        onPressed: _tactics,
+                        child: const Text('تكتيك'),
+                      ),
+                      const SizedBox(width: 6),
+                      FilledButton(
+                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF6A6FC4), minimumSize: const Size(0, 42), padding: const EdgeInsets.symmetric(horizontal: 14)),
+                        onPressed: _subs,
+                        child: const Text('تبديل'),
+                      ),
                       IconButton(onPressed: _infoSheet, tooltip: tr('الإحصاءات'), icon: const Icon(Icons.bar_chart)),
-                      IconButton(onPressed: _tactics, tooltip: tr('التكتيك'), icon: const Icon(Icons.tune)),
-                      IconButton(onPressed: _subs, tooltip: tr('التبديلات'), icon: const Icon(Icons.swap_vert)),
                       IconButton(
                         onPressed: () {
                           _pause();

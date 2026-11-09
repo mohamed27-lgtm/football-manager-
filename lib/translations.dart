@@ -1089,4 +1089,6 @@ const Map<String, List<String>> kTr = {
   'الإيقاع': ['Tempo','Rythme','Ritmo'],
   'عميق': ['Deep','Bas','Profunda'],
   'واسع': ['Wide','Large','Ancho'],
+  'تبديل': ['Sub','Remplacer','Cambio'],
+  'تكتيك': ['Tactics','Tactique','Táctica'],
 };
