@@ -1099,4 +1099,9 @@ const Map<String, List<String>> kTr = {
   'الطول': ['Height','Taille','Altura'],
   'القدم': ['Foot','Pied','Pie'],
   'لا توجد مسيرة مسجّلة بعد': ['No career recorded yet','Aucune carrière enregistrée','Aún sin carrera registrada'],
+  'ترقية': ['Upgrade','Améliorer','Mejorar'],
+  'أقصى': ['Max','Max','Máx.'],
+  'يرفع دخل التذاكر في المباريات على أرضك': ['Raises home matchday ticket income','Augmente les recettes à domicile','Aumenta los ingresos en casa'],
+  'تطور اللاعبين وتعافٍ أسرع': ['Faster player growth and recovery','Progression et récupération plus rapides','Mayor progreso y recuperación'],
+  'مواهب شابة بإمكانات أعلى كل موسم': ['Higher-potential youngsters each season','Jeunes à plus fort potentiel chaque saison','Jóvenes con más potencial cada temporada'],
 };
