@@ -31,7 +31,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppSettings.i;
     return Scaffold(
-      appBar: AppBar(title: Text('⚙️ ${tr('الإعدادات')}'), backgroundColor: kBg),
+      appBar: AppBar(title: Text('⚙️ ${tr('الإعدادات')}')),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: s,

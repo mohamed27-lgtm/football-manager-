@@ -179,7 +179,7 @@ class _DataScreenState extends State<DataScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('🌍 دوريات حقيقية'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('🌍 دوريات حقيقية')),
       body: SafeArea(
         child: ListView(padding: const EdgeInsets.all(14), children: [
           const Panel(

@@ -29,11 +29,11 @@ class PlayerTile extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(children: [
-          PlayerAvatar(p),
-          const SizedBox(width: 10),
+          ratingRing(p.overall),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(p.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
               const SizedBox(height: 3),
               Row(children: [
                 PosChip(p.pos),
@@ -365,14 +365,32 @@ void showPlayerSheet(BuildContext context, GameState gs, Player p, {bool market 
   );
 }
 
-class SquadTab extends StatelessWidget {
+class SquadTab extends StatefulWidget {
   final GameState gs;
   const SquadTab({super.key, required this.gs});
+  @override
+  State<SquadTab> createState() => _SquadTabState();
+}
+
+class _SquadTabState extends State<SquadTab> {
+  Pos? pos;
+  bool absentOnly = false;
 
   @override
   Widget build(BuildContext context) {
+    final gs = widget.gs;
     final sq = gs.user.squad;
     final inj = sq.where((p) => !p.available).length;
+    final order = {for (var i = 0; i < Pos.values.length; i++) Pos.values[i]: i};
+    final list = sq.where((p) => (pos == null || p.pos == pos) && (!absentOnly || !p.available)).toList()
+      ..sort((x, y) {
+        final c = order[x.pos]!.compareTo(order[y.pos]!);
+        return c != 0 ? c : y.overall.compareTo(x.overall);
+      });
+    Widget chip(String label, bool sel, VoidCallback f) => Padding(
+          padding: const EdgeInsetsDirectional.only(end: 8),
+          child: ChoiceChip(label: Text(label), selected: sel, showCheckmark: false, onSelected: (_) => f()),
+        );
     return ListView(padding: const EdgeInsets.all(14), children: [
       Panel(
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
@@ -382,17 +400,21 @@ class SquadTab extends StatelessWidget {
           _kv('الرواتب/أسبوع', money(gs.weeklyWages)),
         ]),
       ),
-      for (final pos in Pos.values) ...[
-        sectionTitle(pos.plural),
-        Panel(
-          padding: EdgeInsets.zero,
-          child: Column(children: [
-            for (final p in (sq.where((x) => x.pos == pos).toList()
-              ..sort((a, b) => b.overall.compareTo(a.overall))))
-              PlayerTile(p: p, onTap: () => showPlayerSheet(context, gs, p)),
-          ]),
-        ),
-      ],
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          chip('الكل ${sq.length}', pos == null && !absentOnly, () => setState(() { pos = null; absentOnly = false; })),
+          for (final ps in Pos.values) chip('${ps.plural} ${sq.where((x) => x.pos == ps).length}', pos == ps, () => setState(() { pos = ps; absentOnly = false; })),
+          chip('غائبون $inj', absentOnly, () => setState(() { absentOnly = true; pos = null; })),
+        ]),
+      ),
+      const SizedBox(height: 10),
+      Panel(
+        padding: EdgeInsets.zero,
+        child: Column(children: [
+          for (final p in list) PlayerTile(p: p, onTap: () => showPlayerSheet(context, gs, p)),
+        ]),
+      ),
     ]);
   }
 

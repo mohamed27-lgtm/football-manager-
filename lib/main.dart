@@ -93,6 +93,7 @@ class _ManagerAppState extends State<ManagerApp> {
       primary: kPrimary,
       onPrimary: Colors.white,
     );
+    final light = AppSettings.i.lightFor(WidgetsBinding.instance.platformDispatcher.platformBrightness);
     Widget home;
     if (loading) {
       home = const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -126,12 +127,14 @@ class _ManagerAppState extends State<ManagerApp> {
         fontFamily: 'Tajawal',
         colorScheme: scheme,
         scaffoldBackgroundColor: kBg,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: kBg,
+        appBarTheme: AppBarTheme(
+          backgroundColor: lightPre(kNavy, light),
+          foregroundColor: lightPre(Colors.white, light),
+          iconTheme: IconThemeData(color: lightPre(Colors.white, light)),
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
-          titleTextStyle: TextStyle(fontFamily: 'Tajawal', fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white),
+          titleTextStyle: TextStyle(fontFamily: 'Tajawal', fontSize: 20, fontWeight: FontWeight.w800, color: lightPre(Colors.white, light)),
         ),
         cardTheme: CardTheme(color: kCard, surfaceTintColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
         bottomSheetTheme: const BottomSheetThemeData(
@@ -139,8 +142,30 @@ class _ManagerAppState extends State<ManagerApp> {
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
         ),
+        segmentedButtonTheme: SegmentedButtonThemeData(
+          style: ButtonStyle(
+            shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            side: const WidgetStatePropertyAll(BorderSide(color: kPrimary, width: 1.5)),
+            backgroundColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? kPrimary : Colors.transparent),
+            foregroundColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? Colors.white : kPrimary),
+            textStyle: const WidgetStatePropertyAll(TextStyle(fontFamily: 'Tajawal', fontWeight: FontWeight.w800)),
+          ),
+        ),
+        switchTheme: SwitchThemeData(
+          thumbColor: const WidgetStatePropertyAll(Colors.white),
+          trackColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? kPrimary : kCard2),
+          trackOutlineColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? kPrimary : kLine),
+        ),
+        tabBarTheme: const TabBarTheme(
+          indicatorColor: kPrimary,
+          labelColor: kPrimary,
+          unselectedLabelColor: kMuted,
+          labelStyle: TextStyle(fontFamily: 'Tajawal', fontWeight: FontWeight.w800),
+        ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
+            backgroundColor: kPrimary,
+            foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
             textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
@@ -155,6 +180,9 @@ class _ManagerAppState extends State<ManagerApp> {
         ),
         chipTheme: ChipThemeData(
           backgroundColor: kCard2,
+          selectedColor: kPrimary,
+          checkmarkColor: Colors.white,
+          secondaryLabelStyle: const TextStyle(fontFamily: 'Tajawal', color: Colors.white, fontWeight: FontWeight.w800),
           side: const BorderSide(color: kLine),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),

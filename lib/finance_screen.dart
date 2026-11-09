@@ -60,7 +60,7 @@ class FinanceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('💰 المركز المالي'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('💰 المركز المالي')),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: gs,

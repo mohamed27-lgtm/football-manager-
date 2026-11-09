@@ -44,7 +44,7 @@ class FacilitiesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('🏗️ المنشآت'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('🏗️ المنشآت')),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: gs,
@@ -74,7 +74,7 @@ class AcademyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('🌱 الأكاديمية'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('🌱 الأكاديمية')),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: gs,

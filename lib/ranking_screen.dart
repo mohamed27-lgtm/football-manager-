@@ -13,7 +13,7 @@ class RankingScreen extends StatelessWidget {
     final all = gs.worldRanking;
     final mine = all.indexOf(gs.user) + 1;
     return Scaffold(
-      appBar: AppBar(title: const Text('🌍 الترتيب العالمي للأندية'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('🌍 الترتيب العالمي للأندية')),
       body: ListView.builder(
         padding: const EdgeInsets.all(14),
         itemCount: all.length + 1,

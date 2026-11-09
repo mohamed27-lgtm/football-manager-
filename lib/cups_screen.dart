@@ -54,7 +54,7 @@ class CupsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('🏆 البطولات'), backgroundColor: kBg),
+        appBar: AppBar(title: const Text('🏆 البطولات')),
         body: SafeArea(child: CupsBody(gs: gs)),
       );
 }

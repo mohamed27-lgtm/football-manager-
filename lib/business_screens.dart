@@ -14,7 +14,7 @@ class SponsorsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('🤝 الرعاة'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('🤝 الرعاة')),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: gs,
@@ -93,7 +93,7 @@ class FfpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('⚖️ اللعب المالي النظيف'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('⚖️ اللعب المالي النظيف')),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: gs,

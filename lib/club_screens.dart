@@ -13,7 +13,7 @@ class StaffScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('🧑‍🏫 الطاقم الفني'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('🧑‍🏫 الطاقم الفني')),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: gs,
@@ -75,7 +75,7 @@ class MediaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('📣 الإعلام والجماهير'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('📣 الإعلام والجماهير')),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: gs,
@@ -146,7 +146,7 @@ class HistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('📜 تاريخ النادي'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('📜 تاريخ النادي')),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: gs,

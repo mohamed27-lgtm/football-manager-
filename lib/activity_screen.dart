@@ -3,66 +3,158 @@ import 'i18n.dart';
 import 'game_state.dart';
 import 'widgets.dart';
 
-/// مركز الإشعارات: المهام المفتوحة، الأخبار، وسجل العمليات
-class ActivityScreen extends StatelessWidget {
+/// الرسائل: مهام وأخبار وعمليات مرتبة في تبويبات
+class ActivityScreen extends StatefulWidget {
   final GameState gs;
   final void Function(GameTask) onOpen;
   const ActivityScreen({super.key, required this.gs, required this.onOpen});
+  @override
+  State<ActivityScreen> createState() => _ActivityScreenState();
+}
+
+class _ActivityScreenState extends State<ActivityScreen> {
+  int tab = 0;
+  bool read = false;
+  GameState get gs => widget.gs;
+
+  Widget _row(IconData icon, Color c, String title, String body, {String? when, String? action, VoidCallback? onTap, bool dot = false}) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: const BoxDecoration(color: kCard, border: Border(bottom: BorderSide(color: kLine))),
+        child: Row(children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: c.withOpacity(0.16), borderRadius: BorderRadius.circular(14)),
+            child: Icon(icon, color: c, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Expanded(child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5))),
+                if (when != null) Text(when, style: const TextStyle(color: kMuted, fontSize: 11)),
+              ]),
+              const SizedBox(height: 2),
+              Text(body, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.4)),
+            ]),
+          ),
+          if (action != null) ...[
+            const SizedBox(width: 10),
+            FilledButton(
+              style: FilledButton.styleFrom(minimumSize: const Size(58, 34), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              onPressed: onTap,
+              child: Text(action),
+            ),
+          ],
+          if (dot && !read) ...[
+            const SizedBox(width: 8),
+            Container(width: 9, height: 9, decoration: const BoxDecoration(color: kPrimary, shape: BoxShape.circle)),
+          ],
+        ]),
+      ),
+    );
+  }
+
+  List<Widget> _taskRows(Iterable<GameTask> ts) => [
+        for (final t in ts)
+          _row(
+            switch (t.action) {
+              TaskAction.offers => Icons.swap_horiz_rounded,
+              TaskAction.injuries => Icons.medical_services_rounded,
+              TaskAction.board => Icons.account_balance_rounded,
+              TaskAction.contracts => Icons.description_rounded,
+              TaskAction.match => Icons.sports_soccer_rounded,
+            },
+            switch (t.action) {
+              TaskAction.offers => kBlue,
+              TaskAction.injuries => const Color(0xFFE5533D),
+              TaskAction.board => const Color(0xFF6A6FC4),
+              _ => kGold,
+            },
+            t.title,
+            t.body,
+            when: t.due,
+            action: switch (t.action) {
+              TaskAction.injuries => 'علاج',
+              TaskAction.board => 'رد',
+              _ => 'عرض',
+            },
+            onTap: () => widget.onOpen(t),
+            dot: t.urgent,
+          ),
+      ];
+
+  List<Widget> _newsRows(Iterable<String> ns) => [
+        for (final n in ns) _row(Icons.newspaper_rounded, kGold, n.split('\n').first, n, when: null),
+      ];
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('مركز الإدارة'),
-          bottom: const TabBar(tabs: [Tab(text: 'المهام'), Tab(text: 'الأخبار'), Tab(text: 'سجل العمليات'), Tab(text: 'التحديات')]),
-        ),
-        body: ListenableBuilder(
-          listenable: gs,
-          builder: (context, _) {
-            final tasks = gs.tasks;
-            return TabBarView(children: [
-              tasks.isEmpty
-                  ? const EmptyState(icon: Icons.task_alt, title: 'لا مهام مفتوحة', subtitle: 'كل القرارات المطلوبة منك أُنجزت.')
-                  : ListView(padding: const EdgeInsets.all(14), children: [for (final t in tasks) TaskCard(task: t, onOpen: () => onOpen(t))]),
-              gs.news.isEmpty
-                  ? const EmptyState(icon: Icons.newspaper, title: 'لا أخبار بعد')
-                  : ListView(padding: const EdgeInsets.all(14), children: [
-                      for (final n in gs.news.take(60))
-                        Panel(padding: const EdgeInsets.all(12), child: Text(n, style: const TextStyle(height: 1.5))),
-                    ]),
-              gs.oplog.isEmpty
-                  ? const EmptyState(icon: Icons.history, title: 'لا عمليات مسجّلة', subtitle: 'ستظهر هنا الصفقات والتجديدات والبيع.')
-                  : ListView(padding: const EdgeInsets.all(14), children: [
-                      for (final n in gs.oplog)
-                        Panel(padding: const EdgeInsets.all(12), child: Row(children: [
-                          const Icon(Icons.check_circle, color: kAccent, size: 18),
-                          const SizedBox(width: 10),
-                          Expanded(child: Text(n, style: const TextStyle(height: 1.4))),
-                        ])),
-                    ]),
-              ListView(padding: const EdgeInsets.all(14), children: [
+    final labels = ['الكل', 'الإدارة', 'الانتقالات', 'الإصابات', 'التحديات'];
+    return Scaffold(
+      appBar: AppBar(title: const Text('الرسائل')),
+      body: ListenableBuilder(
+        listenable: gs,
+        builder: (context, _) {
+          final tasks = gs.tasks;
+          List<Widget> rows;
+          switch (tab) {
+            case 1:
+              rows = _taskRows(tasks.where((t) => t.action == TaskAction.board || t.action == TaskAction.contracts));
+              break;
+            case 2:
+              rows = [..._taskRows(tasks.where((t) => t.action == TaskAction.offers)), ..._newsRows(gs.oplog.take(30))];
+              break;
+            case 3:
+              rows = _taskRows(tasks.where((t) => t.action == TaskAction.injuries));
+              break;
+            case 4:
+              rows = [
                 for (final c in _challenges(gs))
-                  Panel(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Row(children: [
-                        Icon(c.$4 >= 1 ? Icons.emoji_events : Icons.flag, color: c.$4 >= 1 ? kGold : kBlue, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(c.$1, style: const TextStyle(fontWeight: FontWeight.w800))),
-                        Text(c.$3, style: const TextStyle(color: kMuted, fontSize: 12)),
-                      ]),
-                      const SizedBox(height: 4),
-                      Text(c.$2, style: const TextStyle(color: kMuted, fontSize: 12)),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(value: c.$4.clamp(0.0, 1.0), minHeight: 6, borderRadius: BorderRadius.circular(4)),
-                    ]),
+                  _row(c.$4 >= 1 ? Icons.emoji_events_rounded : Icons.flag_rounded, c.$4 >= 1 ? kGold : kBlue, c.$1, '${c.$2} • ${c.$3}'),
+              ];
+              break;
+            default:
+              rows = [..._taskRows(tasks), ..._newsRows(gs.news.take(40))];
+          }
+          return Column(children: [
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<int>(
+                  showSelectedIcon: false,
+                  segments: [for (var i = 0; i < labels.length; i++) ButtonSegment(value: i, label: Text(labels[i]))],
+                  selected: {tab},
+                  onSelectionChanged: (v) => setState(() => tab = v.first),
+                ),
+              ),
+            ),
+            Expanded(
+              child: rows.isEmpty
+                  ? const EmptyState(icon: Icons.task_alt, title: 'لا رسائل', subtitle: 'كل شيء تحت السيطرة.')
+                  : ListView(children: rows),
+            ),
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFFA9D4F8), foregroundColor: const Color(0xFF15233D), minimumSize: const Size(0, 50)),
+                    onPressed: () => setState(() => read = true),
+                    icon: const Icon(Icons.check_rounded),
+                    label: const Text('تحديد الكل كمقروءة'),
                   ),
-              ]),
-            ]);
-          },
-        ),
+                ),
+              ),
+            ),
+          ]);
+        },
       ),
     );
   }

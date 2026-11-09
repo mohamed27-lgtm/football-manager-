@@ -25,6 +25,23 @@ class TacticsControls extends StatelessWidget {
         onSelectionChanged: (s) => on(s.first),
       );
 
+  Widget _row(String label, List<String> labels, int value, ValueChanged<int> on) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(children: [
+          Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14))),
+          SizedBox(
+            width: 230,
+            child: SegmentedButton<int>(
+              showSelectedIcon: false,
+              style: const ButtonStyle(visualDensity: VisualDensity.compact, padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 4))),
+              segments: [for (var i = 0; i < labels.length; i++) ButtonSegment(value: i, label: Text(labels[i], style: const TextStyle(fontSize: 12.5)))],
+              selected: {value},
+              onSelectionChanged: (s) => on(s.first),
+            ),
+          ),
+        ]),
+      );
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -45,16 +62,12 @@ class TacticsControls extends StatelessWidget {
           ],
           _label('العقلية'),
           _seg(['دفاعي', 'متوازن', 'هجومي'], t.mentality, gs.setMentality),
-          _label('الضغط على الخصم'),
-          _seg(['منخفض', 'متوسط', 'عالٍ'], t.pressing, gs.setPressing),
-          _label('إيقاع اللعب'),
-          _seg(['بطيء', 'متوازن', 'سريع'], t.tempo, gs.setTempo),
-          _label('عرض اللعب'),
-          _seg(['ضيّق', 'متوازن', 'عريض'], t.width, gs.setWidth),
-          _label('خط الدفاع'),
-          _seg(['منخفض', 'متوسط', 'مرتفع'], t.defLine, gs.setDefLine),
-          _label('أسلوب التمرير'),
-          _seg(['قصير', 'مختلط', 'مباشر'], t.passing, gs.setPassing),
+          const SizedBox(height: 10),
+          _row('الضغط', ['منخفض', 'متوسط', 'عالٍ'], t.pressing, gs.setPressing),
+          _row('الإيقاع', ['بطيء', 'عادي', 'سريع'], t.tempo, gs.setTempo),
+          _row('العرض', ['ضيّق', 'عادي', 'واسع'], t.width, gs.setWidth),
+          _row('خط الدفاع', ['عميق', 'عادي', 'مرتفع'], t.defLine, gs.setDefLine),
+          _row('أسلوب التمرير', ['قصير', 'مختلط', 'مباشر'], t.passing, gs.setPassing),
           const SizedBox(height: 8),
           const Text(
             'الضغط العالي والإيقاع السريع يرفعان السيطرة والفرص، لكنهما يستنزفان اللياقة ويزيدان الإنذارات.\n'

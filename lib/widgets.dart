@@ -499,6 +499,15 @@ const ColorFilter kLightFilter = ColorFilter.matrix(<double>[
   0, 0, 0, 1, 0,
 ]);
 
+/// لون مُسبق العكس: يظهر بعد مرشّح الوضع الفاتح بلونه الأصلي (المرشّح تناوبي)
+Color lightPre(Color c, bool light) {
+  if (!light) return c;
+  final r = c.red.toDouble(), g = c.green.toDouble(), b = c.blue.toDouble();
+  int cl(double v) => v.round().clamp(0, 255);
+  return Color.fromARGB(c.alpha, cl(0.574 * r - 1.430 * g - 0.144 * b + 255), cl(-0.426 * r - 0.430 * g - 0.144 * b + 255),
+      cl(-0.426 * r - 1.430 * g + 0.856 * b + 255));
+}
+
 /// يعكس المرشّح على الصور (شعارات/أعلام) كي تبقى بألوانها الأصلية في الوضع الفاتح
 class Unfilter extends StatelessWidget {
   final Widget child;
@@ -534,4 +543,17 @@ class WizardBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         ]),
       );
+}
+
+
+/// حلقة التقييم (≥70 تركوازي، ≥60 أخضر، ≥50 رمادي، وإلا برتقالي)
+Widget ratingRing(num v, {double size = 44}) {
+  final c = v >= 70 ? const Color(0xFF1FA58A) : v >= 60 ? const Color(0xFF4CAF50) : v >= 50 ? const Color(0xFF8A94A6) : const Color(0xFFF5883A);
+  return Container(
+    width: size,
+    height: size,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(shape: BoxShape.circle, color: c.withOpacity(0.14), border: Border.all(color: c, width: 3)),
+    child: Text('${v.round()}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: size * 0.38, color: c)),
+  );
 }
