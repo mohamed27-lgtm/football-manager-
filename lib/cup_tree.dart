@@ -5,6 +5,7 @@ import 'cups.dart';
 import 'game_state.dart';
 import 'models.dart';
 import 'widgets.dart';
+import 'trophies.dart';
 
 /// مباراة في الشجرة (قد تكون فارغة لدور لم تُحسم أطرافه بعد)
 class _VM {
@@ -225,7 +226,7 @@ class CupTree extends StatelessWidget {
             top: finalPos.dy + 38,
             width: cardW + 16,
             child: Column(children: [
-              const Icon(Icons.emoji_events, color: kGold, size: 34),
+              trophyImage(trophyKey(cup.name, gs.leagueName), size: 44),
               if (champ != null) Text(champ.name, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
             ]),
           ),

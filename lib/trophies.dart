@@ -54,3 +54,10 @@ Widget trophyImage(String key, {double size = 44}) => Unfilter(
       child: Image.asset('assets/trophies/$key.png', width: size, height: size, fit: BoxFit.contain,
           errorBuilder: (_, __, ___) => Icon(Icons.emoji_events_rounded, size: size * 0.8, color: const Color(0xFFE6B422))),
     );
+
+/// يحلّل سطر لقب مثل "🏆 دوري أبطال أوروبا — الموسم 3" → (اسم البطولة، الموسم)
+(String, int)? parseHonour(String h) {
+  final m = RegExp(r'^🏆 (.+?) — الموسم (\d+)$').firstMatch(h);
+  if (m == null) return null;
+  return (m.group(1)!, int.parse(m.group(2)!));
+}
