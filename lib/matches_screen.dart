@@ -104,7 +104,7 @@ class _MatchesTabState extends State<MatchesTab> {
       result = const Text('—', style: TextStyle(color: kMuted));
     }
     return Container(
-      color: i == gs.week && !gs.seasonOver ? const Color(0x2200E676) : null,
+      color: i == gs.week && !gs.seasonOver ? const Color(0x221FA58A) : null,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(children: [
         SizedBox(width: 26, child: Text('${i + 1}', style: const TextStyle(color: kMuted, fontSize: 12))),

@@ -37,7 +37,7 @@ class RankingScreen extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 6),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: me ? const Color(0x3300E676) : kCard,
+              color: me ? const Color(0x331FA58A) : kCard,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: me ? kAccent : kLine),
             ),

@@ -9,7 +9,7 @@ import 'models.dart';
 const kBg = Color(0xFF070B12);
 const kCard = Color(0xFF0F1620);
 const kCard2 = Color(0xFF172130);
-const kAccent = Color(0xFF00E676);
+const kAccent = Color(0xFF1FA58A);
 const kPrimary = Color(0xFFF0593C);
 const kNavy = Color(0xFF14223F);
 const kGold = Color(0xFFFFC857);
@@ -32,7 +32,7 @@ Color posColor(Pos p) => switch (p) {
     };
 
 Color ratingColor(num v) => v >= 75
-    ? const Color(0xFF00E676)
+    ? const Color(0xFF1FA58A)
     : v >= 68
         ? const Color(0xFF9CCC65)
         : v >= 60

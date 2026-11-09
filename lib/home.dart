@@ -187,9 +187,9 @@ class _StartScreenState extends State<StartScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0x2200E676),
+                    color: const Color(0x221FA58A),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0x5500E676)),
+                    border: Border.all(color: const Color(0x551FA58A)),
                   ),
                   child: Row(children: [
                     Expanded(
@@ -233,7 +233,7 @@ class _StartScreenState extends State<StartScreen> {
                 onTap: _newCareer,
                 borderRadius: BorderRadius.circular(22),
                 child: CustomPaint(
-                  painter: _DashedRRect(const Color(0x8800E676)),
+                  painter: _DashedRRect(const Color(0x881FA58A)),
                   child: Padding(
                     padding: const EdgeInsets.all(18),
                     child: Row(children: [
@@ -323,7 +323,7 @@ class _StartScreenState extends State<StartScreen> {
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(color: const Color(0x3300E676), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: const Color(0x331FA58A), borderRadius: BorderRadius.circular(10)),
               child: Text('${tr('الموسم')} ${m.season}', style: const TextStyle(color: kAccent, fontSize: 11.5, fontWeight: FontWeight.w800)),
             ),
             const SizedBox(height: 8),
@@ -889,7 +889,7 @@ class DashboardTab extends StatelessWidget {
         for (var k = from; k < to; k++)
           Container(
             decoration: BoxDecoration(
-              color: t[k] == gs.user ? const Color(0x2200E676) : null,
+              color: t[k] == gs.user ? const Color(0x221FA58A) : null,
               borderRadius: BorderRadius.circular(10),
             ),
             padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 6),
@@ -1292,9 +1292,9 @@ class DashboardTab extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0x1F00E676),
+        color: const Color(0x1F1FA58A),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0x5500E676)),
+        border: Border.all(color: const Color(0x551FA58A)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [

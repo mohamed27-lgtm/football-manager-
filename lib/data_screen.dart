@@ -284,7 +284,7 @@ class _ClubPickerScreenState extends State<ClubPickerScreen> {
                     margin: const EdgeInsets.only(top: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: chosen?.id == t.id ? const Color(0x2200E676) : kCard,
+                      color: chosen?.id == t.id ? const Color(0x221FA58A) : kCard,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: chosen?.id == t.id ? kAccent : kLine, width: chosen?.id == t.id ? 1.6 : 1),
                     ),

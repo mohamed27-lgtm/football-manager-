@@ -40,7 +40,7 @@ class TableTab extends StatelessWidget {
           for (var i = 0; i < table.length; i++)
             Container(
               decoration: BoxDecoration(
-                color: table[i] == gs.user ? const Color(0x3300E676) : zone(i)?.withOpacity(0.16),
+                color: table[i] == gs.user ? const Color(0x331FA58A) : zone(i)?.withOpacity(0.16),
                 borderRadius: BorderRadius.circular(8),
                 border: Border(right: BorderSide(width: 4, color: zone(i) ?? Colors.transparent)),
               ),
