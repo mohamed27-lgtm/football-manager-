@@ -1798,6 +1798,9 @@ class GameState extends ChangeNotifier {
     if (winners.length == 1) {
       c.done = true;
       c.champion = winners.first;
+      for (final pl in team(winners.first).squad) {
+        pl.awards.add({'s': season, 'c': c.name, 'k': 'cup'});
+      }
       if (winners.first == user.id) {
         final bonus = c.continental ? 10.0 : (c.key == 'sup' ? 2.0 : 3.0);
         user.budget += bonus;
@@ -2047,6 +2050,9 @@ class GameState extends ChangeNotifier {
       'scorer': top.isEmpty || top.first.goals == 0 ? '-' : '${top.first.name} (${top.first.goals})',
       'awards': awards,
     });
+    for (final pl in table.first.squad) {
+      pl.awards.add({'s': season, 'c': leagueName, 'k': 'league'});
+    }
     if (pos == 1) {
       honours.add('🏆 الدوري — الموسم $season');
       celebration = 'الدوري';
@@ -2307,6 +2313,7 @@ class GameState extends ChangeNotifier {
 
     void give(String title, (Player, Team) e, String extra) {
       out.add('$title: ${e.$1.name} (${e.$2.name}) $extra');
+      e.$1.awards.add({'s': season, 'c': title, 'k': 'indiv'});
       if (e.$2 == user) {
         honours.add('$title — ${e.$1.name} (الموسم $season)');
         fans = min(100, fans + 3);

@@ -91,6 +91,51 @@ class _PlayerCard extends StatefulWidget {
 class _PlayerCardState extends State<_PlayerCard> {
   int tab = 0;
 
+  /// الجوائز: صف لكل بطولة، كأس لكل موسم فاز به اللاعب
+  List<Widget> _awardsRows(Player p) {
+    if (p.awards.isEmpty) {
+      return [const EmptyState(icon: Icons.emoji_events_outlined, title: 'لا جوائز بعد', subtitle: 'ستظهر هنا البطولات والجوائز التي يفوز بها اللاعب.')];
+    }
+    final by = <String, List<Map<String, dynamic>>>{};
+    for (final a in p.awards) {
+      by.putIfAbsent(a['c'] as String, () => []).add(a);
+    }
+    final names = by.keys.toList()..sort((x, y) => by[y]!.length.compareTo(by[x]!.length));
+    return [
+      for (final n in names)
+        Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+          child: Row(children: [
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: kPrimary.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+              child: Text('${by[n]!.length}', style: const TextStyle(fontWeight: FontWeight.w900, color: kPrimary, fontSize: 16)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(n, style: const TextStyle(fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                Wrap(spacing: 12, runSpacing: 8, children: [
+                  for (final a in by[n]!)
+                    Column(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(a['k'] == 'indiv' ? Icons.star_rounded : Icons.emoji_events_rounded,
+                          size: 30, color: a['k'] == 'league' ? kGold : (a['k'] == 'indiv' ? const Color(0xFF6A6FC4) : const Color(0xFFB8BECB))),
+                      Text('${a['s']}', style: const TextStyle(color: kMuted, fontSize: 11)),
+                    ]),
+                ]),
+              ]),
+            ),
+            Icon(by[n]!.first['k'] == 'indiv' ? Icons.military_tech_rounded : Icons.shield_rounded, color: kMuted, size: 30),
+          ]),
+        ),
+    ];
+  }
+
   @override
   Widget build(BuildContext ctx) {
     final gs = widget.gs, p = widget.p, market = widget.market;
@@ -114,7 +159,7 @@ class _PlayerCardState extends State<_PlayerCard> {
           ]),
         );
     void snack(String? err, String ok) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? ok)));
-    final tabs = ['السمات', 'الإحصاءات', 'العقد', 'المسيرة', 'إجراءات'];
+    final tabs = ['السمات', 'الإحصاءات', 'العقد', 'المسيرة', 'الجوائز', 'إجراءات'];
     final body = <Widget>[
       if (tab == 0) ...[
           if (p.pos == Pos.gk)
@@ -194,7 +239,8 @@ class _PlayerCardState extends State<_PlayerCard> {
               ),
           ],
       ],
-      if (tab == 4) ...[
+      if (tab == 4) ..._awardsRows(p),
+      if (tab == 5) ...[
           const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.only(bottom: 8),

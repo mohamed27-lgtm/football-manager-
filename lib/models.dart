@@ -49,6 +49,8 @@ class Player {
   double? optionFee; // إعارة بخيار/إلزامية شراء
   bool obligation = false;
   List<Map<String, dynamic>> career = [];
+  /// الجوائز: {s: الموسم, c: اسم البطولة/الجائزة, k: league|cup|indiv}
+  List<Map<String, dynamic>> awards = [];
   double get avgRating => rated == 0 ? 0 : ratingSum / rated;
 
   Player({
@@ -126,6 +128,7 @@ class Player {
         'opt': optionFee,
         'obl': obligation,
         'career': career,
+        'aw': awards,
         'club': club, 'nat': nat, 'sub': sub, 'ft': foot, 'ht': height, 'mv0': mv0, 'ov0': ov0, 'age0': age0,
       };
 
@@ -170,6 +173,10 @@ class Player {
         ..age0 = (j['age0'] as num?)?.toInt()
         ..career = [
           for (final c in (j['career'] as List?) ?? const [])
+            Map<String, dynamic>.from(c as Map)
+        ]
+        ..awards = [
+          for (final c in (j['aw'] as List?) ?? const [])
             Map<String, dynamic>.from(c as Map)
         ];
 }
