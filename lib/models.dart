@@ -32,6 +32,9 @@ class Player {
   int contract; // سنوات متبقية
   String? photo;
   String? nat, sub, foot; // الجنسية، المركز الدقيق، القدم
+  String? nat2; // جنسية ثانية (للاعبين المُنشأين)
+  List<int>? sk; // المهارات الست للاعب المُنشأ: سرعة، تسديد، تمرير، مراوغة، دفاع، قوة
+  List<String> traits = [];
   String? club; // ناديه الحالي (لاعبو السوق الحقيقيون)
   int? height;
   double? mv0; // القيمة السوقية الحقيقية عند الاستيراد (M€)
@@ -129,6 +132,7 @@ class Player {
         'obl': obligation,
         'career': career,
         'aw': awards,
+        'nat2': nat2, 'sk': sk, 'tr': traits,
         'club': club, 'nat': nat, 'sub': sub, 'ft': foot, 'ht': height, 'mv0': mv0, 'ov0': ov0, 'age0': age0,
       };
 
@@ -165,6 +169,9 @@ class Player {
         ..obligation = (j['obl'] as bool?) ?? false
         ..club = j['club'] as String?
         ..nat = j['nat'] as String?
+        ..nat2 = j['nat2'] as String?
+        ..sk = (j['sk'] as List?)?.cast<int>()
+        ..traits = [for (final t in (j['tr'] as List?) ?? const []) t as String]
         ..sub = j['sub'] as String?
         ..foot = j['ft'] as String?
         ..height = (j['ht'] as num?)?.toInt()

@@ -8,6 +8,7 @@ import 'finance_screen.dart';
 import 'game_state.dart';
 import 'ranking_screen.dart';
 import 'widgets.dart';
+import 'create_player.dart';
 import 'scouting_screen.dart';
 import 'loans_screen.dart';
 import 'stadium_screen.dart';
@@ -155,6 +156,7 @@ class _MoreTabState extends State<MoreTab> {
       ]),
       ('السوق', [
         (Icons.swap_horiz_rounded, 'الانتقالات', () => _tab(2)),
+        (Icons.person_add_alt_1_rounded, 'إنشاء لاعب', () => _push(CreatePlayerScreen(gs: gs))),
         (Icons.search_rounded, 'الكشافة', () => _push(ScoutingScreen(gs: gs))),
         (Icons.compare_arrows_rounded, 'الإعارات', () => _push(LoansScreen(gs: gs))),
         (Icons.description_rounded, 'العقود', () => _push(Scaffold(appBar: AppBar(title: const Text('العقود')), body: ContractsView(gs: gs)))),

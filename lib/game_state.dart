@@ -89,6 +89,8 @@ class GameState extends ChangeNotifier {
   Finance fin = Finance();
   final List<Offer> offers = [];
   final Set<int> watch = {};
+  int coins = 300; // كوينز: تُكسب من المتجر ومشاهدة الإعلانات (لاحقاً)
+  static const createPlayerCost = 100;
   // ───────── مهام الكشافة ─────────
   final List<Map<String, dynamic>> missions = []; // {c: البلد, e: أسبوع الانتهاء, w: المدة}
   final List<int> scoutFound = []; // ids اللاعبين المكتشفين (تبقى في السوق)
@@ -320,6 +322,7 @@ class GameState extends ChangeNotifier {
     honours.addAll(((j['honours'] as List?) ?? const []).cast<String>());
     oplog.addAll(((j['oplog'] as List?) ?? const []).cast<String>());
     watch.addAll(((j['watch'] as List?) ?? const []).cast<int>());
+    coins = (j['coins'] as int?) ?? 300;
     for (final m in (j['missions'] as List?) ?? const []) {
       missions.add(Map<String, dynamic>.from(m as Map));
     }
@@ -405,6 +408,7 @@ class GameState extends ChangeNotifier {
         'honours': honours,
         'oplog': oplog,
         'watch': watch.toList(),
+        'coins': coins,
         'missions': missions,
         'sfound': scoutFound,
         'slog': scoutLog,
@@ -1954,6 +1958,19 @@ class GameState extends ChangeNotifier {
   };
 
   double get staffWages => staff.values.fold(0, (a, v) => a + v * 0.04);
+  /// إنشاء لاعب جديد مقابل كوينز
+  String? createPlayer(Player p) {
+    if (user.squad.length >= 30) return 'التشكيلة ممتلئة (30 لاعباً كحد أقصى)';
+    if (coins < createPlayerCost) return 'الكوينز غير كافية ($createPlayerCost مطلوبة)';
+    coins -= createPlayerCost;
+    p.club = user.name;
+    user.squad.add(p);
+    news.insert(0, '🌟 أنشأت لاعباً جديداً: ${p.name} (${p.overall})');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
   // ───────── نظام الكشافة: إرسال كشّاف إلى بلد ─────────
   int get scoutSlots => 1 + (staff['scout'] ?? 0) ~/ 2;
   static const scoutDurations = [2, 4, 6];
