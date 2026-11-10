@@ -24,6 +24,7 @@ import 'sections_page.dart';
 import 'lang_sheet.dart';
 import 'settings.dart';
 import 'widgets.dart';
+import 'stadium_screen.dart';
 
 class StartScreen extends StatefulWidget {
   final List<SaveMeta> saves;
@@ -867,7 +868,7 @@ class DashboardTab extends StatelessWidget {
           tile(Icons.account_balance_wallet_outlined, 'المالية', money(gs.user.budget), kGold, () => _push(context, FinanceScreen(gs: gs))),
           tile(Icons.groups_outlined, 'التشكيلة', 'الفريق والتكتيك', kAccent, () => onNavigate(1)),
           tile(Icons.swap_horiz, 'الانتقالات', gs.offers.isEmpty ? 'سوق اللاعبين' : '${gs.offers.length} عرض جديد', kBlue, () => onNavigate(2)),
-          tile(Icons.stadium_outlined, 'الملعب', 'المنشآت والأكاديمية', const Color(0xFF26C6DA), () => _push(context, FacilitiesScreen(gs: gs))),
+          tile(Icons.stadium_outlined, 'الملعب', 'التذاكر والحضور', const Color(0xFF26C6DA), () => _push(context, StadiumScreen(gs: gs))),
           tile(Icons.handshake_outlined, 'الرعاة', 'دخل ${wageK(gs.dealsIncome)}', kGold, () => _push(context, SponsorsScreen(gs: gs))),
           tile(Icons.badge_outlined, 'الطاقم', 'مدربون وكشافة', const Color(0xFFBA68C8), () => _push(context, StaffScreen(gs: gs))),
           tile(Icons.emoji_events_outlined, 'المسابقات', gs.leagueName, kAccent, () => onNavigate(3)),
