@@ -1202,4 +1202,11 @@ const Map<String, List<String>> kTr = {
   "المستوى": ["Level", "Niveau", "Nivel"],
   "مواهب/موسم": ["Talents/season", "Talents/saison", "Talentos/temporada"],
   "الشباب": ["Youth", "Jeunes", "Jóvenes"],
+  "شدة التدريب": ["Training intensity", "Intensité d'entraînement", "Intensidad de entrenamiento"],
+  "خفيفة": ["Light", "Légère", "Ligera"],
+  "متوسطة": ["Medium", "Moyenne", "Media"],
+  "مكثفة": ["Intense", "Intense", "Intensa"],
+  "تطور أبطأ (×0.7) لكن تعافٍ أسرع للياقة.": ["Slower progress (×0.7) but faster fitness recovery.", "Progression lente (×0.7) mais meilleure récupération.", "Progreso lento (×0.7) pero mejor recuperación."],
+  "توازن بين التطور واللياقة.": ["Balance of progress and fitness.", "Équilibre progression/forme.", "Equilibrio progreso/forma."],
+  "تطور أسرع (×1.35) لكن اللياقة تنخفض أكثر.": ["Faster progress (×1.35) but fitness drops more.", "Progression rapide (×1.35) mais forme en baisse.", "Progreso rápido (×1.35) pero baja la forma."],
 };

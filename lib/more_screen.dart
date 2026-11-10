@@ -83,6 +83,23 @@ class TrainingScreen extends StatelessWidget {
         body: ListenableBuilder(
           listenable: gs,
           builder: (ctx, _) => ListView(padding: const EdgeInsets.all(14), children: [
+            const Text('شدة التدريب', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+            const SizedBox(height: 10),
+            SegmentedButton<int>(
+              showSelectedIcon: false,
+              expandedInsets: EdgeInsets.zero,
+              segments: const [
+                ButtonSegment(value: 0, label: Text('خفيفة')),
+                ButtonSegment(value: 1, label: Text('متوسطة')),
+                ButtonSegment(value: 2, label: Text('مكثفة')),
+              ],
+              selected: {gs.trainIntensity},
+              onSelectionChanged: (v) => gs.setIntensity(v.first),
+            ),
+            const SizedBox(height: 8),
+            Text(const ['تطور أبطأ (×0.7) لكن تعافٍ أسرع للياقة.', 'توازن بين التطور واللياقة.', 'تطور أسرع (×1.35) لكن اللياقة تنخفض أكثر.'][gs.trainIntensity],
+                style: const TextStyle(color: kMuted, fontSize: 12.5)),
+            const SizedBox(height: 16),
             const Text('التركيز الأسبوعي', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
             const SizedBox(height: 10),
             for (final e in trainingModes.entries)

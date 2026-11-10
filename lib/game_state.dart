@@ -77,6 +77,9 @@ class GameState extends ChangeNotifier {
   int leagueId = 0;
   double confidence = 60;
   String training = 'balanced';
+  int trainIntensity = 1; // 0 خفيف، 1 متوسط، 2 مكثف
+  static const intensityGain = [0.7, 1.0, 1.35];
+  static const intensityRec = [4.0, 0.0, -5.0];
   bool fired = false;
   bool seasonOver = false;
   final List<String> news = [];
@@ -271,6 +274,7 @@ class GameState extends ChangeNotifier {
     if (j['fin'] != null) fin = Finance.fromJson(j['fin'] as Map<String, dynamic>);
     confidence = (j['conf'] as num).toDouble();
     training = j['training'] as String;
+    trainIntensity = (j['tint'] as int?) ?? 1;
     fired = j['fired'] as bool;
     seasonOver = j['over'] as bool;
     news.addAll((j['news'] as List).cast<String>());
@@ -422,6 +426,7 @@ class GameState extends ChangeNotifier {
         'loanedOut': [for (final p in loanedOut) p.toJson()],
         'conf': confidence,
         'training': training,
+        'tint': trainIntensity,
         'fired': fired,
         'over': seasonOver,
         'news': news,
@@ -673,6 +678,12 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setIntensity(int v) {
+    trainIntensity = v;
+    notifyListeners();
+    unawaited(save());
+  }
+
   void setTraining(String t) {
     training = t;
     notifyListeners();
@@ -782,6 +793,7 @@ class GameState extends ChangeNotifier {
           if (p.injuredWeeks > 1 && rng.nextDouble() < 0.1 * (staff['doctor'] ?? 0)) p.injuredWeeks--;
           if (training == 'rest') rec += 12;
           if (training == 'fitness') rec += 4;
+          if (training != 'rest') rec += intensityRec[trainIntensity];
           rec += 1.5 * (user.trainingLvl - 1);
           _train(p);
         }
@@ -903,7 +915,7 @@ class GameState extends ChangeNotifier {
     if (training == 'rest' || training == 'fitness') return;
     if (p.overall >= p.potential) return;
     final base = p.age <= 24 ? 0.14 : (p.age <= 29 ? 0.06 : 0.02);
-    final chance = base * (1 + 0.25 * (user.trainingLvl - 1)) * (1 + 0.1 * (staff['coach'] ?? 0));
+    final chance = base * (1 + 0.25 * (user.trainingLvl - 1)) * (1 + 0.1 * (staff['coach'] ?? 0)) * intensityGain[trainIntensity];
     if (rng.nextDouble() > chance) return;
     if (p.pos == Pos.gk) {
       p.gk = min(95, p.gk + 1);
