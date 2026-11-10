@@ -39,7 +39,12 @@ Color ratingColor(num v) => v >= 75
             ? const Color(0xFFFFCA28)
             : const Color(0xFFFF7043);
 
-String money(double v) => '${v.toStringAsFixed(1)}M';
+String money(double v) {
+  final a = v.abs(), sg = v < 0 ? '-' : '';
+  if (a >= 1) return '$sg\$${a.toStringAsFixed(1)}M';
+  if (a >= 0.001) return '$sg\$${(a * 1000).round()}K';
+  return '\$0';
+}
 
 Widget sectionTitle(String t, {Widget? trailing}) => Padding(
       padding: const EdgeInsets.fromLTRB(4, 14, 4, 10),
