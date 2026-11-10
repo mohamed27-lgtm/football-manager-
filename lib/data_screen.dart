@@ -263,8 +263,7 @@ class _ClubPickerScreenState extends State<ClubPickerScreen> {
         child: Column(children: [
           Expanded(
             child: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 12), children: [
-              const Text('اختر فريقك', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 10),
+              const SizedBox(height: 4),
               TextField(
                 onChanged: (v) => setState(() => q = v.trim()),
                 decoration: InputDecoration(
@@ -275,33 +274,41 @@ class _ClubPickerScreenState extends State<ClubPickerScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                 ),
               ),
-              const SizedBox(height: 6),
-              for (final t in shown)
-                InkWell(
-                  borderRadius: BorderRadius.circular(18),
-                  onTap: () => setState(() => chosen = t),
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: chosen?.id == t.id ? const Color(0x221FA58A) : kCard,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: chosen?.id == t.id ? kAccent : kLine, width: chosen?.id == t.id ? 1.6 : 1),
-                    ),
-                    child: Row(children: [
-                      teamBadge(t, size: 38),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(t.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
-                          Text('${'★' * t.reputation} • قوة ${t.strength.toStringAsFixed(1)}${t.venue != null ? ' • ${t.venue}' : ''}',
-                              maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 12)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 12, 4, 6),
+                child: Row(children: [
+                  Expanded(child: Text('الفريق  ${shown.length}', style: const TextStyle(color: kMuted, fontSize: 12.5))),
+                  const SizedBox(width: 70, child: Text('القوة', style: TextStyle(color: kMuted, fontSize: 12.5))),
+                  const SizedBox(width: 70, child: Text('الميزانية', textAlign: TextAlign.end, style: TextStyle(color: kMuted, fontSize: 12.5))),
+                ]),
+              ),
+              Container(
+                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+                clipBehavior: Clip.antiAlias,
+                child: Column(children: [
+                  for (final t in shown)
+                    InkWell(
+                      onTap: () => setState(() => chosen = t),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                        decoration: BoxDecoration(
+                          color: chosen?.id == t.id ? const Color(0xFF1FA58A).withOpacity(0.12) : null,
+                          border: BorderDirectional(
+                            bottom: const BorderSide(color: kLine),
+                            end: BorderSide(color: chosen?.id == t.id ? const Color(0xFF1FA58A) : Colors.transparent, width: 4),
+                          ),
+                        ),
+                        child: Row(children: [
+                          teamBadge(t, size: 34),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
+                          SizedBox(width: 70, child: Align(alignment: AlignmentDirectional.centerStart, child: ratingRing(t.strength, size: 40))),
+                          SizedBox(width: 70, child: Text(money(t.budget), textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
                         ]),
                       ),
-                      if (chosen?.id == t.id) const Icon(Icons.check_circle, color: kAccent),
-                    ]),
-                  ),
-                ),
+                    ),
+                ]),
+              ),
             ]),
           ),
           Padding(
