@@ -12,7 +12,8 @@ class AppSettings extends ChangeNotifier {
   bool haptics = true;
   bool goalFlash = true;
   bool pitchAnim = true;
-  String themeMode = 'dark'; // dark | light | system
+  bool notifs = true, matchNotifs = true, sounds = true; // تفضيلات محفوظة (الإشعارات والأصوات تُفعَّل لاحقاً)
+  String themeMode = 'light'; // dark | light | system
   String lang = 'ar'; // ar | en | fr | es
   bool lightFor(Brightness b) => themeMode == 'light' || (themeMode == 'system' && b == Brightness.light);
 
@@ -24,7 +25,10 @@ class AppSettings extends ChangeNotifier {
       haptics = p.getBool('s_haptics') ?? true;
       goalFlash = p.getBool('s_flash') ?? true;
       pitchAnim = p.getBool('s_pitch') ?? true;
-      themeMode = p.getString('s_theme') ?? 'dark';
+      themeMode = p.getString('s_theme') ?? 'light';
+      notifs = p.getBool('s_notifs') ?? true;
+      matchNotifs = p.getBool('s_mnotifs') ?? true;
+      sounds = p.getBool('s_sounds') ?? true;
       lang = p.getString('s_lang') ?? 'ar';
     } catch (_) {}
   }
@@ -40,10 +44,16 @@ class AppSettings extends ChangeNotifier {
       await p.setBool('s_pitch', pitchAnim);
       await p.setString('s_theme', themeMode);
       await p.setString('s_lang', lang);
+      await p.setBool('s_notifs', notifs);
+      await p.setBool('s_mnotifs', matchNotifs);
+      await p.setBool('s_sounds', sounds);
     } catch (_) {}
   }
 
-  void set({int? speed, double? textScale, bool? haptics, bool? goalFlash, bool? pitchAnim, String? themeMode, String? lang}) {
+  void set({int? speed, double? textScale, bool? haptics, bool? goalFlash, bool? pitchAnim, String? themeMode, String? lang, bool? notifs, bool? matchNotifs, bool? sounds}) {
+    this.notifs = notifs ?? this.notifs;
+    this.matchNotifs = matchNotifs ?? this.matchNotifs;
+    this.sounds = sounds ?? this.sounds;
     this.speed = speed ?? this.speed;
     this.textScale = textScale ?? this.textScale;
     this.haptics = haptics ?? this.haptics;

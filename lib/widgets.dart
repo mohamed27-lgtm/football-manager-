@@ -94,7 +94,7 @@ class GradientButton extends StatefulWidget {
     required this.label,
     this.icon,
     required this.onPressed,
-    this.colors = const [Color(0xFFFF6B3D), Color(0xFFF0593C)],
+    this.colors = const [kPrimary, kPrimary],
   });
 
   @override
