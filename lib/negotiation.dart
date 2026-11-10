@@ -5,6 +5,104 @@ import 'game_state.dart';
 import 'models.dart';
 import 'widgets.dart';
 
+
+Widget _stepper(String label, String value, String sub, VoidCallback? minus, VoidCallback? plus) => Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+      child: Row(children: [
+        _sq(Icons.add_rounded, plus, true),
+        Expanded(
+          child: Column(children: [
+            Text(label, style: const TextStyle(color: kMuted, fontSize: 12)),
+            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+            Text(sub, style: const TextStyle(color: kMuted, fontSize: 11.5)),
+          ]),
+        ),
+        _sq(Icons.remove_rounded, minus, false),
+      ]),
+    );
+
+Widget _sq(IconData i, VoidCallback? on, bool primary) => GestureDetector(
+      onTap: on,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(color: primary ? kPrimary : const Color(0xFFA9D4F8), borderRadius: BorderRadius.circular(10)),
+        child: Icon(i, color: primary ? Colors.white : const Color(0xFF15233D)),
+      ),
+    );
+
+Widget _prob(String label, double v) {
+  final c = v >= 0.7 ? const Color(0xFF1FA58A) : (v >= 0.4 ? const Color(0xFFF5A524) : const Color(0xFFE5533D));
+  return Container(
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+    child: Column(children: [
+      Row(children: [
+        Text('${(v * 100).round()}%', style: TextStyle(color: c, fontWeight: FontWeight.w900)),
+        const Spacer(),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+      ]),
+      const SizedBox(height: 6),
+      ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: v.clamp(0, 1).toDouble(), minHeight: 8, color: c, backgroundColor: kCard2)),
+    ]),
+  );
+}
+
+Widget _negoHead(Player p, List<(String, String)> tiles) => Column(children: [
+      Row(children: [
+        PlayerAvatar(p, size: 52),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(p.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+            Text('${p.club ?? ''} • ${p.age} سنة', style: const TextStyle(color: kMuted, fontSize: 12.5)),
+          ]),
+        ),
+        Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: ratingColor(p.overall), shape: BoxShape.circle),
+          child: Text('${p.overall}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17)),
+        ),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        for (final t in tiles)
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLine)),
+              child: Column(children: [
+                Text(t.$1, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                Text(t.$2, style: const TextStyle(color: kMuted, fontSize: 11)),
+              ]),
+            ),
+          ),
+      ]),
+    ]);
+
+Widget _negoButtons(BuildContext ctx, String primaryLabel, VoidCallback? on, {String secondary = 'إلغاء'}) => Row(children: [
+      Expanded(
+        flex: 2,
+        child: GestureDetector(
+          onTap: () => Navigator.pop(ctx),
+          child: Container(
+            height: 50,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: const Color(0xFFA9D4F8), borderRadius: BorderRadius.circular(10), boxShadow: const [BoxShadow(color: Color(0x4400A0FF), offset: Offset(0, 3))]),
+            child: Text(secondary, style: const TextStyle(color: Color(0xFF15233D), fontWeight: FontWeight.w900, fontSize: 15)),
+          ),
+        ),
+      ),
+      const SizedBox(width: 10),
+      Expanded(flex: 3, child: GradientButton(label: primaryLabel, onPressed: on ?? () {})),
+    ]);
+
 /// تفاوض بمرحلتين: (1) اتفاق السعر مع النادي (3 جولات) ثم (2) الشروط الشخصية للاعب (راتب ومدة)
 void showNegotiation(BuildContext context, GameState gs, Player p) {
   final ask = gs.buyPrice(p);
@@ -32,58 +130,28 @@ void showNegotiation(BuildContext context, GameState gs, Player p) {
       final bonus = stage == 2 ? gs.renewBonus(wage) : 0.0;
       Widget stageBody;
       if (stage == 1) {
+        final prob = ((offer / ask - 0.78) / 0.22).clamp(0.02, 1.0).toDouble();
         stageBody = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Text('عرضك: ${money(offer)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: kAccent)),
-            const Spacer(),
-            Text('عمولة الوكيل ${money(fee)}', style: const TextStyle(color: kMuted, fontSize: 12)),
-          ]),
-          Slider(
-            value: offer.clamp(lo, hi).toDouble(),
-            min: lo,
-            max: hi,
-            divisions: max(1, ((hi - lo) * 10).round()),
-            label: money(offer),
-            onChanged: done ? null : (v) => set(() => offer = (v * 10).round() / 10),
-          ),
-          Text('الإجمالي مع العمولة: ${money(offer + fee)} • ميزانيتك ${money(gs.user.budget)}', style: const TextStyle(color: kMuted, fontSize: 12)),
+          _stepper('عرضك للنادي', money(offer), 'طلب النادي ${money(ask)} • عمولة الوكيل ${money(fee)}', done || offer <= lo ? null : () => set(() => offer = max(lo, ((offer - 0.5) * 10).round() / 10)), done || offer >= hi ? null : () => set(() => offer = min(hi, ((offer + 0.5) * 10).round() / 10))),
+          _prob('احتمال قبول النادي', prob),
+          Text('الإجمالي مع العمولة ${money(offer + fee)} • ميزانيتك ${money(gs.user.budget)}', style: const TextStyle(color: kMuted, fontSize: 12)),
         ]);
       } else {
+        final dem = gs.signDemand(p);
+        final prob = ((wage / dem - 0.8) / 0.2).clamp(0.02, 1.0).toDouble();
         stageBody = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('مدة العقد', style: TextStyle(color: kMuted, fontSize: 12)),
-          const SizedBox(height: 6),
-          Wrap(spacing: 6, children: [
-            for (var y = 1; y <= 5; y++)
-              ChoiceChip(label: Text('$y ${y == 1 ? 'سنة' : 'سنوات'}'), selected: years == y, onSelected: done ? null : (_) => set(() => years = y)),
-          ]),
-          const SizedBox(height: 8),
-          Text('الراتب المعروض: ${wageK(wage)} / أسبوع', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: kAccent)),
-          Slider(
-            value: wage.clamp(wLo, wHi).toDouble(),
-            min: wLo,
-            max: wHi,
-            divisions: max(1, ((wHi - wLo) * 1000).round()),
-            label: wageK(wage),
-            onChanged: done ? null : (v) => set(() => wage = (v * 1000).round() / 1000),
-          ),
-          Text('الصفقة ${money(agreed)} + عمولة ${money(fee)} + مكافأة توقيع ${money2(bonus)} (+عمولة ${money2(gs.agentFee(bonus))})',
-              style: const TextStyle(color: kMuted, fontSize: 12)),
+          _stepper('الراتب الأسبوعي', wageK(wage), 'اللاعب يطلب ${wageK(dem)}', done || wage <= wLo ? null : () => set(() => wage = max(wLo, ((wage - 0.005) * 1000).round() / 1000)), done || wage >= wHi ? null : () => set(() => wage = min(wHi, ((wage + 0.005) * 1000).round() / 1000))),
+          _stepper('مدة العقد', '$years ${years == 1 ? 'سنة' : 'سنوات'}', 'من 5 سنوات', done || years <= 1 ? null : () => set(() => years--), done || years >= 5 ? null : () => set(() => years++)),
+          _stepper('مكافأة التوقيع', money2(bonus), 'عمولة الوكيل ${money2(gs.agentFee(bonus))}', null, null),
+          _prob('احتمال موافقة اللاعب', prob),
+          Text('الصفقة ${money(agreed)} + عمولة ${money(fee)}', style: const TextStyle(color: kMuted, fontSize: 12)),
         ]);
       }
       return SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(18, 0, 18, 18 + MediaQuery.of(ctx).viewInsets.bottom),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              PlayerAvatar(p, size: 48),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(p.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-                  Text('${p.pos.label} • ${p.age} سنة • تقييم ${p.overall}', style: const TextStyle(color: kMuted, fontSize: 13)),
-                ]),
-              ),
-            ]),
+            _negoHead(p, [(money(gs.buyPrice(p)), 'طلب النادي'), (money(p.value), 'القيمة السوقية'), ('${p.contract} ${p.contract == 1 ? 'سنة' : 'سنوات'}', 'العقد')]),
             const SizedBox(height: 10),
             Row(children: [
               for (final e in [(1, 'اتفاق النادي'), (2, 'شروط اللاعب')])
@@ -100,12 +168,7 @@ void showNegotiation(BuildContext context, GameState gs, Player p) {
             Panel(color: kCard2, child: Text(msg, style: const TextStyle(height: 1.5))),
             stageBody,
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: done
-                  ? OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('إغلاق'))
-                  : FilledButton(
-                      onPressed: () {
+            done ? _negoButtons(ctx, 'إغلاق', () => Navigator.pop(ctx), secondary: 'رجوع') : _negoButtons(ctx, stage == 1 ? 'تقديم العرض (الجولة $round/3)' : 'عرض الشروط', () {
                         if (stage == 1) {
                           final r = gs.evaluateOffer(p, offer, round);
                           if (r.status == 'accept') {
@@ -148,10 +211,7 @@ void showNegotiation(BuildContext context, GameState gs, Player p) {
                             });
                           }
                         }
-                      },
-                      child: Text(stage == 1 ? 'قدّم العرض (الجولة $round/3)' : 'اعرض الشروط على اللاعب'),
-                    ),
-            ),
+                      }),
           ]),
         ),
       );
@@ -180,47 +240,15 @@ void showRenewal(BuildContext context, GameState gs, Player p) {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              PlayerAvatar(p, size: 48),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(p.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-                  Text('${p.pos.label} • ${p.age} سنة • تقييم ${p.overall}', style: const TextStyle(color: kMuted, fontSize: 13)),
-                ]),
-              ),
-            ]),
+            _negoHead(p, [(wageK(cur), 'الراتب الحالي'), (money(p.value), 'القيمة السوقية'), ('${p.contract} ${p.contract == 1 ? 'سنة' : 'سنوات'}', 'العقد')]),
             const SizedBox(height: 12),
             Panel(color: kCard2, child: Text(msg, style: const TextStyle(height: 1.5))),
-            const Text('مدة العقد', style: TextStyle(color: kMuted, fontSize: 12)),
-            const SizedBox(height: 6),
-            Wrap(spacing: 6, children: [
-              for (var y = 1; y <= 5; y++)
-                ChoiceChip(
-                  label: Text('$y ${y == 1 ? 'سنة' : 'سنوات'}'),
-                  selected: years == y,
-                  onSelected: done ? null : (_) => set(() => years = y),
-                ),
-            ]),
-            const SizedBox(height: 8),
-            Text('الراتب المعروض: ${wageK(wage)} / أسبوع', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: kAccent)),
-            Slider(
-              value: wage.clamp(lo, hi).toDouble(),
-              min: lo,
-              max: hi,
-              divisions: max(1, ((hi - lo) * 1000).round()),
-              label: wageK(wage),
-              onChanged: done ? null : (v) => set(() => wage = (v * 1000).round() / 1000),
-            ),
-            Text('مكافأة التوقيع ${money2(bonus)} + عمولة الوكيل ${money2(gs.agentFee(bonus))}',
-                style: const TextStyle(color: kMuted, fontSize: 12)),
+            _stepper('الراتب الأسبوعي', wageK(wage), 'الحالي ${wageK(cur)} • يطلب ${wageK(gs.renewDemand(p))}', done || wage <= lo ? null : () => set(() => wage = max(lo, ((wage - 0.005) * 1000).round() / 1000)), done || wage >= hi ? null : () => set(() => wage = min(hi, ((wage + 0.005) * 1000).round() / 1000))),
+            _stepper('مدة العقد', '$years ${years == 1 ? 'سنة' : 'سنوات'}', 'من 5 سنوات', done || years <= 1 ? null : () => set(() => years--), done || years >= 5 ? null : () => set(() => years++)),
+            _stepper('مكافأة التوقيع', money2(bonus), 'عمولة الوكيل ${money2(gs.agentFee(bonus))}', null, null),
+            _prob('احتمال موافقة اللاعب', ((wage / gs.renewDemand(p) - 0.8) / 0.2).clamp(0.02, 1.0).toDouble()),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: done
-                  ? OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('إغلاق'))
-                  : FilledButton(
-                      onPressed: () {
+            done ? _negoButtons(ctx, 'إغلاق', () => Navigator.pop(ctx), secondary: 'رجوع') : _negoButtons(ctx, 'تقديم العرض', () {
                         final r = gs.renewOffer(p, wage, years);
                         if (r.status == 'accept') {
                           Navigator.pop(ctx);
@@ -232,10 +260,8 @@ void showRenewal(BuildContext context, GameState gs, Player p) {
                             if (r.status == 'reject') done = true;
                           });
                         }
-                      },
-                      child: const Text('قدّم عرض التجديد'),
-                    ),
-            ),
+                      
+                      }),
           ]),
         ),
       );
