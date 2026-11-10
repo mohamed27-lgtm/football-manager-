@@ -578,7 +578,7 @@ class _MatchScreenState extends State<MatchScreen> {
     final s = sim;
     if (s.finished) {
       final cup = widget.gs.activeCup;
-      final lm = LastMatch.fromSim(s, comp: cup?.name ?? widget.gs.leagueName, round: widget.gs.week + 1, userHome: s.home.team == widget.gs.user);
+      final lm = LastMatch.fromSim(s, comp: cup?.name ?? widget.gs.leagueName, round: widget.gs.week + 1, label: cup?.roundName ?? 'الجولة ${widget.gs.week + 1}', userHome: s.home.team == widget.gs.user);
       return PopScope(
         canPop: false,
         child: MatchSummaryScreen(

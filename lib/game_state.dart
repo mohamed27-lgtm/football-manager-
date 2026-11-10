@@ -9,8 +9,25 @@ import 'engine.dart';
 import 'finance.dart';
 import 'models.dart';
 import 'last_match.dart';
+import 'calendar.dart';
 import 'sponsors.dart';
 import 'transfers.dart';
+
+class NextMatch {
+  final String comp, round, time;
+  final Team home, away;
+  final DateTime date;
+  final int daysUntil;
+  final Cup? cup;
+  const NextMatch({required this.comp, required this.round, required this.home, required this.away, required this.date, required this.time, required this.daysUntil, this.cup});
+}
+
+class ScheduledMatch {
+  final String comp, key, round, time;
+  final DateTime date;
+  final Team? home, away;
+  const ScheduledMatch({required this.comp, required this.key, required this.round, required this.date, required this.time, this.home, this.away});
+}
 
 class Fixture {
   final int home, away;
@@ -93,21 +110,100 @@ class GameState extends ChangeNotifier {
   LastMatch? lastMatch;
   final Map<int, List<String>> h2h = {}; // خصم → آخر نتائجك أمامه (W/D/L)
 
-  // ───────── جدول المباريات: يوم الأسبوع والوقت لكل مباراة ─────────
-  // الأسبوع يبدأ الاثنين، واليوم الحالي الأربعاء؛ المباراة تقع الجمعة أو السبت أو الأحد
-  int _slot(Fixture f) => (f.home * 7 + f.away * 13 + week * 5 + season * 3) % 3;
-  int matchDayOffset([Fixture? f]) {
-    final x = f ?? userFixture;
-    return x == null ? 5 : 4 + _slot(x);
+  // ───────── التقويم: تاريخ ويوم ووقت كل مباراة ─────────
+  /// اليوم الحالي ضمن الأسبوع (0 = الاثنين). يتقدم بعد كل مباراة كأس، ويعود للاثنين بعد جولة الدوري
+  int dayCursor = 0;
+
+  /// المباراة القادمة للمستخدم عبر كل البطولات، مرتبة بالتاريخ
+  NextMatch? get nextMatch {
+    if (seasonOver || fired) return null;
+    final pc = pendingCup;
+    if (pc != null) {
+      final t = pc.userTie(user.id)!;
+      final slot = GameCalendar.cup(pc.key, pc.round, t.home, t.away);
+      return NextMatch(
+        comp: pc.name,
+        round: pc.roundName,
+        home: team(t.home),
+        away: team(t.away),
+        date: GameCalendar.dateOf(season, week, slot.day),
+        time: slot.time,
+        daysUntil: slot.day - dayCursor,
+        cup: pc,
+      );
+    }
+    final f = userFixture;
+    if (f == null) return null;
+    final slot = GameCalendar.league(f.home, f.away, week, season);
+    return NextMatch(
+      comp: leagueName,
+      round: 'الجولة ${week + 1}',
+      home: team(f.home),
+      away: team(f.away),
+      date: GameCalendar.dateOf(season, week, slot.day),
+      time: slot.time,
+      daysUntil: slot.day - dayCursor,
+    );
   }
 
-  String matchDay([Fixture? f]) => const ['الجمعة', 'السبت', 'الأحد'][matchDayOffset(f) - 4];
-  String matchTime([Fixture? f]) {
-    final x = f ?? userFixture;
-    return x == null ? '20:45' : const ['21:00', '18:30', '20:45'][(x.home + x.away + week) % 3];
+  String matchDay() => nextMatch == null ? '—' : GameCalendar.dayNames[nextMatch!.date.weekday - 1];
+  String matchTime() => nextMatch?.time ?? '—';
+  String matchDate() => nextMatch == null ? '—' : GameCalendar.fmt(nextMatch!.date);
+  int daysUntilMatch() => nextMatch == null ? 0 : nextMatch!.daysUntil.clamp(0, 9).toInt();
+
+  /// تاريخ اليوم داخل اللعبة
+  DateTime get today => GameCalendar.dateOf(season, week.clamp(0, 60).toInt(), dayCursor);
+
+  /// جدول مباريات المستخدم القادمة في كل البطولات (للعرض فقط)
+  List<ScheduledMatch> upcomingSchedule() {
+    final out = <ScheduledMatch>[];
+    for (var w = week; w < rounds.length; w++) {
+      for (final f in rounds[w]) {
+        if (f.played || (f.home != user.id && f.away != user.id)) continue;
+        final slot = GameCalendar.league(f.home, f.away, w, season);
+        out.add(ScheduledMatch(
+          comp: leagueName,
+          key: 'league',
+          round: 'الجولة ${w + 1}',
+          date: GameCalendar.dateOf(season, w, slot.day),
+          time: slot.time,
+          home: team(f.home),
+          away: team(f.away),
+        ));
+      }
+    }
+    for (final c in allCups) {
+      if (c.done || c.alive.isEmpty) continue;
+      final inIt = c.alive.contains(user.id) || c.byes.contains(user.id);
+      if (!inIt) continue;
+      for (var r = c.round; r < c.schedule.length; r++) {
+        final w = c.schedule[r];
+        if (w < week) continue;
+        final t = r == c.round ? c.userTie(user.id) : null;
+        final slot = GameCalendar.cup(c.key, r, t?.home ?? user.id, t?.away ?? r);
+        out.add(ScheduledMatch(
+          comp: c.name,
+          key: c.key,
+          round: _roundLabel(c, r),
+          date: GameCalendar.dateOf(season, w, slot.day),
+          time: slot.time,
+          home: t == null ? null : team(t.home),
+          away: t == null ? null : team(t.away),
+        ));
+      }
+    }
+    out.sort((a, b) {
+      final k = a.date.compareTo(b.date);
+      return k != 0 ? k : a.time.compareTo(b.time);
+    });
+    return out;
   }
 
-  int daysUntilMatch([Fixture? f]) => matchDayOffset(f) - 2;
+  String _roundLabel(Cup c, int r) {
+    if (c.groups.isNotEmpty && r < 3) return 'دور المجموعات — الجولة ${r + 1}';
+    final left = c.schedule.length - r;
+    return switch (left) { 1 => 'النهائي', 2 => 'نصف النهائي', 3 => 'ربع النهائي', _ => 'الدور ${r + 1}' };
+  }
 
   /// آخر نتائج فريق في الدوري: W فوز، D تعادل، L خسارة
   List<String> formOf(Team t, [int n = 5]) {
@@ -123,8 +219,8 @@ class GameState extends ChangeNotifier {
     return out.length <= n ? out : out.sublist(out.length - n);
   }
 
-  void _record(MatchSim s, String comp, int round, int oppId) {
-    final lm = LastMatch.fromSim(s, comp: comp, round: round, userHome: s.home.team == user);
+  void _record(MatchSim s, String comp, int round, int oppId, [String label = '']) {
+    final lm = LastMatch.fromSim(s, comp: comp, round: round, label: label, userHome: s.home.team == user);
     lastMatch = lm;
     final l = h2h.putIfAbsent(oppId, () => []);
     l.add(lm.result);
@@ -364,6 +460,7 @@ class GameState extends ChangeNotifier {
     oplog.addAll(((j['oplog'] as List?) ?? const []).cast<String>());
     watch.addAll(((j['watch'] as List?) ?? const []).cast<int>());
     coins = (j['coins'] as int?) ?? 300;
+    dayCursor = (j['dc'] as int?) ?? 0;
     if (j['lm'] != null) {
       try {
         lastMatch = LastMatch.fromJson(Map<String, dynamic>.from(j['lm'] as Map));
@@ -458,6 +555,7 @@ class GameState extends ChangeNotifier {
         'oplog': oplog,
         'watch': watch.toList(),
         'coins': coins,
+        'dc': dayCursor,
         'lm': lastMatch?.toJson(),
         'h2h': {for (final e in h2h.entries) '${e.key}': e.value},
         'missions': missions,
@@ -812,7 +910,7 @@ class GameState extends ChangeNotifier {
     final f = userFixture;
     if (s == null || f == null) return;
     s.simulateAll();
-    _record(s, leagueName, week + 1, f.home == user.id ? f.away : f.home);
+    _record(s, leagueName, week + 1, f.home == user.id ? f.away : f.home, 'الجولة ${week + 1}');
     roundResults.clear();
     _applyResult(f, s.home.goals, s.away.goals);
     roundResults.add(
@@ -910,6 +1008,7 @@ class GameState extends ChangeNotifier {
     _transferTick();
     _boardTick();
     week++;
+    dayCursor = 0;
     _scoutTick();
     if (week >= 4) transferBan = false;
     _enforceRegistration();
@@ -1558,6 +1657,7 @@ class GameState extends ChangeNotifier {
     _movePyramid(finalTable, pos);
     season++;
     week = 0;
+    dayCursor = 0;
     missions.clear();
     if (pointsPenaltyNext > 0) {
       user.penalty = pointsPenaltyNext;
@@ -1702,6 +1802,17 @@ class GameState extends ChangeNotifier {
 
   void _setupCups(List<int>? qual) {
     final w = rounds.length;
+    // أسابيع الأدوار: موزعة كالواقع على الموسم؛ كل بطولة قارية تلعب في الأسابيع نفسها (بأيام مختلفة)
+    List<int> schedFrac(List<double> fr) {
+      final out = <int>[];
+      for (final f in fr) {
+        var v = min(w - 2, (f * w).round());
+        if (out.isNotEmpty && v <= out.last) v = out.last + 1;
+        out.add(v);
+      }
+      return out;
+    }
+
     List<int> sched(int r, int off) {
       final out = <int>[];
       for (var i = 0; i < r; i++) {
@@ -1755,7 +1866,7 @@ class GameState extends ChangeNotifier {
         key: key,
         name: name,
         continental: true,
-        schedule: sched(6, 3),
+        schedule: schedFrac(const [0.14, 0.27, 0.40, 0.60, 0.76, 0.94]),
         size: 16,
         alive: [...uq, ...foreign.keys.where((k) => k >= lo && k < lo + 100)],
       );
@@ -1916,12 +2027,20 @@ class GameState extends ChangeNotifier {
   /// بطولة تنتظر مباراتك الآن (تُلعب قبل مباراة الدوري)
   Cup? get pendingCup {
     if (seasonOver || fired) return null;
+    Cup? best;
+    var bestDay = 99;
     for (final c in allCups) {
-      if (!c.done && c.dueWeek != null && c.dueWeek! <= week && c.userTie(user.id) != null) {
-        return c;
+      if (!c.done && c.dueWeek != null && c.dueWeek! <= week) {
+        final t = c.userTie(user.id);
+        if (t == null) continue;
+        final d = GameCalendar.cup(c.key, c.round, t.home, t.away).day;
+        if (d < bestDay) {
+          bestDay = d;
+          best = c;
+        }
       }
     }
-    return null;
+    return best;
   }
 
   /// قبل كل مباراة: مستوى المحلل + تحديث الانسجام حسب استقرار التشكيلة
@@ -1961,7 +2080,8 @@ class GameState extends ChangeNotifier {
       return;
     }
     s.simulateAll();
-    _record(s, c.name, week + 1, t.home == user.id ? t.away : t.home);
+    _record(s, c.name, week + 1, t.home == user.id ? t.away : t.home, c.roundName);
+    dayCursor = GameCalendar.cup(c.key, c.round, t.home, t.away).day;
     final grp = c.inGroups;
     _setTie(t, s.home.goals, s.away.goals, pens: !grp);
     final mine = t.home == user.id ? s.home.goals - s.away.goals : s.away.goals - s.home.goals;

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'activity_screen.dart';
 import 'countries.dart';
 import 'game_state.dart';
+import 'calendar.dart';
 import 'i18n.dart';
 import 'last_match.dart';
 import 'match_screen.dart';
@@ -124,7 +125,7 @@ class _MatchSummaryScreenState extends State<MatchSummaryScreen> {
         padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
         child: Column(children: [
           Row(children: [
-            Text('الجولة ${m.round} • ${m.comp}', style: const TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w700)),
+            Text('${m.label.isEmpty ? 'الجولة ${m.round}' : m.label} • ${m.comp}', style: const TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w700)),
             const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -396,9 +397,6 @@ class NextMatchScreen extends StatelessWidget {
   final GameState gs;
   const NextMatchScreen({super.key, required this.gs});
 
-  static String dayOf(GameState gs) => gs.matchDay();
-  static String timeOf(GameState gs) => gs.matchTime();
-
   Widget _card(Widget child) => Container(
         margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
@@ -419,13 +417,13 @@ class NextMatchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final f = gs.userFixture;
-    if (f == null) {
+    final nm = gs.nextMatch;
+    if (nm == null) {
       return Scaffold(appBar: gameBar(context, gs, 'المباراة القادمة'), body: const EmptyState(icon: Icons.event_busy_rounded, title: 'لا مباراة قادمة', subtitle: 'انتهى الموسم.'));
     }
     final u = gs.user;
-    final home = gs.team(f.home), away = gs.team(f.away);
-    final opp = f.home == u.id ? away : home;
+    final home = nm.home, away = nm.away;
+    final opp = home.id == u.id ? away : home;
     final oppRank = gs.table.indexOf(opp) + 1;
     final myForm = gs.formOf(u), oppForm = gs.formOf(opp);
     final key = ([...opp.squad]..sort((a, b) => b.overall.compareTo(a.overall))).take(3).toList();
@@ -442,7 +440,7 @@ class NextMatchScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
             child: Column(children: [
               Row(children: [
-                Text('الجولة ${gs.week + 1} • ${gs.leagueName}', style: const TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w700)),
+                Flexible(child: Text('${nm.round} • ${nm.comp}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w700))),
                 const Spacer(),
                 Text('ملعب ${home.name}', style: const TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w700)),
               ]),
@@ -453,8 +451,9 @@ class NextMatchScreen extends StatelessWidget {
                   flex: 2,
                   child: Column(children: [
                     const Text('VS', style: TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w900)),
-                    Text(dayOf(gs), style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
-                    Text(timeOf(gs), style: const TextStyle(color: Color(0xFFFFC857), fontSize: 18, fontWeight: FontWeight.w900)),
+                    Text(GameCalendar.dayNames[nm.date.weekday - 1], style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                    Text(GameCalendar.fmtShort(nm.date), style: const TextStyle(color: Color(0xFFC9D6EC), fontSize: 13, fontWeight: FontWeight.w700)),
+                    Text(nm.time, style: const TextStyle(color: Color(0xFFFFC857), fontSize: 18, fontWeight: FontWeight.w900)),
                   ]),
                 ),
                 Expanded(flex: 3, child: Column(children: [teamBadge(away, size: 64), const SizedBox(height: 8), Text(away.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))])),
@@ -466,7 +465,7 @@ class NextMatchScreen extends StatelessWidget {
           child: ListView(padding: const EdgeInsets.all(16), children: [
             _title('مقارنة الفريقين'),
             _card(Column(children: [
-              _cmp('المركز', Text('${gs.position}', style: const TextStyle(color: _orange, fontWeight: FontWeight.w900, fontSize: 17)), Text('$oppRank', style: const TextStyle(color: _purple, fontWeight: FontWeight.w900, fontSize: 17))),
+              _cmp('المركز', Text('${gs.position}', style: const TextStyle(color: _orange, fontWeight: FontWeight.w900, fontSize: 17)), Text(oppRank == 0 ? '—' : '$oppRank', style: const TextStyle(color: _purple, fontWeight: FontWeight.w900, fontSize: 17))),
               _cmp('قوة الفريق', Text(nTxt(u.strength.round()), style: const TextStyle(color: _orange, fontWeight: FontWeight.w900, fontSize: 17)), Text(nTxt(opp.strength.round()), style: const TextStyle(color: _purple, fontWeight: FontWeight.w900, fontSize: 17))),
               _cmp('آخر ٥ مباريات', myForm.isEmpty ? const Text('—') : formChips(myForm), oppForm.isEmpty ? const Text('—') : formChips(oppForm)),
             ])),

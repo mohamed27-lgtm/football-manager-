@@ -1310,4 +1310,9 @@ const Map<String, List<String>> kTr = {
   "فوز": ["Win", "Victoire", "Victoria"],
   "تعادل": ["Draw", "Nul", "Empate"],
   "خسارة": ["Loss", "Défaite", "Derrota"],
+  "جدول المباريات": ["Fixtures", "Calendrier", "Calendario"],
+  "يُحدد الخصم بعد القرعة": ["Opponent set after the draw", "Adversaire après le tirage", "Rival tras el sorteo"],
+  "لا مباريات قادمة": ["No upcoming matches", "Aucun match à venir", "Sin partidos próximos"],
+  "انتهت مبارياتك هذا الموسم.": ["Your matches are over this season.", "Vos matchs sont terminés.", "Tus partidos han terminado."],
+  "اليوم": ["Today", "Aujourd'hui", "Hoy"],
 };

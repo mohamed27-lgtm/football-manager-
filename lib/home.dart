@@ -28,6 +28,7 @@ import 'scouting_screen.dart';
 import 'loans_screen.dart';
 import 'stadium_screen.dart';
 import 'match_pages.dart';
+import 'calendar.dart';
 import 'countries.dart';
 
 class StartScreen extends StatefulWidget {
@@ -959,13 +960,11 @@ class DashboardTab extends StatelessWidget {
   }
 
   Widget _matchCard(BuildContext context) {
-    final pc = gs.pendingCup;
-    if (pc != null) return CupMatchCard(gs: gs, cup: pc);
-    final f = gs.userFixture;
-    if (f == null) return const SizedBox.shrink();
+    final nm = gs.nextMatch;
+    if (nm == null) return const SizedBox.shrink();
     final u = gs.user;
-    final isHome = f.home == u.id;
-    final home = gs.team(f.home), away = gs.team(f.away);
+    final home = nm.home, away = nm.away;
+    final isHome = home.id == u.id;
     Widget side(Team t) => Expanded(
           flex: 3,
           child: Column(children: [
@@ -985,7 +984,7 @@ class DashboardTab extends StatelessWidget {
           decoration: BoxDecoration(color: const Color(0xFF15233D), borderRadius: BorderRadius.circular(22), boxShadow: const [BoxShadow(color: Color(0xFF0B1426), offset: Offset(0, 4))]),
           child: Column(children: [
             Row(children: [
-              Text('الجولة ${gs.week + 1} • ${gs.leagueName}', style: const TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w800)),
+              Flexible(child: Text('${nm.round} • ${nm.comp}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w800))),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -1002,10 +1001,11 @@ class DashboardTab extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 6),
                   child: Column(children: [
                     const Text('VS', style: TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w900)),
-                    Text(NextMatchScreen.dayOf(gs), style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)),
-                    Text(NextMatchScreen.timeOf(gs), style: const TextStyle(color: Color(0xFFFFC857), fontSize: 19, fontWeight: FontWeight.w900)),
+                    Text(GameCalendar.dayNames[nm.date.weekday - 1], style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                    Text(GameCalendar.fmtShort(nm.date), style: const TextStyle(color: Color(0xFFC9D6EC), fontSize: 13, fontWeight: FontWeight.w700)),
+                    Text(nm.time, style: const TextStyle(color: Color(0xFFFFC857), fontSize: 19, fontWeight: FontWeight.w900)),
                     const SizedBox(height: 4),
-                    Text('بعد ${gs.daysUntilMatch()} أيام', style: const TextStyle(color: Color(0xFF9FB0CC), fontSize: 12)),
+                    Text(nm.daysUntil <= 0 ? 'اليوم' : 'بعد ${nm.daysUntil} أيام', style: const TextStyle(color: Color(0xFF9FB0CC), fontSize: 12)),
                   ]),
                 ),
               ),
@@ -1102,7 +1102,7 @@ class DashboardTab extends StatelessWidget {
         child: Row(children: [
           const Text('آخر مباراة', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
           const Spacer(),
-          Text('الجولة ${m.round}', style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800)),
+          Text(m.label.isEmpty ? 'الجولة ${m.round}' : m.label, style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800)),
         ]),
       ),
       Container(

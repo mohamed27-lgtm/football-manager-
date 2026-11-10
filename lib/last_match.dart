@@ -5,6 +5,7 @@ import 'models.dart';
 class LastMatch {
   final String comp; // اسم البطولة
   final int round; // رقم الجولة (من 1)
+  final String label; // وصف الجولة أو الدور (الجولة 9، ربع النهائي…)
   final int homeId, awayId;
   final String homeName, awayName;
   final int hg, ag;
@@ -17,6 +18,7 @@ class LastMatch {
   LastMatch({
     required this.comp,
     required this.round,
+    this.label = '',
     required this.homeId,
     required this.awayId,
     required this.homeName,
@@ -35,7 +37,7 @@ class LastMatch {
   String get result => userGoals > oppGoals ? 'W' : (userGoals < oppGoals ? 'L' : 'D');
 
   /// كل الأرقام من تتبّع المحرك لحظة بلحظة (الاستحواذ، التسديدات، التمريرات، التسلل، xG)
-  static LastMatch fromSim(MatchSim s, {required String comp, required int round, required bool userHome}) {
+  static LastMatch fromSim(MatchSim s, {required String comp, required int round, String label = '', required bool userHome}) {
     final hp = s.homePoss;
     final ev = <Map<String, dynamic>>[];
     var hs = 0, as = 0;
@@ -88,6 +90,7 @@ class LastMatch {
     return LastMatch(
       comp: comp,
       round: round,
+      label: label,
       homeId: s.home.team.id,
       awayId: s.away.team.id,
       homeName: s.home.team.name,
@@ -105,6 +108,7 @@ class LastMatch {
   Map<String, dynamic> toJson() => {
         'c': comp,
         'r': round,
+        'rl': label,
         'hi': homeId,
         'ai': awayId,
         'hn': homeName,
@@ -121,6 +125,7 @@ class LastMatch {
   factory LastMatch.fromJson(Map<String, dynamic> j) => LastMatch(
         comp: j['c'] as String,
         round: j['r'] as int,
+        label: (j['rl'] as String?) ?? '',
         homeId: j['hi'] as int,
         awayId: j['ai'] as int,
         homeName: j['hn'] as String,
