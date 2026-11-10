@@ -1191,4 +1191,11 @@ const Map<String, List<String>> kTr = {
   "تمت ترقية الملعب 🏗️": ["Stadium upgraded 🏗️", "Stade amélioré 🏗️", "Estadio mejorado 🏗️"],
   "الملعب والتذاكر": ["Stadium & tickets", "Stade et billets", "Estadio y entradas"],
   "التذاكر والحضور": ["Tickets & attendance", "Billets et affluence", "Entradas y asistencia"],
+  "الأندية": ["Clubs", "Clubs", "Clubes"],
+  "الدول": ["Countries", "Pays", "Países"],
+  "المدربون": ["Managers", "Entraîneurs", "Entrenadores"],
+  "محلي": ["Domestic", "National", "Local"],
+  "أجنبي": ["Foreign", "Étranger", "Extranjero"],
+  "لا بيانات": ["No data", "Aucune donnée", "Sin datos"],
+  "لا توجد جنسيات كافية.": ["Not enough nationalities.", "Pas assez de nationalités.", "No hay suficientes nacionalidades."],
 };
