@@ -180,15 +180,24 @@ class GameState extends ChangeNotifier {
         final w = c.schedule[r];
         if (w < week) continue;
         final t = r == c.round ? c.userTie(user.id) : null;
-        final slot = GameCalendar.cup(c.key, r, t?.home ?? user.id, t?.away ?? r);
+        int? hId = t?.home, aId = t?.away;
+        if (t == null && c.kind == 2 && r < c.lpRounds && r < c.lpFx.length) {
+          for (final p in c.lpFx[r]) {
+            if (p[0] == user.id || p[1] == user.id) {
+              hId = p[0];
+              aId = p[1];
+            }
+          }
+        }
+        final slot = GameCalendar.cup(c.key, r, hId ?? user.id, aId ?? r);
         out.add(ScheduledMatch(
           comp: c.name,
           key: c.key,
           round: _roundLabel(c, r),
           date: GameCalendar.dateOf(season, w, slot.day),
           time: slot.time,
-          home: t == null ? null : team(t.home),
-          away: t == null ? null : team(t.away),
+          home: hId == null ? null : team(hId),
+          away: aId == null ? null : team(aId),
         ));
       }
     }
@@ -200,9 +209,7 @@ class GameState extends ChangeNotifier {
   }
 
   String _roundLabel(Cup c, int r) {
-    if (c.groups.isNotEmpty && r < 3) return 'دور المجموعات — الجولة ${r + 1}';
-    final left = c.schedule.length - r;
-    return switch (left) { 1 => 'النهائي', 2 => 'نصف النهائي', 3 => 'ربع النهائي', _ => 'الدور ${r + 1}' };
+    return c.roundNameAt(r);
   }
 
   /// آخر نتائج فريق في الدوري: W فوز، D تعادل، L خسارة
@@ -1521,11 +1528,11 @@ class GameState extends ChangeNotifier {
   void startNewSeason() {
     final pos = position;
     final finalTable = table;
-    final qualT = finalTable.take(realWorld ? userSlots + userSlotsEl + userSlotsCo : 3).toList();
     final champT = finalTable.first;
     final runnerT = finalTable.length > 1 ? finalTable[1] : finalTable.first;
     final cupWinner = domestic?.champion;
     final cupT = cupWinner == null ? null : team(cupWinner);
+    final qualT = realWorld ? _qualifiers(finalTable, cupT) : finalTable.take(3).toList();
     final aw = _seasonAwards(pos);
     _recordSeason(pos, aw);
     _ffpReview();
@@ -1792,6 +1799,52 @@ class GameState extends ChangeNotifier {
   }
 
   // ───────── البطولات (كأس محلي + بطولة قارية) ─────────
+  /// المتأهلون قارياً من ترتيب الدوري: مراكز الأبطال ثم مقاعد الأوروبي/الثانية، وبطل الكأس المحلي يأخذ مقعده
+  List<Team> _qualifiers(List<Team> tbl, Team? cupT, {int? eOver, int? cOver}) {
+    final u = userSlots, e = eOver ?? userSlotsEl, c = cOver ?? userSlotsCo;
+    final ucl = tbl.take(u).toList();
+    final pool = tbl.skip(u).toList();
+    final uel = <Team>[], uecl = <Team>[];
+    final swiss = confedOf(country).swiss;
+    if (swiss && e > 0 && cupT != null && pool.contains(cupT)) {
+      uel.add(cupT);
+      pool.remove(cupT);
+    }
+    while (uel.length < e && pool.isNotEmpty) {
+      uel.add(pool.removeAt(0));
+    }
+    if (!swiss && c > 0 && cupT != null && pool.contains(cupT)) {
+      uecl.add(cupT);
+      pool.remove(cupT);
+    }
+    while (uecl.length < c && pool.isNotEmpty) {
+      uecl.add(pool.removeAt(0));
+    }
+    return [...ucl, ...uel, ...uecl];
+  }
+
+  /// منطقة التأهل القاري لكل نادٍ في جدول الدوري: 0 أبطال، 1 أوروبي/ثانية، 2 مؤتمر (قبل حسم الكأس يبقى مقعده محجوزاً)
+  Map<int, int> qualZones() {
+    if (div != 1) return {};
+    final tbl = table;
+    final out = <int, int>{};
+    if (!realWorld) {
+      for (var i = 0; i < min(3, tbl.length); i++) {
+        out[tbl[i].id] = 0;
+      }
+      return out;
+    }
+    final swiss = confedOf(country).swiss;
+    final cw = domestic?.champion;
+    final cupT = cw != null && cw < 1000 ? team(cw) : null;
+    final pending = domestic != null && !domestic!.done;
+    final q = _qualifiers(tbl, cupT, eOver: pending && swiss && userSlotsEl > 0 ? userSlotsEl - 1 : null, cOver: pending && !swiss && userSlotsCo > 0 ? userSlotsCo - 1 : null);
+    for (var i = 0; i < q.length; i++) {
+      out[q[i].id] = i < userSlots ? 0 : (i < userSlots + userSlotsEl - (pending && swiss && userSlotsEl > 0 ? 1 : 0) ? 1 : 2);
+    }
+    return out;
+  }
+
   static int _pow2(int n) {
     var p = 1;
     while (p < n) {
@@ -1861,39 +1914,65 @@ class GameState extends ChangeNotifier {
     final qC = realWorld ? order.skip(nU + userSlotsEl).take(userSlotsCo).toList() : <int>[];
 
     var extraId = 1500;
-    Cup euro(String key, String name, List<int> uq, int lo) {
-      final c = Cup(
-        key: key,
-        name: name,
-        continental: true,
-        schedule: schedFrac(const [0.14, 0.27, 0.40, 0.60, 0.76, 0.94]),
-        size: 16,
-        alive: [...uq, ...foreign.keys.where((k) => k >= lo && k < lo + 100)],
-      );
-      // ضمان 16 فريقاً بالضبط (قد ينقص الحقيقي أو يزيد)
-      while (c.alive.length < 16) {
+    List<int> fill(List<int> uq, int lo, int n) {
+      final alive = [...uq, ...foreign.keys.where((k) => k >= lo && k < lo + 100)];
+      // ضمان العدد المطلوب بالضبط (قد ينقص الحقيقي أو يزيد)
+      while (alive.length < n) {
         foreign[extraId] = createTeam(rng, extraId, 'نادٍ ضيف ${extraId - 1499}', 3);
-        c.alive.add(extraId++);
+        alive.add(extraId++);
       }
-      if (c.alive.length > 16) {
-        final keep = c.alive.where(uq.contains).toList();
-        final rest = c.alive.where((x) => !uq.contains(x)).toList()..sort((a, b) => team(b).strength.compareTo(team(a).strength));
-        c.alive = [...keep, ...rest].take(16).toList();
+      if (alive.length > n) {
+        final keep = alive.where(uq.contains).toList();
+        final rest = alive.where((x) => !uq.contains(x)).toList()..sort((a, b) => team(b).strength.compareTo(team(a).strength));
+        return [...keep, ...rest].take(n).toList();
       }
-      final sorted = [...c.alive]..sort((a, b) => team(b).strength.compareTo(team(a).strength));
-      final pots = [for (var k = 0; k < 4; k++) (sorted.sublist(k * 4, k * 4 + 4)..shuffle(rng))];
-      c.groups = [
-        for (var gI = 0; gI < 4; gI++) [for (final pot in pots) pot[gI]]
-      ];
+      return alive;
+    }
+
+    // مرحلة دوري (36 فريقاً، 8 أو 6 مباريات) ← ملحق ← دور الـ16 ← النهائي
+    Cup swissCup(String key, String name, List<int> uq, int lo, int matches, List<double> fr) {
+      final ids = fill(uq, lo, 36);
+      final sorted = [...ids]..sort((a, b) => team(b).strength.compareTo(team(a).strength));
+      final c = Cup(key: key, name: name, continental: true, schedule: schedFrac(fr), size: 36, alive: ids)
+        ..kind = 2
+        ..lpRounds = matches
+        ..groups = [sorted];
+      c.lpFx = swissFixtures(sorted, matches, rng);
       _draw(c);
       return c;
     }
 
-    continental = euro('con', 'دوري أبطال أوروبا', qU, 1000);
-    if (realWorld) {
-      europa = euro('uel', 'الدوري الأوروبي', qE, 1100);
-      conference = euro('uecl', 'دوري المؤتمر الأوروبي', qC, 1200);
+    // 16 فريقاً في 4 مجموعات ثم الإقصاء (أفريقيا/آسيا/أمريكا أو اللعبة الخيالية)
+    Cup groupCup(String key, String name, List<int> uq, int lo, int rounds, List<double> fr) {
+      final ids = fill(uq, lo, 16);
+      final sorted = [...ids]..sort((a, b) => team(b).strength.compareTo(team(a).strength));
+      final pots = [for (var k = 0; k < 4; k++) (sorted.sublist(k * 4, k * 4 + 4)..shuffle(rng))];
+      final c = Cup(key: key, name: name, continental: true, schedule: schedFrac(fr), size: 16, alive: ids)
+        ..kind = 1
+        ..lpRounds = rounds
+        ..groups = [
+          for (var gI = 0; gI < 4; gI++) [for (final pot in pots) pot[gI]]
+        ];
+      _draw(c);
+      return c;
+    }
+
+    const swiss8 = [0.10, 0.17, 0.24, 0.31, 0.38, 0.45, 0.52, 0.58, 0.66, 0.74, 0.82, 0.90, 0.96];
+    const swiss6 = [0.12, 0.20, 0.28, 0.36, 0.44, 0.52, 0.66, 0.74, 0.82, 0.90, 0.96];
+    const grp6 = [0.12, 0.22, 0.32, 0.42, 0.52, 0.62, 0.76, 0.88, 0.96];
+    const grp3 = [0.14, 0.27, 0.40, 0.60, 0.76, 0.94];
+
+    if (realWorld && confedOf(country).swiss) {
+      continental = swissCup('con', 'دوري أبطال أوروبا', qU, 1000, 8, swiss8);
+      europa = swissCup('uel', 'الدوري الأوروبي', qE, 1100, 8, swiss8);
+      conference = swissCup('uecl', 'دوري المؤتمر الأوروبي', qC, 1200, 6, swiss6);
+    } else if (realWorld) {
+      final cf = confedOf(country);
+      continental = groupCup('con', cf.cl, qU, 1000, 6, grp6);
+      europa = null;
+      conference = groupCup('uecl', cf.second, qC, 1200, 6, grp6);
     } else {
+      continental = groupCup('con', 'دوري أبطال أوروبا', qU, 1000, 3, grp3);
       europa = null;
       conference = null;
     }
@@ -1901,12 +1980,19 @@ class GameState extends ChangeNotifier {
 
   void _draw(Cup c) {
     if (c.inGroups) {
+      c.byes = [];
+      if (c.kind == 2) {
+        c.ties = [for (final p in c.lpFx[c.round]) Tie(p[0], p[1])];
+        return;
+      }
       const pat = [
         [(0, 1), (2, 3)],
         [(0, 2), (3, 1)],
         [(3, 0), (1, 2)],
+        [(1, 0), (3, 2)],
+        [(2, 0), (1, 3)],
+        [(0, 3), (2, 1)],
       ];
-      c.byes = [];
       c.ties = [
         for (final g in c.groups)
           for (final pr in pat[c.round]) Tie(g[pr.$1], g[pr.$2])
@@ -1916,6 +2002,13 @@ class GameState extends ChangeNotifier {
     final ids = [...c.alive];
     c.size = _pow2(ids.length);
     final nb = c.size - ids.length;
+    if (c.seeded) {
+      // الملحق: الترتيب محفوظ؛ الأفضل يستضيف الأضعف
+      c.byes = ids.take(nb).toList();
+      final rest = ids.skip(nb).toList();
+      c.ties = [for (var i = 0; i < rest.length ~/ 2; i++) Tie(rest[i], rest[rest.length - 1 - i])];
+      return;
+    }
     ids.sort((a, b) => team(b).strength.compareTo(team(a).strength));
     c.byes = ids.take(nb).toList();
     final rest = ids.skip(nb).toList()..shuffle(rng);
@@ -1949,8 +2042,12 @@ class GameState extends ChangeNotifier {
         c.log.add('${c.roundName}|${t.text((i) => team(i).name)}');
       }
       c.round++;
-      if (c.round < 3) {
+      if (c.round < c.lpRounds) {
         _draw(c);
+        return;
+      }
+      if (c.kind == 2) {
+        _finishLeaguePhase(c);
         return;
       }
       final q = <int>[];
@@ -1977,10 +2074,10 @@ class GameState extends ChangeNotifier {
       c.log.add('${c.roundName}|${t.text((i) => team(i).name)}');
     }
     final idx = c.round;
-    final userWas = c.alive.contains(user.id);
+    final userWas = c.alive.contains(user.id) && !c.byes.contains(user.id);
     if (userWas) {
       if (winners.contains(user.id)) {
-        final prize = (c.continental ? 1.5 : 0.5) * (idx + 1);
+        final prize = (c.continental ? 1.5 : 0.5) * (c.kind == 2 ? idx - c.lpRounds + 1 : idx + 1);
         user.budget += prize;
         fin.add('prize', prize);
         news.insert(0, '🏅 تأهلت في ${c.name} (${c.roundName}) — مكافأة ${money1(prize)}');
@@ -1990,6 +2087,7 @@ class GameState extends ChangeNotifier {
     }
     c.alive = winners;
     c.round++;
+    c.seeded = false;
     if (winners.length == 1) {
       c.done = true;
       c.champion = winners.first;
@@ -2010,6 +2108,29 @@ class GameState extends ChangeNotifier {
     } else {
       _draw(c);
     }
+  }
+
+  /// نهاية مرحلة الدوري (36 فريقاً): 1-8 إلى دور الـ16، 9-24 إلى الملحق، والباقي يودّع
+  void _finishLeaguePhase(Cup c) {
+    final tb = groupTable(c, c.groups[0]);
+    final ids = [for (final r in tb) r.id];
+    final rank = ids.indexOf(user.id);
+    c.alive = ids.take(24).toList();
+    c.seeded = true;
+    if (rank >= 0) {
+      if (rank < 8) {
+        user.budget += 4.0;
+        fin.add('prize', 4.0);
+        news.insert(0, '🏅 ${c.name}: المركز ${rank + 1} في مرحلة الدوري — تأهل مباشر إلى دور الـ16 (+${money1(4.0)})');
+      } else if (rank < 24) {
+        user.budget += 1.5;
+        fin.add('prize', 1.5);
+        news.insert(0, '🏅 ${c.name}: المركز ${rank + 1} — ستلعب الملحق على التأهل لدور الـ16 (+${money1(1.5)})');
+      } else {
+        news.insert(0, '👋 ودّعت ${c.name} من مرحلة الدوري (المركز ${rank + 1})');
+      }
+    }
+    _draw(c);
   }
 
   void _advanceCups() {
@@ -2328,7 +2449,7 @@ class GameState extends ChangeNotifier {
     for (final l in c.log) {
       if (l.contains(user.name)) last = l.substring(0, l.indexOf('|'));
     }
-    if (last != null) return 'خرج في $last';
+    if (last != null) return 'خرج في ${last.contains('مرحلة الدوري') ? 'مرحلة الدوري' : (last.contains('مجموعات') ? 'دور المجموعات' : last)}';
     return c.continental ? 'لم يتأهل' : 'لم يلعب';
   }
 

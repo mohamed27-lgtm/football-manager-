@@ -64,15 +64,17 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
 
     Future<List<Team>> load(LeagueData x) async => teamsFromLeague(await LeagueStore.load(x.id, x.season) ?? x, rng);
     final up = near(d.div - 1), lo = near(d.div + 1);
-    // أندية قارية حقيقية حسب مقاعد كل دولة: أبطال أوروبا ثم الدوري الأوروبي ثم المؤتمر
+    // أندية قارية حقيقية من دوريات الاتحاد نفسه حسب مقاعد كل دولة
+    final cf = confedOf(d.country);
     final userSlots = d.div == 1 ? continentalSlots(d.country) : 0;
     final userEl = d.div == 1 ? europaSlots(d.country) : 0;
     final userCo = d.div == 1 ? conferenceSlots(d.country) : 0;
+    final big = cf.swiss ? 36 : 16;
     final tops = <String, LeagueData>{};
     for (final x in (leagues ?? const <LeagueData>[])) {
-      if (x.div == 1 && x.country != d.country && x.teams.length >= 8) tops[x.country] = x;
+      if (x.div == 1 && x.country != d.country && x.teams.length >= 8 && confedOf(x.country).id == cf.id) tops[x.country] = x;
     }
-    final order = [...kContinentalOrder.where(tops.containsKey), ...tops.keys.where((c) => !kContinentalOrder.contains(c))];
+    final order = [...cf.order.where(tops.containsKey), ...tops.keys.where((c) => !cf.order.contains(c))];
     final loaded = <String, List<ApiTeam>>{};
     Future<List<ApiTeam>> ranked(String c) async {
       if (loaded.containsKey(c)) return loaded[c]!;
@@ -81,43 +83,60 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
       return loaded[c] = [...full.teams]..sort((a, b) => a.rank.compareTo(b.rank));
     }
 
-    // tier: 0 أبطال، 1 أوروبي، 2 مؤتمر — كل دولة تعطي أندية من نطاق مراكز مختلف فلا تتكرر
-    Future<List<Team>> pool(int tier, int need) async {
-      final out = <Team>[];
-      final used = <String>{};
-      Future<void> addFrom(String c, int n, int offset) async {
-        final sub = await ranked(c);
-        final src = tops[c]!;
-        final slice = sub.skip(offset).take(n.isOdd ? n + 1 : n).toList();
-        if (slice.isEmpty) return;
-        final copy = LeagueData(id: src.id, name: src.name, country: src.country, tier: src.tier, div: 1, season: src.season, teams: slice, fetchedAt: src.fetchedAt);
-        var added = 0;
-        for (final t in teamsFromLeague(copy, rng)) {
-          if (added >= n || out.length >= need) break;
-          if (used.contains(t.name)) continue;
-          used.add(t.name);
-          out.add(t);
-          added++;
-        }
+    // مجموعات الأندية: 0 أبطال، 1 أوروبي/ثانية، 2 مؤتمر — لكل دولة نطاق مراكز مختلف فلا تتكرر الأندية
+    final need = [big - userSlots, cf.swiss ? big - userEl : 0, cf.swiss ? big - userCo : big - userCo];
+    final out = [<Team>[], <Team>[], <Team>[]];
+    final used = <String>{};
+    final cursor = <String, int>{};
+    Future<void> addFrom(int tier, String c, int n, int offset) async {
+      final sub = await ranked(c);
+      final src = tops[c]!;
+      final slice = sub.skip(offset).take(n.isOdd ? n + 1 : n).toList();
+      if (slice.isEmpty) return;
+      final copy = LeagueData(id: src.id, name: src.name, country: src.country, tier: src.tier, div: 1, season: src.season, teams: slice, fetchedAt: src.fetchedAt);
+      var added = 0;
+      for (final t in teamsFromLeague(copy, rng)) {
+        if (added >= n || out[tier].length >= need[tier]) break;
+        if (used.contains(t.name)) continue;
+        used.add(t.name);
+        out[tier].add(t);
+        added++;
       }
-
-      int off(String c) => tier == 0 ? 0 : (tier == 1 ? continentalSlots(c) : continentalSlots(c) + europaSlots(c));
-      int cnt(String c) => tier == 0 ? continentalSlots(c) : (tier == 1 ? europaSlots(c) : conferenceSlots(c));
-      for (final c in order) {
-        if (out.length >= need) break;
-        final n = cnt(c);
-        if (n > 0) await addFrom(c, min(need - out.length, n), off(c));
-      }
-      for (final c in order) { // إكمال النقص بمراكز لاحقة
-        if (out.length >= need) break;
-        await addFrom(c, min(need - out.length, 1), off(c) + cnt(c));
-      }
-      return out;
     }
 
-    final world = await pool(0, 16 - userSlots);
-    final worldEl = await pool(1, 16 - userEl);
-    final worldCo = await pool(2, 16 - userCo);
+    int cntOf(String c, int tier) => tier == 0 ? continentalSlots(c) : (tier == 1 ? europaSlots(c) : conferenceSlots(c));
+    int offOf(String c, int tier) {
+      var o = 0;
+      for (var k = 0; k < tier; k++) {
+        o += cntOf(c, k);
+      }
+      return o;
+    }
+
+    for (var tier = 0; tier < 3; tier++) {
+      for (final c in order) {
+        final n = cntOf(c, tier);
+        if (n > 0 && out[tier].length < need[tier]) await addFrom(tier, c, min(need[tier] - out[tier].length, n), offOf(c, tier));
+      }
+    }
+    for (final c in order) {
+      cursor[c] = cntOf(c, 0) + cntOf(c, 1) + cntOf(c, 2) + (cf.swiss ? 1 : 0); // +1 لبطل الكأس
+    }
+    // إكمال النقص بمراكز لاحقة (دورات متتالية)
+    for (var pass = 0; pass < 6; pass++) {
+      var grew = false;
+      for (var tier = 0; tier < 3; tier++) {
+        for (final c in order) {
+          if (out[tier].length >= need[tier]) break;
+          final before = out[tier].length;
+          await addFrom(tier, c, 1, cursor[c]!);
+          cursor[c] = cursor[c]! + 1;
+          if (out[tier].length > before) grew = true;
+        }
+      }
+      if (!grew) break;
+    }
+    final world = out[0], worldEl = out[1], worldCo = out[2];
     final pyramid = Pyramid(
       country: d.country,
       leagueId: d.id,

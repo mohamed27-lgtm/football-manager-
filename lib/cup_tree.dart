@@ -37,7 +37,7 @@ class CupTree extends StatelessWidget {
     for (final l in cup.log) {
       final i = l.indexOf('|');
       final key = l.substring(0, i);
-      if (key.contains('مجموعات')) continue;
+      if (key.contains('مجموعات') || key.contains('مرحلة الدوري') || key == 'الملحق') continue;
       final m = re.firstMatch(l.substring(i + 1));
       if (m == null) continue;
       final v = _VM()
@@ -54,7 +54,8 @@ class CupTree extends StatelessWidget {
       byRound.putIfAbsent(key, () => []).add(v);
     }
     final rounds = byRound.values.toList();
-    if (!cup.done && !cup.inGroups && cup.ties.isNotEmpty) {
+    final playoff = cup.kind == 2 && cup.size == 32;
+    if (!cup.done && !cup.inGroups && cup.ties.isNotEmpty && !playoff) {
       rounds.add([
         for (final t in cup.ties)
           _VM()
@@ -65,6 +66,9 @@ class CupTree extends StatelessWidget {
             ..homeWon = t.played ? t.winner == t.home : null
             ..pen = t.ph != null ? '(${t.ph}-${t.pa})' : null,
       ]);
+    }
+    if (rounds.isEmpty && cup.kind > 0) {
+      rounds.add([for (var i = 0; i < (cup.kind == 2 ? 8 : 4); i++) _VM()]);
     }
     // أدوار مستقبلية فارغة حتى النهائي
     while (rounds.isNotEmpty && rounds.last.length > 1) {
