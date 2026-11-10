@@ -722,75 +722,86 @@ class TransfersTab extends StatefulWidget {
 }
 
 class _TransfersTabState extends State<TransfersTab> {
-  int mode = 0; // 0 سوق 1 مجانيون 2 بيع 3 عروض
+  int mode = 0; // 0 بحث 1 المراقبة 2 العروض 3 السجل
   Pos? filter;
   int sort = 0; // 0 تقييم 1 سعر 2 عمر
-  int minOvr = 0;
-  bool watchOnly = false;
+  bool freeOnly = false;
 
   @override
   Widget build(BuildContext context) {
     final gs = widget.gs;
-    final src = switch (mode) {
-      0 => gs.market.where((p) => !p.free),
-      1 => gs.market.where((p) => p.free),
-      _ => gs.user.squad,
-    };
+    bool buying(Player p) => gs.market.contains(p);
+    final src = mode == 1 ? [...gs.market, ...gs.user.squad] : gs.market.toList();
     final list = src
-        .where((p) => (filter == null || p.pos == filter) && p.overall >= minOvr && (!watchOnly || gs.watch.contains(p.id)))
+        .where((p) => (filter == null || p.pos == filter) && (mode != 0 || !freeOnly || p.free) && (mode != 1 || gs.watch.contains(p.id)))
         .toList()
       ..sort((a, b) => switch (sort) {
-            1 => (mode >= 2 ? gs.sellPrice(b) : gs.buyPrice(b)).compareTo(mode >= 2 ? gs.sellPrice(a) : gs.buyPrice(a)),
+            1 => (buying(b) ? gs.buyPrice(b) : gs.sellPrice(b)).compareTo(buying(a) ? gs.buyPrice(a) : gs.sellPrice(a)),
             2 => a.age.compareTo(b.age),
             _ => b.overall.compareTo(a.overall),
           });
+    Widget chip(String label, bool sel, VoidCallback on) => GestureDetector(
+          onTap: on,
+          child: Container(
+            margin: const EdgeInsets.only(left: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            alignment: Alignment.center,
+            height: 36,
+            decoration: BoxDecoration(color: sel ? kNavy : kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: sel ? kNavy : kLine)),
+            child: sel ? Unfilter(child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13))) : Text(label, style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800, fontSize: 13)),
+          ),
+        );
+    final tabs = ['بحث', 'المراقبة', gs.offers.isEmpty ? 'العروض' : 'العروض (${gs.offers.length})', 'السجل'];
     return ListView(padding: const EdgeInsets.all(14), children: [
-      Panel(
+      Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
         child: Row(children: [
-          const Text('💰 الميزانية', style: TextStyle(color: kMuted)),
-          const Spacer(),
-          AnimatedMoney(gs.user.budget,
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: gs.user.budget < 0 ? const Color(0xFFFF7043) : kPrimary)),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(gs.windowOpen ? 'نافذة الانتقالات مفتوحة' : 'نافذة الانتقالات مغلقة', style: TextStyle(fontWeight: FontWeight.w900, color: gs.windowOpen ? const Color(0xFF1FA58A) : const Color(0xFFE5533D))),
+              Text('${gs.windowLabel}${gs.transferBan ? ' • ⛔ حظر انتقالات' : ''}', style: const TextStyle(color: kMuted, fontSize: 12)),
+            ]),
+          ),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            const Text('ميزانية الانتقالات', style: TextStyle(color: kMuted, fontSize: 11.5)),
+            AnimatedMoney(gs.user.budget, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: gs.user.budget < 0 ? const Color(0xFFE5533D) : kPrimary)),
+          ]),
         ]),
       ),
-      SegmentedButton<int>(
-        showSelectedIcon: false,
-        segments: [
-          const ButtonSegment(value: 0, label: Text('السوق')),
-          const ButtonSegment(value: 1, label: Text('أحرار')),
-          const ButtonSegment(value: 2, label: Text('بيع')),
-          ButtonSegment(value: 3, label: Text(gs.offers.isEmpty ? 'عروض' : 'عروض (${gs.offers.length})')),
-        ],
-        selected: {mode},
-        onSelectionChanged: (s) => setState(() => mode = s.first),
-      ),
-      const SizedBox(height: 8),
-      Text('${gs.windowOpen ? '🟢' : '🔴'} ${gs.windowLabel}${gs.transferBan ? ' • ⛔ حظر انتقالات' : ''}',
-          style: TextStyle(color: gs.windowOpen ? const Color(0xFF1FA58A) : const Color(0xFFFF8A65), fontSize: 12)),
-      const SizedBox(height: 8),
-      if (mode == 3) ..._offers(context, gs) else ...[
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 6),
-              child: FilterChip(label: const Text('⭐ المراقبة'), selected: watchOnly, onSelected: (v) => setState(() => watchOnly = v)),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 6),
-              child: ChoiceChip(label: const Text('الكل'), selected: filter == null, onSelected: (_) => setState(() => filter = null)),
-            ),
-            for (final p in Pos.values)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 6),
-                child: ChoiceChip(label: Text(p.label), selected: filter == p, onSelected: (_) => setState(() => filter = p)),
+      const SizedBox(height: 10),
+      Container(
+        height: 44,
+        decoration: BoxDecoration(border: Border.all(color: kPrimary), borderRadius: BorderRadius.circular(10)),
+        clipBehavior: Clip.antiAlias,
+        child: Row(children: [
+          for (final e in tabs.indexed)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => mode = e.$1),
+                child: Container(alignment: Alignment.center, color: mode == e.$1 ? kPrimary : Colors.transparent, child: Text(e.$2, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: mode == e.$1 ? Colors.white : kPrimary))),
               ),
+            ),
+        ]),
+      ),
+      const SizedBox(height: 10),
+      if (mode == 2) ..._offers(context, gs),
+      if (mode == 3)
+        Panel(
+          child: gs.oplog.isEmpty
+              ? const EmptyState(icon: Icons.history_rounded, title: 'لا سجل بعد', subtitle: 'تظهر هنا صفقاتك وعمليات الشراء والبيع والإعارة.')
+              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [for (final l in gs.oplog.take(40)) Padding(padding: const EdgeInsets.symmetric(vertical: 5), child: Text(l, style: const TextStyle(fontSize: 13.5)))]),
+        ),
+      if (mode < 2) ...[
+        SizedBox(
+          height: 40,
+          child: ListView(scrollDirection: Axis.horizontal, children: [
+            chip('الكل', filter == null, () => setState(() => filter = null)),
+            for (final p in Pos.values) chip(p.plural, filter == p, () => setState(() => filter = p)),
+            if (mode == 0) chip('أحرار', freeOnly, () => setState(() => freeOnly = !freeOnly)),
           ]),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Row(children: [
           const Text('ترتيب:', style: TextStyle(color: kMuted, fontSize: 12)),
           const SizedBox(width: 6),
@@ -800,45 +811,28 @@ class _TransfersTabState extends State<TransfersTab> {
               child: ChoiceChip(label: Text(e.$2), selected: sort == e.$1, onSelected: (_) => setState(() => sort = e.$1)),
             ),
         ]),
-        Row(children: [
-          Text('الحد الأدنى للتقييم: $minOvr', style: const TextStyle(color: kMuted, fontSize: 12)),
-          Expanded(
-            child: Slider(
-              value: minOvr.toDouble(),
-              min: 0,
-              max: 85,
-              divisions: 17,
-              onChanged: (v) => setState(() => minOvr = v.round()),
-            ),
-          ),
-        ]),
-        if (mode < 2)
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Text('يتجدد السوق كل 4 أسابيع، وقد تخطف الأندية الأخرى لاعبين قبلك.', style: TextStyle(color: kMuted, fontSize: 12)),
-          ),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 6),
+          child: Text('يتجدد السوق كل 4 أسابيع، وقد تخطف الأندية الأخرى لاعبين قبلك.', style: TextStyle(color: kMuted, fontSize: 12)),
+        ),
         Panel(
           padding: EdgeInsets.zero,
           child: Column(children: [
-            if (list.isEmpty)
-              const EmptyState(icon: Icons.search_off, title: 'لا نتائج', subtitle: 'جرّب تخفيف الفلاتر أو تغيير المركز.'),
+            if (list.isEmpty) EmptyState(icon: Icons.search_off, title: mode == 1 ? 'قائمة المراقبة فارغة' : 'لا نتائج', subtitle: mode == 1 ? 'اضغط على النجمة في بطاقة اللاعب لإضافته للمراقبة.' : 'جرّب تخفيف الفلاتر أو تغيير المركز.'),
             for (final p in list)
               PlayerTile(
                 p: p,
-                onTap: () => showPlayerSheet(context, gs, p, market: mode < 2),
+                onTap: () => showPlayerSheet(context, gs, p, market: buying(p)),
                 trailing: Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-                  Text(
-                    money(mode < 2 ? gs.buyPrice(p) : gs.sellPrice(p)),
-                    style: const TextStyle(fontWeight: FontWeight.w900, color: kPrimary),
-                  ),
-                  if (p.club != null && mode < 2) Text(p.club!, style: const TextStyle(color: kMuted, fontSize: 11)),
+                  Text(money(buying(p) ? gs.buyPrice(p) : gs.sellPrice(p)), style: const TextStyle(fontWeight: FontWeight.w900, color: kPrimary)),
+                  if (p.club != null && buying(p)) Text(p.club!, style: const TextStyle(color: kMuted, fontSize: 11)),
                   if (p.listed) const Text('معروض للبيع', style: TextStyle(color: Color(0xFFFFCA28), fontSize: 11)),
                   if (p.onLoan) const Text('معار', style: TextStyle(color: kMuted, fontSize: 11)),
                   const SizedBox(height: 3),
                   FilledButton(
                     style: FilledButton.styleFrom(minimumSize: const Size(60, 28), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
-                    onPressed: () => showPlayerSheet(context, gs, p, market: mode < 2),
-                    child: Text(mode < 2 ? 'تفاوض' : 'بيع'),
+                    onPressed: () => showPlayerSheet(context, gs, p, market: buying(p)),
+                    child: Text(buying(p) ? 'تفاوض' : 'بيع'),
                   ),
                 ]),
               ),

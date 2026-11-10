@@ -366,6 +366,20 @@ class GameState extends ChangeNotifier {
   /// ختم زمني لكل خبر (تاريخ اللعبة|الساعة) ليُجمَّع في صندوق الرسائل
   final Map<String, String> newsStamp = {};
   final Set<String> readMsgs = {};
+  final List<int> attHist = []; // حضور آخر المباريات على أرضك
+  int campaignWeek = -99;
+  String? runCampaign() {
+    if (week - campaignWeek < 4) return 'الحملة التالية بعد ${4 - (week - campaignWeek)} جولات';
+    if (user.budget < 1.0) return 'الميزانية لا تكفي (1.0M)';
+    user.budget -= 1.0;
+    fin.add('staff', 1.0);
+    fans = min(100, fans + 3);
+    campaignWeek = week;
+    news.insert(0, '📣 أطلقت حملة تسويقية: شعبية النادي +3');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
   @override
   void notifyListeners() {
     if (news.isNotEmpty && rounds.isNotEmpty) {
@@ -454,6 +468,8 @@ class GameState extends ChangeNotifier {
     training = migrateTraining(j['training'] as String);
     trainIntensity = (j['tint'] as int?) ?? 1;
     indTrain = (j['itr'] as bool?) ?? false;
+    attHist.addAll(((j['ah'] as List?) ?? const []).cast<int>());
+    campaignWeek = (j['cw'] as int?) ?? -99;
     fired = j['fired'] as bool;
     seasonOver = j['over'] as bool;
     news.addAll((j['news'] as List).cast<String>());
@@ -630,6 +646,8 @@ class GameState extends ChangeNotifier {
         'training': training,
         'tint': trainIntensity,
         'itr': indTrain,
+        'ah': attHist,
+        'cw': campaignWeek,
         'fired': fired,
         'over': seasonOver,
         'news': news,
@@ -1015,6 +1033,10 @@ class GameState extends ChangeNotifier {
     final home = f.home == user.id;
     final mk = staff['marketing'] ?? 0;
     final gate = home ? (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (0.75 + 0.5 * fans / 100) * (1 + 0.04 * mk) * ticketMult[ticketLevel] : 0.0;
+    if (home) {
+      attHist.add(attendance);
+      if (attHist.length > 12) attHist.removeAt(0);
+    }
     if (home) fans = (fans + (ticketLevel == 0 ? 0.3 : ticketLevel == 2 ? -0.4 : 0.0)).clamp(0, 100).toDouble();
     final broadcast = (0.35 + 0.1 * user.reputation) * divFactor;
     final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +

@@ -15,6 +15,7 @@ import 'create_player.dart';
 import 'scouting_screen.dart';
 import 'loans_screen.dart';
 import 'stadium_screen.dart';
+import 'fans_screen.dart';
 import 'trophies.dart';
 import 'squad.dart';
 import 'tactics.dart';
@@ -228,7 +229,7 @@ class _MoreTabState extends State<MoreTab> {
       ('النادي', [
         (Icons.account_balance_wallet_rounded, 'المالية', () => _push(FinanceScreen(gs: gs))),
         (Icons.handshake_rounded, 'الرعاة', () => _push(SponsorsScreen(gs: gs))),
-        (Icons.campaign_rounded, 'الجماهير', () => _push(MediaScreen(gs: gs))),
+        (Icons.campaign_rounded, 'الجماهير', () => _push(FansScreen(gs: gs))),
         (Icons.stadium_rounded, 'المنشآت', () => _push(FacilitiesScreen(gs: gs))),
         (Icons.confirmation_number_rounded, 'الملعب والتذاكر', () => _push(StadiumScreen(gs: gs))),
         (Icons.gavel_rounded, 'اللعب المالي النظيف', () => _push(FfpScreen(gs: gs))),
