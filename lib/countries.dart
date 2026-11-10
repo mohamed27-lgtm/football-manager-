@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide Text;
+import 'i18n.dart';
 import 'widgets.dart';
 
 /// دولة: الاسم العربي، رمز ISO، القارة (A أفريقيا، E أوروبا، S آسيا، M الأمريكتان، O أوقيانوسيا)
