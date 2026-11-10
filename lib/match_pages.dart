@@ -317,8 +317,6 @@ class _MatchSummaryScreenState extends State<MatchSummaryScreen> {
           Expanded(child: Column(children: [Text('${a('xg')}', style: const TextStyle(color: _blue, fontSize: 26, fontWeight: FontWeight.w900)), const Text('المنافس xG', style: TextStyle(color: kMuted, fontSize: 13))])),
         ]),
       ),
-      const SizedBox(height: 8),
-      const Text('التمريرات والتسلل وxG أرقام تقديرية مشتقة من الاستحواذ والتسديدات.', style: TextStyle(color: kMuted, fontSize: 11.5)),
     ]);
   }
 
@@ -398,8 +396,8 @@ class NextMatchScreen extends StatelessWidget {
   final GameState gs;
   const NextMatchScreen({super.key, required this.gs});
 
-  static String dayOf(int week) => const ['الأحد', 'السبت', 'الجمعة', 'الخميس'][week % 4];
-  static String timeOf(int week) => const ['20:45', '18:30', '21:00', '19:15'][week % 4];
+  static String dayOf(GameState gs) => gs.matchDay();
+  static String timeOf(GameState gs) => gs.matchTime();
 
   Widget _card(Widget child) => Container(
         margin: const EdgeInsets.only(bottom: 14),
@@ -455,8 +453,8 @@ class NextMatchScreen extends StatelessWidget {
                   flex: 2,
                   child: Column(children: [
                     const Text('VS', style: TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w900)),
-                    Text(dayOf(gs.week), style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
-                    Text(timeOf(gs.week), style: const TextStyle(color: Color(0xFFFFC857), fontSize: 18, fontWeight: FontWeight.w900)),
+                    Text(dayOf(gs), style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                    Text(timeOf(gs), style: const TextStyle(color: Color(0xFFFFC857), fontSize: 18, fontWeight: FontWeight.w900)),
                   ]),
                 ),
                 Expanded(flex: 3, child: Column(children: [teamBadge(away, size: 64), const SizedBox(height: 8), Text(away.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))])),

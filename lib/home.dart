@@ -1002,8 +1002,10 @@ class DashboardTab extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 6),
                   child: Column(children: [
                     const Text('VS', style: TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w900)),
-                    Text(NextMatchScreen.dayOf(gs.week), style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)),
-                    Text(NextMatchScreen.timeOf(gs.week), style: const TextStyle(color: Color(0xFFFFC857), fontSize: 19, fontWeight: FontWeight.w900)),
+                    Text(NextMatchScreen.dayOf(gs), style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)),
+                    Text(NextMatchScreen.timeOf(gs), style: const TextStyle(color: Color(0xFFFFC857), fontSize: 19, fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 4),
+                    Text('بعد ${gs.daysUntilMatch()} أيام', style: const TextStyle(color: Color(0xFF9FB0CC), fontSize: 12)),
                   ]),
                 ),
               ),

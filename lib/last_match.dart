@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'engine.dart';
 import 'models.dart';
 
@@ -35,9 +34,9 @@ class LastMatch {
   int get oppGoals => userHome ? ag : hg;
   String get result => userGoals > oppGoals ? 'W' : (userGoals < oppGoals ? 'L' : 'D');
 
-  /// تقدير تفاصيل لا يتتبعها المحرك: التمريرات والتسلل وxG مشتقة من الاستحواذ والتسديدات
+  /// كل الأرقام من تتبّع المحرك لحظة بلحظة (الاستحواذ، التسديدات، التمريرات، التسلل، xG)
   static LastMatch fromSim(MatchSim s, {required String comp, required int round, required bool userHome}) {
-    final rng = Random(s.home.goals * 31 + s.away.goals * 17 + s.minute);
+    final hp = s.homePoss;
     final ev = <Map<String, dynamic>>[];
     var hs = 0, as = 0;
     for (final e in s.events) {
@@ -59,21 +58,20 @@ class LastMatch {
         ev.add({'m': e.minute, 't': 'sub', 'h': e.home, 'a': m?.group(1) ?? e.text, 'b': m?.group(2)});
       }
     }
-    num passes(Side x) => (x.poss * 100 / max(1, s.minute) * 7.3 + x.team.strength * 0.8 + rng.nextInt(12)).round();
-    num acc(Side x) => (58 + x.team.strength * 0.38 + rng.nextInt(4)).round().clamp(60, 94);
-    num xg(Side x) => ((x.onTarget * 0.28 + (x.shots - x.onTarget) * 0.05) * 10).round() / 10;
-    final hp = s.homePoss;
+    num acc(Side x) => x.passes == 0 ? 0 : (100 * x.passOk / x.passes).round();
+    num xg(Side x) => (x.xg * 10).round() / 10;
     final stats = <String, List<num>>{
       'poss': [hp, 100 - hp],
       'shots': [s.home.shots, s.away.shots],
       'target': [s.home.onTarget, s.away.onTarget],
-      'passes': [passes(s.home), passes(s.away)],
+      'passes': [s.home.passes, s.away.passes],
       'acc': [acc(s.home), acc(s.away)],
       'corners': [s.home.corners, s.away.corners],
       'fouls': [s.home.fouls, s.away.fouls],
-      'offside': [(s.home.shots * 0.2).round() + rng.nextInt(3), (s.away.shots * 0.2).round() + rng.nextInt(3)],
+      'offside': [s.home.offsides, s.away.offsides],
       'xg': [xg(s.home), xg(s.away)],
     };
+
     final rt = <Map<String, dynamic>>[];
     for (final side in [s.home, s.away]) {
       side.ratings.forEach((p, r) => rt.add({'id': p.id, 'n': p.name, 'r': (r * 10).round() / 10, 'h': side.isHome, 'p': p.pos.index}));

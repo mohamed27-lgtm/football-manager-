@@ -33,6 +33,14 @@ class Side {
   final Map<int, int> yellowCount = {};
   final Map<Player, double> ratings = {};
   int goals = 0, shots = 0, onTarget = 0, poss = 0, subsLeft = 3, fouls = 0, corners = 0;
+  int passes = 0, passOk = 0, offsides = 0;
+  double xg = 0;
+
+  /// مهارة التمرير: متوسط تمرير اللاعبين الميدانيين
+  double get passSkill {
+    final l = slots.where((s) => s.pos != Pos.gk).toList();
+    return l.isEmpty ? 40 : l.fold(0.0, (a, s) => a + s.p.pas) / l.length;
+  }
   int mentalityBoost = 0;
 
   Side(this.team, this.isHome, this.isUser) {
@@ -193,6 +201,16 @@ class MatchSim {
     final a = homeAtt ? home : away;
     final d = homeAtt ? away : home;
     a.poss++;
+    // تمريرات الاستحواذ: العدد يتبع أسلوب التمرير، والدقة تتبع مهارة اللاعبين
+    final k = 5 + rng.nextInt(6) + (a.team.passing - 1);
+    final okRate = (0.58 + 0.0042 * a.passSkill - 0.02 * (a.team.passing - 1) - 0.012 * (d.team.pressing - 1)).clamp(0.55, 0.93);
+    var ok = 0;
+    for (var i = 0; i < k; i++) {
+      if (rng.nextDouble() < okRate) ok++;
+    }
+    a.passes += k;
+    a.passOk += ok;
+    if (rng.nextDouble() < 0.05 * (1 + 0.2 * (d.team.defLine - 1))) a.offsides++;
     attackHome = a.isHome;
     _setBall(a, rng.nextDouble() * 0.75, 0.85);
 
@@ -264,6 +282,7 @@ class MatchSim {
             0.025 * (a.team.width - 1) -
             0.02 * (a.team.passing - 1))
         .clamp(0.2, 0.6);
+    a.xg += onT * (0.30 * pow(q / max(20, gkR), 1.4)).clamp(0.06, 0.65);
     if (rng.nextDouble() > onT) {
       if (rng.nextDouble() < 0.35) {
         _log('miss', '${shooter.name} يسدد بعيداً عن المرمى', a.isHome,
@@ -320,6 +339,7 @@ class MatchSim {
     _log('penalty', '⚠️ ركلة جزاء لصالح ${a.team.name}!', a.isHome);
     final gkP = _gk(d);
     final p = (0.72 + 0.003 * (shooter.atk - 70)).clamp(0.55, 0.9);
+    a.xg += p;
     if (rng.nextDouble() < p) {
       a.onTarget++;
       a.goals++;

@@ -93,6 +93,22 @@ class GameState extends ChangeNotifier {
   LastMatch? lastMatch;
   final Map<int, List<String>> h2h = {}; // خصم → آخر نتائجك أمامه (W/D/L)
 
+  // ───────── جدول المباريات: يوم الأسبوع والوقت لكل مباراة ─────────
+  // الأسبوع يبدأ الاثنين، واليوم الحالي الأربعاء؛ المباراة تقع الجمعة أو السبت أو الأحد
+  int _slot(Fixture f) => (f.home * 7 + f.away * 13 + week * 5 + season * 3) % 3;
+  int matchDayOffset([Fixture? f]) {
+    final x = f ?? userFixture;
+    return x == null ? 5 : 4 + _slot(x);
+  }
+
+  String matchDay([Fixture? f]) => const ['الجمعة', 'السبت', 'الأحد'][matchDayOffset(f) - 4];
+  String matchTime([Fixture? f]) {
+    final x = f ?? userFixture;
+    return x == null ? '20:45' : const ['21:00', '18:30', '20:45'][(x.home + x.away + week) % 3];
+  }
+
+  int daysUntilMatch([Fixture? f]) => matchDayOffset(f) - 2;
+
   /// آخر نتائج فريق في الدوري: W فوز، D تعادل، L خسارة
   List<String> formOf(Team t, [int n = 5]) {
     final out = <String>[];
