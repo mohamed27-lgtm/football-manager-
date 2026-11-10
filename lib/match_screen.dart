@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
+import 'lineup_pages.dart';
 import 'package:flutter/services.dart';
 import 'engine.dart';
 import 'game_state.dart';
@@ -219,39 +220,70 @@ class _MatchScreenState extends State<MatchScreen> {
 
   Widget _scoreboard() {
     final s = sim;
-    Widget side(Team t, {required bool home}) => Expanded(
+    final gs = widget.gs;
+    final venue = s.home.team.venue ?? 'ملعب ${s.home.team.name}';
+    final att = s.home.team == gs.user ? gs.attendance : ((12000 + 8000 * s.home.team.stadium) * 0.8).round();
+    final hp = (s.home.poss + s.away.poss) == 0 ? 50 : (100 * s.home.poss / (s.home.poss + s.away.poss)).round();
+    Widget side(Team t) => Expanded(
           child: Column(children: [
-            teamBadge(t, size: 44),
+            teamBadge(t, size: 52),
             const SizedBox(height: 6),
-            Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Colors.white)),
+            Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
           ]),
         );
-    return Unfilter(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-        color: kNavy,
-        child: Column(children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            side(s.home.team, home: true),
-            Column(children: [
-              Text('${s.home.goals} : ${s.away.goals}', style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 1, color: Colors.white)),
-              Container(
-                margin: const EdgeInsets.only(top: 2),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                decoration: BoxDecoration(color: s.finished ? Colors.white24 : kPrimary, borderRadius: BorderRadius.circular(12)),
-                child: Text(s.finished ? 'انتهت' : "${s.minute}'", style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900)),
-              ),
-            ]),
-            side(s.away.team, home: false),
+    return Column(children: [
+      Unfilter(
+        child: Container(
+          color: kNavy,
+          padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+          child: Row(children: [
+            const Expanded(child: Text('المباراة المباشرة', style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w900))),
+            budgetPill(widget.gs),
           ]),
-          const SizedBox(height: 8),
+        ),
+      ),
+      Container(
+        color: kCard,
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        child: Column(children: [
+          Row(children: [
+            Expanded(child: Text('$venue • ${att.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},')} متفرج', style: const TextStyle(color: kMuted, fontSize: 12))),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(color: s.finished ? kMuted : const Color(0xFFE5533D), borderRadius: BorderRadius.circular(12)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                if (!s.finished) const Icon(Icons.circle, size: 8, color: Colors.white),
+                const SizedBox(width: 4),
+                Text(s.finished ? 'انتهت' : "مباشر  ${s.minute}'", style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
+              ]),
+            ),
+          ]),
+          const SizedBox(height: 10),
+          Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+            side(s.home.team),
+            Text('${s.home.goals} - ${s.away.goals}', style: const TextStyle(fontSize: 38, fontWeight: FontWeight.w900)),
+            side(s.away.team),
+          ]),
+          const SizedBox(height: 10),
+          Row(children: [
+            Text('$hp%', style: const TextStyle(color: kPrimary, fontWeight: FontWeight.w900, fontSize: 12)),
+            const Expanded(child: Text('الاستحواذ', textAlign: TextAlign.center, style: TextStyle(color: kMuted, fontSize: 12))),
+            Text('${100 - hp}%', style: const TextStyle(color: Color(0xFF2F7BE6), fontWeight: FontWeight.w900, fontSize: 12)),
+          ]),
+          const SizedBox(height: 4),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(value: (s.minute / 90).clamp(0.0, 1.0).toDouble(), minHeight: 3, color: kPrimary, backgroundColor: Colors.white24),
+            child: SizedBox(
+              height: 6,
+              child: Row(children: [
+                Expanded(flex: hp.clamp(1, 99).toInt(), child: Container(color: kPrimary)),
+                Expanded(flex: (100 - hp).clamp(1, 99).toInt(), child: Container(color: const Color(0xFF2F7BE6))),
+              ]),
+            ),
           ),
         ]),
       ),
-    );
+    ]);
   }
 
   Widget _talkPanel() => Panel(
@@ -305,15 +337,9 @@ class _MatchScreenState extends State<MatchScreen> {
         Expanded(child: _liveStats())
       else ...[
       Expanded(
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Stack(alignment: Alignment.center, children: [
-            Center(
-              child: AspectRatio(
-                aspectRatio: 0.74,
-                child: LivePitch(sim: sim, anim: _anim),
-              ),
-            ),
+        child: ListView(padding: const EdgeInsets.fromLTRB(10, 10, 10, 6), children: [
+          Stack(alignment: Alignment.center, children: [
+            AspectRatio(aspectRatio: 0.86, child: LivePitch(sim: sim, anim: _anim)),
             if (flash != null)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -322,14 +348,13 @@ class _MatchScreenState extends State<MatchScreen> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: kAccent, width: 2),
                 ),
-                child: Text(flash!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                child: Text(flash!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
               ),
           ]),
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
-        child: Text(sim.lastText, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted)),
+          Padding(padding: const EdgeInsets.fromLTRB(4, 8, 4, 4), child: Text(sim.lastText, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted))),
+          const Padding(padding: EdgeInsets.fromLTRB(4, 8, 4, 6), child: Text('أحداث المباراة', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14))),
+          _eventsPanel(),
+        ]),
       ),
       ],
     ]);
@@ -612,52 +637,46 @@ class _MatchScreenState extends State<MatchScreen> {
                         child: const Text('متابعة'),
                       ),
                     )
-                  : Row(children: [
-                      IconButton.filled(
-                        style: IconButton.styleFrom(backgroundColor: kPrimary, foregroundColor: Colors.white),
-                        onPressed: running ? () => setState(_pause) : _start,
-                        icon: Icon(running ? Icons.pause : Icons.play_arrow),
-                      ),
-                      const SizedBox(width: 8),
-                      for (final x in const [1, 2, 4])
-                        Padding(
-                          padding: const EdgeInsetsDirectional.only(end: 6),
-                          child: ChoiceChip(
-                            label: Text('x$x'),
-                            selected: speed == x,
-                            showCheckmark: false,
-                            onSelected: (_) {
-                              speed = x;
-                              if (running) {
-                                _start();
-                              } else {
+                  : Column(mainAxisSize: MainAxisSize.min, children: [
+                      Container(
+                        height: 40,
+                        decoration: BoxDecoration(border: Border.all(color: kLine), borderRadius: BorderRadius.circular(10)),
+                        clipBehavior: Clip.antiAlias,
+                        child: Row(children: [
+                          for (final x in const [1, 2, 4])
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  speed = x;
+                                  if (running) {
+                                    _start();
+                                  } else {
+                                    setState(() {});
+                                  }
+                                },
+                                child: Unfilter(child: Container(alignment: Alignment.center, color: speed == x ? kNavy : Colors.transparent, child: Text('×$x', style: TextStyle(fontWeight: FontWeight.w900, color: speed == x ? Colors.white : kMuted)))),
+                              ),
+                            ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                _pause();
+                                sim.simulateAll();
                                 setState(() {});
-                              }
-                            },
+                              },
+                              child: Container(alignment: Alignment.center, child: const Text('تخطي', style: TextStyle(fontWeight: FontWeight.w900, color: kMuted))),
+                            ),
                           ),
-                        ),
-                      const Spacer(),
-                      FilledButton(
-                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFFA9D4F8), foregroundColor: const Color(0xFF15233D), minimumSize: const Size(0, 42), padding: const EdgeInsets.symmetric(horizontal: 14)),
-                        onPressed: _tactics,
-                        child: const Text('تكتيك'),
+                        ]),
                       ),
-                      const SizedBox(width: 6),
-                      FilledButton(
-                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF6A6FC4), minimumSize: const Size(0, 42), padding: const EdgeInsets.symmetric(horizontal: 14)),
-                        onPressed: _subs,
-                        child: const Text('تبديل'),
-                      ),
-                      IconButton(onPressed: _infoSheet, tooltip: tr('الإحصاءات'), icon: const Icon(Icons.bar_chart)),
-                      IconButton(
-                        onPressed: () {
-                          _pause();
-                          sim.simulateAll();
-                          setState(() {});
-                        },
-                        tooltip: tr('إنهاء'),
-                        icon: const Icon(Icons.fast_forward),
-                      ),
+                      const SizedBox(height: 8),
+                      Row(children: [
+                        Expanded(child: whiteBtn(running ? 'إيقاف' : 'استئناف', () => setState(running ? _pause : _start), icon: running ? Icons.pause_rounded : Icons.play_arrow_rounded)),
+                        const SizedBox(width: 8),
+                        Expanded(child: blueBtn('التكتيك', _tactics, icon: Icons.account_tree_outlined)),
+                        const SizedBox(width: 8),
+                        Expanded(child: GradientButton(label: 'تبديل', icon: Icons.swap_horiz_rounded, onPressed: _subs)),
+                      ]),
                     ]),
             ),
           ]),
