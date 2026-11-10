@@ -84,7 +84,24 @@ class MediaScreen extends StatelessWidget {
             final done = gs.pressWeek == gs.week;
             final f = gs.fans;
             final label = f >= 80 ? 'عشق جماهيري' : f >= 60 ? 'شعبية كبيرة' : f >= 40 ? 'شعبية متوسطة' : 'جماهير فاترة';
+            Widget tile(String v, String l, Color c) => Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+                    child: Column(children: [
+                      Text(v, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: c)),
+                      Text(l, style: const TextStyle(color: kMuted, fontSize: 12)),
+                    ]),
+                  ),
+                );
             return ListView(padding: const EdgeInsets.all(14), children: [
+              Row(children: [
+                tile('${f.round()}%', 'الشعبية', kPrimary),
+                tile('${gs.attendance}', 'الحضور المتوقع', const Color(0xFF1FA58A)),
+                tile(f >= 60 ? 'ممتاز' : (f >= 40 ? 'جيد' : 'ضعيف'), 'رضا الجماهير', const Color(0xFFF5A524)),
+              ]),
+              const SizedBox(height: 12),
               Panel(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
