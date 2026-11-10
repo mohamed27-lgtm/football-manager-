@@ -363,6 +363,25 @@ class GameState extends ChangeNotifier {
   void setTicketLevel(int v) { ticketLevel = v; notifyListeners(); unawaited(save()); }
   int difficulty = 1; // 0 سهل، 1 عادي، 2 صعب
   bool introSeen = false;
+  /// ختم زمني لكل خبر (تاريخ اللعبة|الساعة) ليُجمَّع في صندوق الرسائل
+  final Map<String, String> newsStamp = {};
+  final Set<String> readMsgs = {};
+  @override
+  void notifyListeners() {
+    if (news.isNotEmpty && rounds.isNotEmpty) {
+      final d = today;
+      final n = DateTime.now();
+      final stamp = '${d.year}-${d.month}-${d.day}|${n.hour.toString().padLeft(2, '0')}:${n.minute.toString().padLeft(2, '0')}';
+      for (final x in news.take(12)) {
+        newsStamp.putIfAbsent(x, () => stamp);
+      }
+      if (newsStamp.length > 150) {
+        final keep = news.take(60).toSet();
+        newsStamp.removeWhere((k, _) => !keep.contains(k));
+      }
+    }
+    super.notifyListeners();
+  }
   bool indTrain = false; // تدريب فردي للمواهب الشابة
   void setIndTrain(bool v) { indTrain = v; notifyListeners(); unawaited(save()); }
   final List<Map<String, dynamic>> history = [];
@@ -438,6 +457,7 @@ class GameState extends ChangeNotifier {
     fired = j['fired'] as bool;
     seasonOver = j['over'] as bool;
     news.addAll((j['news'] as List).cast<String>());
+    newsStamp.addAll(((j['nst'] as Map?) ?? const {}).cast<String, String>());
     roundResults.addAll((j['results'] as List).cast<String>());
     market = [
       for (final p in j['market'] as List) Player.fromJson(p as Map<String, dynamic>)
@@ -613,6 +633,7 @@ class GameState extends ChangeNotifier {
         'fired': fired,
         'over': seasonOver,
         'news': news,
+        'nst': newsStamp,
         'results': roundResults,
         'teams': [for (final t in teams) t.toJson()],
         'market': [for (final p in market) p.toJson()],
