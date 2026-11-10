@@ -200,6 +200,7 @@ const formations = <Formation>[
   Formation('3-5-2', 3, 5, 2),
   Formation('5-3-2', 5, 3, 2),
   Formation('4-5-1', 4, 5, 1),
+  Formation('4-2-3-1', 4, 5, 1),
 ];
 
 class Team {
@@ -208,7 +209,7 @@ class Team {
   final int reputation;
   List<Player> squad;
   Formation formation = formations[0];
-  int mentality = 1;
+  int mentality = 2; // 0 دفاعية، 1 حذرة، 2 متوازنة، 3 هجومية، 4 شاملة
   int pressing = 1;
   int tempo = 1;
   int width = 1; // 0 ضيق، 1 متوازن، 2 عريض
@@ -324,6 +325,7 @@ class Team {
         'squad': [for (final p in squad) p.toJson()],
         'formation': formations.indexOf(formation),
         'ment': mentality,
+        'm5': true,
         'press': pressing,
         'tempo': tempo,
         'wid': width,
@@ -361,7 +363,7 @@ class Team {
       budget: (j['budget'] as num).toDouble(),
     );
     t.formation = formations[(j['formation'] as int).clamp(0, formations.length - 1).toInt()];
-    t.mentality = j['ment'] as int;
+    t.mentality = (j['m5'] as bool?) == true ? j['ment'] as int : (j['ment'] as int) * 2;
     t.pressing = j['press'] as int;
     t.tempo = j['tempo'] as int;
     t.width = (j['wid'] as int?) ?? 1;

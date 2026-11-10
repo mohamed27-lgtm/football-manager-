@@ -19,6 +19,7 @@ import 'team_tab.dart';
 import 'tactics.dart';
 import 'facilities_screen.dart';
 import 'i18n.dart';
+import 'lineup_pages.dart';
 import 'images_screen.dart';
 import 'sections_page.dart';
 import 'lang_sheet.dart';
@@ -1016,7 +1017,7 @@ class DashboardTab extends StatelessWidget {
               Expanded(
                 flex: 2,
                 child: GestureDetector(
-                  onTap: () => _push(context, Scaffold(appBar: gameBar(context, gs, 'التشكيلة'), body: TacticsTab(gs: gs))),
+                  onTap: () => _push(context, LineupScreen(gs: gs)),
                   child: Container(
                     height: 52,
                     alignment: Alignment.center,
@@ -1224,7 +1225,7 @@ class DashboardTab extends StatelessWidget {
     final offers = gs.offers.length;
     final items = <(IconData, String, int, VoidCallback)>[
       (Icons.groups_rounded, 'الفريق', injured, () => onNavigate(1)),
-      (Icons.account_tree_rounded, 'التكتيك', 0, () => _push(context, Scaffold(appBar: AppBar(title: const Text('التشكيلة والتكتيك')), body: TacticsTab(gs: gs)))),
+      (Icons.account_tree_rounded, 'التكتيك', 0, () => _push(context, TacticsScreen(gs: gs))),
       (Icons.bolt_rounded, 'التدريب', 0, () => _training(context)),
       (Icons.swap_horiz_rounded, 'الانتقالات', offers, () => onNavigate(2)),
       (Icons.search_rounded, 'الكشافة', 0, () => _push(context, ScoutingScreen(gs: gs))),
@@ -1460,7 +1461,7 @@ class DashboardTab extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         sq(Icons.view_list_rounded, 'القائمة', () {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: const Text('التشكيلة والتكتيك')), body: TacticsTab(gs: gs))));
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => LineupScreen(gs: gs)));
         }),
         const SizedBox(width: 10),
         sq(Icons.bolt_rounded, 'تدريب', () => _training(context)),

@@ -61,7 +61,7 @@ class TacticsControls extends StatelessWidget {
             ]),
           ],
           _label('العقلية'),
-          _seg(['دفاعي', 'متوازن', 'هجومي'], t.mentality, gs.setMentality),
+          _seg(['دفاعية', 'حذرة', 'متوازنة', 'هجومية', 'شاملة'], t.mentality, gs.setMentality),
           const SizedBox(height: 10),
           _row('الضغط', ['منخفض', 'متوسط', 'عالٍ'], t.pressing, gs.setPressing),
           _row('الإيقاع', ['بطيء', 'عادي', 'سريع'], t.tempo, gs.setTempo),

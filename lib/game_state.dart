@@ -37,13 +37,20 @@ class Fixture {
 }
 
 const trainingModes = <String, String>{
-  'balanced': 'متوازن',
-  'attack': 'هجوم',
-  'defense': 'دفاع',
-  'passing': 'تمرير',
-  'fitness': 'لياقة',
-  'rest': 'راحة',
+  'technical': 'فني',
+  'physical': 'بدني',
+  'mental': 'ذهني',
+  'tactical': 'تكتيكي',
 };
+
+/// تحويل أنماط التدريب القديمة في الحفظات
+String migrateTraining(String k) => switch (k) {
+      'attack' || 'balanced' => 'technical',
+      'fitness' => 'physical',
+      'rest' => 'mental',
+      'defense' || 'passing' => 'tactical',
+      _ => trainingModes.containsKey(k) ? k : 'technical',
+    };
 
 enum TaskAction { offers, board, contracts, injuries, match }
 
@@ -94,7 +101,7 @@ class GameState extends ChangeNotifier {
   String country = '';
   int leagueId = 0;
   double confidence = 60;
-  String training = 'balanced';
+  String training = 'technical';
   int trainIntensity = 1; // 0 خفيف، 1 متوسط، 2 مكثف
   static const intensityGain = [0.7, 1.0, 1.35];
   static const intensityRec = [4.0, 0.0, -5.0];
@@ -356,6 +363,8 @@ class GameState extends ChangeNotifier {
   void setTicketLevel(int v) { ticketLevel = v; notifyListeners(); unawaited(save()); }
   int difficulty = 1; // 0 سهل، 1 عادي، 2 صعب
   bool introSeen = false;
+  bool indTrain = false; // تدريب فردي للمواهب الشابة
+  void setIndTrain(bool v) { indTrain = v; notifyListeners(); unawaited(save()); }
   final List<Map<String, dynamic>> history = [];
   String bigWin = '', bigLoss = '';
   int bigWinD = 0, bigLossD = 0;
@@ -423,8 +432,9 @@ class GameState extends ChangeNotifier {
     leagueName = (j['league'] as String?) ?? leagueName;
     if (j['fin'] != null) fin = Finance.fromJson(j['fin'] as Map<String, dynamic>);
     confidence = (j['conf'] as num).toDouble();
-    training = j['training'] as String;
+    training = migrateTraining(j['training'] as String);
     trainIntensity = (j['tint'] as int?) ?? 1;
+    indTrain = (j['itr'] as bool?) ?? false;
     fired = j['fired'] as bool;
     seasonOver = j['over'] as bool;
     news.addAll((j['news'] as List).cast<String>());
@@ -599,6 +609,7 @@ class GameState extends ChangeNotifier {
         'conf': confidence,
         'training': training,
         'tint': trainIntensity,
+        'itr': indTrain,
         'fired': fired,
         'over': seasonOver,
         'news': news,
@@ -964,9 +975,10 @@ class GameState extends ChangeNotifier {
         if (t == user) {
           rec += 1.5 * (staff['doctor'] ?? 0);
           if (p.injuredWeeks > 1 && rng.nextDouble() < 0.1 * (staff['doctor'] ?? 0)) p.injuredWeeks--;
-          if (training == 'rest') rec += 12;
-          if (training == 'fitness') rec += 4;
-          if (training != 'rest') rec += intensityRec[trainIntensity];
+          if (training == 'mental') rec += 8;
+          if (training == 'physical') rec += 4;
+          if (training != 'mental') rec += intensityRec[trainIntensity];
+          if (training == 'mental') p.morale = min(100, p.morale + 1.2);
           rec += 1.5 * (user.trainingLvl - 1);
           _train(p);
         }
@@ -1087,31 +1099,29 @@ class GameState extends ChangeNotifier {
   }
 
   void _train(Player p) {
-    if (training == 'rest' || training == 'fitness') return;
+    if (training == 'mental' || training == 'physical') return;
     if (p.overall >= p.potential) return;
     final base = p.age <= 24 ? 0.14 : (p.age <= 29 ? 0.06 : 0.02);
-    final chance = base * (1 + 0.25 * (user.trainingLvl - 1)) * (1 + 0.1 * (staff['coach'] ?? 0)) * intensityGain[trainIntensity];
+    final chance = base * (1 + 0.25 * (user.trainingLvl - 1)) * (1 + 0.1 * (staff['coach'] ?? 0)) * intensityGain[trainIntensity] * (indTrain && p.age <= 22 ? 1.25 : 1.0);
     if (rng.nextDouble() > chance) return;
     if (p.pos == Pos.gk) {
       p.gk = min(95, p.gk + 1);
       return;
     }
     switch (training) {
-      case 'attack':
-        p.atk = min(95, p.atk + 1);
-      case 'defense':
-        p.def = min(95, p.def + 1);
-      case 'passing':
-        p.pas = min(95, p.pas + 1);
-      default:
-        switch (p.pos) {
-          case Pos.def:
-            p.def = min(95, p.def + 1);
-          case Pos.mid:
-            p.pas = min(95, p.pas + 1);
-          default:
-            p.atk = min(95, p.atk + 1);
+      case 'technical':
+        if (p.pos == Pos.def) {
+          p.pas = min(95, p.pas + 1);
+        } else {
+          p.atk = min(95, p.atk + 1);
         }
+      case 'tactical':
+        if (p.pos == Pos.att) {
+          p.pas = min(95, p.pas + 1);
+        } else {
+          p.def = min(95, p.def + 1);
+        }
+        user.cohesion = min(100, user.cohesion + 0.05);
     }
   }
 

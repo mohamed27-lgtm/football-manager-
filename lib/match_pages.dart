@@ -5,6 +5,7 @@ import 'countries.dart';
 import 'game_state.dart';
 import 'calendar.dart';
 import 'i18n.dart';
+import 'lineup_pages.dart';
 import 'last_match.dart';
 import 'match_screen.dart';
 import 'models.dart';
@@ -537,7 +538,7 @@ class NextMatchScreen extends StatelessWidget {
           ]),
         ),
         bottomActions(
-          whiteBtn('التشكيلة', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => Scaffold(appBar: gameBar(context, gs, 'التشكيلة'), body: TacticsTab(gs: gs)))), icon: Icons.groups_2_outlined),
+          whiteBtn('التشكيلة', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => LineupScreen(gs: gs))), icon: Icons.groups_2_outlined),
           GradientButton(label: 'ابدأ المباراة', icon: Icons.sports_soccer_rounded, onPressed: gs.fired ? null : () => playMatch(context, gs)),
         ),
       ]),

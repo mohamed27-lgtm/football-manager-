@@ -66,7 +66,7 @@ class Side {
       .toList()
     ..sort((a, b) => b.effective.compareTo(a.effective));
 
-  int get mentality => (team.mentality + mentalityBoost).clamp(0, 2).toInt();
+  int get mentality => (team.mentality + mentalityBoost).clamp(0, 4).toInt();
 
   int count(Pos p) => slots.where((s) => s.pos == p).length;
 
@@ -83,14 +83,14 @@ class Side {
 
   double get attackPower =>
       (0.55 * lineAvg(Pos.att) + 0.45 * lineAvg(Pos.mid)) *
-      (1 + 0.06 * (mentality - 1)) *
+      (1 + 0.03 * (mentality - 2)) *
       pow(max(1, count(Pos.att)) / 2, 0.25) *
       _form *
       _man;
 
   double get defensePower =>
       (0.6 * lineAvg(Pos.def) + 0.25 * lineAvg(Pos.mid) + 0.15 * lineAvg(Pos.gk)) *
-      (1 - 0.05 * (mentality - 1)) *
+      (1 - 0.025 * (mentality - 2)) *
       pow(max(1, count(Pos.def)) / 4, 0.3) *
       _form *
       _man;
@@ -189,8 +189,8 @@ class MatchSim {
       if (s.isUser) continue;
       final o = identical(s, home) ? away : home;
       s.mentalityBoost = 0;
-      if (minute > 70 && s.goals < o.goals) s.mentalityBoost = 1;
-      if (minute > 75 && s.goals > o.goals) s.mentalityBoost = -1;
+      if (minute > 70 && s.goals < o.goals) s.mentalityBoost = 2;
+      if (minute > 75 && s.goals > o.goals) s.mentalityBoost = -2;
       if (minute == 56 || minute == 66 || minute == 76) _aiSub(s);
     }
 
