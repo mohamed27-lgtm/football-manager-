@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
 import 'compare.dart';
+import 'flags.dart';
 import 'game_state.dart';
 import 'models.dart';
 import 'negotiation.dart';
@@ -30,20 +31,27 @@ class PlayerTile extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(children: [
-          ratingRing(p.overall),
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: kCard2, border: Border.all(color: kLine)),
+            clipBehavior: Clip.antiAlias,
+            child: p.photo == null ? Icon(Icons.person_rounded, color: posColor(p.pos), size: 30) : appImage(p.photo!, w: 46, h: 46, fit: BoxFit.cover, fallback: Icon(Icons.person_rounded, color: posColor(p.pos), size: 30)),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(p.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-              const SizedBox(height: 3),
               Row(children: [
+                Flexible(child: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+                if (p.nat != null && p.nat!.isNotEmpty) ...[const SizedBox(width: 6), FlagBadge(p.nat!, size: 16)],
+              ]),
+              const SizedBox(height: 3),
+              Wrap(spacing: 6, runSpacing: 2, crossAxisAlignment: WrapCrossAlignment.center, children: [
                 PosChip(p.pos),
-                const SizedBox(width: 8),
+                if (p.sub != null && p.sub!.isNotEmpty) Text(p.sub!, style: const TextStyle(color: kMuted, fontSize: 11.5)),
                 Text('${p.age} سنة', style: const TextStyle(color: kMuted, fontSize: 12)),
-                if (st != null) ...[
-                  const SizedBox(width: 8),
-                  Text(st, style: const TextStyle(color: Color(0xFFFF7043), fontSize: 12)),
-                ],
+                if (st != null) Text(st, style: const TextStyle(color: Color(0xFFFF7043), fontSize: 12)),
+                for (final t in p.traits.take(2)) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), decoration: BoxDecoration(color: const Color(0xFF6A6FC4).withOpacity(0.15), borderRadius: BorderRadius.circular(6)), child: Text(t, style: const TextStyle(color: Color(0xFF6A6FC4), fontSize: 10.5, fontWeight: FontWeight.w700))),
               ]),
             ]),
           ),
@@ -69,6 +77,8 @@ class PlayerTile extends StatelessWidget {
                   ),
                 ]),
               ),
+          const SizedBox(width: 10),
+          ratingRing(p.overall),
         ]),
       ),
     );
