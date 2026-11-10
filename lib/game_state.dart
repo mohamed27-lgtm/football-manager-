@@ -8,6 +8,7 @@ import 'data.dart';
 import 'engine.dart';
 import 'finance.dart';
 import 'models.dart';
+import 'last_match.dart';
 import 'sponsors.dart';
 import 'transfers.dart';
 
@@ -89,6 +90,30 @@ class GameState extends ChangeNotifier {
   Finance fin = Finance();
   final List<Offer> offers = [];
   final Set<int> watch = {};
+  LastMatch? lastMatch;
+  final Map<int, List<String>> h2h = {}; // خصم → آخر نتائجك أمامه (W/D/L)
+
+  /// آخر نتائج فريق في الدوري: W فوز، D تعادل، L خسارة
+  List<String> formOf(Team t, [int n = 5]) {
+    final out = <String>[];
+    for (final r in rounds) {
+      for (final f in r) {
+        if (!f.played || (f.home != t.id && f.away != t.id)) continue;
+        final mine = f.home == t.id ? f.hg! : f.ag!;
+        final opp = f.home == t.id ? f.ag! : f.hg!;
+        out.add(mine > opp ? 'W' : (mine < opp ? 'L' : 'D'));
+      }
+    }
+    return out.length <= n ? out : out.sublist(out.length - n);
+  }
+
+  void _record(MatchSim s, String comp, int round, int oppId) {
+    final lm = LastMatch.fromSim(s, comp: comp, round: round, userHome: s.home.team == user);
+    lastMatch = lm;
+    final l = h2h.putIfAbsent(oppId, () => []);
+    l.add(lm.result);
+    if (l.length > 10) l.removeAt(0);
+  }
   int coins = 300; // كوينز: تُكسب من المتجر ومشاهدة الإعلانات (لاحقاً)
   static const createPlayerCost = 100;
   // ───────── مهام الكشافة ─────────
@@ -323,6 +348,14 @@ class GameState extends ChangeNotifier {
     oplog.addAll(((j['oplog'] as List?) ?? const []).cast<String>());
     watch.addAll(((j['watch'] as List?) ?? const []).cast<int>());
     coins = (j['coins'] as int?) ?? 300;
+    if (j['lm'] != null) {
+      try {
+        lastMatch = LastMatch.fromJson(Map<String, dynamic>.from(j['lm'] as Map));
+      } catch (_) {}
+    }
+    for (final e in ((j['h2h'] as Map?) ?? const {}).entries) {
+      h2h[int.parse(e.key as String)] = (e.value as List).cast<String>();
+    }
     for (final m in (j['missions'] as List?) ?? const []) {
       missions.add(Map<String, dynamic>.from(m as Map));
     }
@@ -409,6 +442,8 @@ class GameState extends ChangeNotifier {
         'oplog': oplog,
         'watch': watch.toList(),
         'coins': coins,
+        'lm': lastMatch?.toJson(),
+        'h2h': {for (final e in h2h.entries) '${e.key}': e.value},
         'missions': missions,
         'sfound': scoutFound,
         'slog': scoutLog,
@@ -761,6 +796,7 @@ class GameState extends ChangeNotifier {
     final f = userFixture;
     if (s == null || f == null) return;
     s.simulateAll();
+    _record(s, leagueName, week + 1, f.home == user.id ? f.away : f.home);
     roundResults.clear();
     _applyResult(f, s.home.goals, s.away.goals);
     roundResults.add(
@@ -1909,6 +1945,7 @@ class GameState extends ChangeNotifier {
       return;
     }
     s.simulateAll();
+    _record(s, c.name, week + 1, t.home == user.id ? t.away : t.home);
     final grp = c.inGroups;
     _setTie(t, s.home.goals, s.away.goals, pens: !grp);
     final mine = t.home == user.id ? s.home.goals - s.away.goals : s.away.goals - s.home.goals;

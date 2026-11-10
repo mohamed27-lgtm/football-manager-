@@ -9,6 +9,8 @@ import 'settings.dart';
 import 'pitch_view.dart';
 import 'tactics.dart';
 import 'widgets.dart';
+import 'last_match.dart';
+import 'match_pages.dart';
 
 class MatchScreen extends StatefulWidget {
   final GameState gs;
@@ -574,6 +576,21 @@ class _MatchScreenState extends State<MatchScreen> {
   @override
   Widget build(BuildContext context) {
     final s = sim;
+    if (s.finished) {
+      final cup = widget.gs.activeCup;
+      final lm = LastMatch.fromSim(s, comp: cup?.name ?? widget.gs.leagueName, round: widget.gs.week + 1, userHome: s.home.team == widget.gs.user);
+      return PopScope(
+        canPop: false,
+        child: MatchSummaryScreen(
+          gs: widget.gs,
+          m: lm,
+          onContinue: () {
+            widget.gs.finishCurrent();
+            Navigator.pop(context);
+          },
+        ),
+      );
+    }
     return PopScope(
       canPop: false,
       child: Scaffold(

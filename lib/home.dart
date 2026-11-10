@@ -27,6 +27,8 @@ import 'widgets.dart';
 import 'scouting_screen.dart';
 import 'loans_screen.dart';
 import 'stadium_screen.dart';
+import 'match_pages.dart';
+import 'countries.dart';
 
 class StartScreen extends StatefulWidget {
   final List<SaveMeta> saves;
@@ -506,6 +508,18 @@ class _HomeShellState extends State<HomeShell> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     child: Row(children: [
+                      if (tab == 0) ...[
+                        teamBadge(gs.user, size: 38),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 3,
+                          child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(gs.user.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                            Text('${gs.leagueName} • المركز ${gs.position}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF9FB0CC), fontSize: 12)),
+                          ]),
+                        ),
+                      ],
+                      if (tab != 0) const Spacer(),
                       GestureDetector(
                         onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FinanceScreen(gs: gs))),
                         child: Container(
@@ -519,7 +533,7 @@ class _HomeShellState extends State<HomeShell> {
                           ]),
                         ),
                       ),
-                      const Spacer(),
+                      if (tab == 0) const SizedBox(width: 4),
                       Builder(builder: (ctx) {
                         final n = gs.tasks.length;
                         return IconButton(
@@ -529,15 +543,12 @@ class _HomeShellState extends State<HomeShell> {
                                     Navigator.of(ctx).pop();
                                     _openTask(t);
                                   }))),
-                          icon: Stack(clipBehavior: Clip.none, children: [
-                            const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 26),
-                            if (n > 0)
-                              Positioned(
-                                  top: 0,
-                                  right: 0,
-                                  child: Container(
-                                      width: 10, height: 10, decoration: const BoxDecoration(color: Color(0xFFFF3D3D), shape: BoxShape.circle))),
-                          ]),
+                          icon: Badge(
+                            isLabelVisible: n > 0,
+                            backgroundColor: const Color(0xFFF0583A),
+                            label: Text('$n'),
+                            child: const Icon(Icons.mail_outline_rounded, color: Colors.white, size: 26),
+                          ),
                         );
                       }),
                     ]),
@@ -942,6 +953,11 @@ class DashboardTab extends StatelessWidget {
     );
   }
 
+  Widget _formUnder(Team t) {
+    final f = gs.formOf(t);
+    return f.isEmpty ? const SizedBox(height: 26) : formChips(f, size: 24);
+  }
+
   Widget _matchCard(BuildContext context) {
     final pc = gs.pendingCup;
     if (pc != null) return CupMatchCard(gs: gs, cup: pc);
@@ -949,53 +965,255 @@ class DashboardTab extends StatelessWidget {
     if (f == null) return const SizedBox.shrink();
     final u = gs.user;
     final isHome = f.home == u.id;
-    final opp = gs.team(isHome ? f.away : f.home);
+    final home = gs.team(f.home), away = gs.team(f.away);
     Widget side(Team t) => Expanded(
+          flex: 3,
           child: Column(children: [
-            teamBadge(t, size: 54),
-            const SizedBox(height: 6),
-            Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
+            teamBadge(t, size: 70),
+            const SizedBox(height: 8),
+            Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+            const SizedBox(height: 8),
+            _formUnder(t),
           ]),
         );
-    return _card(
-      child: Column(children: [
-        Row(children: [
-          Text('المباراة القادمة', style: const TextStyle(color: kMuted, fontSize: 12.5)),
-          const Spacer(),
-          Text('${gs.week + 1}/${gs.rounds.length} • ${isHome ? 'على أرضك' : 'خارج أرضك'}', style: const TextStyle(color: kMuted, fontSize: 12)),
-        ]),
-        const SizedBox(height: 12),
-        Row(children: [
-          side(isHome ? u : opp),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(12)),
-            child: const Text('VS', style: TextStyle(fontWeight: FontWeight.w900, color: kMuted)),
+    return GestureDetector(
+      onTap: () => _push(context, NextMatchScreen(gs: gs)),
+      child: Unfilter(
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(color: const Color(0xFF15233D), borderRadius: BorderRadius.circular(22), boxShadow: const [BoxShadow(color: Color(0xFF0B1426), offset: Offset(0, 4))]),
+          child: Column(children: [
+            Row(children: [
+              Text('الجولة ${gs.week + 1} • ${gs.leagueName}', style: const TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w800)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(color: const Color(0xFF1FA58A).withOpacity(0.25), borderRadius: BorderRadius.circular(10)),
+                child: Text(isHome ? 'على أرضك' : 'خارج أرضك', style: const TextStyle(color: Color(0xFF7FE0C8), fontWeight: FontWeight.w900)),
+              ),
+            ]),
+            const SizedBox(height: 14),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              side(home),
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Column(children: [
+                    const Text('VS', style: TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w900)),
+                    Text(NextMatchScreen.dayOf(gs.week), style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)),
+                    Text(NextMatchScreen.timeOf(gs.week), style: const TextStyle(color: Color(0xFFFFC857), fontSize: 19, fontWeight: FontWeight.w900)),
+                  ]),
+                ),
+              ),
+              side(away),
+            ]),
+            const SizedBox(height: 16),
+            Row(children: [
+              Expanded(
+                flex: 2,
+                child: GestureDetector(
+                  onTap: () => _push(context, Scaffold(appBar: gameBar(context, gs, 'التشكيلة'), body: TacticsTab(gs: gs))),
+                  child: Container(
+                    height: 52,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), boxShadow: const [BoxShadow(color: Color(0x33000000), offset: Offset(0, 2))]),
+                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                      Text('التشكيلة', style: TextStyle(color: Color(0xFF15233D), fontWeight: FontWeight.w900, fontSize: 16)),
+                      SizedBox(width: 8),
+                      Icon(Icons.groups_2_outlined, color: Color(0xFF15233D)),
+                    ]),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(flex: 3, child: GradientButton(label: 'العب المباراة', icon: Icons.sports_soccer_rounded, onPressed: gs.fired ? null : () => playMatch(context, gs))),
+            ]),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _ring(String label, double v, Color c, String text) => Expanded(
+        child: Column(children: [
+          SizedBox(
+            width: 70,
+            height: 70,
+            child: Stack(alignment: Alignment.center, children: [
+              SizedBox(width: 70, height: 70, child: CircularProgressIndicator(value: (v / 100).clamp(0, 1).toDouble(), strokeWidth: 7, color: c, backgroundColor: kCard2)),
+              Text(text, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+            ]),
           ),
-          side(isHome ? opp : u),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
         ]),
-        const SizedBox(height: 14),
-        Row(children: [
-          Expanded(
-            flex: 3,
-            child: GradientButton(
-              label: 'لعب',
-              icon: Icons.play_arrow_rounded,
-              onPressed: gs.fired ? null : () => playMatch(context, gs),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            flex: 2,
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(minimumSize: const Size(0, 52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-              onPressed: () => _push(context, Scaffold(appBar: AppBar(title: const Text('التشكيلة والتكتيك')), body: TacticsTab(gs: gs))),
-              child: const Text('التشكيلة'),
-            ),
-          ),
-        ]),
+      );
+
+  Widget _teamStatus() {
+    final u = gs.user;
+    final xi = u.lineup.isEmpty ? u.squad.take(11).toList() : u.lineup;
+    final fit = xi.isEmpty ? 0.0 : xi.fold<double>(0, (a, p) => a + p.fitness) / xi.length;
+    final mor = xi.isEmpty ? 0.0 : xi.fold<double>(0, (a, p) => a + p.morale) / xi.length;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+      child: Row(children: [
+        _ring('التقييم', u.strength, const Color(0xFF2F7BE6), '${u.strength.round()}'),
+        _ring('اللياقة', fit, const Color(0xFF1FA58A), '${fit.round()}%'),
+        _ring('المعنويات', mor, const Color(0xFF1FA58A), '${mor.round()}%'),
+        _ring('الانسجام', u.cohesion, const Color(0xFFF5A524), '${u.cohesion.round()}%'),
       ]),
     );
+  }
+
+  Widget _lastMatchCard(BuildContext context) {
+    final m = gs.lastMatch;
+    if (m == null) return const SizedBox.shrink();
+    Team? t(int id) {
+      try {
+        return gs.team(id);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final h = t(m.homeId), a = t(m.awayId);
+    final res = m.result;
+    final label = res == 'W' ? 'فوز' : (res == 'L' ? 'خسارة' : 'تعادل');
+    final lc = res == 'W' ? const Color(0xFF1FA58A) : (res == 'L' ? const Color(0xFFE5533D) : const Color(0xFF9AA3B2));
+    final goals = [
+      for (final e in m.events)
+        if (e['t'] == 'goal' && (e['h'] as bool) == m.userHome) "${e['a']} '${e['m']}"
+    ];
+    Widget side(Team? tm, String name) => Expanded(
+          child: Row(children: [
+            if (tm != null) teamBadge(tm, size: 44),
+            const SizedBox(width: 8),
+            Flexible(child: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+          ]),
+        );
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(2, 18, 2, 8),
+        child: Row(children: [
+          const Text('آخر مباراة', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+          const Spacer(),
+          Text('الجولة ${m.round}', style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800)),
+        ]),
+      ),
+      Container(
+        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: [
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(children: [
+              Row(children: [
+                side(h, m.homeName),
+                Column(children: [
+                  Text('${m.hg} - ${m.ag}', style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
+                    decoration: BoxDecoration(color: lc.withOpacity(0.18), borderRadius: BorderRadius.circular(10)),
+                    child: Text(label, style: TextStyle(color: lc, fontWeight: FontWeight.w900)),
+                  ),
+                ]),
+                Expanded(
+                  child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                    Flexible(child: Text(m.awayName, maxLines: 2, textAlign: TextAlign.end, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
+                    const SizedBox(width: 8),
+                    if (a != null) teamBadge(a, size: 44),
+                  ]),
+                ),
+              ]),
+              if (goals.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(goals.join('  •  '), textAlign: TextAlign.center, style: const TextStyle(color: kMuted, fontSize: 12.5)),
+              ],
+            ]),
+          ),
+          Container(height: 1, color: kLine),
+          Row(children: [
+            Expanded(
+              child: InkWell(
+                onTap: () => _push(context, MatchSummaryScreen(gs: gs, m: m, onContinue: () => Navigator.of(context).pop())),
+                child: const Padding(padding: EdgeInsets.symmetric(vertical: 14), child: Center(child: Text('ملخص المباراة', style: TextStyle(color: Color(0xFFF0583A), fontWeight: FontWeight.w900, fontSize: 15)))),
+              ),
+            ),
+            Container(width: 1, height: 44, color: kLine),
+            Expanded(
+              child: InkWell(
+                onTap: () => _push(context, MatchSummaryScreen(gs: gs, m: m, initialTab: 1, onContinue: () => Navigator.of(context).pop())),
+                child: const Padding(padding: EdgeInsets.symmetric(vertical: 14), child: Center(child: Text('الإحصائيات', style: TextStyle(color: Color(0xFFF0583A), fontWeight: FontWeight.w900, fontSize: 15)))),
+              ),
+            ),
+          ]),
+        ]),
+      ),
+    ]);
+  }
+
+  Widget _weekPlayers(BuildContext context) {
+    final m = gs.lastMatch;
+    final all = {for (final p in gs.user.squad) p.id: p};
+    final tops = <(Player, double)>[];
+    if (m != null) {
+      for (final r in m.ratings) {
+        if ((r['h'] as bool) == m.userHome && all.containsKey(r['id'])) tops.add((all[r['id']]!, (r['r'] as num).toDouble()));
+      }
+    } else {
+      for (final p in gs.user.squad) {
+        if (p.rated > 0) tops.add((p, p.avgRating));
+      }
+    }
+    tops.sort((a, b) => b.$2.compareTo(a.$2));
+    final top = tops.take(3).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(2, 18, 2, 8),
+        child: Row(children: [
+          const Text('لاعبو الأسبوع', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+          const Spacer(),
+          const Text('الأفضل أداءً', style: TextStyle(color: kMuted, fontWeight: FontWeight.w800)),
+        ]),
+      ),
+      Row(children: [
+        for (final e in top)
+          Expanded(
+            child: GestureDetector(
+              onTap: () => showPlayerSheet(context, gs, e.$1),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+                child: Column(children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: const BoxDecoration(color: Color(0xFFE6E9F2), shape: BoxShape.circle),
+                    clipBehavior: Clip.antiAlias,
+                    child: e.$1.photo != null ? appImage(e.$1.photo!, w: 64, h: 64, fit: BoxFit.cover, fallback: const Icon(Icons.person, size: 38, color: Color(0xFF6A6FC4))) : const Icon(Icons.person, size: 38, color: Color(0xFF6A6FC4)),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Flexible(child: Text(e.$1.name.split(' ').last, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900))),
+                    if (countryByName(e.$1.nat) != null) ...[const SizedBox(width: 5), FlagRect(countryByName(e.$1.nat)!.iso, w: 22)],
+                  ]),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    decoration: BoxDecoration(color: ratingColor(e.$2 * 10 + 15).withOpacity(0.85), borderRadius: BorderRadius.circular(8)),
+                    child: Text(e.$2.toStringAsFixed(1), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                  ),
+                ]),
+              ),
+            ),
+          ),
+      ]),
+    ];
   }
 
   Widget _quickGrid(BuildContext context) {
@@ -1095,8 +1313,7 @@ class DashboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(padding: const EdgeInsets.fromLTRB(14, 12, 14, 20), children: [
-      _clubHeader(),
+    return ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 20), children: [
       if (gs.fired)
         Panel(
           color: const Color(0xFF2A1414),
@@ -1132,8 +1349,13 @@ class DashboardTab extends StatelessWidget {
         )
       else
         _matchCard(context),
+      if (!gs.fired && !gs.seasonOver) ...[
+        const Padding(padding: EdgeInsets.fromLTRB(2, 4, 2, 8), child: Text('حالة الفريق', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17))),
+        _teamStatus(),
+        _lastMatchCard(context),
+        _weekPlayers(context),
+      ],
       if (gs.boardKind != null) _board(context),
-      _quickGrid(context),
       _attention(context),
     ]);
   }
