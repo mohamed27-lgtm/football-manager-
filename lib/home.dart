@@ -24,6 +24,8 @@ import 'sections_page.dart';
 import 'lang_sheet.dart';
 import 'settings.dart';
 import 'widgets.dart';
+import 'scouting_screen.dart';
+import 'loans_screen.dart';
 import 'stadium_screen.dart';
 
 class StartScreen extends StatefulWidget {
@@ -1005,8 +1007,8 @@ class DashboardTab extends StatelessWidget {
       (Icons.account_tree_rounded, 'التكتيك', 0, () => _push(context, Scaffold(appBar: AppBar(title: const Text('التشكيلة والتكتيك')), body: TacticsTab(gs: gs)))),
       (Icons.bolt_rounded, 'التدريب', 0, () => _training(context)),
       (Icons.swap_horiz_rounded, 'الانتقالات', offers, () => onNavigate(2)),
-      (Icons.search_rounded, 'الكشافة', 0, () => onNavigate(2)),
-      (Icons.school_rounded, 'الأكاديمية', 0, () => _push(context, AcademyScreen(gs: gs))),
+      (Icons.search_rounded, 'الكشافة', 0, () => _push(context, ScoutingScreen(gs: gs))),
+      (Icons.compare_arrows_rounded, 'الإعارات', 0, () => _push(context, LoansScreen(gs: gs))),
       (Icons.account_balance_wallet_rounded, 'المالية', 0, () => _push(context, FinanceScreen(gs: gs))),
       (Icons.stadium_rounded, 'المنشآت', 0, () => _push(context, FacilitiesScreen(gs: gs))),
       (Icons.emoji_events_rounded, 'المسابقات', 0, () => onNavigate(3)),

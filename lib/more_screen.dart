@@ -165,7 +165,6 @@ class _MoreTabState extends State<MoreTab> {
         (Icons.campaign_rounded, 'الجماهير', () => _push(MediaScreen(gs: gs))),
         (Icons.stadium_rounded, 'المنشآت', () => _push(FacilitiesScreen(gs: gs))),
         (Icons.confirmation_number_rounded, 'الملعب والتذاكر', () => _push(StadiumScreen(gs: gs))),
-        (Icons.school_rounded, 'الأكاديمية', () => _push(AcademyScreen(gs: gs))),
         (Icons.gavel_rounded, 'اللعب المالي النظيف', () => _push(FfpScreen(gs: gs))),
         (Icons.history_edu_rounded, 'تاريخ النادي', () => _push(HistoryScreen(gs: gs))),
       ]),

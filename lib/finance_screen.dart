@@ -68,7 +68,7 @@ class FinanceScreen extends StatelessWidget {
             final u = gs.user;
             final f = gs.fin;
             final net = f.totalIncome - f.totalExpense;
-            final weeklyCost = gs.weeklyWages + 0.03 * (u.stadium + u.trainingLvl + u.academy);
+            final weeklyCost = gs.weeklyWages + 0.03 * (u.stadium + u.trainingLvl);
             final runway = u.budget > 0 && weeklyCost > 0 ? (u.budget / weeklyCost).floor() : 0;
             return ListView(padding: const EdgeInsets.all(14), children: [
               Panel(

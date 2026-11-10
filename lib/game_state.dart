@@ -826,7 +826,7 @@ class GameState extends ChangeNotifier {
     final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +
         dealsIncome * (0.9 + 0.2 * fans / 100);
     final sponsorX = sponsor * (1 + 0.05 * mk);
-    final maintenance = 0.03 * (user.stadium + user.trainingLvl + user.academy);
+    final maintenance = 0.03 * (user.stadium + user.trainingLvl);
     final interest = fin.debt * 0.004;
     fin.add('tickets', gate);
     fin.add('broadcast', broadcast);
@@ -1271,7 +1271,7 @@ class GameState extends ChangeNotifier {
     final lvl = switch (kind) {
       'stadium' => user.stadium,
       'training' => user.trainingLvl,
-      _ => user.academy,
+      _ => 1,
     };
     if (lvl >= 5) return 'وصلت إلى أقصى مستوى';
     final cost = upgradeCost(lvl);
@@ -1284,7 +1284,7 @@ class GameState extends ChangeNotifier {
       case 'training':
         user.trainingLvl++;
       default:
-        user.academy++;
+        break;
     }
     news.insert(0, '🏗️ تمت ترقية المنشأة (${money1(cost)})');
     unawaited(save());
@@ -1490,13 +1490,6 @@ class GameState extends ChangeNotifier {
       } else {
         t.autoPick();
       }
-    }
-
-    final n = 1 + (user.academy - 1) ~/ 2;
-    for (var i = 0; i < n && user.squad.length < 30; i++) {
-      final p = makeAcademyPlayer(rng, Pos.values[rng.nextInt(4)], user.academy);
-      user.squad.add(p);
-      news.insert(0, '🌱 الأكاديمية: انضم الموهوب ${p.name} (${p.age} سنة، إمكانات ${p.potential})');
     }
 
     for (final d in deals) {

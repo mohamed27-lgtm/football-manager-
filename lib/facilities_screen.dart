@@ -88,12 +88,11 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
         child: ListenableBuilder(
           listenable: gs,
           builder: (context, _) {
-            final lv = gs.user.stadium + gs.user.trainingLvl + gs.user.academy;
+            final lv = gs.user.stadium + gs.user.trainingLvl;
             final upkeep = lv * 0.02;
             Widget cards() => Column(children: [
                   _fac(context, 'stadium', Icons.stadium_rounded, const Color(0xFFE5533D), 'الملعب', 'يرفع دخل التذاكر في المباريات على أرضك', gs.user.stadium),
                   _fac(context, 'training', Icons.fitness_center_rounded, const Color(0xFF1FA58A), 'مركز التدريب', 'تطور اللاعبين وتعافٍ أسرع', gs.user.trainingLvl),
-                  _fac(context, 'academy', Icons.school_rounded, const Color(0xFF6A6FC4), 'الأكاديمية', 'مواهب شابة بإمكانات أعلى كل موسم', gs.user.academy),
                   _fac(context, 'medical', Icons.medical_services_rounded, const Color(0xFFE5533D), 'المركز الطبي', 'مدة أقصر للإصابات', 1, locked: true),
                   _fac(context, 'scout', Icons.search_rounded, const Color(0xFFF5A524), 'شبكة الكشافة', 'مناطق بحث أكثر', 1, locked: true),
                   _fac(context, 'fans', Icons.groups_rounded, const Color(0xFF2F7BE6), 'مرافق الجماهير', 'دخل المباريات أعلى', 1, locked: true),
@@ -112,7 +111,7 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
               ),
               const SizedBox(height: 12),
               Row(children: [
-                _tile('${(lv / 3).toStringAsFixed(1)}', 'مستوى النادي', const Color(0xFF1FA58A)),
+                _tile('${(lv / 2).toStringAsFixed(1)}', 'مستوى النادي', const Color(0xFF1FA58A)),
                 _tile(money(upkeep), 'الصيانة الأسبوعية', kPrimary),
                 _tile(money(gs.user.budget), 'الميزانية', kAccent),
               ]),
@@ -123,7 +122,6 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
                 for (final e in [
                   ('الملعب', 'يرفع دخل التذاكر', gs.user.stadium),
                   ('مركز التدريب', 'يسرّع التطور', gs.user.trainingLvl),
-                  ('الأكاديمية', 'مواهب أفضل', gs.user.academy),
                 ])
                   Container(
                     margin: const EdgeInsets.only(bottom: 10),
@@ -138,91 +136,6 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
                   ),
               ],
               const Text('كل مستوى يزيد مصاريف الصيانة الأسبوعية قليلاً.', style: TextStyle(color: kMuted, fontSize: 12)),
-            ]);
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class AcademyScreen extends StatelessWidget {
-  final GameState gs;
-  const AcademyScreen({super.key, required this.gs});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('🌱 الأكاديمية')),
-      body: SafeArea(
-        child: ListenableBuilder(
-          listenable: gs,
-          builder: (context, _) {
-            final a = gs.user.academy;
-            final intake = 1 + (a - 1) ~/ 2;
-            final youths = gs.user.squad.where((p) => p.age <= 21).toList()
-              ..sort((x, y) => y.potential.compareTo(x.potential));
-            Widget tile(String v, String l, Color c) => Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
-                    child: Column(children: [
-                      Text(v, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: c)),
-                      Text(l, style: const TextStyle(color: kMuted, fontSize: 12)),
-                    ]),
-                  ),
-                );
-            return ListView(padding: const EdgeInsets.all(14), children: [
-              Row(children: [
-                tile('$a/5', 'المستوى', kPrimary),
-                tile('$intake', 'مواهب/موسم', const Color(0xFF1FA58A)),
-                tile('${youths.length}', 'الشباب', const Color(0xFF6A6FC4)),
-              ]),
-              const SizedBox(height: 12),
-              Panel(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    const Text('مستوى الأكاديمية', style: TextStyle(fontWeight: FontWeight.w800)),
-                    const Spacer(),
-                    Text('$a/5', style: const TextStyle(color: kAccent, fontWeight: FontWeight.w800)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text('في نهاية الموسم ينضم $intake ${intake == 1 ? 'موهبة' : 'مواهب'} جديدة، بإمكانات متوقعة بين ${56 + 6 * a} و${71 + 6 * a} تقريباً.',
-                      style: const TextStyle(color: kMuted, fontSize: 13, height: 1.5)),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: GradientButton(
-                      label: a >= 5 ? 'أقصى مستوى ✅' : 'ترقية مقابل ${money(gs.upgradeCost(a))}',
-                      icon: a >= 5 ? null : Icons.upgrade_rounded,
-                      onPressed: a >= 5
-                          ? null
-                          : () {
-                              final err = gs.upgrade('academy');
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تمت الترقية ✅')));
-                            },
-                    ),
-                  ),
-                ]),
-              ),
-              sectionTitle('المواهب الشابة (21 سنة فما دون)'),
-              Panel(
-                padding: EdgeInsets.zero,
-                child: youths.isEmpty
-                    ? const Padding(padding: EdgeInsets.all(14), child: Text('لا يوجد لاعبون شباب حالياً', style: TextStyle(color: kMuted)))
-                    : Column(children: [
-                        for (final p in youths)
-                          PlayerTile(
-                            p: p,
-                            onTap: () => showPlayerSheet(context, gs, p),
-                            trailing: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                              Text('إمكانات ${p.potential}', style: const TextStyle(color: Color(0xFF7C4DFF), fontWeight: FontWeight.w700, fontSize: 13)),
-                              Text('${p.age} سنة', style: const TextStyle(color: kMuted, fontSize: 12)),
-                            ]),
-                          ),
-                      ]),
-              ),
             ]);
           },
         ),

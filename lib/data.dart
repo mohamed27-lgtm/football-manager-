@@ -116,10 +116,3 @@ void topUpSquad(Team t, Random rng) {
   }
 }
 
-/// لاعب من الأكاديمية: ضعيف الآن، إمكاناته عالية حسب مستوى الأكاديمية
-Player makeAcademyPlayer(Random rng, Pos pos, int academy) {
-  final p = makePlayer(rng, pos, 44 + academy * 3 + rng.nextInt(7), 16 + rng.nextInt(3));
-  p.potential = min(95, p.overall + 12 + academy * 3 + rng.nextInt(10));
-  p.contract = 3;
-  return p;
-}
