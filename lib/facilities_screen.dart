@@ -162,7 +162,24 @@ class AcademyScreen extends StatelessWidget {
             final intake = 1 + (a - 1) ~/ 2;
             final youths = gs.user.squad.where((p) => p.age <= 21).toList()
               ..sort((x, y) => y.potential.compareTo(x.potential));
+            Widget tile(String v, String l, Color c) => Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+                    child: Column(children: [
+                      Text(v, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: c)),
+                      Text(l, style: const TextStyle(color: kMuted, fontSize: 12)),
+                    ]),
+                  ),
+                );
             return ListView(padding: const EdgeInsets.all(14), children: [
+              Row(children: [
+                tile('$a/5', 'المستوى', kPrimary),
+                tile('$intake', 'مواهب/موسم', const Color(0xFF1FA58A)),
+                tile('${youths.length}', 'الشباب', const Color(0xFF6A6FC4)),
+              ]),
+              const SizedBox(height: 12),
               Panel(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
@@ -176,14 +193,15 @@ class AcademyScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
-                    child: FilledButton(
+                    child: GradientButton(
+                      label: a >= 5 ? 'أقصى مستوى ✅' : 'ترقية مقابل ${money(gs.upgradeCost(a))}',
+                      icon: a >= 5 ? null : Icons.upgrade_rounded,
                       onPressed: a >= 5
                           ? null
                           : () {
                               final err = gs.upgrade('academy');
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تمت الترقية ✅')));
                             },
-                      child: Text(a >= 5 ? 'أقصى مستوى ✅' : 'ترقية مقابل ${money(gs.upgradeCost(a))}'),
                     ),
                   ),
                 ]),

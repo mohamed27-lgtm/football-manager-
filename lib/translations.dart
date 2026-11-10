@@ -1199,4 +1199,7 @@ const Map<String, List<String>> kTr = {
   "لا بيانات": ["No data", "Aucune donnée", "Sin datos"],
   "لا توجد جنسيات كافية.": ["Not enough nationalities.", "Pas assez de nationalités.", "No hay suficientes nacionalidades."],
   "رضا الجماهير": ["Fan satisfaction", "Satisfaction des fans", "Satisfacción de aficionados"],
+  "المستوى": ["Level", "Niveau", "Nivel"],
+  "مواهب/موسم": ["Talents/season", "Talents/saison", "Talentos/temporada"],
+  "الشباب": ["Youth", "Jeunes", "Jóvenes"],
 };
