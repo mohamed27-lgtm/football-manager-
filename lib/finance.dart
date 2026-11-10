@@ -18,6 +18,7 @@ class Finance {
     'agents',
     'loanin',
     'staff',
+    'scouting',
   ];
 
   static const labels = <String, String>{
@@ -37,6 +38,7 @@ class Finance {
     'loanin': 'استعارة لاعبين',
     'staff': 'رواتب الطاقم',
     'loanout': 'إعارة لاعبين',
+    'scouting': 'مهام الكشافة',
   };
 
   void add(String key, double v) => season[key] = (season[key] ?? 0) + v;

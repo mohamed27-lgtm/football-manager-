@@ -89,6 +89,10 @@ class GameState extends ChangeNotifier {
   Finance fin = Finance();
   final List<Offer> offers = [];
   final Set<int> watch = {};
+  // ───────── مهام الكشافة ─────────
+  final List<Map<String, dynamic>> missions = []; // {c: البلد, e: أسبوع الانتهاء, w: المدة}
+  final List<int> scoutFound = []; // ids اللاعبين المكتشفين (تبقى في السوق)
+  final List<String> scoutLog = [];
   final List<String> oplog = [];
   void logOp(String m) {
     oplog.insert(0, 'الأسبوع ${week + 1} • $m');
@@ -316,6 +320,11 @@ class GameState extends ChangeNotifier {
     honours.addAll(((j['honours'] as List?) ?? const []).cast<String>());
     oplog.addAll(((j['oplog'] as List?) ?? const []).cast<String>());
     watch.addAll(((j['watch'] as List?) ?? const []).cast<int>());
+    for (final m in (j['missions'] as List?) ?? const []) {
+      missions.add(Map<String, dynamic>.from(m as Map));
+    }
+    scoutFound.addAll(((j['sfound'] as List?) ?? const []).cast<int>());
+    scoutLog.addAll(((j['slog'] as List?) ?? const []).cast<String>());
     final st = j['staff'] as Map<String, dynamic>?;
     if (st != null) st.forEach((k, v) => staff[k] = v as int);
     boardKind = j['bk'] as int?;
@@ -396,6 +405,9 @@ class GameState extends ChangeNotifier {
         'honours': honours,
         'oplog': oplog,
         'watch': watch.toList(),
+        'missions': missions,
+        'sfound': scoutFound,
+        'slog': scoutLog,
         'staff': staff,
         'bk': boardKind,
         'div': div,
@@ -842,6 +854,7 @@ class GameState extends ChangeNotifier {
     _transferTick();
     _boardTick();
     week++;
+    _scoutTick();
     if (week >= 4) transferBan = false;
     _enforceRegistration();
     if (week % 4 == 0) market = _scoutedMarket();
@@ -1496,6 +1509,7 @@ class GameState extends ChangeNotifier {
     _movePyramid(finalTable, pos);
     season++;
     week = 0;
+    missions.clear();
     if (pointsPenaltyNext > 0) {
       user.penalty = pointsPenaltyNext;
       news.insert(0, '⛔ خصم $pointsPenaltyNext نقاط من رصيدك بسبب مخالفة اللعب المالي النظيف');
@@ -1947,6 +1961,82 @@ class GameState extends ChangeNotifier {
   };
 
   double get staffWages => staff.values.fold(0, (a, v) => a + v * 0.04);
+  // ───────── نظام الكشافة: إرسال كشّاف إلى بلد ─────────
+  int get scoutSlots => 1 + (staff['scout'] ?? 0) ~/ 2;
+  static const scoutDurations = [2, 4, 6];
+  double missionCost(int weeks) => 0.3 * weeks;
+
+  List<MapEntry<String, int>> get scoutCountries {
+    final by = <String, int>{};
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+      if (t == user) continue;
+      for (final p in t.squad) {
+        final n = p.nat;
+        if (n != null && n.isNotEmpty && p.age <= 23) by[n] = (by[n] ?? 0) + 1;
+      }
+    }
+    final l = by.entries.where((e) => e.value >= 3).toList()..sort((a, b) => b.value.compareTo(a.value));
+    return l;
+  }
+
+  String? startMission(String country, int weeks) {
+    if (missions.length >= scoutSlots) return 'لا يوجد كشّاف متاح (الحد $scoutSlots)';
+    if (missions.any((m) => m['c'] == country)) return 'يوجد كشّاف في هذا البلد بالفعل';
+    final cost = missionCost(weeks);
+    if (cost > user.budget) return 'الميزانية غير كافية (${money1(cost)})';
+    user.budget -= cost;
+    fin.add('scouting', cost);
+    missions.add({'c': country, 'e': week + weeks, 'w': weeks});
+    news.insert(0, '🔭 أرسلت كشّافاً إلى $country لمدة $weeks أسابيع');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  String? cancelMission(Map<String, dynamic> m) {
+    missions.remove(m);
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  void _scoutTick() {
+    final done = missions.where((m) => (m['e'] as int) <= week).toList();
+    for (final m in done) {
+      missions.remove(m);
+      final country = m['c'] as String;
+      final lvl = staff['scout'] ?? 0;
+      final pool = <Player>[];
+      for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+        if (t == user) continue;
+        for (final p in t.squad) {
+          if (p.nat == country && p.age <= 23 && !p.onLoan && !scoutFound.contains(p.id)) {
+            p.club = t.name;
+            pool.add(p);
+          }
+        }
+      }
+      pool.sort((a, b) => (b.potential + rng.nextInt(10)).compareTo(a.potential + rng.nextInt(10)));
+      final n = 2 + (m['w'] as int) ~/ 2 + lvl ~/ 2;
+      final found = pool.take(n).toList();
+      for (final p in found) {
+        scoutFound.add(p.id);
+        if (!market.any((x) => x.id == p.id)) market.add(Player.fromJson(p.toJson())..club = p.club);
+      }
+      while (scoutFound.length > 24) {
+        scoutFound.removeAt(0);
+      }
+      if (found.isEmpty) {
+        scoutLog.insert(0, '$country: لم يجد الكشّاف أحداً');
+        news.insert(0, '🔭 عاد الكشّاف من $country دون اكتشافات');
+      } else {
+        scoutLog.insert(0, '$country: ${found.map((p) => '${p.name} (${p.overall}/${p.potential})').join('، ')}');
+        news.insert(0, '🔭 عاد الكشّاف من $country: اكتشف ${found.length} لاعبين جدداً في السوق');
+      }
+      if (scoutLog.length > 20) scoutLog.removeLast();
+    }
+  }
+
   double staffCost(String role) => 4.0 * ((staff[role] ?? 0) + 1);
 
   String? upgradeStaff(String role) {
@@ -1980,6 +2070,12 @@ class GameState extends ChangeNotifier {
     // الأفضلية للأقوى لكن بتنوع: نأخذ 45 عشوائياً ونرتّبهم
     for (final p in pool.take(45)) {
       m.add(Player.fromJson(p.toJson())..club = p.club);
+    }
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+      if (t == user) continue;
+      for (final p in t.squad) {
+        if (scoutFound.contains(p.id) && !m.any((x) => x.id == p.id)) m.add(Player.fromJson(p.toJson())..club = t.name);
+      }
     }
     final lvl = staff['scout'] ?? 0;
     if (lvl > 0) {

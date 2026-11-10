@@ -48,6 +48,91 @@ class _ScoutingScreenState extends State<ScoutingScreen> {
     );
   }
 
+  int _weeks = 4;
+
+  List<Widget> _missions() {
+    final slots = gs.scoutSlots;
+    return [
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Text('الكشّافون النشطون', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+            const Spacer(),
+            Text('${gs.missions.length}/$slots', style: const TextStyle(color: kMuted)),
+          ]),
+          const SizedBox(height: 8),
+          if (gs.missions.isEmpty) const Text('لا مهام جارية.', style: TextStyle(color: kMuted)),
+          for (final m in gs.missions)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(children: [
+                const Icon(Icons.travel_explore_rounded, color: kPrimary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(m['c'] as String, style: const TextStyle(fontWeight: FontWeight.w800)),
+                    Text('يعود بعد ${(m['e'] as int) - gs.week} أسابيع', style: const TextStyle(color: kMuted, fontSize: 12)),
+                  ]),
+                ),
+                TextButton(onPressed: () => gs.cancelMission(m), child: const Text('إلغاء')),
+              ]),
+            ),
+        ]),
+      ),
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('إرسال كشّاف جديد', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+          const SizedBox(height: 10),
+          SegmentedButton<int>(
+            showSelectedIcon: false,
+            expandedInsets: EdgeInsets.zero,
+            segments: [for (final w in GameState.scoutDurations) ButtonSegment(value: w, label: Text('$w أسابيع'))],
+            selected: {_weeks},
+            onSelectionChanged: (v) => setState(() => _weeks = v.first),
+          ),
+          const SizedBox(height: 6),
+          Text('التكلفة ${money(gs.missionCost(_weeks))} • يكتشف ${2 + _weeks ~/ 2 + (gs.staff['scout'] ?? 0) ~/ 2} لاعبين شباباً تقريباً.', style: const TextStyle(color: kMuted, fontSize: 12.5)),
+          const SizedBox(height: 8),
+          for (final e in gs.scoutCountries.take(12))
+            InkWell(
+              onTap: () {
+                final err = gs.startMission(e.key, _weeks);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'انطلق الكشّاف ✅')));
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 9),
+                child: Row(children: [
+                  const Icon(Icons.flag_rounded, size: 18, color: kMuted),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(e.key, style: const TextStyle(fontWeight: FontWeight.w700))),
+                  Text('${e.value} موهبة', style: const TextStyle(color: kMuted, fontSize: 12)),
+                  const SizedBox(width: 10),
+                  const Icon(Icons.send_rounded, size: 16, color: kPrimary),
+                ]),
+              ),
+            ),
+        ]),
+      ),
+      if (gs.scoutLog.isNotEmpty) ...[
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('تقارير الكشّافين', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+            const SizedBox(height: 8),
+            for (final l in gs.scoutLog.take(6)) Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Text(l, style: const TextStyle(fontSize: 12.5, height: 1.4))),
+          ]),
+        ),
+      ],
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,8 +148,9 @@ class _ScoutingScreenState extends State<ScoutingScreen> {
               showSelectedIcon: false,
               expandedInsets: EdgeInsets.zero,
               segments: const [
-                ButtonSegment(value: 0, label: Text('مواهب مقترحة')),
-                ButtonSegment(value: 1, label: Text('المراقبة')),
+                ButtonSegment(value: 0, label: Text('المهام')),
+                ButtonSegment(value: 1, label: Text('مواهب مقترحة')),
+                ButtonSegment(value: 2, label: Text('المراقبة')),
               ],
               selected: {tab},
               onSelectionChanged: (v) => setState(() => tab = v.first),
@@ -80,7 +166,7 @@ class _ScoutingScreenState extends State<ScoutingScreen> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('الكشّاف يضيف مواهب أفضل إلى السوق كل 4 أسابيع.', style: TextStyle(color: kMuted, fontSize: 12.5)),
+                const Text('الكشّاف الدائم يضيف مواهب إلى السوق كل 4 أسابيع. المهام تضيف مواهب من بلد تختاره.', style: TextStyle(color: kMuted, fontSize: 12.5)),
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
@@ -98,8 +184,9 @@ class _ScoutingScreenState extends State<ScoutingScreen> {
               ]),
             ),
             const SizedBox(height: 12),
-            if (tab == 0) _list(gems, 'لا مواهب حالياً', 'ترقية الكشّاف تضيف مواهب أفضل.'),
-            if (tab == 1) _list(watched, 'لا لاعبين تحت المراقبة', 'أضف لاعباً من بطاقته إلى قائمة المراقبة.'),
+            if (tab == 0) ..._missions(),
+            if (tab == 1) _list(gems, 'لا مواهب حالياً', 'ترقية الكشّاف تضيف مواهب أفضل.'),
+            if (tab == 2) _list(watched, 'لا لاعبين تحت المراقبة', 'أضف لاعباً من بطاقته إلى قائمة المراقبة.'),
           ]);
         },
       ),
