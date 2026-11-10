@@ -1215,7 +1215,7 @@ class DashboardTab extends StatelessWidget {
             ),
           ),
       ]),
-    ];
+    ]);
   }
 
   Widget _quickGrid(BuildContext context) {
