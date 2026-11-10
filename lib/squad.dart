@@ -151,111 +151,78 @@ class _PlayerCardState extends State<_PlayerCard> {
     ];
   }
 
-  @override
-  Widget build(BuildContext ctx) {
-    final gs = widget.gs, p = widget.p, market = widget.market;
-    final context = widget.outer;
-    Widget chip(String l, String v) => Expanded(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
-            child: Column(children: [
-              Text(v, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
-              Text(l, style: const TextStyle(color: kMuted, fontSize: 12)),
-            ]),
-          ),
-        );
-    Widget info(String l, String v) => Expanded(
-          child: Column(children: [
-            Text(l, style: const TextStyle(color: kMuted, fontSize: 11)),
-            const SizedBox(height: 3),
-            Text(v, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-          ]),
-        );
-    void snack(String? err, String ok) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? ok)));
-    final tabs = ['السمات', 'الإحصاءات', 'العقد', 'المسيرة', 'الجوائز', 'إجراءات'];
-    final body = <Widget>[
-      if (tab == 0) ...[
-          if (p.pos == Pos.gk)
-            StatBar('حراسة', p.gk)
-          else ...[
-            StatBar('هجوم', p.atk),
-            StatBar('دفاع', p.def),
-            StatBar('تمرير', p.pas),
-          ],
-          StatBar('الإمكانات', p.potential, color: const Color(0xFF7C4DFF)),
-          StatBar('اللياقة', p.fitness, color: const Color(0xFF29B6F6)),
-          StatBar('المعنويات', p.morale, color: const Color(0xFFFFCA28)),
-      ],
-      if (tab == 1) ...[
-          Row(children: [
-            chip('مباريات', '${p.apps}'),
-            chip('أهداف', '${p.goals}'),
-            chip('صناعة', '${p.assists}'),
-            chip('إنذارات', '${p.yellows}'),
-          ]),
-          const SizedBox(height: 10),
-          Row(children: [
-            chip('متوسط التقييم', p.rated == 0 ? '—' : p.avgRating.toStringAsFixed(1)),
-            chip('إصابات', '${p.injuryCount}'),
-            chip('الحالة', p.injuredWeeks > 0 ? 'مصاب' : (p.suspendedMatches > 0 ? 'موقوف' : 'جاهز')),
-          ]),
-          if (p.injuredWeeks > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text('🚑 مصاب — يعود بعد ${p.injuredWeeks} أسابيع', style: const TextStyle(color: Color(0xFFEF5350), fontSize: 13)),
-            ),
-          if (p.suspendedMatches > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text('🟥 موقوف ${p.suspendedMatches} مباراة', style: const TextStyle(color: Color(0xFFEF5350), fontSize: 13)),
-            ),
-      ],
-      if (tab == 2) ...[
-          Text('القيمة السوقية: ${money(p.value)}   •   الراتب الأسبوعي: ${money(p.wage)}',
-              style: const TextStyle(color: kMuted, fontSize: 13)),
-          if (!market)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text('العقد: ${p.contract} ${p.contract <= 1 ? 'سنة (ينتهي هذا الموسم!)' : 'سنوات متبقية'}',
-                  style: TextStyle(
-                      fontSize: 13, color: p.contract <= 1 ? const Color(0xFFFFCA28) : kMuted)),
-            ),
-          if (market)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                switch (gs.joinOutlook(p)) {
-                  0 => '😊 اللاعب يرحّب بالانضمام إلى ناديك',
-                  1 => '🤔 اللاعب متردد في الانضمام إلى ناديك',
-                  _ => '🙅 يرى اللاعب ناديك أقل من طموحه وقد يرفض',
-                },
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: switch (gs.joinOutlook(p)) { 0 => kAccent, 1 => kGold, _ => const Color(0xFFFF5252) },
+  Color _attrColor(num v) => v >= 70 ? const Color(0xFF1FA58A) : v >= 55 ? const Color(0xFF2F7BE6) : v >= 45 ? const Color(0xFFF5A524) : const Color(0xFFE5533D);
+
+  Widget _section(String t) => Padding(
+        padding: const EdgeInsets.only(top: 12, bottom: 6, right: 4, left: 4),
+        child: Text(t, style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800, fontSize: 13)),
+      );
+
+  Widget _card(Widget child, {EdgeInsets pad = const EdgeInsets.symmetric(horizontal: 14, vertical: 6)}) => Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: pad,
+        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+        child: child,
+      );
+
+  Widget _bars(List<(String, num)> rows) => _card(Column(children: [
+        for (final r in rows)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(children: [
+              SizedBox(width: 74, child: Text(r.$1, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14))),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(value: (r.$2 / 100).clamp(0, 1).toDouble(), minHeight: 8, color: _attrColor(r.$2), backgroundColor: kCard2),
                 ),
               ),
-            ),
-      ],
-      if (tab == 3) ...[
-        if (p.career.isEmpty) const Text('لا توجد مسيرة مسجّلة بعد', style: TextStyle(color: kMuted)),
-          if (p.career.isNotEmpty) ...[
-            for (final c in p.career.reversed.take(6))
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(children: [
-                  SizedBox(width: 56, child: Text('موسم ${c['s']}', style: const TextStyle(color: kMuted, fontSize: 12))),
-                  Expanded(child: Text('${c['t']}', overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
-                  Text('${c['a']} م • ${c['g']} ه • ${c['as']} ص • ${(c['r'] as num).toStringAsFixed(1)}',
-                      style: const TextStyle(fontSize: 12, color: kMuted)),
-                ]),
-              ),
-          ],
-      ],
-      if (tab == 4) ..._awardsRows(p),
-      if (tab == 5) ...[
+              SizedBox(width: 38, child: Text('${r.$2.round()}', textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14))),
+            ]),
+          ),
+      ]));
+
+  Widget _tile(String l, String v, {Color? c}) => Expanded(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+          child: Column(children: [
+            Text(v, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: c)),
+            const SizedBox(height: 2),
+            Text(l, style: const TextStyle(color: kMuted, fontSize: 12)),
+          ]),
+        ),
+      );
+
+  Widget _row(String l, String v, {Color? vc, String? sub}) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        child: Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(l, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+              if (sub != null) Text(sub, style: const TextStyle(color: kMuted, fontSize: 11.5)),
+            ]),
+          ),
+          Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: vc)),
+        ]),
+      );
+
+  /// ترتيب اللاعب بين كل اللاعبين وبين من هم بمركزه في دوريه
+  (int, int, int, int) _ranks(GameState gs, Player p) {
+    final all = <Player>[for (final t in gs.teams) ...t.squad];
+    final world = all.where((x) => x.overall > p.overall).length + 1;
+    final samePos = all.where((x) => x.pos == p.pos).toList();
+    final inPos = samePos.where((x) => x.overall > p.overall).length + 1;
+    return (world, all.length, inPos, samePos.length);
+  }
+
+  void _controls(BuildContext ctx0) {
+    final ctx = ctx0;
+    final gs = widget.gs, p = widget.p, market = widget.market;
+    final context = widget.outer;
+    void snack(String? err, String ok) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? ok)));
+    final actions = <Widget>[
           const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -435,58 +402,257 @@ class _PlayerCardState extends State<_PlayerCard> {
                 ),
               ]),
             ]),
+    ];
+    showModalBottomSheet<void>(
+      context: ctx0,
+      isScrollControlled: true,
+      builder: (sheet) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: actions),
+        ),
+      ),
+    ).then((_) {
+      if (!market && !gs.user.squad.contains(p) && ctx0.mounted) Navigator.of(ctx0).pop();
+    });
+  }
+
+  @override
+  Widget build(BuildContext ctx) {
+    final gs = widget.gs, p = widget.p, market = widget.market;
+    final context = widget.outer;
+    void snack(String? err, String ok) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? ok)));
+    Widget info(String l, String v, {Color? c, bool last = false}) => Expanded(
+          child: Container(
+            decoration: BoxDecoration(border: last ? null : const BorderDirectional(end: BorderSide(color: kLine))),
+            child: Column(children: [
+              Text(l, style: const TextStyle(color: kMuted, fontSize: 11.5)),
+              const SizedBox(height: 4),
+              Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: c)),
+            ]),
+          ),
+        );
+    final tabs = ['السمات', 'الإحصاءات', 'العقد', 'المسيرة', 'الجوائز'];
+    final avg = p.rated == 0 ? '—' : p.avgRating.toStringAsFixed(1);
+    final (wr, wn, pr, pn) = _ranks(gs, p);
+    final body = <Widget>[
+      if (tab == 0) ...[
+        _section('فنية'),
+        _bars(p.pos == Pos.gk ? [('الحراسة', p.gk)] : [('الهجوم', p.atk), ('التمرير', p.pas), ('الدفاع', p.def)]),
+        _section('بدنية'),
+        _bars([('اللياقة', p.fitness)]),
+        _section('ذهنية'),
+        _bars([('المعنويات', p.morale)]),
+        _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Expanded(child: Text('الإمكانية المتوقعة', style: TextStyle(fontWeight: FontWeight.w800))),
+            Text('${p.overall} ← ${p.potential}', style: const TextStyle(fontWeight: FontWeight.w900)),
+          ]),
+          const SizedBox(height: 8),
+          Stack(children: [
+            ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: (p.potential / 100).clamp(0, 1).toDouble(), minHeight: 10, color: const Color(0xFFBFE6DC), backgroundColor: kCard2)),
+            ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: (p.overall / 100).clamp(0, 1).toDouble(), minHeight: 10, color: const Color(0xFF1FA58A), backgroundColor: Colors.transparent)),
+          ]),
+        ]), pad: const EdgeInsets.all(14)),
       ],
+      if (tab == 1) ...[
+        Row(children: [_tile('مباريات', '${p.apps}'), _tile('أهداف', '${p.goals}', c: const Color(0xFF1FA58A)), _tile('تمريرات حاسمة', '${p.assists}', c: const Color(0xFF2F7BE6))]),
+        const SizedBox(height: 8),
+        Row(children: [_tile('بطاقات', '${p.yellows}', c: const Color(0xFFF5A524)), _tile('إصابات', '${p.injuryCount}'), _tile('التقييم', avg, c: const Color(0xFF1FA58A))]),
+        const SizedBox(height: 10),
+        _card(Row(children: [
+          SizedBox(
+            width: 110,
+            height: 70,
+            child: CustomPaint(painter: _GaugePainter(1 - (wr - 1) / (wn <= 1 ? 1 : wn - 1)), child: const SizedBox.shrink()),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('الترتيب بين كل اللاعبين', style: TextStyle(color: kMuted, fontSize: 12)),
+              Text('#$wr', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900)),
+              Text('من $wn • بين من بمركزه: $pr من $pn', style: const TextStyle(color: kMuted, fontSize: 12)),
+            ]),
+          ),
+        ]), pad: const EdgeInsets.all(14)),
+        if (p.injuredWeeks > 0) Text('🚑 مصاب — يعود بعد ${p.injuredWeeks} أسابيع', style: const TextStyle(color: Color(0xFFE5533D), fontSize: 13)),
+        if (p.suspendedMatches > 0) Text('🟥 موقوف ${p.suspendedMatches} مباراة', style: const TextStyle(color: Color(0xFFE5533D), fontSize: 13)),
+      ],
+      if (tab == 2) ...[
+        _card(Column(children: [
+          _row('الراتب الأسبوعي', money(p.wage)),
+          const Divider(height: 1),
+          _row('القيمة السوقية', money(p.value)),
+          const Divider(height: 1),
+          if (!market) _row('ينتهي العقد', 'بعد ${p.contract} ${p.contract <= 1 ? 'سنة' : 'سنوات'}', vc: p.contract <= 1 ? const Color(0xFFE5533D) : null),
+          if (market)
+            _row(
+              'رغبة اللاعب بالانضمام',
+              switch (gs.joinOutlook(p)) { 0 => 'مرتفعة', 1 => 'متردد', _ => 'ضعيفة' },
+              vc: switch (gs.joinOutlook(p)) { 0 => const Color(0xFF1FA58A), 1 => const Color(0xFFF5A524), _ => const Color(0xFFE5533D) },
+            ),
+        ])),
+        if (p.onLoan) _card(Text(p.optionFee != null ? (p.obligation ? 'معار بإلزامية شراء: ${money(p.optionFee!)}' : 'معار بخيار شراء: ${money(p.optionFee!)}') : 'لاعب معار — يعود إلى ناديه نهاية الموسم.', style: const TextStyle(color: kMuted)), pad: const EdgeInsets.all(14)),
+        if (!market)
+          _card(Column(children: [
+            Row(children: [
+              const Expanded(child: Text('متاح للبيع', style: TextStyle(fontWeight: FontWeight.w800))),
+              Switch(value: p.listed, onChanged: (_) { gs.toggleListed(p); setState(() {}); }),
+            ]),
+          ])),
+      ],
+      if (tab == 3) ...[
+        if (p.career.isEmpty) const Text('لا توجد مسيرة مسجّلة بعد', style: TextStyle(color: kMuted)),
+        if (p.career.isNotEmpty)
+          _card(Column(children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(children: const [
+                SizedBox(width: 56, child: Text('الموسم', style: TextStyle(color: kMuted, fontSize: 12))),
+                Expanded(child: Text('النادي', style: TextStyle(color: kMuted, fontSize: 12))),
+                SizedBox(width: 44, child: Text('مباريات', style: TextStyle(color: kMuted, fontSize: 12))),
+                SizedBox(width: 40, child: Text('أهداف', textAlign: TextAlign.end, style: TextStyle(color: kMuted, fontSize: 12))),
+              ]),
+            ),
+            for (final c in p.career.reversed.take(8)) ...[
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(children: [
+                  SizedBox(width: 56, child: Text('م${c['s']}', style: const TextStyle(color: kMuted, fontSize: 12.5))),
+                  Expanded(child: Text('${c['t']}', overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14))),
+                  SizedBox(width: 44, child: Text('${c['a']}', style: const TextStyle(fontWeight: FontWeight.w800))),
+                  SizedBox(width: 40, child: Text('${c['g']}', textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1FA58A)))),
+                ]),
+              ),
+            ],
+          ])),
+      ],
+      if (tab == 4) ..._awardsRows(p),
+    ];
+    Widget big(String label, Color bg, Color fg, VoidCallback f, {IconData? icon, int flex = 1}) => Expanded(
+          flex: flex,
+          child: GestureDetector(
+            onTap: f,
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10), boxShadow: [BoxShadow(color: Color.alphaBlend(Colors.black26, bg), offset: const Offset(0, 3))]),
+              alignment: Alignment.center,
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w900, fontSize: 16)),
+                if (icon != null) ...[const SizedBox(width: 6), Icon(icon, color: fg, size: 20)],
+              ]),
+            ),
+          ),
+        );
+    const purple = Color(0xFF6A6FC4), sky = Color(0xFFA9D4F8), navy = Color(0xFF15233D);
+    final bottom = <Widget>[
+      if (market && p.free)
+        big('توقيع حر', kPrimary, Colors.white, () {
+          final err = gs.buy(p);
+          Navigator.pop(ctx);
+          snack(err, 'تم التوقيع ✅');
+        }, icon: Icons.description_rounded, flex: 2)
+      else if (market) ...[
+        big('تفاوض', kPrimary, Colors.white, () {
+          Navigator.pop(ctx);
+          showNegotiation(context, gs, p);
+        }, icon: Icons.description_rounded, flex: 2),
+        const SizedBox(width: 10),
+        big('إعارة', purple, Colors.white, () {
+          final err = gs.loanIn(p);
+          Navigator.pop(ctx);
+          snack(err, 'تمت الإعارة ✅');
+        }, icon: Icons.handshake_rounded),
+      ] else if (!p.onLoan) ...[
+        big('بيع', kPrimary, Colors.white, () async {
+          final ok = await confirmDialog(ctx,
+              title: 'بيع ${p.name}؟',
+              body: 'ستستلم ${money(gs.sellPrice(p))} وتخسر لاعباً تقييمه ${p.overall} وراتبه ${money(p.wage)}/أسبوع.',
+              confirm: 'بيع', danger: true);
+          if (!ok || !ctx.mounted) return;
+          final err = gs.sell(p);
+          Navigator.pop(ctx);
+          snack(err, 'تم البيع ✅');
+        }, icon: Icons.attach_money_rounded),
+        const SizedBox(width: 10),
+        big('إعارة', purple, Colors.white, () {
+          final err = gs.loanOut(p);
+          Navigator.pop(ctx);
+          snack(err, 'تمت الإعارة ✅');
+        }, icon: Icons.handshake_rounded),
+      ],
+      if (market || !p.onLoan) const SizedBox(width: 10),
+      big('التحكم', sky, navy, () => _controls(ctx)),
     ];
     return Scaffold(
       appBar: AppBar(title: const Text('بطاقة اللاعب')),
-      body: SafeArea(
-        child: ListView(padding: const EdgeInsets.all(14), children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
-            child: Row(children: [
-              ratingRing(p.overall, size: 62),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(p.name, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: kPrimary)),
-                  const SizedBox(height: 3),
-                  Text([if (p.club != null) p.club!, if (p.nat != null) p.nat!].join(' • '), style: const TextStyle(color: kMuted, fontSize: 12.5)),
-                  const SizedBox(height: 6),
-                  Row(children: [PosChip(p.pos), if (p.sub != null) ...[const SizedBox(width: 6), Text(p.sub!, style: const TextStyle(color: kMuted, fontSize: 12))]]),
-                ]),
-              ),
-              PlayerAvatar(p, size: 56),
-            ]),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
-            child: Row(children: [
-              info('القيمة', money(p.value)),
-              info('الراتب', money(p.wage)),
-              info('العمر', '${p.age}'),
-              if (p.height != null) info('الطول', '${p.height} سم'),
-              if (p.foot != null) info('القدم', '${p.foot}'),
-            ]),
-          ),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SegmentedButton<int>(
-              showSelectedIcon: false,
-              segments: [for (var i = 0; i < tabs.length; i++) ButtonSegment(value: i, label: Text(tabs[i]))],
-              selected: {tab},
-              onSelectionChanged: (v) => setState(() => tab = v.first),
+      bottomNavigationBar: SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(14, 8, 14, 10), child: Row(children: bottom))),
+      body: ListView(padding: const EdgeInsets.all(14), children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
+          child: Row(children: [
+            PlayerAvatar(p, size: 76),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: kPrimary)),
+                const SizedBox(height: 4),
+                Text([if (p.club != null) p.club!, if (p.nat != null) p.nat!].join(' • '), style: const TextStyle(color: kMuted, fontSize: 13)),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: const Color(0xFFBFE6DC), borderRadius: BorderRadius.circular(8)),
+                  child: Text('${p.pos.label}${p.sub != null ? '\n${p.sub}' : ''}', textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF0B6E5A), fontWeight: FontWeight.w900, fontSize: 12)),
+                ),
+              ]),
             ),
-          ),
-          const SizedBox(height: 12),
-          ...body,
-        ]),
-      ),
+            ratingRing(p.overall, size: 74),
+          ]),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+          child: Row(children: [
+            info('القدم', p.foot ?? '—'),
+            info('الطول', p.height != null ? '${(p.height! / 100).toStringAsFixed(2)}m' : '—'),
+            info('العمر', '${p.age}'),
+            info('الراتب', money(p.wage)),
+            info('القيمة', money(p.value), c: const Color(0xFF1FA58A), last: true),
+          ]),
+        ),
+        const SizedBox(height: 12),
+        SegmentedButton<int>(
+          showSelectedIcon: false,
+          expandedInsets: EdgeInsets.zero,
+          style: const ButtonStyle(padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 2))),
+          segments: [for (var i = 0; i < tabs.length; i++) ButtonSegment(value: i, label: Text(tabs[i], style: const TextStyle(fontSize: 13)))],
+          selected: {tab},
+          onSelectionChanged: (v) => setState(() => tab = v.first),
+        ),
+        const SizedBox(height: 4),
+        ...body,
+      ]),
     );
   }
+}
+
+class _GaugePainter extends CustomPainter {
+  final double v;
+  _GaugePainter(this.v);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = Rect.fromLTWH(8, 8, size.width - 16, (size.height - 8) * 2);
+    final bg = Paint()..style = PaintingStyle.stroke..strokeWidth = 12..strokeCap = StrokeCap.round..color = const Color(0xFFE3E6EE);
+    final fg = Paint()..style = PaintingStyle.stroke..strokeWidth = 12..strokeCap = StrokeCap.round..color = const Color(0xFF1FA58A);
+    canvas.drawArc(r, 3.14159, 3.14159, false, bg);
+    canvas.drawArc(r, 3.14159, 3.14159 * v.clamp(0.02, 1.0), false, fg);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GaugePainter o) => o.v != v;
 }
 
 class SquadTab extends StatefulWidget {
