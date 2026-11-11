@@ -64,7 +64,7 @@ void _act(GameState gs, Random r) {
     case 12:
       gs.runCampaign();
     case 13:
-      gs.setFormation(Formation.values[r.nextInt(Formation.values.length)]);
+      gs.setFormation(formations[r.nextInt(formations.length)]);
       gs.setMentality(r.nextInt(5));
       gs.autoPickUser();
     case 14:
