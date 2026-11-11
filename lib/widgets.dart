@@ -369,13 +369,22 @@ class PlayerAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (p.photo == null) return RatingBadge(p.overall, size: size);
-    final fb = RatingBadge(p.overall, size: size);
+    // لاعب بلا صورة (موهبة مولَّدة): صورة رمزية موحّدة بلون ثابت من هويته بدل شكل ناقص
+    final hue = (p.id * 47 % 360).toDouble();
+    final fb = Container(
+      width: size,
+      height: size,
+      color: HSLColor.fromAHSL(1, hue, 0.35, 0.82).toColor(),
+      child: Stack(alignment: Alignment.bottomCenter, children: [
+        Positioned(top: size * 0.16, child: Container(width: size * 0.34, height: size * 0.34, decoration: BoxDecoration(color: HSLColor.fromAHSL(1, hue, 0.3, 0.42).toColor(), shape: BoxShape.circle))),
+        Positioned(bottom: -size * 0.22, child: Container(width: size * 0.78, height: size * 0.62, decoration: BoxDecoration(color: HSLColor.fromAHSL(1, hue, 0.3, 0.42).toColor(), shape: BoxShape.circle))),
+      ]),
+    );
     return SizedBox(
       width: size + 4,
       height: size + 4,
       child: Stack(clipBehavior: Clip.none, children: [
-        ClipOval(child: appImage(p.photo!, w: size, h: size, fit: BoxFit.cover, fallback: fb)),
+        ClipOval(child: p.photo == null ? fb : appImage(p.photo!, w: size, h: size, fit: BoxFit.cover, fallback: fb)),
         Positioned(
           right: -2,
           bottom: -2,
