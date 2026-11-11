@@ -5,6 +5,8 @@ import 'cups.dart';
 import 'flags.dart';
 import 'game_state.dart';
 import 'models.dart';
+import 'national_screen.dart';
+import 'world.dart';
 import 'widgets.dart';
 
 const _kGreen = Color(0xFF1FA58A);
@@ -40,6 +42,8 @@ class _CompetitionsViewState extends State<CompetitionsView> {
         if (gs.europa != null) _Comp('uel', gs.europa!.name, Icons.emoji_events_rounded, const Color(0xFFE8841C), gs.europa),
         if (gs.conference != null) _Comp('uecl', gs.conference!.name, Icons.emoji_events_rounded, _kGreen, gs.conference),
         if (gs.superCup != null) _Comp('sup', 'كأس السوبر', Icons.emoji_events_rounded, _kPurple, gs.superCup),
+        if (gs.ic != null) _Comp('ic', gs.ic!.name, Icons.emoji_events_rounded, const Color(0xFFA6812E), gs.ic),
+        if (gs.cwc != null) _Comp('cwc', gs.cwc!.name, Icons.emoji_events_rounded, const Color(0xFFE6B422), gs.cwc),
       ];
 
   void _open(String id) => setState(() {
@@ -85,8 +89,8 @@ class _CompetitionsViewState extends State<CompetitionsView> {
       if (gs.europa != null) (gs.europa!.name, const Color(0xFFE8841C), 'uel', inCup(gs.europa)),
       if (gs.conference != null) (gs.conference!.name, _kGreen, 'uecl', inCup(gs.conference)),
       if (gs.superCup != null) ('كأس السوبر', _kPurple, 'sup', inCup(gs.superCup)),
-      ('كأس العالم للأندية', const Color(0xFFE6B422), 'cwc', false),
-      ('كأس إنتركونتيننتال', const Color(0xFFA6812E), 'ic', false),
+      ('كأس العالم للأندية', const Color(0xFFE6B422), 'cwc', inCup(gs.cwc)),
+      ('كأس إنتركونتيننتال', const Color(0xFFA6812E), 'ic', inCup(gs.ic)),
     ];
     final nations = <String>[
       if (gs.country.isNotEmpty) gs.country,
@@ -148,19 +152,11 @@ class _CompetitionsViewState extends State<CompetitionsView> {
               }),
           ]),
           const SizedBox(height: 14),
-          GestureDetector(
-            onTap: () => _snack('بطولات المنتخبات (كأس العالم • أمم أفريقيا • أوروبا) قادمة في تحديث لاحق'),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
-              child: Row(children: [
-                const Text('بطولات المنتخبات', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                const SizedBox(width: 8),
-                const Expanded(child: Text('كأس العالم  •  أمم أفريقيا  •  أوروبا', style: TextStyle(color: kMuted, fontSize: 12))),
-                const Icon(Icons.chevron_left_rounded, color: kMuted),
-              ]),
-            ),
-          ),
+          head('بطولات المنتخبات'),
+          grid([
+            for (final d in kNatTours)
+              card(d.name, _trophyChip(const Color(0xFF2F5FB4), size: 38), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => NatTourScreen(gs: gs, tourKey: d.key)))),
+          ]),
         ]),
       ),
     ]);
@@ -221,7 +217,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
           final cur = cs.where((c) => c.id == sel).toList();
           final c = cur.isEmpty ? null : cur.first;
           // بطولات بلا بيانات (كأس العالم للأندية / إنتركونتيننتال)
-          if (sel == 'cwc' || sel == 'ic') return _placeholder(sel == 'cwc');
+          if ((sel == 'cwc' && gs.cwc == null) || (sel == 'ic' && gs.ic == null)) return _placeholder(sel == 'cwc');
           if (c == null) return _hub();
           final cup = c.cup;
           final Widget body;
@@ -239,7 +235,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
               chipSub = inLp ? (cup.kind == 2 ? 'المباراة ${cup.round + 1} من ${cup.lpRounds}' : 'الجولة ${cup.round + 1} من ${cup.lpRounds}') : 'انتهت';
             } else {
               body = _bracketBody(cup);
-              chipSub = cup.kind == 2 ? 'الملحق من دور الـ16' : 'من ربع النهائي';
+              chipSub = cup.kind == 2 ? 'الملحق من دور الـ16' : (cup.groups.length > 4 ? 'من دور الـ16' : 'من ربع النهائي');
             }
           } else {
             body = _bracketBody(cup);
@@ -252,7 +248,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
               ..add(('الأدوار الإقصائية', chipSub, Icons.account_tree_outlined, c.color, sub == 1, () => setState(() => sub = 1)));
             // العنوان المعروض في الشريحة المحددة
             bar[0] = (bar[0].$1, cup.inGroups ? (cup.kind == 2 ? 'المباراة ${cup.round + 1} من ${cup.lpRounds}' : 'الجولة ${cup.round + 1} من ${cup.lpRounds}') : 'انتهت', bar[0].$3, c.color, sub == 0, bar[0].$6);
-            bar[1] = (bar[1].$1, cup.kind == 2 ? 'الملحق ثم دور الـ16' : 'من ربع النهائي', bar[1].$3, c.color, sub == 1, bar[1].$6);
+            bar[1] = (bar[1].$1, cup.kind == 2 ? 'الملحق ثم دور الـ16' : (cup.groups.length > 4 ? 'من دور الـ16' : 'من ربع النهائي'), bar[1].$3, c.color, sub == 1, bar[1].$6);
           } else {
             for (final o in cs) {
               bar.add((o.title, o.id == sel ? chipSub : '', Icons.emoji_events_outlined, o.color, o.id == sel, () => setState(() {
@@ -555,46 +551,57 @@ class _CompetitionsViewState extends State<CompetitionsView> {
 
   // ───────── كأس العالم للأندية / إنتركونتيننتال ─────────
   Widget _placeholder(bool cwc) {
-    final left = cwc ? ((3 - gs.season) % 4 + 4) % 4 : 1;
+    final key = cwc ? 'cwc' : 'ic';
+    final left = cwc ? ((3 - gs.season) % 4 + 4) % 4 : 0;
+    final hist = [for (final h in gs.cupHist) if (h['k'] == key) h].reversed.toList();
+    final color = cwc ? const Color(0xFFE6B422) : const Color(0xFFA6812E);
+    final name = cwc ? 'كأس العالم للأندية' : 'كأس إنتركونتيننتال';
     return Column(children: [
-      _subHeader(cwc ? 'كأس العالم للأندية' : 'كأس إنتركونتيننتال', _trophyChip(cwc ? const Color(0xFFE6B422) : const Color(0xFFA6812E))),
-      _chipBar([
-        (cwc ? 'كأس العالم للأندية' : 'كأس إنتركونتيننتال', cwc ? 'كل 4 مواسم' : 'كل موسم', Icons.emoji_events_outlined, cwc ? const Color(0xFFE6B422) : const Color(0xFFA6812E), true, () {}),
-        ('الشجرة', '', Icons.account_tree_outlined, kMuted, false, () {}),
-        ('الجدول', '', Icons.table_rows_outlined, kMuted, false, () {}),
-      ]),
+      _subHeader(name, _trophyChip(color)),
       Expanded(
-        child: Center(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(width: 190, height: 190, decoration: BoxDecoration(color: kCard, shape: BoxShape.circle), child: const Icon(Icons.emoji_events_rounded, size: 110, color: Color(0xFFE6B422))),
-            const SizedBox(height: 22),
-            const Text('لا توجد سجلات بعد', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 8),
-            Text(
-              cwc ? (left == 0 ? 'تنطلق النسخة هذا الموسم.' : 'تنطلق النسخة القادمة بعد $left مواسم.') : 'تنطلق النسخة القادمة مع الموسم المقبل.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: kMuted, fontSize: 15),
-            ),
-            const Text('ستظهر النتائج والشجرة هنا.', style: TextStyle(color: kMuted, fontSize: 15)),
-            const SizedBox(height: 22),
-            SizedBox(
-              width: 280,
-              child: GestureDetector(
-                onTap: () => _snack('تم تفعيل التذكير بالموعد'),
-                child: Container(
-                  height: 54,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(color: const Color(0xFFA9D4F8), borderRadius: BorderRadius.circular(12), boxShadow: const [BoxShadow(color: Color(0x4400A0FF), offset: Offset(0, 3))]),
-                  child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Icon(Icons.calendar_today_outlined, color: Color(0xFF15233D)),
-                    SizedBox(width: 10),
-                    Text('تذكيري بالموعد', style: TextStyle(color: Color(0xFF15233D), fontWeight: FontWeight.w900, fontSize: 16)),
-                  ]),
-                ),
+        child: ListView(padding: const EdgeInsets.all(16), children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Icon(Icons.emoji_events_rounded, color: color, size: 34),
+                const SizedBox(width: 10),
+                Expanded(child: Text(cwc ? (left == 0 ? 'تنطلق النسخة هذا الموسم' : 'النسخة القادمة بعد $left ${left == 1 ? 'موسم' : 'مواسم'}') : 'النسخة القادمة مع الموسم المقبل', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))),
+              ]),
+              const SizedBox(height: 10),
+              Text(
+                cwc
+                    ? '32 نادياً: 12 من أوروبا، 6 من أمريكا الجنوبية، 4 من أفريقيا، 4 من آسيا، 5 من أمريكا الشمالية والوسطى، وناد من أوقيانوسيا. يتأهل أبطال الاتحادات في آخر 4 مواسم ثم الأعلى تصنيفاً (Elo). 8 مجموعات ثم أدوار إقصائية.'
+                    : 'أبطال الاتحادات الستة: يدخل الأقوى تصنيفاً مباشرةً إلى نصف النهائي، ويلعب البقية دوراً أول ثم نصف النهائي والنهائي.',
+                style: const TextStyle(color: kMuted, height: 1.6, fontSize: 13),
               ),
+            ]),
+          ),
+          const SizedBox(height: 14),
+          const Text('الأبطال السابقون', style: TextStyle(color: kMuted, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          if (hist.isEmpty)
+            Container(padding: const EdgeInsets.all(20), alignment: Alignment.center, decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)), child: const Text('لا توجد سجلات بعد — ستظهر النتائج هنا.', style: TextStyle(color: kMuted)))
+          else
+            Container(
+              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+              child: Column(children: [
+                for (var i = 0; i < hist.length; i++)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(border: i == 0 ? null : const Border(top: BorderSide(color: kLine))),
+                    child: Row(children: [
+                      SizedBox(width: 56, child: Text('م${hist[i]['s']}', style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800))),
+                      Icon(Icons.emoji_events_rounded, color: color, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text('${hist[i]['n']}', style: const TextStyle(fontWeight: FontWeight.w900))),
+                      Text('الوصيف: ${hist[i]['r']}', style: const TextStyle(color: kMuted, fontSize: 11.5)),
+                    ]),
+                  ),
+              ]),
             ),
-          ]),
-        ),
+        ]),
       ),
     ]);
   }

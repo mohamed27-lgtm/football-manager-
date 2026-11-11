@@ -3,6 +3,7 @@ import 'i18n.dart';
 import 'flags.dart';
 import 'game_state.dart';
 import 'models.dart';
+import 'world.dart';
 import 'widgets.dart';
 
 /// الترتيب العالمي: أندية (Elo) / دول (من جنسيات اللاعبين) / لاعبون / مدربون
@@ -16,7 +17,7 @@ class RankingScreen extends StatefulWidget {
 class _RankingScreenState extends State<RankingScreen> {
   GameState get gs => widget.gs;
   int tab = 0;
-  int region = 0; // 0 الكل، 1 محلي، 2 أجنبي
+  String conf = 'all'; // فلتر الاتحاد القاري
 
   static const _medals = [Color(0xFFE6B422), Color(0xFFB8BECB), Color(0xFFC98B5B)];
 
@@ -82,52 +83,72 @@ class _RankingScreenState extends State<RankingScreen> {
         child: Column(children: rows),
       );
 
+  Widget _confChips() => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: [
+            for (final e in [('all', 'الكل'), ...kConfNames.entries.map((x) => (x.key, x.value))])
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: conf == e.$1 ? Unfilter(child: _pill(e.$2, true, () => setState(() => conf = e.$1))) : _pill(e.$2, false, () => setState(() => conf = e.$1)),
+              ),
+          ]),
+        ),
+      );
+
+  Widget _initial(String n, {double size = 30}) => Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(color: kCard2, shape: BoxShape.circle),
+        child: Text(n.isEmpty ? '?' : n.substring(0, 1), style: const TextStyle(fontWeight: FontWeight.w900, color: kMuted)),
+      );
+
   List<Widget> _clubs() {
-    final all = gs.worldRanking;
-    final mine = all.indexOf(gs.user) + 1;
-    final shown = <(int, Team)>[
+    final all = gs.worldClubTable();
+    final mine = all.indexWhere((e) => e.$4 == gs.user) + 1;
+    final shown = <(int, (String, String, double, Team?))>[
       for (var i = 0; i < all.length; i++)
-        if (region == 0 || (region == 1 ? !gs.foreign.containsKey(all[i].id) || all[i].id < 1000 : gs.foreign.containsKey(all[i].id) && all[i].id >= 1000)) (i + 1, all[i])
+        if (conf == 'all' || all[i].$2 == conf) (i + 1, all[i])
     ];
     return [
-      _summary(mine, teamBadge(gs.user, size: 44), gs.user.name, '${gs.eloOf(gs.user).round()} نقطة • من ${all.length}'),
-      Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Wrap(spacing: 8, children: [
-          for (final e in const [(0, 'الكل'), (1, 'محلي'), (2, 'أجنبي')])
-            region == e.$1
-                ? Unfilter(child: _pill(e.$2, true, () => setState(() => region = e.$1)))
-                : _pill(e.$2, false, () => setState(() => region = e.$1)),
-        ]),
-      ),
+      _summary(mine, teamBadge(gs.user, size: 44), gs.user.name, '${gs.eloOf(gs.user).round()} نقطة Elo • من ${all.length} نادياً'),
+      _confChips(),
       _card([
-        for (final e in shown)
-          _row(e.$1, teamBadge(e.$2, size: 30), e.$2.name, '', Text('${gs.eloOf(e.$2).round()}', style: const TextStyle(fontWeight: FontWeight.w900)), me: e.$2 == gs.user),
+        for (final e in shown.take(150))
+          _row(e.$1, e.$2.$4 != null ? teamBadge(e.$2.$4!, size: 30) : _initial(e.$2.$1), e.$2.$1, kConfNames[e.$2.$2] ?? '', Text('${e.$2.$3.round()}', style: const TextStyle(fontWeight: FontWeight.w900)), me: e.$2.$4 == gs.user),
       ]),
     ];
   }
 
   List<Player> _allPlayers() => [for (final t in gs.worldRanking) ...t.squad];
 
+  /// ترتيب المنتخبات: نقاط فيفا (P = P0 + I × (W − We)) تتغير بعد كل مباراة دولية وبطولة
   List<Widget> _countries() {
-    final by = <String, List<int>>{};
-    for (final p in _allPlayers()) {
-      final n = p.nat;
-      if (n == null || n.isEmpty) continue;
-      by.putIfAbsent(n, () => []).add(p.overall);
+    gs.ensureNat();
+    final rank = gs.nat.ranking;
+    if (rank.isEmpty) return [const EmptyState(icon: Icons.flag_outlined, title: 'لا بيانات', subtitle: 'لا توجد منتخبات.')];
+    final mine = rank.indexOf(gs.country) + 1;
+    final shown = <(int, String)>[
+      for (var i = 0; i < rank.length; i++)
+        if (conf == 'all' || gs.nat.conf[rank[i]] == conf) (i + 1, rank[i])
+    ];
+    Widget trail(String n) {
+      final p = gs.nat.pts[n]!;
+      final d = p - (gs.nat.start[n] ?? p);
+      return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+        Text(p.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)),
+        Text('${d >= 0 ? '▲' : '▼'} ${d.abs().toStringAsFixed(1)}', style: TextStyle(fontSize: 11, color: d >= 0 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D))),
+      ]);
     }
-    final rows = <(String, double, int)>[];
-    by.forEach((k, v) {
-      if (v.length < 5) return;
-      v.sort((a, b) => b.compareTo(a));
-      final top = v.take(11).toList();
-      rows.add((k, top.reduce((a, b) => a + b) / top.length, v.length));
-    });
-    rows.sort((a, b) => b.$2.compareTo(a.$2));
-    if (rows.isEmpty) return [const EmptyState(icon: Icons.flag_outlined, title: 'لا بيانات', subtitle: 'لا توجد جنسيات كافية.')];
+
     return [
-      for (var i = 0; i < rows.length && i < 60; i++)
-        _row(i + 1, FlagBadge(rows[i].$1, size: 30), rows[i].$1, '${rows[i].$3} لاعباً', ratingRing(rows[i].$2, size: 34)),
+      if (mine > 0) _summary(mine, FlagBadge(gs.country, size: 44), 'منتخب ${gs.country}', '${gs.nat.pts[gs.country]!.toStringAsFixed(1)} نقطة • من ${rank.length} منتخباً'),
+      _confChips(),
+      _card([
+        for (final e in shown.take(220)) _row(e.$1, FlagBadge(e.$2, size: 30), e.$2, kConfNames[gs.nat.conf[e.$2]] ?? '', trail(e.$2), me: e.$2 == gs.country),
+      ]),
     ];
   }
 
@@ -168,7 +189,7 @@ class _RankingScreenState extends State<RankingScreen> {
             expandedInsets: EdgeInsets.zero,
             segments: const [
               ButtonSegment(value: 0, label: Text('الأندية', style: TextStyle(fontSize: 12))),
-              ButtonSegment(value: 1, label: Text('الدول', style: TextStyle(fontSize: 12))),
+              ButtonSegment(value: 1, label: Text('المنتخبات', style: TextStyle(fontSize: 12))),
               ButtonSegment(value: 2, label: Text('اللاعبون', style: TextStyle(fontSize: 12))),
               ButtonSegment(value: 3, label: Text('المدربون', style: TextStyle(fontSize: 12))),
             ],

@@ -68,7 +68,7 @@ class CupTree extends StatelessWidget {
       ]);
     }
     if (rounds.isEmpty && cup.kind > 0) {
-      rounds.add([for (var i = 0; i < (cup.kind == 2 ? 8 : 4); i++) _VM()]);
+      rounds.add([for (var i = 0; i < (cup.kind == 2 ? 8 : max(4, cup.groups.length)); i++) _VM()]);
     }
     // أدوار مستقبلية فارغة حتى النهائي
     while (rounds.isNotEmpty && rounds.last.length > 1) {
