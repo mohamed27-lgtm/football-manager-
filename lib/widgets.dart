@@ -475,21 +475,41 @@ class AnimatedMoney extends StatelessWidget {
 /// نافذة تأكيد للعمليات الحساسة: تعرض الأثر المالي قبل التنفيذ
 Future<bool> confirmDialog(BuildContext context,
     {required String title, required String body, String confirm = 'تأكيد', bool danger = false}) async {
+  Widget btn(String label, Color bg, Color fg, VoidCallback f) => Expanded(
+        child: GestureDetector(
+          onTap: f,
+          child: Container(
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10), boxShadow: [BoxShadow(color: Color.alphaBlend(Colors.black26, bg), offset: const Offset(0, 3))]),
+            child: Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w900, fontSize: 15)),
+          ),
+        ),
+      );
   final ok = await showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
+    builder: (ctx) => Dialog(
       backgroundColor: kCard,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18), side: BorderSide(color: danger ? const Color(0xFFFF5252) : kLine)),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-      content: Text(body, style: const TextStyle(height: 1.5)),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
-        FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: danger ? const Color(0xFFFF5252) : kAccent, foregroundColor: danger ? Colors.white : Colors.black),
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text(confirm),
-        ),
-      ],
+      insetPadding: const EdgeInsets.symmetric(horizontal: 22),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: kLine)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(12)),
+            child: Text(body, textAlign: TextAlign.center, style: const TextStyle(height: 1.6, fontSize: 14)),
+          ),
+          const SizedBox(height: 16),
+          Row(children: [
+            btn(confirm, danger ? const Color(0xFFE5533D) : kPrimary, Colors.white, () => Navigator.pop(ctx, true)),
+            const SizedBox(width: 10),
+            btn('إلغاء', const Color(0xFFA9D4F8), const Color(0xFF15233D), () => Navigator.pop(ctx, false)),
+          ]),
+        ]),
+      ),
     ),
   );
   return ok == true;
