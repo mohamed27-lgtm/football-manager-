@@ -13,18 +13,8 @@ class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key, required this.gs, required this.onRestart, required this.onLogout});
 
   Future<void> _confirm(BuildContext context, String title, String body, Future<void> Function() action) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(body),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('تأكيد'))),
-        ],
-      ),
-    );
-    if (ok == true) await action();
+    final ok = await confirmDialog(context, title: title, body: body, confirm: tr('تأكيد'), danger: true);
+    if (ok) await action();
   }
 
   Widget _group(String title, List<Widget> rows) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
