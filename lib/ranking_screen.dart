@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
+import 'flags.dart';
 import 'game_state.dart';
 import 'models.dart';
 import 'widgets.dart';
@@ -66,6 +67,21 @@ class _RankingScreenState extends State<RankingScreen> {
         ]),
       );
 
+  Widget _pill(String t, bool sel, VoidCallback f) => GestureDetector(
+        onTap: f,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(color: sel ? const Color(0xFF15233D) : kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: sel ? const Color(0xFF15233D) : kLine)),
+          child: Text(t, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: sel ? Colors.white : kMuted)),
+        ),
+      );
+
+  Widget _card(List<Widget> rows) => Container(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: rows),
+      );
+
   List<Widget> _clubs() {
     final all = gs.worldRanking;
     final mine = all.indexOf(gs.user) + 1;
@@ -79,11 +95,15 @@ class _RankingScreenState extends State<RankingScreen> {
         padding: const EdgeInsets.only(bottom: 8),
         child: Wrap(spacing: 8, children: [
           for (final e in const [(0, 'الكل'), (1, 'محلي'), (2, 'أجنبي')])
-            ChoiceChip(label: Text(e.$2), selected: region == e.$1, onSelected: (_) => setState(() => region = e.$1)),
+            region == e.$1
+                ? Unfilter(child: _pill(e.$2, true, () => setState(() => region = e.$1)))
+                : _pill(e.$2, false, () => setState(() => region = e.$1)),
         ]),
       ),
-      for (final e in shown)
-        _row(e.$1, teamBadge(e.$2, size: 30), e.$2.name, '', Text('${gs.eloOf(e.$2).round()}', style: const TextStyle(fontWeight: FontWeight.w900)), me: e.$2 == gs.user),
+      _card([
+        for (final e in shown)
+          _row(e.$1, teamBadge(e.$2, size: 30), e.$2.name, '', Text('${gs.eloOf(e.$2).round()}', style: const TextStyle(fontWeight: FontWeight.w900)), me: e.$2 == gs.user),
+      ]),
     ];
   }
 
@@ -107,7 +127,7 @@ class _RankingScreenState extends State<RankingScreen> {
     if (rows.isEmpty) return [const EmptyState(icon: Icons.flag_outlined, title: 'لا بيانات', subtitle: 'لا توجد جنسيات كافية.')];
     return [
       for (var i = 0; i < rows.length && i < 60; i++)
-        _row(i + 1, const CircleAvatar(radius: 15, backgroundColor: kCard2, child: Icon(Icons.flag_rounded, size: 16, color: kMuted)), rows[i].$1, '${rows[i].$3} لاعباً', ratingRing(rows[i].$2, size: 34)),
+        _row(i + 1, FlagBadge(rows[i].$1, size: 30), rows[i].$1, '${rows[i].$3} لاعباً', ratingRing(rows[i].$2, size: 34)),
     ];
   }
 
