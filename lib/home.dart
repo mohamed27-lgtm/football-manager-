@@ -30,6 +30,7 @@ import 'loans_screen.dart';
 import 'stadium_screen.dart';
 import 'match_pages.dart';
 import 'calendar.dart';
+import 'awards_screens.dart';
 import 'countries.dart';
 
 class StartScreen extends StatefulWidget {
@@ -1341,6 +1342,10 @@ class DashboardTab extends StatelessWidget {
             const SizedBox(height: 8),
             Text('أنهيت الدوري في المركز ${gs.position} (الهدف: ${gs.objective})', style: const TextStyle(color: kMuted)),
             const SizedBox(height: 12),
+            if (gs.ceremony != null) ...[
+              GradientButton(label: 'حفل الجوائز', icon: Icons.emoji_events_rounded, onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AwardsHubScreen(gs: gs)))),
+              const SizedBox(height: 10),
+            ],
             OutlinedButton.icon(
               onPressed: () => showSeasonReport(context, gs),
               icon: const Icon(Icons.assessment),

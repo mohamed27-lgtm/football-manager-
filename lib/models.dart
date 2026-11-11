@@ -41,6 +41,7 @@ class Player {
   double? mv0; // القيمة السوقية الحقيقية عند الاستيراد (M€)
   int? ov0, age0; // التقييم والعمر عند الاستيراد
   bool free = false, onLoan = false, listed = false, registered = true;
+  double awardBoost = 0; // زيادة القيمة السوقية بسبب الجوائز (M)
   bool filler = false; // لاعب حشو مولَّد لملء التشكيلة (لا يظهر في السوق)
   double? salary;
   double fitness = 100;
@@ -90,13 +91,13 @@ class Player {
   double get value {
     if (mv0 != null && ov0 != null) {
       final v = mv0! * pow(10, (overall - ov0!) / 9.3) * _ageF(age) / _ageF(age0 ?? age);
-      return max(0.1, (v * 10).round() / 10);
+      return max(0.1, (v * 10).round() / 10 + awardBoost);
     }
     var m = 1.0;
     if (age <= 23) m += max(0, potential - overall) / 25;
     if (age >= 31) m *= 0.6;
     final v = pow(overall / 50, 6).toDouble() * m;
-    return max(0.1, (v * 10).round() / 10);
+    return max(0.1, (v * 10).round() / 10 + awardBoost);
   }
 
   double get baseWage => (overall - 40).clamp(1, 60) * 0.0015;
@@ -124,6 +125,7 @@ class Player {
         'photo': photo,
         'free': free,
         'fil': filler,
+        'ab': awardBoost,
         'loan': onLoan,
         'listed': listed,
         'reg': registered,
@@ -162,6 +164,7 @@ class Player {
         ..photo = j['photo'] as String?
         ..free = (j['free'] as bool?) ?? false
         ..filler = (j['fil'] as bool?) ?? false
+        ..awardBoost = (j['ab'] as num?)?.toDouble() ?? 0
         ..onLoan = (j['loan'] as bool?) ?? false
         ..listed = (j['listed'] as bool?) ?? false
         ..registered = (j['reg'] as bool?) ?? true

@@ -73,7 +73,13 @@ void main() {
       print('DIAG s$s market: free=${gs.freeAgents.length} marketSize=${gs.market.length} fillersInMarket=${gs.market.where((p) => p.filler).length} fakeFree=${gs.market.where((p) => p.free && !gs.freeAgents.any((x) => x.id == p.id)).length} avgAgeFA=${gs.freeAgents.isEmpty ? 0 : (gs.freeAgents.fold<int>(0, (a, p) => a + p.age) / gs.freeAgents.length).toStringAsFixed(1)} young<=20=${all.where((p) => p.age <= 20).length}');
       expect(gs.market.where((p) => p.filler).length, 0);
       expect(gs.teams.every((t) => t.squad.length >= 16), true);
+      expect(gs.ceremony, isNotNull);
+      final cer = (gs.ceremony!['a'] as List).map((a) => a['id']).toList();
+      // ignore: avoid_print
+      print('DIAG s$s awards: $cer winners=${(gs.ceremony!['a'] as List).take(4).map((a) => (a['nom'] as List).first['n']).toList()} mine=${gs.myAwardWins().length}');
+      gs.claimAwardRewards();
       gs.startNewSeason();
+      expect(gs.ceremony, isNull);
     }
   });
 }

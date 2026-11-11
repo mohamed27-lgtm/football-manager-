@@ -15,6 +15,8 @@ import 'sponsors.dart';
 import 'transfers.dart';
 import 'world.dart';
 
+part 'awards_logic.dart';
+
 class NextMatch {
   final String comp, round, time;
   final Team home, away;
@@ -114,6 +116,13 @@ class GameState extends ChangeNotifier {
   List<Player> market = [];
   /// لاعبون أحرار حقيقيون (أُطلقوا من أنديتهم أو انتهت عقودهم) + مواهب مولَّدة بعد الاعتزال
   List<Player> freeAgents = [];
+  /// حفل جوائز نهاية الموسم: يُبنى عند انتهاء الدوري ويُمسح عند بدء الموسم الجديد
+  Map<String, dynamic>? ceremony;
+  void touch() {
+    notifyListeners();
+    unawaited(save());
+  }
+
   MatchSim? sim;
   Finance fin = Finance();
   final List<Offer> offers = [];
@@ -494,6 +503,7 @@ class GameState extends ChangeNotifier {
     market = [
       for (final p in j['market'] as List) Player.fromJson(p as Map<String, dynamic>)
     ];
+    ceremony = j['cer'] == null ? null : Map<String, dynamic>.from(jsonDecode(jsonEncode(j['cer'])) as Map);
     freeAgents = [for (final p in (j['fa'] as List?) ?? const []) Player.fromJson(p as Map<String, dynamic>)];
     rounds = [
       for (final r in j['rounds'] as List)
@@ -706,6 +716,7 @@ class GameState extends ChangeNotifier {
         'teams': [for (final t in teams) t.toJson()],
         'market': [for (final p in market) p.toJson()],
         'fa': [for (final p in freeAgents) p.toJson()],
+        'cer': ceremony,
         'rounds': [
           for (final r in rounds)
             [
@@ -1143,7 +1154,10 @@ class GameState extends ChangeNotifier {
     if (week >= 4) transferBan = false;
     _enforceRegistration();
     if (week % 4 == 0) market = _scoutedMarket();
-    if (week >= rounds.length) seasonOver = true;
+    if (week >= rounds.length) {
+      seasonOver = true;
+      this.ensureCeremony();
+    }
     _advanceCups();
     sim = null;
     unawaited(save());
@@ -1953,6 +1967,7 @@ class GameState extends ChangeNotifier {
     }
     _setupWorldCups();
     market = _scoutedMarket();
+    ceremony = null;
     _setObjective();
     if (confidence <= 0) fired = true;
     _advanceCups();
@@ -3262,91 +3277,7 @@ class GameState extends ChangeNotifier {
   }
 
   List<String> _seasonAwards(int pos) {
-    final out = <String>[];
-    final tb = table;
-    int rankOf(Team t) => tb.indexOf(t) + 1;
-    // نجوم الأندية القارية والدرجات الأخرى: نقدّر إحصاءاتهم لأنهم لا يلعبون في دوريك
-    for (final t in [...foreign.values.where((x) => x.id < 3000), ...upper, ...lower]) {
-      for (final p in t.squad) {
-        if (p.apps > 0 || p.overall < 66) continue;
-        final q = (p.overall - 60).clamp(0, 30) / 30.0;
-        p.apps = 22 + rng.nextInt(14);
-        switch (p.pos) {
-          case Pos.att:
-            p.goals = (q * 26 * (0.55 + rng.nextDouble() * 0.6)).round();
-            p.assists = (q * 11 * rng.nextDouble()).round();
-          case Pos.mid:
-            p.goals = (q * 11 * rng.nextDouble()).round();
-            p.assists = (q * 14 * (0.4 + rng.nextDouble() * 0.6)).round();
-          case Pos.def:
-            p.goals = (q * 4 * rng.nextDouble()).round();
-            p.assists = (q * 5 * rng.nextDouble()).round();
-          case Pos.gk:
-            break;
-        }
-      }
-    }
-    final all = <(Player, Team)>[
-      for (final t in [...teams, ...foreign.values.where((x) => x.id < 3000)])
-        for (final p in t.squad)
-          if (p.apps > 0) (p, t)
-    ];
-    if (all.isEmpty) return out;
-    double sc((Player, Team) e) {
-      final r = rankOf(e.$2);
-      final eloBonus = (eloOf(e.$2) - 1500) / 40.0;
-      return e.$1.goals * 2.0 + e.$1.assists * 1.5 + e.$1.overall * 0.25 + (r == 0 ? eloBonus : (teams.length - r) * 0.2);
-    }
-    (Player, Team) best(Iterable<(Player, Team)> l, double Function((Player, Team)) f) =>
-        l.reduce((a, b) => f(b) > f(a) ? b : a);
-
-    void give(String title, (Player, Team) e, String extra) {
-      out.add('$title: ${e.$1.name} (${e.$2.name}) $extra');
-      e.$1.awards.add({'s': season, 'c': title, 'k': 'indiv'});
-      if (e.$2 == user) {
-        honours.add('$title — ${e.$1.name} (الموسم $season)');
-        fans = min(100, fans + 3);
-        news.insert(0, '🥇 $title لاعبك ${e.$1.name}!');
-      }
-    }
-
-    final bd = best(all, sc);
-    give('🥇 الكرة الذهبية', bd, '— ${bd.$1.goals} هدف');
-    final gb = best(all, (e) => e.$1.goals * 100.0 + e.$1.assists);
-    give('👟 الحذاء الذهبي', gb, '— ${gb.$1.goals} هدف');
-    final pm = best(all, (e) => e.$1.assists * 100.0 + e.$1.goals);
-    give('🎯 أفضل صانع ألعاب', pm, '— ${pm.$1.assists} تمريرة حاسمة');
-    final gks = all.where((e) => e.$1.pos == Pos.gk);
-    if (gks.isNotEmpty) {
-      final gk = best(gks, (e) => e.$1.gk - e.$2.ga * 0.5);
-      give('🧤 أفضل حارس', gk, '— ${gk.$2.ga} هدفاً دخل مرماه');
-    }
-    final young = all.where((e) => e.$1.age <= 21);
-    if (young.isNotEmpty) give('🌟 أفضل لاعب شاب', best(young, sc), '');
-    // مدرب العام: أكبر تفوق على ترتيب القوة
-    final byStrength = [...teams]..sort((a, b) => b.strength.compareTo(a.strength));
-    Team coach = tb.first;
-    var bestGain = -99;
-    for (final t in teams) {
-      final gain = (byStrength.indexOf(t) + 1) - rankOf(t);
-      if (gain > bestGain || (gain == bestGain && rankOf(t) < rankOf(coach))) {
-        bestGain = gain;
-        coach = t;
-      }
-    }
-    out.add('🎖️ مدرب العام: مدرب ${coach.name}');
-    if (coach == user) {
-      honours.add('🎖️ مدرب العام — الموسم $season');
-      confidence = min(100, confidence + 6);
-      news.insert(0, '🎖️ اخترت مدرب العام!');
-    }
-    // التشكيلة المثالية
-    final xi = <String>[];
-    for (final e in const [(Pos.gk, 1), (Pos.def, 4), (Pos.mid, 3), (Pos.att, 3)]) {
-      final l = all.where((x) => x.$1.pos == e.$1).toList()..sort((a, b) => sc(b).compareTo(sc(a)));
-      xi.addAll(l.take(e.$2).map((x) => x.$1.name));
-    }
-    out.add('⭐ التشكيلة المثالية: ${xi.join('، ')}');
-    return out;
+    this.ensureCeremony();
+    return this._applyCeremony();
   }
 }
