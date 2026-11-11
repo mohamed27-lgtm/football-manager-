@@ -687,25 +687,46 @@ class _SquadTabState extends State<SquadTab> {
         final c = order[x.pos]!.compareTo(order[y.pos]!);
         return c != 0 ? c : y.overall.compareTo(x.overall);
       });
-    Widget chip(String label, bool sel, VoidCallback f) => Padding(
-          padding: const EdgeInsetsDirectional.only(end: 8),
-          child: ChoiceChip(label: Text(label), selected: sel, showCheckmark: false, onSelected: (_) => f()),
+    Widget chip(String label, bool sel, VoidCallback f) => GestureDetector(
+          onTap: f,
+          child: Container(
+            margin: const EdgeInsetsDirectional.only(end: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            decoration: BoxDecoration(
+              color: sel ? const Color(0xFF15233D) : kCard,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: sel ? const Color(0xFF15233D) : kLine),
+            ),
+            child: Text(label, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: sel ? Colors.white : kMuted)),
+          ),
+        );
+    Widget wrapSel(bool sel, Widget c) => sel ? Unfilter(child: c) : c;
+    Widget tile(String k, String v, {Color? c}) => Expanded(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLine)),
+            child: Column(children: [
+              Text(v, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: c)),
+              const SizedBox(height: 2),
+              Text(k, style: const TextStyle(color: kMuted, fontSize: 11)),
+            ]),
+          ),
         );
     return ListView(padding: const EdgeInsets.all(14), children: [
-      Panel(
-        child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-          _kv('اللاعبون', '${sq.length}'),
-          _kv('التقييم', gs.user.strength.toStringAsFixed(1)),
-          _kv('غائبون', '$inj'),
-          _kv('الرواتب/أسبوع', money(gs.weeklyWages)),
-        ]),
-      ),
+      Row(children: [
+        tile('اللاعبون', '${sq.length}'),
+        tile('التقييم', gs.user.strength.toStringAsFixed(1), c: const Color(0xFF1FA58A)),
+        tile('غائبون', '$inj', c: inj > 0 ? const Color(0xFFE5533D) : null),
+        tile('الرواتب/أسبوع', money(gs.weeklyWages)),
+      ]),
+      const SizedBox(height: 12),
       SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(children: [
-          chip('الكل ${sq.length}', pos == null && !absentOnly, () => setState(() { pos = null; absentOnly = false; })),
-          for (final ps in Pos.values) chip('${ps.plural} ${sq.where((x) => x.pos == ps).length}', pos == ps, () => setState(() { pos = ps; absentOnly = false; })),
-          chip('غائبون $inj', absentOnly, () => setState(() { absentOnly = true; pos = null; })),
+          wrapSel(pos == null && !absentOnly, chip('الكل ${sq.length}', pos == null && !absentOnly, () => setState(() { pos = null; absentOnly = false; }))),
+          for (final ps in Pos.values) wrapSel(pos == ps, chip('${ps.plural} ${sq.where((x) => x.pos == ps).length}', pos == ps, () => setState(() { pos = ps; absentOnly = false; }))),
+          wrapSel(absentOnly, chip('غائبون $inj', absentOnly, () => setState(() { absentOnly = true; pos = null; }))),
         ]),
       ),
       const SizedBox(height: 10),
