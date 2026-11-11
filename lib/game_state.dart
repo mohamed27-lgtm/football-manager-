@@ -3195,6 +3195,7 @@ class GameState extends ChangeNotifier {
       if (t.name == name) return t.id;
     }
     final i = kWorldClubs.indexWhere((c) => c.name == name);
+    if (i < 0) return -1; // نادٍ لم يعد في الدوري (هبط) ولا في سجل العالم
     final reg = kWorldClubs[i];
     final id = 3000 + i;
     final e0 = elo[name] ?? reg.elo.toDouble();
@@ -3232,7 +3233,7 @@ class GameState extends ChangeNotifier {
       }
       names.add(n);
     }
-    final ids = [for (final n in names) _clubIdByName(n)]..sort((a, b) => eloOf(team(b)).compareTo(eloOf(team(a))));
+    final ids = [for (final n in names) _clubIdByName(n)].where((i) => i >= 0).toList()..sort((a, b) => eloOf(team(b)).compareTo(eloOf(team(a))));
     ic = Cup(key: 'ic', name: 'كأس إنتركونتيننتال', continental: true, schedule: _weeksAt(const [0.36, 0.42, 0.48]), size: 8, alive: ids)..seeded = true;
     _draw(ic!);
     news.insert(0, '🌍 كأس إنتركونتيننتال: ${names.map((n) => n).join(' • ')}');
@@ -3253,7 +3254,8 @@ class GameState extends ChangeNotifier {
       all.addAll(got);
     });
     if (all.length != 32) return;
-    final cid = [for (final n in all) _clubIdByName(n)]..sort((a, b) => eloOf(team(b)).compareTo(eloOf(team(a))));
+    final cid = [for (final n in all) _clubIdByName(n)].where((i) => i >= 0).toList()..sort((a, b) => eloOf(team(b)).compareTo(eloOf(team(a))));
+    if (cid.length != 32) return;
     final pots = [for (var k = 0; k < 4; k++) (cid.sublist(k * 8, k * 8 + 8)..shuffle(rng))];
     final c = Cup(key: 'cwc', name: 'كأس العالم للأندية', continental: true, schedule: _weeksAt(const [0.50, 0.56, 0.62, 0.70, 0.78, 0.86, 0.94]), size: 32, alive: cid)
       ..kind = 1
