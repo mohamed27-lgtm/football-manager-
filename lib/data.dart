@@ -110,11 +110,22 @@ void topUpSquad(Team t, Random rng) {
   final lvl = (t.strength - 8).round().clamp(48, 76);
   minimum.forEach((pos, n) {
     while (t.squad.where((p) => p.pos == pos).length < n) {
-      t.squad.add(makeYouth(rng, pos, level: lvl));
+      t.squad.add(makeYouth(rng, pos, level: lvl)..filler = true);
     }
   });
   while (t.squad.length < 20) {
-    t.squad.add(makeYouth(rng, Pos.values[1 + rng.nextInt(3)], level: lvl));
+    t.squad.add(makeYouth(rng, Pos.values[1 + rng.nextInt(3)], level: lvl)..filler = true);
   }
 }
 
+
+
+/// موهبة مولَّدة بعد اعتزال لاعب: من نفس المركز والجنسية، بإمكانات عالية نسبياً
+Player makeRegen(Random rng, Player retired) {
+  final base = (retired.overall - 12).clamp(46, 70);
+  final p = makePlayer(rng, retired.pos, base + rng.nextInt(6), 16 + rng.nextInt(3));
+  p.nat = retired.nat;
+  p.potential = (retired.overall + rng.nextInt(9) - 4).clamp(66, 90);
+  p.contract = 3;
+  return p;
+}

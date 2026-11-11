@@ -112,6 +112,8 @@ class GameState extends ChangeNotifier {
   final List<String> news = [];
   final List<String> roundResults = [];
   List<Player> market = [];
+  /// لاعبون أحرار حقيقيون (أُطلقوا من أنديتهم أو انتهت عقودهم) + مواهب مولَّدة بعد الاعتزال
+  List<Player> freeAgents = [];
   MatchSim? sim;
   Finance fin = Finance();
   final List<Offer> offers = [];
@@ -457,7 +459,8 @@ class GameState extends ChangeNotifier {
     _setupWorldCups();
     fans = 20.0 + user.reputation * 12;
     _genSponsorOffers();
-    market = generateMarket(rng);
+    _seedFreeAgents();
+    market = _scoutedMarket();
     _setObjective();
     news.add('مرحباً بك مدرباً لنادي ${user.name} في $leagueName. هدف الإدارة: المركز $objective أو أفضل.');
   }
@@ -491,6 +494,7 @@ class GameState extends ChangeNotifier {
     market = [
       for (final p in j['market'] as List) Player.fromJson(p as Map<String, dynamic>)
     ];
+    freeAgents = [for (final p in (j['fa'] as List?) ?? const []) Player.fromJson(p as Map<String, dynamic>)];
     rounds = [
       for (final r in j['rounds'] as List)
         [
@@ -701,6 +705,7 @@ class GameState extends ChangeNotifier {
         'results': roundResults,
         'teams': [for (final t in teams) t.toJson()],
         'market': [for (final p in market) p.toJson()],
+        'fa': [for (final p in freeAgents) p.toJson()],
         'rounds': [
           for (final r in rounds)
             [
@@ -1009,6 +1014,18 @@ class GameState extends ChangeNotifier {
     }
   }
 
+  /// المدرب الآلي يختار العقلية حسب قوة الخصم والملعب
+  void _aiTactics(Team h, Team a) {
+    void set(Team t, Team o, bool home) {
+      if (t == user) return;
+      final d = t.strength - o.strength + (home ? 2 : -2);
+      t.mentality = d >= 8 ? 3 : (d >= 3 ? 2 : (d >= -5 ? 2 : (d >= -10 ? 1 : 0)));
+      if (d >= 12) t.mentality = 4;
+    }
+    set(h, a, true);
+    set(a, h, false);
+  }
+
   void finishMatchday() {
     final s = sim;
     final f = userFixture;
@@ -1022,6 +1039,7 @@ class GameState extends ChangeNotifier {
 
     for (final fx in rounds[week]) {
       if (identical(fx, f)) continue;
+      _aiTactics(team(fx.home), team(fx.away));
       final m = MatchSim(team(fx.home), team(fx.away), random: rng)..simulateAll();
       _applyResult(fx, m.home.goals, m.away.goals);
       roundResults.add(
@@ -1317,6 +1335,7 @@ class GameState extends ChangeNotifier {
     user.squad.add(p);
     _registerNew(p);
     market.remove(p);
+    freeAgents.removeWhere((x) => x.id == p.id);
     news.insert(0, '💼 تعاقدت مع ${p.name} مقابل ${money1(price)} + عمولة وكيل ${money1(fee)}$note');
     logOp('تعاقد مع ${p.name} (-${money1(price + fee)})');
     unawaited(save());
@@ -1454,9 +1473,12 @@ class GameState extends ChangeNotifier {
       for (final p in user.squad.where((p) => p.overall >= 58 && !offers.any((o) => o.player == p))) {
         final chance = p.listed ? 0.22 : 0.025;
         if (rng.nextDouble() < chance) {
-          final others = teams.where((t) => t != user).toList();
-          final club = others[rng.nextInt(others.length)];
           final amount = ((p.value * (0.85 + rng.nextDouble() * 0.5)) * 10).round() / 10;
+          final others = teams.where((t) => t != user).toList();
+          final fit = others.where((t) => t.budget >= amount && p.overall >= t.strength - 6 && _needOf(t) == p.pos).toList();
+          final cands = fit.isNotEmpty ? fit : others.where((t) => t.budget >= amount).toList();
+          if (cands.isEmpty) continue;
+          final club = cands[rng.nextInt(cands.length)];
           offers.add(Offer(p, club.name, max(0.1, amount), 3));
           news.insert(0, '📨 عرض من ${club.name} لشراء ${p.name}: ${money1(amount)}');
           break;
@@ -1464,35 +1486,100 @@ class GameState extends ChangeNotifier {
       }
     }
     if (windowOpen) _aiTransfers();
-    if (windowOpen && market.length > 8 && rng.nextDouble() < 0.25) {
-      final top = [...market]..sort((a, b) => b.overall.compareTo(a.overall));
-      final pick = top[rng.nextInt(min(6, top.length))];
-      final club = teams.where((t) => t != user).toList()[rng.nextInt(teams.length - 1)];
-      market.remove(pick);
-      news.insert(0, '🏃 سبقك ${club.name} إلى ${pick.free ? 'توقيع' : 'ضم'} ${pick.name}');
+  }
+
+  /// لاعبون أحرار في بداية اللعبة: من اللاعبين الحقيقيين الذين لا يضمنون مكاناً أساسياً
+  void _seedFreeAgents() {
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+      if (t == user || t.squad.length < 22 || rng.nextDouble() > 0.35) continue;
+      final sorted = [...t.squad]..sort((a, b) => b.overall.compareTo(a.overall));
+      final c = sorted.skip(8).where((p) => p.age >= 27 && p.overall >= 58 && !p.filler && !p.onLoan).toList();
+      if (c.isEmpty) continue;
+      final p = c[rng.nextInt(c.length)];
+      t.squad.remove(p);
+      _release(p);
+      if (freeAgents.length >= 60) break;
     }
   }
 
-  /// صفقات بين الأندية الأخرى: تتحرك النجوم فتتغير قوة الفرق خلال الموسم
+  /// المركز الذي يحتاجه النادي أكثر (نقص عددي ثم أضعف خط)
+  Pos? _needOf(Team t) {
+    const minimum = {Pos.gk: 2, Pos.def: 6, Pos.mid: 6, Pos.att: 4};
+    for (final e in minimum.entries) {
+      if (t.squad.where((p) => p.pos == e.key && !p.onLoan).length < e.value) return e.key;
+    }
+    Pos? worst;
+    var gap = 0.0;
+    for (final pos in Pos.values) {
+      final xs = t.squad.where((p) => p.pos == pos).map((p) => p.overall).toList()..sort((a, b) => b.compareTo(a));
+      if (xs.isEmpty) continue;
+      final k = switch (pos) { Pos.gk => 1, Pos.def => 4, Pos.mid => 3, Pos.att => 3 };
+      final avg = xs.take(k).reduce((a, b) => a + b) / min(k, xs.length);
+      final g = t.strength - avg;
+      if (g > gap) {
+        gap = g;
+        worst = pos;
+      }
+    }
+    return gap >= 3 ? worst : null;
+  }
+
+  /// ذكاء الأندية: كل ناقل يبحث عن حاجته الفعلية، ويشتري من يناسب ميزانيته ومستواه، أو يوقّع حراً
   void _aiTransfers() {
     final pool = teams.where((t) => t != user).toList();
     if (pool.length < 4) return;
-    final n = rng.nextDouble() < 0.4 ? 2 : 1;
+    final n = rng.nextDouble() < 0.5 ? 2 : 1;
     for (var i = 0; i < n; i++) {
-      final from = pool[rng.nextInt(pool.length)];
-      final cands = from.squad.where((p) => p.overall >= 62 && !p.onLoan).toList();
-      if (cands.isEmpty || from.squad.length <= 18) continue;
-      final p = cands[rng.nextInt(cands.length)];
-      final buyers = pool.where((t) => t != from && t.squad.length < 28 && t.budget >= p.value && t.strength + 4 >= p.overall).toList();
-      if (buyers.isEmpty) continue;
-      final to = buyers[rng.nextInt(buyers.length)];
-      final fee = (p.value * (0.9 + rng.nextDouble() * 0.4) * 10).round() / 10;
-      from.squad.remove(p);
-      to.squad.add(p);
+      final to = pool[rng.nextInt(pool.length)];
+      if (to.squad.length >= 28) continue;
+      final need = _needOf(to);
+      if (need == null) continue;
+      // أولاً: لاعب حر مناسب (بلا مقابل)
+      final fa = freeAgents.where((p) => p.pos == need && p.overall >= to.strength - 6).toList()
+        ..sort((a, b) => b.overall.compareTo(a.overall));
+      if (fa.isNotEmpty && rng.nextDouble() < 0.6) {
+        final p = fa.first;
+        freeAgents.remove(p);
+        market.removeWhere((x) => x.id == p.id);
+        p
+          ..free = false
+          ..contract = 1 + rng.nextInt(3);
+        to.squad.add(p);
+        if (p.overall >= 66) news.insert(0, '✍️ ${to.name} يوقّع مع ${p.name} حراً');
+        to.autoPick();
+        continue;
+      }
+      // ثانياً: شراء من نادٍ آخر
+      final sellers = [...pool]..shuffle(rng);
+      Player? best;
+      Team? from;
+      for (final f in sellers.take(6)) {
+        if (f == to || f.squad.length <= 19) continue;
+        final cnt = f.squad.where((p) => p.pos == need).length;
+        for (final p in f.squad) {
+          if (p.pos != need || p.onLoan || p.filler && p.overall < 60) continue;
+          if (cnt <= (need == Pos.gk ? 2 : 4)) continue;
+          if (p.overall < to.strength - 4 || p.overall > to.strength + 7) continue;
+          if (p.value * 1.1 > to.budget * 0.6) continue;
+          if (best == null || p.overall > best.overall) {
+            best = p;
+            from = f;
+          }
+        }
+      }
+      if (best == null || from == null) continue;
+      final fee = (best.value * (0.9 + rng.nextDouble() * 0.4) * 10).round() / 10;
+      from.squad.remove(best);
+      to.squad.add(best..contract = 2 + rng.nextInt(3));
       from.budget += fee;
       to.budget -= fee;
       from.repairLineup();
-      news.insert(0, '🔁 ${p.name} ينتقل من ${from.name} إلى ${to.name} (${money1(fee)})');
+      to.autoPick();
+      final inMarket = market.any((x) => x.id == best!.id);
+      market.removeWhere((x) => x.id == best!.id);
+      news.insert(0, inMarket
+          ? '🏃 سبقك ${to.name} إلى ضم ${best.name} من ${from.name} (${money1(fee)})'
+          : '🔁 ${best.name} ينتقل من ${from.name} إلى ${to.name} (${money1(fee)})');
     }
     if (news.length > 150) news.removeRange(150, news.length);
   }
@@ -1608,6 +1695,72 @@ class GameState extends ChangeNotifier {
   }
 
   // ───────── نهاية الموسم ─────────
+  /// تطور اللاعب الموسمي: منحنى عمري حسب المركز + عامل نمو فردي خفي + الأداء والتدريب
+  void _develop(Player p, int form, int train) {
+    final gf = 0.7 + ((p.id * 2654435761) & 0xFF) / 255 * 0.8; // 0.7 – 1.5
+    final peak = switch (p.pos) { Pos.gk => 30, Pos.def => 28, Pos.mid => 27, Pos.att => 26 };
+    final playing = p.apps >= 18 ? 1 : (p.apps < 5 ? -1 : 0);
+    if (p.age <= peak - 2) {
+      final gap = p.potential - p.overall;
+      if (gap > 0) {
+        final rate = p.age <= 21 ? 0.32 : (p.age <= 24 ? 0.24 : 0.14);
+        final g = (gap * rate * gf + playing * 0.8 + form * 0.7 + train * 0.6 + rng.nextDouble() * 1.6 - 0.4).round();
+        _grow(p, max(0, min(g, gap)));
+      }
+      if (p.age <= 23) {
+        if (form > 0 && p.apps >= 15 && rng.nextDouble() < 0.35 * gf) p.potential = min(95, p.potential + 1);
+        if ((form < 0 || p.apps < 3) && rng.nextDouble() < 0.3) p.potential = max(p.overall, p.potential - 1);
+      }
+    } else if (p.age <= peak + 2) {
+      if (form > 0 && p.overall < p.potential + 2 && rng.nextDouble() < 0.5) _grow(p, 1);
+      if (form < 0 && rng.nextDouble() < 0.5) _grow(p, -1);
+    } else {
+      final yrs = p.age - (peak + 2);
+      final d = ((0.8 + yrs * 0.5) * (2.0 - gf) + rng.nextDouble() * 1.4 - 0.5 - (form > 0 ? 1 : 0)).round();
+      _grow(p, -max(0, d));
+      p.potential = max(p.overall, p.potential - 1);
+    }
+    if (p.potential < p.overall) p.potential = p.overall;
+  }
+
+  bool _retires(Player p) {
+    final start = p.pos == Pos.gk ? 36 : 33;
+    if (p.age < start) return false;
+    if (p.age >= 40) return true;
+    var pr = (p.age - start + 1) * 0.13 + (p.overall < 58 ? 0.15 : 0);
+    if (p.overall >= 78) pr -= 0.1;
+    return rng.nextDouble() < pr;
+  }
+
+  /// يُطلق لاعب حقيقي إلى سوق الأحرار
+  void _release(Player p) {
+    p
+      ..free = true
+      ..club = null
+      ..listed = false
+      ..contract = 0
+      ..onLoan = false;
+    freeAgents.add(p);
+  }
+
+  /// الأحرار القدامى يكبرون ويتطورون ويعتزلون مثل غيرهم
+  void _ageFreeAgents() {
+    for (final p in [...freeAgents]) {
+      p.age++;
+      p.apps = 0;
+      p.rated = 0;
+      p.ratingSum = 0;
+      _develop(p, 0, 0);
+      if (_retires(p) || (p.age >= 31 && p.overall < 60)) freeAgents.remove(p);
+    }
+  }
+
+  /// نُبقي أفضل 90 حراً فقط
+  void _trimFreeAgents() {
+    freeAgents.sort((a, b) => (b.overall + b.potential * 0.3).compareTo(a.overall + a.potential * 0.3));
+    if (freeAgents.length > 90) freeAgents.removeRange(90, freeAgents.length);
+  }
+
   void _grow(Player p, int d) {
     int c(int v) => (v + d).clamp(20, 95).toInt();
     switch (p.pos) {
@@ -1689,26 +1842,14 @@ class GameState extends ChangeNotifier {
     fin.add('prize', prize);
     news.insert(0, '🏆 أنهيت الموسم $season في المركز $pos — جائزة ${prize.toStringAsFixed(1)}M');
 
+    _ageFreeAgents();
     for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
       for (final p in [...t.squad]) {
         p.age++;
         p.contract--;
-        // تطور اللاعب: العمر + الأداء الموسمي (التقييم والمشاركات) + مستوى التدريب
         final played = p.apps >= 15;
         final form = p.rated == 0 ? 0 : (p.avgRating >= 7.3 ? 1 : (p.avgRating <= 6.2 && played ? -1 : 0));
-        final train = t == user ? (user.trainingLvl >= 3 ? 1 : 0) : 0;
-        if (p.age <= 24) {
-          if (p.overall < p.potential) {
-            var g = 1 + rng.nextInt(3) + (p.apps >= 18 ? 1 : (p.apps < 5 ? -1 : 0)) + (form > 0 ? 1 : 0) + train;
-            _grow(p, max(0, min(g, p.potential - p.overall)));
-          }
-        } else if (p.age <= 30) {
-          // قمة العطاء: يتغير قليلاً حسب الأداء فقط
-          if (form > 0 && p.overall < p.potential + 2 && rng.nextDouble() < 0.5) _grow(p, 1);
-          if (form < 0 && rng.nextDouble() < 0.5) _grow(p, -1);
-        } else {
-          _grow(p, -(rng.nextInt(3) + (p.age >= 34 ? 1 : 0)) + (form > 0 ? 1 : 0));
-        }
+        _develop(p, form, t == user && user.trainingLvl >= 3 ? 1 : 0);
         if (p.apps > 0) {
           p.career.add({
             's': season,
@@ -1730,15 +1871,28 @@ class GameState extends ChangeNotifier {
         p.assists = 0;
         p.apps = 0;
         p.yellows = 0;
-        if (p.age >= 36) {
+        if (_retires(p)) {
           t.squad.remove(p);
           if (t == user) news.insert(0, '👋 اعتزل ${p.name}');
+          if (!p.filler && p.overall >= 60) {
+            final r = makeRegen(rng, p);
+            if (t != user && t.squad.length < 27) {
+              t.squad.add(r);
+            } else {
+              r..free = true..contract = 0;
+              freeAgents.add(r);
+            }
+          }
         } else if (p.contract <= 0) {
           if (t == user) {
             t.squad.remove(p);
             news.insert(0, '📤 انتهى عقد ${p.name} ورحل عن النادي');
-          } else {
+            if (!p.filler && !p.onLoan) _release(p);
+          } else if (p.filler || p.age <= 28 || rng.nextDouble() < 0.7) {
             p.contract = 1 + rng.nextInt(4);
+          } else {
+            t.squad.remove(p);
+            if (!p.filler && p.overall >= 55) _release(p);
           }
         }
       }
@@ -1758,6 +1912,7 @@ class GameState extends ChangeNotifier {
       }
     }
 
+    _trimFreeAgents();
     for (final d in deals) {
       d.years--;
     }
@@ -2476,12 +2631,12 @@ class GameState extends ChangeNotifier {
 
   /// سوق حقيقي: لاعبون من أندية الدوريات الأخرى (بالنادي والقيمة الحقيقية) + أحرار
   List<Player> _scoutedMarket() {
-    final m = generateMarket(rng).where((p) => p.free).toList();
+    final m = <Player>[for (final p in freeAgents) Player.fromJson(p.toJson())..free = true..club = null];
     final pool = <Player>[];
     for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
       if (t == user) continue;
       for (final p in t.squad) {
-        if (p.overall >= 58 && !p.onLoan && p.injuredWeeks == 0) {
+        if (p.overall >= 58 && !p.onLoan && !p.filler && p.injuredWeeks == 0) {
           p.club = t.name;
           pool.add(p);
         }

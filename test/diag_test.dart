@@ -69,6 +69,10 @@ void main() {
       final f = gs.fin;
       // ignore: avoid_print
       print('DIAG s$s econ: income=${f.totalIncome.toStringAsFixed(1)} expense=${f.totalExpense.toStringAsFixed(1)} tickets=${(f.season['tickets'] ?? 0).toStringAsFixed(1)} broadcast=${(f.season['broadcast'] ?? 0).toStringAsFixed(1)} sponsor=${(f.season['sponsor'] ?? 0).toStringAsFixed(1)} prize=${(f.season['prize'] ?? 0).toStringAsFixed(1)} wages=${(f.season['wages'] ?? 0).toStringAsFixed(1)} | avgOv=${avgOv.toStringAsFixed(1)} avgAge=${avgAge.toStringAsFixed(1)} userSquad=${gs.user.squad.length} maxOv=${all.map((p) => p.overall).reduce(max)} p99=${(all.map((p) => p.overall).toList()..sort())[(all.length * 0.99).floor()]}');
+      // ignore: avoid_print
+      print('DIAG s$s market: free=${gs.freeAgents.length} marketSize=${gs.market.length} fillersInMarket=${gs.market.where((p) => p.filler).length} fakeFree=${gs.market.where((p) => p.free && !gs.freeAgents.any((x) => x.id == p.id)).length} avgAgeFA=${gs.freeAgents.isEmpty ? 0 : (gs.freeAgents.fold<int>(0, (a, p) => a + p.age) / gs.freeAgents.length).toStringAsFixed(1)} young<=20=${all.where((p) => p.age <= 20).length}');
+      expect(gs.market.where((p) => p.filler).length, 0);
+      expect(gs.teams.every((t) => t.squad.length >= 16), true);
       gs.startNewSeason();
     }
   });

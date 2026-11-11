@@ -41,6 +41,7 @@ class Player {
   double? mv0; // القيمة السوقية الحقيقية عند الاستيراد (M€)
   int? ov0, age0; // التقييم والعمر عند الاستيراد
   bool free = false, onLoan = false, listed = false, registered = true;
+  bool filler = false; // لاعب حشو مولَّد لملء التشكيلة (لا يظهر في السوق)
   double? salary;
   double fitness = 100;
   double morale = 70;
@@ -122,6 +123,7 @@ class Player {
         'yel': yellows,
         'photo': photo,
         'free': free,
+        'fil': filler,
         'loan': onLoan,
         'listed': listed,
         'reg': registered,
@@ -159,6 +161,7 @@ class Player {
         ..yellows = j['yel'] as int
         ..photo = j['photo'] as String?
         ..free = (j['free'] as bool?) ?? false
+        ..filler = (j['fil'] as bool?) ?? false
         ..onLoan = (j['loan'] as bool?) ?? false
         ..listed = (j['listed'] as bool?) ?? false
         ..registered = (j['reg'] as bool?) ?? true
