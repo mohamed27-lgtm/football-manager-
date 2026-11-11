@@ -194,7 +194,7 @@ class MatchSim {
       if (minute == 56 || minute == 66 || minute == 76) _aiSub(s);
     }
 
-    final hm = home.midPower * 1.04;
+    final hm = home.midPower * 1.07;
     final am = away.midPower;
     final ph = pow(hm, 3) / (pow(hm, 3) + pow(am, 3));
     final homeAtt = rng.nextDouble() < ph;

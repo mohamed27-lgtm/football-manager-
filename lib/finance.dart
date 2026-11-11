@@ -10,6 +10,7 @@ class Finance {
   static const expenseKeys = [
     'wages',
     'maintenance',
+    'operations',
     'purchases',
     'renewals',
     'severance',
@@ -29,6 +30,7 @@ class Finance {
     'sales': 'بيع اللاعبين',
     'wages': 'الرواتب',
     'maintenance': 'الصيانة',
+    'operations': 'التشغيل والإدارة',
     'purchases': 'شراء اللاعبين',
     'renewals': 'تجديد العقود',
     'severance': 'إنهاء العقود',

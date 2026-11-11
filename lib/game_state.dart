@@ -1085,12 +1085,15 @@ class GameState extends ChangeNotifier {
       if (attHist.length > 12) attHist.removeAt(0);
     }
     if (home) fans = (fans + (ticketLevel == 0 ? 0.3 : ticketLevel == 2 ? -0.4 : 0.0)).clamp(0, 100).toDouble();
-    final broadcast = (0.35 + 0.1 * user.reputation) * divFactor;
+    final broadcast = (0.35 + 0.1 * user.reputation) * divFactor * (0.85 + 0.3 * (teams.length - position) / max(1, teams.length - 1));
     final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +
         dealsIncome * (0.9 + 0.2 * fans / 100);
     final sponsorX = sponsor * (1 + 0.05 * mk);
     final maintenance = 0.03 * (user.stadium + user.trainingLvl);
     final interest = fin.debt * 0.004;
+    // مصاريف التشغيل والإدارة (طاقم غير لاعبين، الأمن، السفر، التسويق...) نحو 22% من الإيرادات
+    final ops = 0.22 * (gate + broadcast + sponsorX);
+    fin.add('operations', ops);
     fin.add('tickets', gate);
     fin.add('broadcast', broadcast);
     fin.add('sponsor', sponsorX);
@@ -1098,7 +1101,7 @@ class GameState extends ChangeNotifier {
     fin.add('staff', staffWages);
     fin.add('maintenance', maintenance);
     fin.add('interest', interest);
-    user.budget += gate + broadcast + sponsorX - weeklyWages - staffWages - maintenance - interest;
+    user.budget += gate + broadcast + sponsorX - weeklyWages - staffWages - maintenance - interest - ops;
     fin.record(user.budget);
 
     if (week >= 4) {

@@ -100,19 +100,21 @@ List<Player> generateMarket(Random rng) {
   return list;
 }
 
-Player makeYouth(Random rng, Pos pos) =>
-    makePlayer(rng, pos, 50 + rng.nextInt(8), 17 + rng.nextInt(3));
+/// لاعب أكاديمية: مستواه يتبع مستوى ناديه (الأندية القوية تُخرّج مواهب أفضل) كي لا ينهار مستوى الدوري مع الزمن
+Player makeYouth(Random rng, Pos pos, {int level = 0}) =>
+    makePlayer(rng, pos, level > 0 ? level - 3 + rng.nextInt(8) : 50 + rng.nextInt(8), 17 + rng.nextInt(3));
 
 /// يضمن الحد الأدنى من اللاعبين في كل مركز (يملأ النقص بلاعبين شباب)
 void topUpSquad(Team t, Random rng) {
   const minimum = {Pos.gk: 2, Pos.def: 6, Pos.mid: 6, Pos.att: 3};
+  final lvl = (t.strength - 13).round().clamp(46, 72);
   minimum.forEach((pos, n) {
     while (t.squad.where((p) => p.pos == pos).length < n) {
-      t.squad.add(makeYouth(rng, pos));
+      t.squad.add(makeYouth(rng, pos, level: lvl));
     }
   });
   while (t.squad.length < 20) {
-    t.squad.add(makeYouth(rng, Pos.values[1 + rng.nextInt(3)]));
+    t.squad.add(makeYouth(rng, Pos.values[1 + rng.nextInt(3)], level: lvl));
   }
 }
 
