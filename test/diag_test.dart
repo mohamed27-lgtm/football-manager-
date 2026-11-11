@@ -1,0 +1,69 @@
+import 'dart:math';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:football_manager/data.dart';
+import 'package:football_manager/engine.dart';
+import 'package:football_manager/game_state.dart';
+import 'package:football_manager/models.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues({});
+
+  test('واقعية المباراة: أهداف، أفضلية الأرض، قوة', () {
+    final r = Random(3);
+    var n = 0, goals = 0, hw = 0, dr = 0, aw = 0, o25 = 0, btts = 0, cs = 0;
+    for (var i = 0; i < 3000; i++) {
+      final h = createTeam(r, 0, 'H', 3 + r.nextInt(3));
+      final a = createTeam(r, 1, 'A', 3 + r.nextInt(3));
+      final m = MatchSim(h, a, random: r)..simulateAll();
+      final hg = m.home.goals, ag = m.away.goals;
+      n++;
+      goals += hg + ag;
+      if (hg > ag) hw++; else if (hg == ag) dr++; else aw++;
+      if (hg + ag > 2) o25++;
+      if (hg > 0 && ag > 0) btts++;
+      if (hg == 0 || ag == 0) cs++;
+    }
+    // ignore: avoid_print
+    print('DIAG match: goals/match=${(goals / n).toStringAsFixed(2)} home=${(hw * 100 / n).toStringAsFixed(1)}% draw=${(dr * 100 / n).toStringAsFixed(1)}% away=${(aw * 100 / n).toStringAsFixed(1)}% over2.5=${(o25 * 100 / n).toStringAsFixed(1)}% btts=${(btts * 100 / n).toStringAsFixed(1)}% cleansheet=${(cs * 100 / n).toStringAsFixed(1)}%');
+    // قوة أعلى تفوز أكثر
+    var strongWins = 0, strongDraw = 0;
+    for (var i = 0; i < 2000; i++) {
+      final h = createTeam(r, 0, 'H', 7);
+      final a = createTeam(r, 1, 'A', 3);
+      final m = MatchSim(h, a, random: r)..simulateAll();
+      if (m.home.goals > m.away.goals) strongWins++;
+      if (m.home.goals == m.away.goals) strongDraw++;
+    }
+    // ignore: avoid_print
+    print('DIAG strong(rep7) vs weak(rep3) at home: win=${(strongWins * 100 / 2000).toStringAsFixed(1)}% draw=${(strongDraw * 100 / 2000).toStringAsFixed(1)}%');
+  });
+
+  test('الدوري والاقتصاد عبر 8 مواسم', () {
+    final r = Random(11);
+    final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 2 + i % 6)];
+    final gs = GameState.fromData(teams, 5, 'تجريبي');
+    for (var s = 1; s <= 8; s++) {
+      var guard = 0;
+      while (!gs.seasonOver && guard++ < 600) {
+        gs.confidence = 100;
+        final c = gs.pendingCup;
+        if (c != null) {
+          gs.startCupMatch(c);
+          gs.finishCurrent();
+          continue;
+        }
+        gs.startMatch();
+        gs.finishCurrent();
+      }
+      final tb = gs.table;
+      final totalGoals = gs.teams.fold<int>(0, (a, t) => a + t.gf);
+      final played = gs.teams.fold<int>(0, (a, t) => a + t.played) ~/ 2;
+      final draws = gs.teams.fold<int>(0, (a, t) => a + t.drawn) ~/ 2;
+      // ignore: avoid_print
+      print('DIAG s$s: champ=${tb.first.name} pts=${tb.first.points} last=${tb.last.points} spread=${tb.first.points - tb.last.points} goals/match=${(totalGoals / played).toStringAsFixed(2)} draw%=${(draws * 100 / played).toStringAsFixed(1)} userPos=${gs.position} budget=${gs.user.budget.toStringAsFixed(1)} wages=${gs.weeklyWages.toStringAsFixed(2)} str=${gs.user.strength.toStringAsFixed(1)} topStr=${tb.first.strength.toStringAsFixed(1)}');
+      gs.startNewSeason();
+    }
+  });
+}
