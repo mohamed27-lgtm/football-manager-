@@ -3123,11 +3123,47 @@ class GameState extends ChangeNotifier {
     return res;
   }
 
+  /// جوائز بطولة المنتخبات: الهدّاف، أفضل لاعب، أفضل حارس، أفضل لاعب شاب
+  void _natAwards(NatTour t, List<String> teams) {
+    String f((Player, Team) e, String nat) => '${e.$1.name}|$nat|${e.$2.name}';
+    if (t.scorers.isNotEmpty) t.awards['boot'] = t.scorers.keys.first;
+    List<(Player, Team)> of(String? n) => n == null ? const [] : (_natIdx?[n] ?? const <(Player, Team)>[]);
+    final ch = of(t.champion).where((e) => e.$1.pos != Pos.gk).toList()..sort((a, b) => b.$1.overall.compareTo(a.$1.overall));
+    final ru = of(t.runnerUp).where((e) => e.$1.pos != Pos.gk).toList()..sort((a, b) => b.$1.overall.compareTo(a.$1.overall));
+    if (ch.isNotEmpty) {
+      // أفضل لاعب: من البطل غالباً، ومن الوصيف أحياناً
+      final pick = (ru.isNotEmpty && rng.nextDouble() < 0.22 ? ru : ch);
+      t.awards['ball'] = f(pick.first, pick == ru ? t.runnerUp! : t.champion!);
+    }
+    final gks = of(t.champion).where((e) => e.$1.pos == Pos.gk).toList()..sort((a, b) => b.$1.gk.compareTo(a.$1.gk));
+    if (gks.isNotEmpty) t.awards['glove'] = f(gks.first, t.champion!);
+    (Player, Team)? yb;
+    String? yn;
+    for (final n in teams) {
+      for (final e in of(n)) {
+        if (e.$1.age <= 21 && (yb == null || e.$1.overall > yb.$1.overall)) {
+          yb = e;
+          yn = n;
+        }
+      }
+    }
+    if (yb != null) t.awards['young'] = f(yb, yn!);
+    for (final e in t.awards.entries) {
+      final p = e.value.split('|');
+      if (p.length == 3 && p[2] == user.name) {
+        final title = switch (e.key) { 'boot' => 'هدّاف', 'ball' => 'أفضل لاعب في', 'glove' => 'أفضل حارس في', _ => 'أفضل لاعب شاب في' };
+        news.insert(0, '🏅 لاعبك ${p[0]} — $title ${t.name}');
+        user.squad.where((x) => x.name == p[0]).firstOrNull?.awards.add({'s': season, 'c': '${t.name}: ${switch (e.key) { 'boot' => 'الهدّاف', 'ball' => 'أفضل لاعب', 'glove' => 'أفضل حارس', _ => 'أفضل شاب' }}', 'k': 'indiv'});
+      }
+    }
+  }
+
   void _playNatTour(NatTourDef d) {
     final hl = kNatHosts[d.key]!;
     final hosts = [for (final h in hl[(season ~/ d.cycle) % hl.length]) if (nat.pts.containsKey(h)) h];
     final teams = _natQualify(d, hosts);
     final t = nat.play(d, season, teams, hosts, rng, _natAdj, _natPool);
+    _natAwards(t, teams);
     nat.history.add(t);
     final same = nat.history.where((x) => x.key == d.key).toList();
     while (same.length > 3) {

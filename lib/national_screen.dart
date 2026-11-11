@@ -166,6 +166,36 @@ class _NatTourScreenState extends State<NatTourScreen> {
     return out;
   }
 
+  List<Widget> _awards(NatTour t) {
+    const meta = [('ball', '🏆', 'أفضل لاعب في البطولة'), ('boot', '👟', 'الحذاء الذهبي (الهدّاف)'), ('glove', '🧤', 'القفاز الذهبي'), ('young', '⭐', 'أفضل لاعب شاب')];
+    final rows = <Widget>[];
+    for (final m in meta) {
+      final v = t.awards[m.$1];
+      if (v == null) continue;
+      final f = v.split('|');
+      final mine = f.length == 3 && f[2] == widget.gs.user.name;
+      rows.add(Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: mine ? kPrimary : kLine, width: mine ? 2 : 1)),
+        child: Row(children: [
+          Container(width: 46, height: 46, alignment: Alignment.center, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFFBEBB5)), child: Text(m.$2, style: const TextStyle(fontSize: 22))),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(m.$3, style: const TextStyle(color: kMuted, fontSize: 12)),
+              Text(f[0], style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              if (f.length == 3) Text('${f[1]} • ${f[2]}', style: const TextStyle(color: kMuted, fontSize: 12)),
+            ]),
+          ),
+          if (f.length == 3) FlagBadge(f[1], size: 30),
+        ]),
+      ));
+    }
+    if (rows.isEmpty) return [const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('لا جوائز لهذه النسخة', style: TextStyle(color: kMuted))))];
+    return rows;
+  }
+
   List<Widget> _scorers(NatTour t) {
     if (t.scorers.isEmpty) return [const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('لا بيانات للهدّافين', style: TextStyle(color: kMuted))))];
     final l = t.scorers.entries.toList();
@@ -229,7 +259,7 @@ class _NatTourScreenState extends State<NatTourScreen> {
     final d = def;
     final eds = gs.nat.history.where((t) => t.key == d.key).toList().reversed.toList(); // الأحدث أولاً
     final cur = eds.isEmpty ? null : eds[ed.clamp(0, eds.length - 1)];
-    final tabs = ['المجموعات', 'الإقصائيات', 'الهدّافون', 'السجل'];
+    final tabs = ['المجموعات', 'الإقصائيات', 'الهدّافون', 'الجوائز', 'السجل'];
     return Scaffold(
       appBar: AppBar(title: Text(d.name)),
       body: cur == null
@@ -268,7 +298,8 @@ class _NatTourScreenState extends State<NatTourScreen> {
               if (tab == 0) ..._groups(cur),
               if (tab == 1) ..._knockout(cur),
               if (tab == 2) ..._scorers(cur),
-              if (tab == 3) ..._history(eds),
+              if (tab == 3) ..._awards(cur),
+              if (tab == 4) ..._history(eds),
             ]),
     );
   }

@@ -144,6 +144,7 @@ class NatTour {
   List<NatMatch> matches = [];
   String? champion, runnerUp;
   Map<String, int> scorers = {}; // اللاعب|المنتخب|النادي ← الأهداف
+  Map<String, String> awards = {}; // جوائز البطولة: المفتاح ← اللاعب|المنتخب|النادي
   List<String> hosts;
   NatTour(this.key, this.name, this.season, this.teams, this.groups, this.hosts);
 
@@ -157,6 +158,7 @@ class NatTour {
         'c': champion,
         'r': runnerUp,
         'sc': scorers,
+        'aw': awards,
         'h': hosts,
       };
 
@@ -171,7 +173,8 @@ class NatTour {
         ..matches = [for (final m in j['m'] as List) NatMatch.fromJson(m as List)]
         ..champion = j['c'] as String?
         ..runnerUp = j['r'] as String?
-        ..scorers = {for (final e in ((j['sc'] as Map?) ?? const {}).entries) e.key as String: e.value as int};
+        ..scorers = {for (final e in ((j['sc'] as Map?) ?? const {}).entries) e.key as String: e.value as int}
+        ..awards = {for (final e in ((j['aw'] as Map?) ?? const {}).entries) e.key as String: e.value as String};
 }
 
 /// معلومات بطولة منتخبات: المفتاح، الاسم، دورية الموسم، شكل البطولة
