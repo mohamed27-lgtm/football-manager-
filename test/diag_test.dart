@@ -42,7 +42,7 @@ void main() {
 
   test('الدوري والاقتصاد عبر 8 مواسم', () {
     final r = Random(11);
-    final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 2 + i % 6)];
+    final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];
     final gs = GameState.fromData(teams, 5, 'تجريبي');
     for (var s = 1; s <= 8; s++) {
       var guard = 0;
@@ -63,6 +63,12 @@ void main() {
       final draws = gs.teams.fold<int>(0, (a, t) => a + t.drawn) ~/ 2;
       // ignore: avoid_print
       print('DIAG s$s: champ=${tb.first.name} pts=${tb.first.points} last=${tb.last.points} spread=${tb.first.points - tb.last.points} goals/match=${(totalGoals / played).toStringAsFixed(2)} draw%=${(draws * 100 / played).toStringAsFixed(1)} userPos=${gs.position} budget=${gs.user.budget.toStringAsFixed(1)} wages=${gs.weeklyWages.toStringAsFixed(2)} str=${gs.user.strength.toStringAsFixed(1)} topStr=${tb.first.strength.toStringAsFixed(1)}');
+      final all = gs.teams.expand((t) => t.squad).toList();
+      final avgOv = all.fold<int>(0, (a, p) => a + p.overall) / all.length;
+      final avgAge = all.fold<int>(0, (a, p) => a + p.age) / all.length;
+      final f = gs.fin;
+      // ignore: avoid_print
+      print('DIAG s$s econ: income=${f.totalIncome.toStringAsFixed(1)} expense=${f.totalExpense.toStringAsFixed(1)} tickets=${(f.season['tickets'] ?? 0).toStringAsFixed(1)} broadcast=${(f.season['broadcast'] ?? 0).toStringAsFixed(1)} sponsor=${(f.season['sponsor'] ?? 0).toStringAsFixed(1)} prize=${(f.season['prize'] ?? 0).toStringAsFixed(1)} wages=${(f.season['wages'] ?? 0).toStringAsFixed(1)} | avgOv=${avgOv.toStringAsFixed(1)} avgAge=${avgAge.toStringAsFixed(1)} userSquad=${gs.user.squad.length} maxOv=${all.map((p) => p.overall).reduce(max)} p99=${(all.map((p) => p.overall).toList()..sort())[(all.length * 0.99).floor()]}');
       gs.startNewSeason();
     }
   });
