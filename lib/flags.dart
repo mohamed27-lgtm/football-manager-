@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
+import 'countries.dart' show countryByName;
 import 'widgets.dart';
 
 /// رموز ISO للدول (بالأسماء العربية المستخدمة في الدوريات)
@@ -30,7 +31,7 @@ class FlagBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iso = kCountryIso[country];
+    final iso = kCountryIso[country] ?? countryByName(country)?.iso;
     final fallback = Center(
       child: Text(_emoji(iso) ?? '🌍', style: TextStyle(fontSize: size * 0.55)),
     );

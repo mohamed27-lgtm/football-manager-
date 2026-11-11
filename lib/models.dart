@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'nations.dart';
 
 enum Pos { gk, def, mid, att }
 
@@ -168,8 +169,8 @@ class Player {
         ..optionFee = (j['opt'] as num?)?.toDouble()
         ..obligation = (j['obl'] as bool?) ?? false
         ..club = j['club'] as String?
-        ..nat = j['nat'] as String?
-        ..nat2 = j['nat2'] as String?
+        ..nat = natArabic(j['nat'] as String?)
+        ..nat2 = natArabic(j['nat2'] as String?)
         ..sk = (j['sk'] as List?)?.cast<int>()
         ..traits = [for (final t in (j['tr'] as List?) ?? const []) t as String]
         ..sub = j['sub'] as String?

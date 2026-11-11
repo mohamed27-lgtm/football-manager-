@@ -2,6 +2,7 @@ import 'dart:math';
 import 'api_football.dart';
 import 'data.dart';
 import 'models.dart';
+import 'nations.dart';
 
 Pos _pos(String s) => switch (s.toLowerCase()) {
       'goalkeeper' => Pos.gk,
@@ -21,7 +22,7 @@ Player playerFromApi(ApiPlayer ap, int teamBase) {
     p
       ..potential = max(ap.pot ?? p.overall, p.overall)
       ..contract = (ap.contract ?? 2).clamp(1, 5).toInt()
-      ..nat = ap.nat
+      ..nat = natArabic(ap.nat)
       ..sub = ap.sub
       ..foot = ap.foot
       ..height = ap.height
