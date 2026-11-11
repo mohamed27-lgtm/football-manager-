@@ -333,6 +333,16 @@ class GameState extends ChangeNotifier {
   final Map<String, double> elo = {};
   double eloOf(Team t) => elo[t.name] ?? 1500 + (t.strength - 65) * 18;
 
+  /// نقاط تصنيف الأندية: تراكمية من الصفر، تزيد فقط بنتائج مباريات حقيقية (فوز 3، تعادل 1) × وزن البطولة
+  final Map<String, double> clubPts = {};
+  void _award(String h, String a, int hg, int ag, double w) {
+    double s(int x, int y) => x > y ? 3.0 : (x == y ? 1.0 : 0.0);
+    clubPts[h] = (clubPts[h] ?? 0) + s(hg, ag) * w;
+    clubPts[a] = (clubPts[a] ?? 0) + s(ag, hg) * w;
+  }
+
+  double _cupW(Cup c) => switch (c.key) { 'dom' || 'sup' => 1.0, 'ic' || 'cwc' => 2.0, _ => 1.5 };
+
   void _eloUpdate(Team h, Team a, int hg, int ag) {
     final eh = eloOf(h), ea = eloOf(a);
     final exp = 1 / (1 + pow(10, (ea - (eh + 50)) / 400));
@@ -569,9 +579,18 @@ class GameState extends ChangeNotifier {
       for (final e in ((nj['start'] as Map?) ?? const {}).entries) {
         nat.start[e.key as String] = (e.value as num).toDouble();
       }
+      for (final e in ((nj['cur'] as Map?) ?? const {}).entries) {
+        nat.cur[e.key as String] = [for (final x in e.value as List) (x as num).toDouble()];
+      }
+      for (final e in ((nj['past'] as Map?) ?? const {}).entries) {
+        nat.past[e.key as String] = [for (final x in e.value as List) (x as num).toDouble()];
+      }
       for (final h in (nj['hist'] as List?) ?? const []) {
         nat.history.add(NatTour.fromJson(h as Map<String, dynamic>));
       }
+    }
+    for (final e in ((j['cp'] as Map?) ?? const {}).entries) {
+      clubPts[e.key as String] = (e.value as num).toDouble();
     }
     for (final e in ((j['cc'] as Map?) ?? const {}).entries) {
       contChamps[e.key as String] = e.value as String;
@@ -664,7 +683,8 @@ class GameState extends ChangeNotifier {
         'ban': transferBan,
         'ppn': pointsPenaltyNext,
         'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson(), 'eur': europa?.toJson(), 'uecl': conference?.toJson(), 'sup': superCup?.toJson(), 'cwc': cwc?.toJson(), 'ic': ic?.toJson()},
-        'nat': {'pts': nat.pts, 'start': nat.start, 'hist': [for (final t in nat.history) t.toJson()]},
+        'nat': {'pts': nat.pts, 'start': nat.start, 'cur': nat.cur, 'past': nat.past, 'hist': [for (final t in nat.history) t.toJson()]},
+        'cp': clubPts,
         'cc': contChamps,
         'ch': cupHist,
         'loanedOut': [for (final p in loanedOut) p.toJson()],
@@ -964,6 +984,7 @@ class GameState extends ChangeNotifier {
     f.ag = ag;
     final h = team(f.home), a = team(f.away);
     _eloUpdate(h, a, hg, ag);
+    _award(h.name, a.name, hg, ag, 1.0);
     h.played++;
     a.played++;
     h.gf += hg;
@@ -2096,10 +2117,11 @@ class GameState extends ChangeNotifier {
     c.ties = [for (var i = 0; i + 1 < rest.length; i += 2) Tie(rest[i], rest[i + 1])];
   }
 
-  void _setTie(Tie t, int hg, int ag, {bool pens = true}) {
+  void _setTie(Tie t, int hg, int ag, {bool pens = true, double w = 1.0}) {
     t.hg = hg;
     t.ag = ag;
     _eloUpdate(team(t.home), team(t.away), hg, ag);
+    _award(team(t.home).name, team(t.away).name, hg, ag, w);
     if (hg == ag && pens) {
       final pHome = (0.5 + (team(t.home).strength - team(t.away).strength) * 0.01).clamp(0.35, 0.65).toDouble();
       final homeWins = rng.nextDouble() < pHome;
@@ -2110,9 +2132,9 @@ class GameState extends ChangeNotifier {
     }
   }
 
-  void _playAiTie(Tie t, {bool pens = true}) {
+  void _playAiTie(Tie t, {bool pens = true, double w = 1.0}) {
     final m = MatchSim(team(t.home), team(t.away), random: rng)..simulateAll();
-    _setTie(t, m.home.goals, m.away.goals, pens: pens);
+    _setTie(t, m.home.goals, m.away.goals, pens: pens, w: w);
   }
 
   void _closeRoundIfDone(Cup c) {
@@ -2151,6 +2173,9 @@ class GameState extends ChangeNotifier {
       return;
     }
     final winners = [...c.byes, for (final t in c.ties) t.winner];
+    for (final wn in winners) {
+      clubPts[team(wn).name] = (clubPts[team(wn).name] ?? 0) + 2.0 * _cupW(c);
+    }
     for (final t in c.ties) {
       c.log.add('${c.roundName}|${t.text((i) => team(i).name)}');
     }
@@ -2172,6 +2197,7 @@ class GameState extends ChangeNotifier {
     if (winners.length == 1) {
       c.done = true;
       c.champion = winners.first;
+      clubPts[team(winners.first).name] = (clubPts[team(winners.first).name] ?? 0) + 4.0 * _cupW(c);
       final fin0 = c.ties.isEmpty ? null : c.ties.first;
       cupHist.add({
         's': season,
@@ -2226,7 +2252,7 @@ class GameState extends ChangeNotifier {
       while (!c.done && c.dueWeek != null && c.dueWeek! <= week) {
         if (c.userTie(user.id) != null) break;
         for (final t in c.ties.where((t) => !t.played)) {
-          _playAiTie(t, pens: !c.inGroups);
+          _playAiTie(t, pens: !c.inGroups, w: _cupW(c));
         }
         _closeRoundIfDone(c);
       }
@@ -2292,7 +2318,7 @@ class GameState extends ChangeNotifier {
     _record(s, c.name, week + 1, t.home == user.id ? t.away : t.home, c.roundName);
     dayCursor = GameCalendar.cup(c.key, c.round, t.home, t.away).day;
     final grp = c.inGroups;
-    _setTie(t, s.home.goals, s.away.goals, pens: !grp);
+    _setTie(t, s.home.goals, s.away.goals, pens: !grp, w: _cupW(c));
     final mine = t.home == user.id ? s.home.goals - s.away.goals : s.away.goals - s.home.goals;
     final won = grp ? mine > 0 : t.winner == user.id;
     final lost = grp ? mine < 0 : t.winner != user.id;
@@ -2318,7 +2344,7 @@ class GameState extends ChangeNotifier {
     }
     _morale(user, won ? 3 : (lost ? -3 : 0));
     for (final o in c.ties.where((x) => !x.played)) {
-      _playAiTie(o, pens: !grp);
+      _playAiTie(o, pens: !grp, w: _cupW(c));
     }
     _closeRoundIfDone(c);
     _advanceCups();
@@ -2815,6 +2841,8 @@ class GameState extends ChangeNotifier {
     return [for (final c in kWorldClubs) if (c.conf == conf) (c.name, elo[c.name] ?? c.elo.toDouble())];
   }
 
+  /// بطولة قارية لاتحاد غير اتحادك: أدوار إقصائية تُحاكى بنتائج أهداف حقيقية (بواسون من فارق القوة)
+  /// وتُمنح نقاطها للأندية بنفس قاعدة التصنيف؛ القوة الابتدائية داخلية فقط ولا تُعرض كنقاط
   String _ghostChampion(String conf) {
     final l = _confClubs(conf)..sort((a, b) => b.$2.compareTo(a.$2));
     final e = {for (final x in l) x.$1: x.$2};
@@ -2823,13 +2851,22 @@ class GameState extends ChangeNotifier {
       final nx = <String>[];
       for (var i = 0; i + 1 < cur.length; i += 2) {
         final a = cur[i], b = cur[i + 1];
-        final p = 1 / (1 + pow(10, (e[b]! - e[a]!) / 400));
-        nx.add(rng.nextDouble() < p ? a : b);
+        final g = NatState.goals(rng, e[a]!, e[b]!);
+        _award(a, b, g.$1, g.$2, 1.5);
+        String w;
+        if (g.$1 != g.$2) {
+          w = g.$1 > g.$2 ? a : b;
+        } else {
+          w = rng.nextDouble() < 1 / (1 + pow(10, (e[b]! - e[a]!) / 1200)) ? a : b;
+        }
+        clubPts[w] = (clubPts[w] ?? 0) + 3.0;
+        nx.add(w);
       }
       if (cur.length.isOdd) nx.add(cur.last);
       cur = nx;
     }
     final w = cur.first;
+    clubPts[w] = (clubPts[w] ?? 0) + 6.0;
     elo[w] = e[w]! + 12;
     return w;
   }
@@ -2849,6 +2886,10 @@ class GameState extends ChangeNotifier {
       if (c != cf.id) contChamps[champKey(season, c)] = _ghostChampion(c);
     }
     ensureNat();
+    nat.start
+      ..clear()
+      ..addAll({for (final n in nat.pts.keys) n: nat.rating(n)});
+    nat.rollSeason();
     _buildNatIdx();
     nat.seasonWindow(rng, _natAdj);
     for (final d in kNatTours) {
@@ -3018,15 +3059,19 @@ class GameState extends ChangeNotifier {
       return uc;
     }
 
-    final out = <(String, String, double, Team?)>[for (final t in worldRanking) (t.name, confOf(t), eloOf(t), t)];
+    final out = <(String, String, double, Team?)>[for (final t in worldRanking) (t.name, confOf(t), clubPts[t.name] ?? 0, t)];
     final have = {for (final e in out) e.$1};
     if (realWorld) {
       for (final c in kWorldClubs) {
         if (c.conf == uc || have.contains(c.name)) continue;
-        out.add((c.name, c.conf, elo[c.name] ?? c.elo.toDouble(), null));
+        out.add((c.name, c.conf, clubPts[c.name] ?? 0, null));
       }
     }
-    out.sort((a, b) => b.$3.compareTo(a.$3));
+    double seed(String n) => elo[n] ?? kWorldClubs.where((c) => c.name == n).map((c) => c.elo.toDouble()).followedBy([1500.0]).first;
+    out.sort((a, b) {
+      final c = b.$3.compareTo(a.$3);
+      return c != 0 ? c : seed(b.$1).compareTo(seed(a.$1));
+    });
     return out;
   }
 

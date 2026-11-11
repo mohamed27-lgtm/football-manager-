@@ -113,11 +113,11 @@ class _RankingScreenState extends State<RankingScreen> {
         if (conf == 'all' || all[i].$2 == conf) (i + 1, all[i])
     ];
     return [
-      _summary(mine, teamBadge(gs.user, size: 44), gs.user.name, '${gs.eloOf(gs.user).round()} نقطة Elo • من ${all.length} نادياً'),
+      _summary(mine, teamBadge(gs.user, size: 44), gs.user.name, '${(gs.clubPts[gs.user.name] ?? 0).toStringAsFixed(1)} نقطة • من ${all.length} نادياً'),
       _confChips(),
       _card([
         for (final e in shown.take(150))
-          _row(e.$1, e.$2.$4 != null ? teamBadge(e.$2.$4!, size: 30) : _initial(e.$2.$1), e.$2.$1, kConfNames[e.$2.$2] ?? '', Text('${e.$2.$3.round()}', style: const TextStyle(fontWeight: FontWeight.w900)), me: e.$2.$4 == gs.user),
+          _row(e.$1, e.$2.$4 != null ? teamBadge(e.$2.$4!, size: 30) : _initial(e.$2.$1), e.$2.$1, kConfNames[e.$2.$2] ?? '', Text(e.$2.$3.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)), me: e.$2.$4 == gs.user),
       ]),
     ];
   }
@@ -135,7 +135,7 @@ class _RankingScreenState extends State<RankingScreen> {
         if (conf == 'all' || gs.nat.conf[rank[i]] == conf) (i + 1, rank[i])
     ];
     Widget trail(String n) {
-      final p = gs.nat.pts[n]!;
+      final p = gs.nat.rating(n);
       final d = p - (gs.nat.start[n] ?? p);
       return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
         Text(p.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)),
@@ -144,7 +144,7 @@ class _RankingScreenState extends State<RankingScreen> {
     }
 
     return [
-      if (mine > 0) _summary(mine, FlagBadge(gs.country, size: 44), 'منتخب ${gs.country}', '${gs.nat.pts[gs.country]!.toStringAsFixed(1)} نقطة • من ${rank.length} منتخباً'),
+      if (mine > 0) _summary(mine, FlagBadge(gs.country, size: 44), 'منتخب ${gs.country}', '${gs.nat.rating(gs.country).toStringAsFixed(1)} نقطة • من ${rank.length} منتخباً'),
       _confChips(),
       _card([
         for (final e in shown.take(220)) _row(e.$1, FlagBadge(e.$2, size: 30), e.$2, kConfNames[gs.nat.conf[e.$2]] ?? '', trail(e.$2), me: e.$2 == gs.country),
@@ -169,10 +169,10 @@ class _RankingScreenState extends State<RankingScreen> {
   }
 
   List<Widget> _coaches() {
-    final all = gs.worldRanking;
+    final all = [...gs.worldRanking]..sort((a, b) => (gs.clubPts[b.name] ?? 0).compareTo(gs.clubPts[a.name] ?? 0));
     return [
       for (var i = 0; i < all.length && i < 60; i++)
-        _row(i + 1, teamBadge(all[i], size: 30), 'مدرب ${all[i].name}', '${all[i].won} فوز • ${all[i].drawn} تعادل • ${all[i].lost} خسارة', Text('${gs.eloOf(all[i]).round()}', style: const TextStyle(fontWeight: FontWeight.w900)), me: all[i] == gs.user),
+        _row(i + 1, teamBadge(all[i], size: 30), 'مدرب ${all[i].name}', '${all[i].won} فوز • ${all[i].drawn} تعادل • ${all[i].lost} خسارة', Text((gs.clubPts[all[i].name] ?? 0).toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)), me: all[i] == gs.user),
     ];
   }
 

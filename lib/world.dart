@@ -278,7 +278,58 @@ class NatState {
   final Map<String, String> conf = {};
   final Map<String, int> qp = {}, qgd = {}; // نتائج مباريات التصفيات للموسم
   final List<NatTour> history = [];
-  int rankDelta = 0;
+  // قوة المنتخب الداخلية (Elo مبدئي) تُستعمل لمحاكاة النتائج فقط؛ ولا تُعرض كنقاط
+  // نقاط التصنيف المعروضة: صيغة فيفا الكلاسيكية M × I × T × C بمتوسطات المواسم (1 / 0.5 / 0.3 / 0.2)
+  final Map<String, List<double>> cur = {}; // [مجموع نقاط المباريات، عدد المباريات] للموسم الجاري
+  final Map<String, List<double>> past = {}; // متوسطات المواسم السابقة (الأحدث أخيراً، حتى 3)
+  Map<String, int> _rk = {};
+  static const _confCoef = {'uefa': 1.0, 'conmebol': 1.0, 'concacaf': 0.88, 'afc': 0.86, 'caf': 0.86, 'ofc': 0.85};
+
+  double rating(String n) {
+    final c = cur[n];
+    var r = (c == null || c[1] == 0) ? 0.0 : c[0] / c[1];
+    final p = past[n] ?? const <double>[];
+    const ws = [0.5, 0.3, 0.2];
+    for (var i = 0; i < p.length && i < 3; i++) {
+      r += p[p.length - 1 - i] * ws[i];
+    }
+    return r * 100;
+  }
+
+  void snapshotRanks() {
+    final l = pts.keys.toList()
+      ..sort((a, b) {
+        final c = rating(b).compareTo(rating(a));
+        return c != 0 ? c : pts[b]!.compareTo(pts[a]!);
+      });
+    _rk = {for (var i = 0; i < l.length; i++) l[i]: i + 1};
+  }
+
+  /// نهاية موسم: يُحفظ متوسط نقاط مباريات كل منتخب ويُصفَّر عدّاد الموسم
+  void rollSeason() {
+    cur.forEach((n, c) {
+      if (c[1] > 0) {
+        final l = past.putIfAbsent(n, () => []);
+        l.add(c[0] / c[1]);
+        while (l.length > 3) {
+          l.removeAt(0);
+        }
+      }
+    });
+    cur.clear();
+  }
+
+  void _credit(String a, String b, int ag, int bg, double imp, int? pa, int? pb) {
+    double m(int x, int y, int? px, int? py) => x > y ? 3.0 : (x < y ? 0.0 : ((px != null && py != null) ? (px > py ? 2.0 : 1.0) : 1.0));
+    double t(String o) => max(0.5, (200 - (_rk[o] ?? 100)) / 100.0);
+    final c = ((_confCoef[conf[a]] ?? 0.86) + (_confCoef[conf[b]] ?? 0.86)) / 2;
+    final xa = cur.putIfAbsent(a, () => [0.0, 0.0]);
+    xa[0] += m(ag, bg, pa, pb) * imp * t(b) * c;
+    xa[1] += 1;
+    final xb = cur.putIfAbsent(b, () => [0.0, 0.0]);
+    xb[0] += m(bg, ag, pb, pa) * imp * t(a) * c;
+    xb[1] += 1;
+  }
 
   bool get ready => pts.isNotEmpty;
 
@@ -295,11 +346,14 @@ class NatState {
         pts[n.$1] = b + (n.$1.hashCode % 80) - 40.0;
       }
     }
-    if (start.isEmpty) start.addAll(pts);
   }
 
   List<String> get ranking {
-    final l = pts.keys.toList()..sort((a, b) => pts[b]!.compareTo(pts[a]!));
+    final l = pts.keys.toList()
+      ..sort((a, b) {
+        final c = rating(b).compareTo(rating(a));
+        return c != 0 ? c : pts[b]!.compareTo(pts[a]!);
+      });
     return l;
   }
 
@@ -325,7 +379,8 @@ class NatState {
   }
 
   /// معادلة فيفا: P = P0 + I × (W − We). في الأدوار الإقصائية لا يخسر الخاسر نقاطاً
-  void apply(String a, String b, int ag, int bg, double imp, {bool ko = false, int? pa, int? pb}) {
+  void apply(String a, String b, int ag, int bg, double imp, {bool ko = false, int? pa, int? pb, double fifa = 1.0}) {
+    _credit(a, b, ag, bg, fifa, pa, pb);
     final ra = pts[a] ?? 1200, rb = pts[b] ?? 1200;
     double w;
     if (ag != bg) {
@@ -351,9 +406,7 @@ class NatState {
   void seasonWindow(Random rng, double Function(String) adj) {
     qp.clear();
     qgd.clear();
-    start
-      ..clear()
-      ..addAll(pts);
+    snapshotRanks();
     final byConf = <String, List<String>>{};
     conf.forEach((n, c) => byConf.putIfAbsent(c, () => []).add(n));
     for (var round = 0; round < 6; round++) {
@@ -364,7 +417,7 @@ class NatState {
           final a = x[i], b = x[i + 1];
           final ra = pts[a]! + adj(a) + 40, rb = pts[b]! + adj(b);
           final g = goals(rng, ra, rb);
-          apply(a, b, g.$1, g.$2, qual ? 25 : 10);
+          apply(a, b, g.$1, g.$2, qual ? 25 : 10, fifa: qual ? 2.5 : 1.0);
           if (qual) {
             qp[a] = (qp[a] ?? 0) + (g.$1 > g.$2 ? 3 : (g.$1 == g.$2 ? 1 : 0));
             qp[b] = (qp[b] ?? 0) + (g.$2 > g.$1 ? 3 : (g.$1 == g.$2 ? 1 : 0));
@@ -400,6 +453,7 @@ class NatState {
   /// يلعب بطولة كاملة ويحدّث نقاط فيفا بعد كل مباراة
   NatTour play(NatTourDef d, int season, List<String> teams, List<String> hosts, Random rng, double Function(String) adj, ScorerPool pool) {
     String stage(String s) => s;
+    snapshotRanks();
     double eff(String n) => pts[n]! + adj(n) + (hosts.contains(n) ? 60 : 0);
     final sorted = [...teams]..sort((a, b) => eff(b).compareTo(eff(a)));
     final g = d.groups;
@@ -451,7 +505,7 @@ class NatState {
       }
       credit(a, ag);
       credit(b, bg);
-      apply(a, b, ag, bg, imp, ko: ko && d.key == 'wc', pa: pa, pb: pb);
+      apply(a, b, ag, bg, imp, ko: ko && d.key == 'wc', pa: pa, pb: pb, fifa: d.key == 'wc' ? 4.0 : 3.0);
       final m = NatMatch(a, b, ag, bg, stage(st), pa: pa, pb: pb);
       t.matches.add(m);
       return m;
