@@ -1751,7 +1751,16 @@ class GameState extends ChangeNotifier {
       p.rated = 0;
       p.ratingSum = 0;
       _develop(p, 0, 0);
-      if (_retires(p) || (p.age >= 31 && p.overall < 60)) freeAgents.remove(p);
+      if (_retires(p)) {
+        if (p.overall >= 55) {
+          rebirth(rng, p);
+          p..free = true..contract = 0;
+        } else {
+          freeAgents.remove(p);
+        }
+      } else if (p.age >= 31 && p.overall < 60) {
+        freeAgents.remove(p);
+      }
     }
   }
 
@@ -1874,13 +1883,13 @@ class GameState extends ChangeNotifier {
         if (_retires(p)) {
           t.squad.remove(p);
           if (t == user) news.insert(0, '👋 اعتزل ${p.name}');
-          if (!p.filler && p.overall >= 60) {
-            final r = makeRegen(rng, p);
+          if (!p.filler && p.overall >= 55) {
+            rebirth(rng, p);
             if (t != user && t.squad.length < 27) {
-              t.squad.add(r);
+              t.squad.add(p);
             } else {
-              r..free = true..contract = 0;
-              freeAgents.add(r);
+              p..free = true..contract = 0;
+              freeAgents.add(p);
             }
           }
         } else if (p.contract <= 0) {

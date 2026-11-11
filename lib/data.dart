@@ -120,12 +120,29 @@ void topUpSquad(Team t, Random rng) {
 
 
 
-/// موهبة مولَّدة بعد اعتزال لاعب: من نفس المركز والجنسية، بإمكانات عالية نسبياً
-Player makeRegen(Random rng, Player retired) {
-  final base = (retired.overall - 12).clamp(46, 70);
-  final p = makePlayer(rng, retired.pos, base + rng.nextInt(6), 16 + rng.nextInt(3));
-  p.nat = retired.nat;
-  p.potential = (retired.overall + rng.nextInt(9) - 4).clamp(66, 90);
-  p.contract = 3;
-  return p;
+/// «ولادة جديدة» بعد الاعتزال: يبقى الاسم والصورة والجنسية والمركز، وتعود القدرات والعمر إلى البداية
+void rebirth(Random rng, Player p) {
+  final high = p.overall;
+  final t = makePlayer(rng, p.pos, 44 + rng.nextInt(10), 16 + rng.nextInt(2));
+  p
+    ..age = t.age
+    ..atk = t.atk
+    ..def = t.def
+    ..pas = t.pas
+    ..gk = t.gk
+    ..potential = (high + rng.nextInt(9) - 6).clamp(64, 92)
+    ..contract = 3
+    ..sk = null
+    ..mv0 = null
+    ..ov0 = null
+    ..age0 = null
+    ..free = false
+    ..listed = false
+    ..onLoan = false
+    ..injuredWeeks = 0
+    ..suspendedMatches = 0
+    ..salary = null
+    ..career = []
+    ..awards = []
+    ..traits = [];
 }
