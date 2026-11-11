@@ -107,7 +107,7 @@ Player makeYouth(Random rng, Pos pos, {int level = 0}) =>
 /// يضمن الحد الأدنى من اللاعبين في كل مركز (يملأ النقص بلاعبين شباب)
 void topUpSquad(Team t, Random rng) {
   const minimum = {Pos.gk: 2, Pos.def: 6, Pos.mid: 6, Pos.att: 3};
-  final lvl = (t.strength - 13).round().clamp(46, 72);
+  final lvl = (t.strength - 8).round().clamp(48, 76);
   minimum.forEach((pos, n) {
     while (t.squad.where((p) => p.pos == pos).length < n) {
       t.squad.add(makeYouth(rng, pos, level: lvl));

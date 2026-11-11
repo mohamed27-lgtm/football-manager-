@@ -282,7 +282,7 @@ class MatchSim {
             0.025 * (a.team.width - 1) -
             0.02 * (a.team.passing - 1))
         .clamp(0.2, 0.6);
-    a.xg += onT * (0.30 * pow(q / max(20, gkR), 1.4)).clamp(0.06, 0.65);
+    a.xg += onT * (0.275 * pow(q / max(20, gkR), 1.4)).clamp(0.06, 0.65);
     if (rng.nextDouble() > onT) {
       if (rng.nextDouble() < 0.35) {
         _log('miss', '${shooter.name} يسدد بعيداً عن المرمى', a.isHome,
@@ -292,7 +292,7 @@ class MatchSim {
       return;
     }
     a.onTarget++;
-    final pg = (0.30 * pow(q / max(20, gkR), 1.4)).clamp(0.06, 0.65);
+    final pg = (0.275 * pow(q / max(20, gkR), 1.4)).clamp(0.06, 0.65);
     if (rng.nextDouble() < pg) {
       a.goals++;
       shooter.goals++;
