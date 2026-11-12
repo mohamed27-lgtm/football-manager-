@@ -602,8 +602,8 @@ class GameState extends ChangeNotifier {
     for (final x in (j['wl'] as List?) ?? const []) {
       wLeagues.add(WorldLeague.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(x)) as Map)));
     }
-    ((j['ch'] as Map?) ?? const {}).forEach((k, v) => clubHonours[k as String] = (v as List).cast<String>());
-    ((j['wc'] as Map?) ?? const {}).forEach((k, v) => worldChamps[k as String] = v as String);
+    ((j['clh'] as Map?) ?? const {}).forEach((k, v) => clubHonours[k as String] = (v as List).cast<String>());
+    ((j['wch'] as Map?) ?? const {}).forEach((k, v) => worldChamps[k as String] = v as String);
     worldFeed.addAll(((j['wf'] as List?) ?? const []).cast<String>());
     pendingAwards = [for (final a in (j['pa'] as List?) ?? const []) Map<String, dynamic>.from(jsonDecode(jsonEncode(a)) as Map)];
     ceremony = j['cer'] == null ? null : Map<String, dynamic>.from(jsonDecode(jsonEncode(j['cer'])) as Map);
@@ -848,8 +848,8 @@ class GameState extends ChangeNotifier {
         'cer': ceremony,
         'pa': pendingAwards,
         'wl': [for (final l in wLeagues) l.toJson()],
-        'ch': clubHonours,
-        'wc': worldChamps,
+        'clh': clubHonours,
+        'wch': worldChamps,
         'wf': worldFeed,
         'rounds': [
           for (final r in rounds)
