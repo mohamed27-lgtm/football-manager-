@@ -28,7 +28,8 @@ class PhotoIndex {
 
   static String? _key(String name) {
     final parts = _norm(name).split(RegExp(r'\s+')).where((x) => x.isNotEmpty).toList();
-    if (parts.length < 2) return null;
+    if (parts.isEmpty) return null;
+    if (parts.length < 2) return '${parts.first}|'; // اسم مفرد مثل Gavi
     return '${parts.last}|${parts.first[0]}';
   }
 
@@ -46,7 +47,6 @@ class PhotoIndex {
           for (final p in t.players) {
             final ph = p.photo;
             if (ph == null || ph.isEmpty || ph.startsWith('http') || !File(ph).existsSync()) continue;
-            byId[p.id] = ph;
             final k = _key(p.name);
             if (k != null && p.age != null) byKey.putIfAbsent(k, () => []).add((p.age!, ph));
           }
@@ -67,23 +67,15 @@ class PhotoIndex {
 
   /// مسار صورة محلية للاعب بلا صورة، أو null
   static String? lookup(Player p) {
-    if (_byKey.isEmpty && _byId.isEmpty) return null;
-    final byId = _byId[p.id];
-    if (byId != null) return byId;
+    if (_byKey.isEmpty) return null;
     final k = _key(p.name);
     if (k == null) return null;
     final l = _byKey[k];
     if (l == null) return null;
     final age = p.age0 ?? p.age;
-    (int, String)? best;
-    var bd = 99;
-    for (final e in l) {
-      final d = (e.$1 - age).abs();
-      if (d < bd) {
-        bd = d;
-        best = e;
-      }
-    }
-    return (best != null && bd <= 1) ? best.$2 : null;
+    // معرّف اللاعب في اللعبة عدّاد داخلي لا علاقة له بمعرّف الـ API، فلا يُستخدم للمطابقة.
+    // نقبل فقط تطابقاً غير ملتبس: نفس اللقب والحرف الأول وفارق عمر ≤ 1 وصورة واحدة مرشّحة.
+    final ok = {for (final e in l) if ((e.$1 - age).abs() <= 1) e.$2};
+    return ok.length == 1 ? ok.first : null;
   }
 }
