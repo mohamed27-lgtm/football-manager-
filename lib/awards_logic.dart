@@ -171,7 +171,14 @@ extension SeasonCeremony on GameState {
     double sc((Player, Team) e) {
       final r = rankOf(e.$2);
       final eloBonus = (eloOf(e.$2) - 1500) / 40.0;
-      return e.$1.goals * 2.0 + e.$1.assists * 1.5 + e.$1.overall * 0.25 + (r == 0 ? eloBonus : (teams.length - r) * 0.2);
+      // ألقاب النادي هذا الموسم: الجوائز الكبرى تذهب غالباً للاعبي الفرق الفائزة بالبطولات
+      var trophies = 0.0;
+      for (final h in clubHonours[honourKey(e.$2.name)] ?? const <String>[]) {
+        if (!h.endsWith('الموسم $season')) continue;
+        trophies += h.contains('أبطال') || h.contains('بطولة') ? 9.0 : (h.startsWith('الدوري') || h.contains('دوري') ? 6.0 : 3.0);
+      }
+      if (e.$2 == user) trophies += honours.where((h) => h.endsWith('الموسم $season')).length * 5.0;
+      return e.$1.goals * 2.0 + e.$1.assists * 1.5 + e.$1.overall * 0.25 + (r == 0 ? eloBonus : (teams.length - r) * 0.2) + trophies;
     }
 
     final awards = <Map<String, dynamic>>[];
