@@ -603,7 +603,10 @@ class _PlayerCardState extends State<_PlayerCard> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: kPrimary)),
                 const SizedBox(height: 4),
-                Text([if (p.club != null) p.club!, if (p.nat != null) p.nat!].join(' • '), style: const TextStyle(color: kMuted, fontSize: 13)),
+                Row(children: [
+                  if (p.nat != null && p.nat!.isNotEmpty) ...[FlagBadge(p.nat!, size: 20), const SizedBox(width: 6)],
+                  Expanded(child: Text([if (p.nat != null && p.nat!.isNotEmpty) p.nat!, if (p.club != null) p.club!].join(' • '), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 13))),
+                ]),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -612,7 +615,6 @@ class _PlayerCardState extends State<_PlayerCard> {
                 ),
               ]),
             ),
-            ratingRing(p.overall, size: 74),
           ]),
         ),
         const SizedBox(height: 10),
@@ -620,11 +622,11 @@ class _PlayerCardState extends State<_PlayerCard> {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
           child: Row(children: [
-            info('القدم', p.foot ?? '—'),
-            info('الطول', p.height != null ? '${(p.height! / 100).toStringAsFixed(2)}m' : '—'),
+            info('القدم', switch ((p.foot ?? '').toLowerCase()) { 'right' => 'اليمنى', 'left' => 'اليسرى', 'both' => 'الاثنتان', _ => '—' }),
+            info('الطول', p.height != null ? '${p.height} سم' : '—'),
             info('العمر', '${p.age}'),
             info('الراتب', money(p.wage)),
-            info('القيمة', money(p.value), c: const Color(0xFF1FA58A), last: true),
+            info('القيمة السوقية', money(p.value), c: const Color(0xFF1FA58A), last: true),
           ]),
         ),
         const SizedBox(height: 12),

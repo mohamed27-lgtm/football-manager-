@@ -280,6 +280,22 @@ def phase_images():
 
 # ───────────── مرحلة 3: الحزم ─────────────
 
+try:
+    import tm_enrich
+except Exception:  # pragma: no cover
+    tm_enrich = None
+
+
+def _enrich(pl, team_name):
+    """يضيف الجنسية والقدم والطول والقيمة الحقيقية من Transfermarkt عند المطابقة"""
+    if tm_enrich is not None:
+        try:
+            tm_enrich.enrich(pl, team_name)
+        except Exception as e:  # لا نوقف الحزمة بسبب لاعب واحد
+            print("enrich:", e)
+    return pl
+
+
 def pack_league(d, missing):
     """يحوّل مسارات الصور إلى مسارات نسبية داخل الحزمة ويُرجع (json, ملفات)"""
     files = {}
@@ -303,8 +319,9 @@ def pack_league(d, missing):
             "rank": t["rank"], "pts": t["pts"], "loaded": True,
             "logo": local(t.get("logo"), "teams", t["id"]),
             "players": [
-                {"id": p["id"], "n": p["n"], "a": p.get("a"), "p": p.get("p", ""),
-                 "no": p.get("no"), "ph": local(p.get("ph"), "players", p["id"])}
+                _enrich(
+                    {"id": p["id"], "n": p["n"], "a": p.get("a"), "p": p.get("p", ""),
+                     "no": p.get("no"), "ph": local(p.get("ph"), "players", p["id"])}, t["name"])
                 for p in t["players"]
             ],
         })
