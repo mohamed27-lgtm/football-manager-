@@ -42,7 +42,6 @@ class TeamTab extends StatelessWidget {
           child: Row(children: [
             _big('التشكيلة', Icons.groups_2_outlined, true, () => _go(context, LineupScreen(gs: gs))),
             _big('التكتيك', Icons.account_tree_outlined, false, () => _go(context, TacticsScreen(gs: gs))),
-            _big('التدريب', Icons.fitness_center_rounded, false, () => _go(context, TrainingScreen(gs: gs))),
           ]),
         ),
         Align(

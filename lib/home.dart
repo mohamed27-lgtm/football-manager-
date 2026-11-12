@@ -1222,7 +1222,6 @@ class DashboardTab extends StatelessWidget {
     final items = <(IconData, String, int, VoidCallback)>[
       (Icons.groups_rounded, 'الفريق', injured, () => onNavigate(1)),
       (Icons.account_tree_rounded, 'التكتيك', 0, () => _push(context, TacticsScreen(gs: gs))),
-      (Icons.bolt_rounded, 'التدريب', 0, () => _training(context)),
       (Icons.swap_horiz_rounded, 'الانتقالات', offers, () => onNavigate(2)),
       (Icons.search_rounded, 'الكشافة', 0, () => _push(context, ScoutingScreen(gs: gs))),
       (Icons.compare_arrows_rounded, 'الإعارات', 0, () => _push(context, LoansScreen(gs: gs))),
@@ -1464,8 +1463,6 @@ class DashboardTab extends StatelessWidget {
           Navigator.of(context).push(MaterialPageRoute(builder: (_) => LineupScreen(gs: gs)));
         }),
         const SizedBox(width: 10),
-        sq(Icons.bolt_rounded, 'تدريب', () => _training(context)),
-        const SizedBox(width: 12),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 0),

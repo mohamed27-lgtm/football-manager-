@@ -31,7 +31,7 @@ class PlayerTile extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(children: [
-          playerFace(p, 48, ring: posColor(p.pos), ringWidth: 2),
+          statusFace(p, 48, ring: posColor(p.pos), ringWidth: 2),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

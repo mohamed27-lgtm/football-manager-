@@ -440,7 +440,7 @@ class NextMatchScreen extends StatelessWidget {
               Row(children: [
                 Flexible(child: Text('${nm.round} • ${nm.comp}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w700))),
                 const Spacer(),
-                Text('ملعب ${home.name}', style: const TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w700)),
+                Text(home.venue ?? 'ملعب ${home.name}', style: const TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w700)),
               ]),
               const SizedBox(height: 14),
               Row(children: [

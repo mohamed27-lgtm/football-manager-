@@ -3,6 +3,7 @@ import 'api_football.dart';
 import 'data.dart';
 import 'models.dart';
 import 'nations.dart';
+import 'stadiums.dart';
 
 Pos _pos(String s) => switch (s.toLowerCase()) {
       'goalkeeper' => Pos.gk,
@@ -63,7 +64,7 @@ List<Team> teamsFromLeague(LeagueData d, Random rng) {
       budget: 12.0 + rep * 8,
     )
       ..badge = t.logo
-      ..venue = t.venue;
+      ..venue = (t.venue != null && t.venue!.isNotEmpty) ? t.venue : stadiumFor(t.name);
     topUpSquad(team, rng);
     // ميزانية واقعية من القيمة السوقية الحقيقية للتشكيلة (نحو 12٪ منها)
     if (t.players.any((x) => x.ov != null)) {

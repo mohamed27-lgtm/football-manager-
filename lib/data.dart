@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'models.dart';
+import 'stadiums.dart';
 
 
 const _first = [
@@ -80,6 +81,7 @@ Team createTeam(Random rng, int id, String name, int rep) {
   });
   final t = Team(
       id: id, name: name, reputation: rep, squad: squad, budget: 12.0 + rep * 8);
+  t.venue = stadiumFor(name);
   t.autoPick();
   return t;
 }

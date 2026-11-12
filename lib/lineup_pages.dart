@@ -93,7 +93,7 @@ class LineupPitch extends StatelessWidget {
                 onTap: onTap == null ? null : () => onTap!(idx),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Stack(clipBehavior: Clip.none, children: [
-                    playerFace(p, 38, ring: Colors.white, ringWidth: 2),
+                    statusFace(p, 38, ring: Colors.white, ringWidth: 2),
                     if (showRating)
                       Positioned(
                         right: -10,
@@ -233,7 +233,7 @@ class LineupScreen extends StatelessWidget {
                         width: 62,
                         margin: const EdgeInsets.only(left: 8),
                         child: Column(children: [
-                          playerFace(p, 46, ring: posColor(p.pos), ringWidth: 2),
+                          statusFace(p, 46, ring: posColor(p.pos), ringWidth: 2),
                           const SizedBox(height: 3),
                           Text(p.name.split(' ').last, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                           Text('${p.overall}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: ratingColor(p.overall))),

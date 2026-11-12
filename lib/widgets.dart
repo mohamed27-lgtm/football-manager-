@@ -618,3 +618,32 @@ Widget ratingRing(num v, {double size = 44}) {
     child: Text('${v.round()}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: size * 0.38, color: c)),
   );
 }
+
+
+/// أيقونة حالة اللاعب: صليب طبي أحمر للمصاب، وبطاقة حمراء للموقوف
+Widget? playerStatusIcon(Player p, double size) {
+  if (p.injuredWeeks > 0) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: const Color(0xFFE53935), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: size * 0.09)),
+      child: Icon(Icons.add_rounded, color: Colors.white, size: size * 0.78),
+    );
+  }
+  if (p.suspendedMatches > 0) {
+    return Container(
+      width: size * 0.66,
+      height: size * 0.88,
+      decoration: BoxDecoration(color: const Color(0xFFE53935), borderRadius: BorderRadius.circular(size * 0.14), border: Border.all(color: Colors.white, width: size * 0.08)),
+    );
+  }
+  return null;
+}
+
+/// صورة اللاعب مع أيقونة الإصابة/الإيقاف على الزاوية
+Widget statusFace(Player p, double size, {Color? ring, double ringWidth = 2}) {
+  final face = playerFace(p, size, ring: ring, ringWidth: ringWidth);
+  final ic = playerStatusIcon(p, (size * 0.38).clamp(13.0, 24.0).toDouble());
+  if (ic == null) return face;
+  return Stack(clipBehavior: Clip.none, children: [face, PositionedDirectional(end: -3, bottom: -3, child: ic)]);
+}

@@ -90,7 +90,7 @@ class _StadiumScreenState extends State<StadiumScreen> {
                 Row(children: [
                   const Icon(Icons.stadium_rounded, color: kPrimary),
                   const SizedBox(width: 8),
-                  Text('ملعب ${gs.user.name}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                  Text(gs.user.venue ?? 'ملعب ${gs.user.name}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                   const Spacer(),
                   Text('المستوى $lvl/5', style: const TextStyle(color: kMuted)),
                 ]),

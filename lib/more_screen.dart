@@ -215,8 +215,6 @@ class _MoreTabState extends State<MoreTab> {
         (Icons.groups_rounded, 'مركز الفريق', () => _tab(1)),
         (Icons.account_tree_rounded, 'التكتيك', () => _push(TacticsScreen(gs: gs))),
         (Icons.groups_2_outlined, 'التشكيلة', () => _push(LineupScreen(gs: gs))),
-        (Icons.bolt_rounded, 'التدريب', () => _push(TrainingScreen(gs: gs))),
-        (Icons.healing_rounded, 'الإصابات والعلاج', () => _tab(1)),
       ]),
       ('السوق', [
         (Icons.swap_horiz_rounded, 'الانتقالات', () => _tab(2)),
