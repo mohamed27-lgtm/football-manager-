@@ -17,7 +17,13 @@ for f in sorted(glob.glob('data/leagues/*.json')):
     for t in d.get('teams', []):
         if t['id'] < 800000 and str(t['id']) not in done:
             todo.append((t['id'], t['name']))
-print('remaining teams:', len(todo))
+# الأولوية للفرق التي لا يغطيها Transfermarkt (assets/coaches.json)
+try:
+    have = json.loads(Path('assets/coaches.json').read_text(encoding='utf-8'))
+except Exception:
+    have = {}
+todo.sort(key=lambda x: x[1].lower().strip() in have)
+print('remaining teams:', len(todo), 'not covered by TM:', sum(1 for x in todo if x[1].lower().strip() not in have))
 
 def current(resp, tid):
     best = None

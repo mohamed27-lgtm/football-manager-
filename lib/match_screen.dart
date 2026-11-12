@@ -688,6 +688,20 @@ class _MatchScreenState extends State<MatchScreen> {
 
 /// يبدأ مباراة الجولة الحالية ويفتح شاشة المباراة
 Future<void> playMatch(BuildContext context, GameState gs) async {
+  if (gs.intlBreak) {
+    final msg = gs.playIntlBreak();
+    if (context.mounted) {
+      await showDialog<void>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('🌍 التوقف الدولي'),
+          content: Text(msg),
+          actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('حسناً'))],
+        ),
+      );
+    }
+    return;
+  }
   final c = gs.pendingCup;
   if (c != null) {
     gs.startCupMatch(c);
