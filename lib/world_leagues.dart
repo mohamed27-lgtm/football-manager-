@@ -115,10 +115,44 @@ extension WorldLeagues on GameState {
     return (pois(1.4 * exp(d) * 1.08), pois(1.15 * exp(-d)));
   }
 
+  /// فرق الدوري بلاعبيه الحقيقيين (تُبنى مرة واحدة في الجلسة؛ تعود للتبسيط إن لم تتوفر البيانات)
+  Map<String, Team>? _teamsOfWorld(WorldLeague l) {
+    final have = wTeams[l.id];
+    if (have != null) return have;
+    final src = Bundled.cached?.where((x) => x.id == l.id).firstOrNull;
+    if (src == null) return null;
+    return wTeams[l.id] = worldTeamsOf(src, rng);
+  }
+
+  /// مباراة بالمحرك الكامل نفسه الذي تُلعب به مبارياتك: خطوط، لياقة، تكتيك، تبديلات، إصابات
+  (int, int) _engineScore(Team h, Team a) {
+    try {
+      final sim = MatchSim(h, a, random: rng);
+      sim.simulateAll();
+      return (sim.home.goals, sim.away.goals);
+    } catch (_) {
+      return (-1, -1);
+    }
+  }
+
+  void _restWorld(Map<String, Team> ts) {
+    for (final t in ts.values) {
+      for (final p in t.squad) {
+        p.fitness = min(100, p.fitness + 30).toDouble();
+        if (p.injuredWeeks > 0) p.injuredWeeks--;
+      }
+    }
+  }
+
   void _playRound(WorldLeague l, {List<String>? feed}) {
     if (l.done || l.round >= l.totalRounds) return;
+    final ts = _teamsOfWorld(l);
+    if (ts != null) _restWorld(ts);
     for (final (a, b) in l.pairs(l.round)) {
-      final (gh, ga) = _fastScore(l.str[a], l.str[b]);
+      var (gh, ga) = (-1, -1);
+      final th = ts?[l.names[a]], ta = ts?[l.names[b]];
+      if (th != null && ta != null) (gh, ga) = _engineScore(th, ta);
+      if (gh < 0) (gh, ga) = _fastScore(l.str[a], l.str[b]);
       void put(int t, int f, int ag) {
         final s = l.st[t];
         s[0]++;

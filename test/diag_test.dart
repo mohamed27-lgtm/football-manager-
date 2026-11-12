@@ -7,6 +7,8 @@ import 'package:football_manager/data.dart';
 import 'package:football_manager/engine.dart';
 import 'package:football_manager/game_state.dart';
 import 'package:football_manager/models.dart';
+import 'package:football_manager/importer.dart';
+import 'package:football_manager/api_football.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -199,6 +201,16 @@ void main() {
     final gs = GameState.fromData(teams, 2, 'تجريبي');
     final names = [for (var i = 0; i < 18; i++) 'Club $i'];
     gs.wLeagues.add(WorldLeague(900, 'دوري تجريبي', 'بلد', 1, names, [for (var i = 0; i < 18; i++) 80.0 - i]));
+    // الدوري التجريبي الأول يُلعب بالمحرك الكامل بلاعبين حقيقيين
+    final rr = Random(5);
+    final ld = LeagueData(id: 900, name: 'دوري تجريبي', country: 'بلد', tier: 1, season: 2023, fetchedAt: DateTime(2023), teams: [
+      for (var i = 0; i < 18; i++)
+        ApiTeam(id: i, name: 'Club $i', rank: i + 1, squadLoaded: true, players: [
+          for (var k = 0; k < 20; k++)
+            ApiPlayer(id: i * 100 + k, name: 'P$i-$k', age: 20 + k % 12, position: k < 2 ? 'Goalkeeper' : k < 8 ? 'Defender' : k < 15 ? 'Midfielder' : 'Attacker', ov: 78 - i + rr.nextInt(6), value: 20.0 - i),
+        ]),
+    ]);
+    gs.wTeams[900] = worldTeamsOf(ld, rr);
     gs.wLeagues.add(WorldLeague(901, 'دوري فردي', 'بلد', 1, names.take(15).toList(), [for (var i = 0; i < 15; i++) 70.0 - i]));
     var guard = 0;
     while (!gs.seasonOver && guard++ < 800) {
@@ -216,6 +228,10 @@ void main() {
     expect(l.round > 0, true, reason: 'الدوري الآخر يتقدم أسبوعياً');
     final exp = (gs.week * l.totalRounds / gs.rounds.length).floor();
     expect((l.round - exp).abs() <= 3, true, reason: 'نفس رتم موسم المستخدم: round=${l.round} exp=$exp');
+    final gp = l.st.fold<int>(0, (a, e) => a + e[0]) / 2, gf = l.st.fold<int>(0, (a, e) => a + e[4]);
+    // ignore: avoid_print
+    print('DIAG world engine: matches=$gp goals/match=${(gf / gp).toStringAsFixed(2)} top=${l.names[l.order.first]}');
+    expect(gf / gp > 1.5 && gf / gp < 4.5, true, reason: 'معدل أهداف واقعي بالمحرك الكامل');
     // سلامة الجدول: لا يلعب فريق مرتين في جولة
     for (var rr = 0; rr < l.totalRounds; rr++) {
       final ps = l.pairs(rr);

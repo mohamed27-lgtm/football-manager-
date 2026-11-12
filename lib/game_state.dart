@@ -131,6 +131,7 @@ class GameState extends ChangeNotifier {
   /// دوريات العالم الأخرى تُلعب آلياً، وخزائن ألقاب كل الأندية (مفتاح النادي ← ألقابه)
   final List<WorldLeague> wLeagues = [];
   final Map<String, List<String>> clubHonours = {};
+  final Map<int, Map<String, Team>> wTeams = {}; // فرق الدوريات العالمية (مؤقتة، تُبنى عند الحاجة)
   final Map<String, String> worldChamps = {};
   final List<String> worldFeed = [];
   void touch() {

@@ -76,3 +76,24 @@ List<Team> teamsFromLeague(LeagueData d, Random rng) {
   }
   return out;
 }
+
+/// فرق دوري عالمي بنفس بناء فرق اللعبة (لتُلعب مبارياتها بالمحرك الكامل). تُبنى كلها دون حذف الفريق الأخير.
+Map<String, Team> worldTeamsOf(LeagueData d, Random rng) {
+  final src = [...d.teams]..sort((a, b) => a.rank.compareTo(b.rank));
+  final n = src.length;
+  final base = switch (d.tier) { 1 => 70, 2 => 66, _ => 62 };
+  final out = <String, Team>{};
+  for (var i = 0; i < n; i++) {
+    final t = src[i];
+    final p = n <= 1 ? 0.5 : i / (n - 1);
+    final tb = base + ((0.5 - p) * 14).round();
+    final rep = p < 0.15 ? 5 : p < 0.35 ? 4 : p < 0.65 ? 3 : 2;
+    final squad = [for (final ap in t.players) playerFromApi(ap, tb)]..sort((a, b) => b.overall.compareTo(a.overall));
+    if (squad.length > 28) squad.removeRange(28, squad.length);
+    final team = Team(id: 100000 + d.id * 100 + i, name: t.name, reputation: rep, squad: squad, budget: 10.0);
+    topUpSquad(team, rng);
+    team.autoPick();
+    out[t.name] = team;
+  }
+  return out;
+}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
+import 'models.dart';
 import 'transfers.dart';
 import 'match_pages.dart';
 import 'lineup_pages.dart';
@@ -15,6 +16,72 @@ class _Msg {
   final bool reply;
   final GameTask? task;
   const _Msg(this.key, this.title, this.body, this.sender, this.time, this.cat, this.day, {this.reply = false, this.task});
+}
+
+/// صورة اللاعب وشعار النادي المرتبطان بالرسالة (من عرض الشراء أو من نص الخبر)
+class _Subject {
+  final Player? player;
+  final Team? club;
+  const _Subject(this.player, this.club);
+}
+
+_Subject _subjectOf(GameState gs, _Msg m) {
+  Player? pl;
+  Team? cl;
+  final t = m.task;
+  if (t != null && t.action == TaskAction.offers) {
+    for (final o in gs.offers) {
+      if ('offer-${o.player.id}' == t.id) {
+        pl = o.player;
+        cl = _teamNamed(gs, o.club) ?? Team(id: -1, name: o.club, reputation: 3, squad: [], budget: 0);
+      }
+    }
+    if (pl != null) return _Subject(pl, cl);
+  }
+  final text = '${m.title} ${m.body}';
+  for (final p in gs.user.squad) {
+    if (p.name.length > 3 && text.contains(p.name)) {
+      pl = p;
+      break;
+    }
+  }
+  for (final c in [...gs.teams, ...gs.foreign.values]) {
+    if (c.id != gs.user.id && c.name.length > 3 && text.contains(c.name)) {
+      cl = c;
+      break;
+    }
+  }
+  return _Subject(pl, cl);
+}
+
+Team? _teamNamed(GameState gs, String n) {
+  for (final c in [...gs.teams, ...gs.upper, ...gs.lower, ...gs.foreign.values]) {
+    if (c.name == n) return c;
+  }
+  return null;
+}
+
+Widget _subjectAvatar(_Subject s, double size, IconData fallback, Color color) {
+  if (s.player == null && s.club == null) {
+    return Container(width: size, height: size, decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(12)), child: Icon(fallback, color: color));
+  }
+  return SizedBox(
+    width: size + 6,
+    height: size,
+    child: Stack(clipBehavior: Clip.none, children: [
+      if (s.player != null) playerFace(s.player!, size) else Center(child: teamBadge(s.club!, size: size)),
+      if (s.player != null && s.club != null)
+        Positioned(
+          right: -4,
+          bottom: -4,
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(color: kCard, shape: BoxShape.circle, border: Border.all(color: kLine)),
+            child: teamBadge(s.club!, size: size * 0.42),
+          ),
+        ),
+    ]),
+  );
 }
 
 /// الرسائل: صندوق وارد مجمّع بالأيام مع شرائح تصنيف وشاشة تفاصيل
@@ -117,7 +184,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: m.reply ? kPrimary.withOpacity(0.5) : kLine)),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(width: 44, height: 44, decoration: BoxDecoration(color: c.withOpacity(0.15), borderRadius: BorderRadius.circular(12)), child: Icon(_catIcons[m.cat], color: c)),
+          _subjectAvatar(_subjectOf(gs, m), 44, _catIcons[m.cat], c),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -296,8 +363,8 @@ class MessageDetailScreen extends StatelessWidget {
       bottomNavigationBar: bar,
       body: ListView(padding: const EdgeInsets.all(14), children: [
         Row(children: [
-          Container(width: 46, height: 46, decoration: BoxDecoration(color: c.withOpacity(0.15), borderRadius: BorderRadius.circular(12)), child: Icon(_ActivityScreenState._catIcons[msg.cat], color: c)),
-          const SizedBox(width: 12),
+          _subjectAvatar(_subjectOf(gs, msg), 56, _ActivityScreenState._catIcons[msg.cat], c),
+          const SizedBox(width: 14),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(msg.sender, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)), Text('${msg.cat == 0 ? 'الانتقالات' : msg.sender}', style: const TextStyle(color: kMuted, fontSize: 12))])),
           Text(msg.time, style: const TextStyle(color: kMuted, fontSize: 12)),
         ]),
