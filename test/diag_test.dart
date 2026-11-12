@@ -141,7 +141,7 @@ void main() {
     }
     expect(gs.seasonOver, true, reason: 'الموسم ينتهي رغم الإقالة');
     expect(gs.fired, true);
-    expect(teams.every((t) => t.played == 38), true, reason: 'كل الفرق لعبت كامل جولاتها');
+    expect(teams.every((t) => t.won + t.drawn + t.lost == 38), true, reason: 'كل الفرق لعبت كامل جولاتها');
     gs.startNewSeason();
     expect(gs.seasonOver, false);
     expect(gs.week, 0);
