@@ -104,7 +104,8 @@ void main() {
     expect(gs.jobOffers.length, greaterThan(0), reason: 'عروض نهاية الموسم');
     // عرض داخل الدوري أثناء الموسم يُنفَّذ فوراً بعد الاستقالة
     gs.resign();
-    expect(gs.fired, true);
+    expect(gs.resigned, true);
+    expect(gs.fired, false, reason: "الاستقالة لا تجمّد اللعبة");
     final jobs = gs.availableJobs;
     expect(jobs.isNotEmpty, true);
     final target = jobs.first.club;
