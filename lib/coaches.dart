@@ -40,6 +40,12 @@ const _kCoaches = <String, String>{
   'inter miami': 'خافيير ماسكيرانو', 'la galaxy': 'غريغ فانيي',
 };
 
+/// هل لهذا النادي مدرب حقيقي معروف (وليس اسماً مولَّداً)
+bool hasRealCoach(String club) {
+  final k = club.toLowerCase().trim();
+  return _realCoaches.containsKey(k) || _kCoaches.containsKey(k);
+}
+
 /// اسم مدرب النادي: حقيقي إن عُرف، وإلا اسم مولَّد ثابت من اسم النادي
 String coachFor(String club) {
   final k = club.toLowerCase().trim();

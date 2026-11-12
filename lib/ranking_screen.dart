@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide Text;
+import 'coaches.dart';
 import 'i18n.dart';
 import 'flags.dart';
 import 'auth.dart';
@@ -256,7 +257,7 @@ class _RankingScreenState extends State<RankingScreen> {
   }
 
   List<Widget> _coaches() {
-    final all = [...gs.worldRanking]..sort((a, b) => (gs.clubPts[b.name] ?? 0).compareTo(gs.clubPts[a.name] ?? 0));
+    final all = [for (final t in gs.worldRanking) if (t == gs.user || t.coach != null || hasRealCoach(t.name)) t]..sort((a, b) => (gs.clubPts[b.name] ?? 0).compareTo(gs.clubPts[a.name] ?? 0));
     return [
       for (var i = 0; i < all.length && i < 100; i++)
         _row(i + 1, teamBadge(all[i], size: 30), all[i] == gs.user && _me != null ? _me! : all[i].coachName, '${all[i].name} • ${all[i].won} فوز • ${all[i].drawn} تعادل • ${all[i].lost} خسارة', Text((gs.clubPts[all[i].name] ?? 0).toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)), me: all[i] == gs.user),

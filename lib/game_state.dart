@@ -377,8 +377,16 @@ class GameState extends ChangeNotifier {
   }
 
   /// كل الأندية المعروفة مرتبة عالمياً
+  /// نادٍ حقيقي فعلي (ليس «نادٍ ضيف» ولا اسماً مولَّداً من قوائم الأندية الوهمية)
+  bool isRealClub(Team t) {
+    if (t.name.startsWith('نادٍ ضيف')) return false;
+    if (foreignClubNames.contains(t.name)) return false;
+    if (const ['سبارتا الشمال', 'فيورينتينا الهضاب', 'أنتويرب الميناء'].contains(t.name)) return false;
+    return true;
+  }
+
   List<Team> get worldRanking {
-    final all = {for (final t in [...teams, ...upper, ...lower, ...foreign.values]) t.name: t}.values.toList();
+    final all = {for (final t in [...teams, ...upper, ...lower, ...foreign.values].where(isRealClub)) t.name: t}.values.toList();
     all.sort((a, b) => eloOf(b).compareTo(eloOf(a)));
     return all;
   }
