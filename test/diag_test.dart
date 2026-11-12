@@ -240,9 +240,10 @@ void main() {
         expect(seen.add(a) && seen.add(b), true);
       }
     }
+    final champ0 = l.names[l.order.first];
     gs.startNewSeason();
     expect(gs.worldChamps.containsKey('900|1'), true);
-    expect(gs.clubHonours['Club 0']?.isNotEmpty ?? false, true, reason: 'الأقوى غالباً بطل');
+    expect(gs.clubHonours[champ0]?.isNotEmpty ?? false, true, reason: 'بطل الدوري يُسجَّل في خزينته');
     expect(gs.wLeagues.first.round, 0);
     // حفظ وتحميل
     final j = gs.toJson();
@@ -268,6 +269,11 @@ void main() {
       gs.playIntlBreak();
       gs.nat.winDone.clear();
     }
+    gs.ensureNat();
+    final opp = gs.nat.pts.keys.firstWhere((k) => k != 'إسبانيا');
+    expect(gs.natFriendly(opp), null);
+    expect(gs.natFriendly(opp) != null, true, reason: 'ودية واحدة بالأسبوع');
+    expect(gs.natJobLog.isNotEmpty, true);
     // ignore: avoid_print
     print('DIAG natjob: log=${gs.natJobLog.length} first=${gs.natJobLog.isEmpty ? '-' : gs.natJobLog.first}');
     final after = gs.user.squad.fold<int>(0, (a, p) => a + p.goals + p.apps);

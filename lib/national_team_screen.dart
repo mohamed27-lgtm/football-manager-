@@ -111,6 +111,21 @@ class NationScreen extends StatelessWidget {
                       ),
                   ],
                 ]))
+              else if (gs.natJob != null)
+                _box(Row(children: [
+                  const Icon(Icons.sports_soccer_rounded, color: kPrimary),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('مباراة ودية بمنتخب ${gs.natJob} أمام $nation (مرة كل أسبوع)', style: const TextStyle(fontSize: 12.5, height: 1.4))),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 100,
+                    child: blueBtn('العب', () {
+                      final err = gs.natFriendly(nation);
+                      final l = gs.natJobLog.isEmpty ? null : gs.natJobLog.first;
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'انتهت المباراة: ${l![2]}-${l[3]} أمام $nation')));
+                    }),
+                  ),
+                ]))
               else if (gs.natJob == null)
                 _box(Row(children: [
                   const Icon(Icons.flag_rounded, color: kPrimary),

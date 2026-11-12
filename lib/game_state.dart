@@ -134,6 +134,7 @@ class GameState extends ChangeNotifier {
   final Map<String, List<String>> clubHonours = {};
   String? natJob; // المنتخب الذي تدرّبه بجانب ناديك
   List<int> natCall = [];
+  int natFriendlyWeek = -1;
   final List<List<dynamic>> natJobLog = []; // [موسم، خصم، لنا، علينا، 0 رسمية/1 ودية، 1 أرض/0 خارج]
   final Map<int, Map<String, Team>> wTeams = {}; // فرق الدوريات العالمية (مؤقتة، تُبنى عند الحاجة)
   final Map<String, String> worldChamps = {};

@@ -130,6 +130,25 @@ extension NationalLogic on GameState {
     unawaited(save());
   }
 
+  /// مباراة ودية يطلبها المدرب أمام منتخب آخر (بالمحرك الكامل، وتؤثر في التصنيف بوزن الودية)
+  String? natFriendly(String opp) {
+    final job = natJob;
+    if (job == null) return 'لا تدرّب منتخباً';
+    if (opp == job) return 'اختر منتخباً آخر';
+    if (natFriendlyDone) return 'لُعبت مباراة ودية هذا الأسبوع — انتظر الأسبوع القادم';
+    ensureNat();
+    final r = _natJobMatch(job, opp, false);
+    if (r == null) return 'تعذّر إجراء المباراة';
+    nat.apply(job, opp, r.$1, r.$2, 10, fifa: 1.0);
+    nat.log.add([season, 9, job, opp, r.$1, r.$2, 1]);
+    natFriendlyWeek = week;
+    notifyListeners();
+    unawaited(save());
+    return null;
+  }
+
+  bool get natFriendlyDone => natFriendlyWeek == week;
+
   /// مباراة منتخبي بالمحرك الكامل: تُستدعى من نافذة دولية فتُعيد النتيجة (لطرف أ، لطرف ب)
   (int, int)? _natJobMatch(String a, String b, bool qual) {
     final job = natJob;
