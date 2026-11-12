@@ -80,9 +80,9 @@ extension WorldLeagues on GameState {
     final ovs = [for (final p in t.players) if (p.ov != null) p.ov!]..sort((a, b) => b.compareTo(a));
     if (ovs.length >= 11) {
       final top = ovs.take(16).toList();
-      return top.fold<int>(0, (a, b) => a + b) / top.length;
+      return top.fold<int>(0, (a, b) => a + b) / top.length.toDouble();
     }
-    return 66 - 10 * (n <= 1 ? 0.5 : rank / (n - 1)); // لا تقييمات: من ترتيب الفريق
+    return (66 - 10 * (n <= 1 ? 0.5 : rank / (n - 1))).toDouble(); // لا تقييمات: من ترتيب الفريق
   }
 
   /// يبني دوريات العالم من البيانات المضمّنة (عدا دوريات بلد المستخدم فهي تُلعب كاملة)

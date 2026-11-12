@@ -18,6 +18,7 @@ import 'coaches.dart';
 import 'stadiums.dart';
 import 'importer.dart';
 import 'bundled.dart';
+import 'api_football.dart';
 
 part 'awards_logic.dart';
 part 'jobs_logic.dart';
