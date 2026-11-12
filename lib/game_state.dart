@@ -16,6 +16,7 @@ import 'transfers.dart';
 import 'world.dart';
 
 part 'awards_logic.dart';
+part 'jobs_logic.dart';
 
 class NextMatch {
   final String comp, round, time;
@@ -56,7 +57,7 @@ String migrateTraining(String k) => switch (k) {
       _ => trainingModes.containsKey(k) ? k : 'technical',
     };
 
-enum TaskAction { offers, board, contracts, injuries, match }
+enum TaskAction { offers, board, contracts, injuries, match, job }
 
 class GameTask {
   final String id, title, body, reason, due;
@@ -95,7 +96,7 @@ class GameState extends ChangeNotifier {
 
   /// معامل الدخل حسب الدرجة (البث والجوائز أقل في الدرجات الدنيا)
   double get divFactor => div <= 1 ? 1.0 : (div == 2 ? 0.6 : 0.4);
-  late final Team user;
+  late Team user;
   late List<List<Fixture>> rounds;
 
   int season = 1;
@@ -295,6 +296,17 @@ class GameState extends ChangeNotifier {
         action: TaskAction.contracts,
       ));
     }
+    for (final o in jobOffers) {
+      t.add(GameTask(
+        id: 'job-${o.club}',
+        title: 'عرض تدريب من ${o.club}',
+        body: o.reason,
+        reason: 'عقد ${o.years} مواسم • الهدف: المركز ${o.objective}',
+        due: seasonOver ? 'قبل الموسم القادم' : 'ينتهي بعد ${o.ttl} أسابيع',
+        urgent: false,
+        action: TaskAction.job,
+      ));
+    }
     final inj = user.squad.where((p) => p.injuredWeeks > 0).toList();
     if (inj.isNotEmpty) {
       t.add(GameTask(
@@ -389,6 +401,12 @@ class GameState extends ChangeNotifier {
   /// ختم زمني لكل خبر (تاريخ اللعبة|الساعة) ليُجمَّع في صندوق الرسائل
   final Map<String, String> newsStamp = {};
   final Set<String> readMsgs = {};
+  final List<JobOffer> jobOffers = []; // عروض تدريب من أندية أخرى
+  String? pendingJob; // نادٍ ينتقل إليه المدرب مع بداية الموسم
+  double mgrRep = 50; // سمعة المدرب
+  int mgrEnd = 0; // آخر موسم في عقد المدرب (0 = غير محدد)
+  bool resigned = false;
+  bool jobsGen = false;
   final List<int> attHist = []; // حضور آخر المباريات على أرضك
   int campaignWeek = -99;
   String? runCampaign() {
@@ -496,6 +514,14 @@ class GameState extends ChangeNotifier {
     attHist.addAll(((j['ah'] as List?) ?? const []).cast<int>());
     campaignWeek = (j['cw'] as int?) ?? -99;
     fired = j['fired'] as bool;
+    for (final x in (j['jobs'] as List?) ?? const []) {
+      jobOffers.add(JobOffer.fromJson(x as Map<String, dynamic>));
+    }
+    pendingJob = j['pj'] as String?;
+    mgrRep = ((j['mr'] as num?) ?? 50).toDouble();
+    mgrEnd = (j['me'] as int?) ?? 0;
+    resigned = (j['rs'] as bool?) ?? false;
+    jobsGen = (j['jg'] as bool?) ?? false;
     seasonOver = j['over'] as bool;
     news.addAll((j['news'] as List).cast<String>());
     newsStamp.addAll(((j['nst'] as Map?) ?? const {}).cast<String, String>());
@@ -712,6 +738,12 @@ class GameState extends ChangeNotifier {
         'ah': attHist,
         'cw': campaignWeek,
         'fired': fired,
+        'jobs': [for (final o in jobOffers) o.toJson()],
+        'pj': pendingJob,
+        'mr': mgrRep,
+        'me': mgrEnd,
+        'rs': resigned,
+        'jg': jobsGen,
         'over': seasonOver,
         'news': news,
         'nst': newsStamp,
@@ -1145,6 +1177,7 @@ class GameState extends ChangeNotifier {
     if (user.budget < -5) confidence -= 2;
     confidence = confidence.clamp(0, 100).toDouble();
     if (confidence <= 0) fired = true;
+    this._weeklyJobs();
 
     if (week == rounds.length ~/ 2 && ffpRatio > 0.85) {
       news.insert(0, '⚠️ تحذير اللعب المالي النظيف: الرواتب ${(ffpRatio * 100).round()}% من الإيرادات (الحد 85%)');
@@ -1160,6 +1193,7 @@ class GameState extends ChangeNotifier {
     if (week >= rounds.length) {
       seasonOver = true;
       this.ensureCeremony();
+      this._seasonJobs(position);
     }
     _advanceCups();
     sim = null;
@@ -1947,6 +1981,8 @@ class GameState extends ChangeNotifier {
     }
     deals.removeWhere((d) => d.years <= 0);
     _movePyramid(finalTable, pos);
+    this._applyPendingJob();
+    jobOffers.clear();
     season++;
     week = 0;
     dayCursor = 0;

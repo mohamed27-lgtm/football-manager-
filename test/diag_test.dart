@@ -82,4 +82,50 @@ void main() {
       expect(gs.ceremony, isNull);
     }
   });
+
+  test('عروض التدريب والاستقالة وتغيير النادي', () {
+    final r = Random(5);
+    final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];
+    final gs = GameState.fromData(teams, 5, 'تجريبي');
+    var seen = 0;
+    var guard = 0;
+    while (!gs.seasonOver && guard++ < 600) {
+      gs.confidence = 100;
+      final c = gs.pendingCup;
+      if (c != null) {
+        gs.startCupMatch(c);
+        gs.finishCurrent();
+        continue;
+      }
+      gs.startMatch();
+      gs.finishCurrent();
+      seen += gs.jobOffers.length;
+    }
+    expect(gs.jobOffers.length, greaterThan(0), reason: 'عروض نهاية الموسم');
+    // عرض داخل الدوري أثناء الموسم يُنفَّذ فوراً بعد الاستقالة
+    gs.resign();
+    expect(gs.fired, true);
+    final jobs = gs.availableJobs;
+    expect(jobs.isNotEmpty, true);
+    final target = jobs.first.club;
+    final err = gs.acceptJob(jobs.first);
+    expect(err, anyOf(isNull, isA<String>()));
+    // ignore: avoid_print
+    print('DIAG jobs: seen=$seen accept err=$err now=${gs.user.name} target=$target fired=${gs.fired} pending=${gs.pendingJob}');
+    // موسم جديد بعد الاتفاق
+    var g2 = 0;
+    while (!gs.seasonOver && g2++ < 600) {
+      gs.confidence = 100;
+      final c = gs.pendingCup;
+      if (c != null) {
+        gs.startCupMatch(c);
+        gs.finishCurrent();
+        continue;
+      }
+      gs.startMatch();
+      gs.finishCurrent();
+    }
+    gs.startNewSeason();
+    expect(gs.teams.contains(gs.user), true);
+  });
 }

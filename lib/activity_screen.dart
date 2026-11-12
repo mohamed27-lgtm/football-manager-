@@ -4,6 +4,7 @@ import 'transfers.dart';
 import 'match_pages.dart';
 import 'lineup_pages.dart';
 import 'game_state.dart';
+import 'jobs_screens.dart';
 import 'widgets.dart';
 
 /// رسالة في صندوق الوارد
@@ -52,8 +53,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
     final out = <_Msg>[];
     for (final t in gs.tasks) {
       final cat = switch (t.action) { TaskAction.offers => 0, TaskAction.injuries => 3, TaskAction.match => 2, _ => 1 };
-      out.add(_Msg('t:${t.id}', t.title, t.body, switch (t.action) { TaskAction.offers => 'الانتقالات', TaskAction.injuries => 'الطاقم الطبي', _ => 'الإدارة' }, '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}', cat, gs.today,
-          reply: t.action == TaskAction.offers || t.action == TaskAction.board, task: t));
+      out.add(_Msg('t:${t.id}', t.title, t.body, switch (t.action) { TaskAction.offers => 'الانتقالات', TaskAction.injuries => 'الطاقم الطبي', TaskAction.job => 'عرض تدريب', _ => 'الإدارة' }, '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}', cat, gs.today,
+          reply: t.action == TaskAction.offers || t.action == TaskAction.board || t.action == TaskAction.job, task: t));
     }
     for (final n in gs.news.take(60)) {
       final st = gs.newsStamp[n];
@@ -261,6 +262,11 @@ class MessageDetailScreen extends StatelessWidget {
           },
         ),
       );
+    } else if (t != null && t.action == TaskAction.job) {
+      bar = SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(14, 8, 14, 10), child: GradientButton(label: 'مراجعة العرض', icon: Icons.work_outline_rounded, onPressed: () {
+            Navigator.of(context).pop();
+            Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => JobsScreen(gs: gs)));
+          })));
     } else if (t != null && t.action == TaskAction.board) {
       bar = SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(14, 8, 14, 10), child: GradientButton(label: 'ردّ على الإدارة', icon: Icons.reply_rounded, onPressed: () {
             Navigator.of(context).pop();

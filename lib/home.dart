@@ -1,3 +1,4 @@
+import 'jobs_screens.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide Text;
 import 'package:flutter/services.dart';
@@ -447,6 +448,9 @@ class _HomeShellState extends State<HomeShell> {
         break;
       case TaskAction.injuries:
         setState(() => tab = 1);
+        break;
+      case TaskAction.job:
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => JobsScreen(gs: widget.gs)));
         break;
       case TaskAction.contracts:
         Navigator.of(context).push(MaterialPageRoute(
@@ -1316,10 +1320,16 @@ class DashboardTab extends StatelessWidget {
         Panel(
           color: const Color(0xFF2A1414),
           child: Column(children: [
-            const Text('🚫 تمت إقالتك', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+            Text(gs.resigned ? '✍️ استقلت' : '🚫 تمت إقالتك', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
-            const Text('فقدت ثقة مجلس الإدارة.', style: TextStyle(color: kMuted)),
+            Text(gs.resigned ? 'استقلت من منصبك.' : 'فقدت ثقة مجلس الإدارة.', style: const TextStyle(color: kMuted)),
             const SizedBox(height: 12),
+            GradientButton(
+              label: 'عروض التدريب (${gs.availableJobs.length})',
+              icon: Icons.work_outline_rounded,
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => JobsScreen(gs: gs))),
+            ),
+            const SizedBox(height: 8),
             GradientButton(
               label: 'ابدأ مسيرة جديدة',
               onPressed: () async {

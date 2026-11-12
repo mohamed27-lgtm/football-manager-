@@ -8,6 +8,7 @@ import 'club_screens.dart';
 import 'settings_screen.dart';
 import 'finance_screen.dart';
 import 'game_state.dart';
+import 'jobs_screens.dart';
 import 'ranking_screen.dart';
 import 'widgets.dart';
 import 'fixtures_screen.dart';
@@ -232,6 +233,7 @@ class _MoreTabState extends State<MoreTab> {
         (Icons.confirmation_number_rounded, 'الملعب والتذاكر', () => _push(StadiumScreen(gs: gs))),
         (Icons.gavel_rounded, 'اللعب المالي النظيف', () => _push(FfpScreen(gs: gs))),
         (Icons.history_edu_rounded, 'تاريخ النادي', () => _push(HistoryScreen(gs: gs))),
+        (Icons.work_outline_rounded, 'عقدي والعروض', () => _push(JobsScreen(gs: gs))),
       ]),
       ('المنافسات', [
         (Icons.leaderboard_rounded, 'الدوري والترتيب', () => _tab(3)),
