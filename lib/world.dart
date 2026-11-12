@@ -283,6 +283,13 @@ class NatState {
   final List<NatTour> history = [];
   /// سجل المباريات الدولية (تصفيات/ودية): [موسم، جولة، أ، ب، أهداف أ، أهداف ب، النوع 0 تصفيات/1 ودية]
   final List<List<dynamic>> log = [];
+  /// النوافذ الدولية المنتهية هذا الموسم، والتصنيف المنشور رسمياً (يتحدّث بعد كل نافذة)
+  final Set<int> winDone = {};
+  final Map<String, double> pub = {};
+  final Map<String, int> prevRk = {};
+  String pubDate = '';
+  bool pendRel = false;
+  static const winNames = ['سبتمبر', 'أكتوبر', 'نوفمبر', 'مارس', 'يونيو'];
   // قوة المنتخب الداخلية (Elo مبدئي) تُستعمل لمحاكاة النتائج فقط؛ ولا تُعرض كنقاط
   // نقاط التصنيف المعروضة: صيغة فيفا الكلاسيكية M × I × T × C بمتوسطات المواسم (1 / 0.5 / 0.3 / 0.2)
   final Map<String, List<double>> cur = {}; // [مجموع نقاط المباريات، عدد المباريات] للموسم الجاري
@@ -341,7 +348,10 @@ class NatState {
   void init(Iterable<(String, String)> nations, Random rng) {
     for (final n in nations) {
       conf[n.$1] = natConfOf(n.$1, n.$2);
-      if (pts.containsKey(n.$1)) continue;
+      if (pts.containsKey(n.$1)) {
+        _seedPast(n.$1);
+        continue;
+      }
       final base = _initPts[n.$1];
       if (base != null) {
         pts[n.$1] = base.toDouble();
@@ -350,7 +360,15 @@ class NatState {
         final b = switch (c) { 'caf' => 1220, 'afc' => 1180, 'uefa' => 1200, 'conmebol' => 1300, 'concacaf' => 1120, _ => 1000 };
         pts[n.$1] = b + (n.$1.hashCode % 80) - 40.0;
       }
+      _seedPast(n.$1);
     }
+  }
+
+  /// نقاط ابتدائية معقولة للتصنيف قبل أول مباراة (تتلاشى تدريجياً مع نتائج المباريات)
+  void _seedPast(String n) {
+    if (past.containsKey(n) || (cur[n]?[1] ?? 0) > 0) return;
+    final r = ((pts[n] ?? 1200) - 1000) * 0.45 + 250;
+    past[n] = [r / 100, r / 100, r / 100];
   }
 
   List<String> get ranking {
@@ -407,18 +425,24 @@ class NatState {
     pts[b] = rb + db;
   }
 
-  /// نوافذ المباريات الدولية للموسم: 4 جولات تصفيات رسمية داخل الاتحاد (وزن 25) و2 ودية بين منتخبات من أي اتحاد (وزن 10)
-  void seasonWindow(Random rng, double Function(String) adj, [int season = 0]) {
+  /// بداية موسم جديد: تصفير نقاط التصفيات والنوافذ
+  void startSeason() {
     qp.clear();
     qgd.clear();
+    winDone.clear();
+  }
+
+  /// نافذة دولية (0 سبتمبر، 1 أكتوبر، 2 نوفمبر، 3 مارس، 4 يونيو): جولة تصفيات رسمية داخل الاتحاد (0–3)
+  /// ومباريات ودية بين منتخبات من أي اتحاد (كل النوافذ عدا أكتوبر)
+  int playWindow(int wid, Random rng, double Function(String) adj, int season) {
     snapshotRanks();
-    final byConf = <String, List<String>>{};
-    conf.forEach((n, c) => byConf.putIfAbsent(c, () => []).add(n));
-    void play(String a, String b, int round, bool qual) {
+    var n = 0;
+    void play(String a, String b, bool qual) {
       final ra = pts[a]! + adj(a) + 40, rb = pts[b]! + adj(b);
       final g = goals(rng, ra, rb);
       apply(a, b, g.$1, g.$2, qual ? 25 : 10, fifa: qual ? 2.5 : 1.0);
-      log.add([season, round, a, b, g.$1, g.$2, qual ? 0 : 1]);
+      log.add([season, wid, a, b, g.$1, g.$2, qual ? 0 : 1]);
+      n++;
       if (qual) {
         qp[a] = (qp[a] ?? 0) + (g.$1 > g.$2 ? 3 : (g.$1 == g.$2 ? 1 : 0));
         qp[b] = (qp[b] ?? 0) + (g.$2 > g.$1 ? 3 : (g.$1 == g.$2 ? 1 : 0));
@@ -427,23 +451,46 @@ class NatState {
       }
     }
 
-    for (var round = 0; round < 6; round++) {
-      final qual = round < 4;
-      if (qual) {
-        for (final l in byConf.values) {
-          final x = [...l]..shuffle(rng);
-          for (var i = 0; i + 1 < x.length; i += 2) {
-            play(x[i], x[i + 1], round, true);
-          }
-        }
-      } else {
-        final x = conf.keys.toList()..shuffle(rng);
+    if (wid <= 3) {
+      final byConf = <String, List<String>>{};
+      conf.forEach((nm, c) => byConf.putIfAbsent(c, () => []).add(nm));
+      for (final l in byConf.values) {
+        final x = [...l]..shuffle(rng);
         for (var i = 0; i + 1 < x.length; i += 2) {
-          play(x[i], x[i + 1], round, false);
+          play(x[i], x[i + 1], true);
         }
       }
     }
-    if (log.length > 900) log.removeRange(0, log.length - 900);
+    if (wid != 1) {
+      final x = conf.keys.toList()..shuffle(rng);
+      for (var i = 0; i + 1 < x.length; i += 2) {
+        play(x[i], x[i + 1], false);
+      }
+    }
+    winDone.add(wid);
+    pendRel = true;
+    if (log.length > 1400) log.removeRange(0, log.length - 1400);
+    return n;
+  }
+
+  /// ترتيب التصنيف المنشور رسمياً (قبل أول إصدار يُعرض الترتيب الحالي)
+  List<String> get pubRanking {
+    if (pub.isEmpty) return ranking;
+    final l = pub.keys.toList()..sort((a, b) => pub[b]!.compareTo(pub[a]!));
+    return l;
+  }
+
+  /// إصدار تصنيف جديد: نقاط كل منتخب الآن وحركة المراكز مقارنة بالإصدار السابق
+  void publish(String date) {
+    final old = pubRanking;
+    prevRk
+      ..clear()
+      ..addAll({for (var i = 0; i < old.length; i++) old[i]: i + 1});
+    pub
+      ..clear()
+      ..addAll({for (final n in pts.keys) n: rating(n)});
+    pubDate = date;
+    pendRel = false;
   }
 
   /// أفضل منتخبات اتحاد في التصفيات (النقاط ثم فارق الأهداف ثم تصنيف فيفا)

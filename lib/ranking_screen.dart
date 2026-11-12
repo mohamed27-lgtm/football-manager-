@@ -4,6 +4,7 @@ import 'flags.dart';
 import 'auth.dart';
 import 'game_state.dart';
 import 'models.dart';
+import 'calendar.dart';
 import 'world.dart';
 import 'widgets.dart';
 
@@ -138,7 +139,7 @@ class _RankingScreenState extends State<RankingScreen> {
   /// ترتيب المنتخبات: نقاط فيفا (P = P0 + I × (W − We)) تتغير بعد كل مباراة دولية وبطولة
   List<Widget> _countries() {
     gs.ensureNat();
-    final rank = gs.nat.ranking;
+    final rank = gs.nat.pubRanking;
     if (rank.isEmpty) return [const EmptyState(icon: Icons.flag_outlined, title: 'لا بيانات', subtitle: 'لا توجد منتخبات.')];
     final mine = rank.indexOf(gs.country) + 1;
     final shown = <(int, String)>[
@@ -146,16 +147,19 @@ class _RankingScreenState extends State<RankingScreen> {
         if (conf == 'all' || gs.nat.conf[rank[i]] == conf) (i + 1, rank[i])
     ];
     Widget trail(String n) {
-      final p = gs.nat.rating(n);
-      final d = p - (gs.nat.start[n] ?? p);
+      final p = gs.nat.pub[n] ?? gs.nat.rating(n);
+      final now = rank.indexOf(n) + 1;
+      final was = gs.nat.prevRk[n] ?? now;
+      final d = was - now; // موجب = صعود في الترتيب
       return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
         Text(p.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)),
-        Text('${d >= 0 ? '▲' : '▼'} ${d.abs().toStringAsFixed(1)}', style: TextStyle(fontSize: 11, color: d >= 0 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D))),
+        Text(d == 0 ? '—' : '${d > 0 ? '▲' : '▼'} ${d.abs()}', style: TextStyle(fontSize: 11, color: d == 0 ? kMuted : (d > 0 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D)))),
       ]);
     }
 
     return [
-      if (mine > 0) _summary(mine, FlagBadge(gs.country, size: 44), 'منتخب ${gs.country}', '${gs.nat.rating(gs.country).toStringAsFixed(1)} نقطة • من ${rank.length} منتخباً'),
+      _release(),
+      if (mine > 0) _summary(mine, FlagBadge(gs.country, size: 44), 'منتخب ${gs.country}', '${(gs.nat.pub[gs.country] ?? gs.nat.rating(gs.country)).toStringAsFixed(1)} نقطة • من ${rank.length} منتخباً'),
       _confChips(),
       _card([
         for (final e in shown.take(220)) InkWell(onTap: () => _natMatches(e.$2), child: _row(e.$1, FlagBadge(e.$2, size: 30), e.$2, kConfNames[gs.nat.conf[e.$2]] ?? '', trail(e.$2), me: e.$2 == gs.country)),
@@ -163,11 +167,33 @@ class _RankingScreenState extends State<RankingScreen> {
     ];
   }
 
+  /// بطاقة موعد الإصدار: آخر إصدار رسمي والنافذة الدولية القادمة
+  Widget _release() {
+    final w = gs.nextWindow;
+    final next = w == null ? 'لا نوافذ هذا الموسم' : 'النافذة القادمة: ${NatState.winNames[w]} • ${GameCalendar.fmtShort(intlWindowDate(gs.season, w))}';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+      child: Row(children: [
+        const Icon(Icons.event_note_rounded, color: kPrimary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(gs.nat.pubDate.isEmpty ? 'لم يصدر تصنيف بعد' : 'آخر إصدار رسمي: ${gs.nat.pubDate}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+            Text(next, style: const TextStyle(color: kMuted, fontSize: 12)),
+            const Text('يتحدّث التصنيف بعد كل نافذة دولية بأسبوع', style: TextStyle(color: kMuted, fontSize: 11)),
+          ]),
+        ),
+      ]),
+    );
+  }
+
   /// آخر المباريات الدولية لمنتخب: رسمية (تصفيات وبطولات) وودية
   void _natMatches(String n) {
     final rows = <(int, int, String, String, int, int, String)>[]; // موسم، ترتيب، أ، ب، هأ، هب، نوع
     for (final l in gs.nat.log) {
-      if (l[2] == n || l[3] == n) rows.add((l[0] as int, l[1] as int, l[2] as String, l[3] as String, l[4] as int, l[5] as int, (l[6] as int) == 0 ? 'تصفيات رسمية' : 'ودية'));
+      if (l[2] == n || l[3] == n) rows.add((l[0] as int, l[1] as int, l[2] as String, l[3] as String, l[4] as int, l[5] as int, (l[6] as int) == 0 ? 'تصفيات رسمية • نافذة ${NatState.winNames[(l[1] as int).clamp(0, 4)]}' : 'ودية • نافذة ${NatState.winNames[(l[1] as int).clamp(0, 4)]}'));
     }
     for (final t in gs.nat.history) {
       for (final m in t.matches) {

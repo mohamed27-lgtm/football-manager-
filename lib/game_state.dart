@@ -17,6 +17,7 @@ import 'world.dart';
 
 part 'awards_logic.dart';
 part 'jobs_logic.dart';
+part 'intl_logic.dart';
 
 class NextMatch {
   final String comp, round, time;
@@ -651,6 +652,21 @@ class GameState extends ChangeNotifier {
       for (final e in ((nj['past'] as Map?) ?? const {}).entries) {
         nat.past[e.key as String] = [for (final x in e.value as List) (x as num).toDouble()];
       }
+      for (final e in ((nj['qp'] as Map?) ?? const {}).entries) {
+        nat.qp[e.key as String] = e.value as int;
+      }
+      for (final e in ((nj['qgd'] as Map?) ?? const {}).entries) {
+        nat.qgd[e.key as String] = e.value as int;
+      }
+      nat.winDone.addAll(((nj['wd'] as List?) ?? const []).cast<int>());
+      for (final e in ((nj['pub'] as Map?) ?? const {}).entries) {
+        nat.pub[e.key as String] = (e.value as num).toDouble();
+      }
+      for (final e in ((nj['prk'] as Map?) ?? const {}).entries) {
+        nat.prevRk[e.key as String] = e.value as int;
+      }
+      nat.pubDate = (nj['pd'] as String?) ?? '';
+      nat.pendRel = (nj['pr'] as bool?) ?? false;
       for (final l in (nj['log'] as List?) ?? const []) {
         nat.log.add(List<dynamic>.from(l as List));
       }
@@ -752,7 +768,7 @@ class GameState extends ChangeNotifier {
         'ban': transferBan,
         'ppn': pointsPenaltyNext,
         'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson(), 'eur': europa?.toJson(), 'uecl': conference?.toJson(), 'sup': superCup?.toJson(), 'cwc': cwc?.toJson(), 'ic': ic?.toJson()},
-        'nat': {'pts': nat.pts, 'start': nat.start, 'cur': nat.cur, 'past': nat.past, 'log': nat.log, 'hist': [for (final t in nat.history) t.toJson()]},
+        'nat': {'pts': nat.pts, 'start': nat.start, 'cur': nat.cur, 'past': nat.past, 'log': nat.log, 'qp': nat.qp, 'qgd': nat.qgd, 'wd': nat.winDone.toList(), 'pub': nat.pub, 'prk': nat.prevRk, 'pd': nat.pubDate, 'pr': nat.pendRel, 'hist': [for (final t in nat.history) t.toJson()]},
         'cp': clubPts,
         'cc': contChamps,
         'ch': cupHist,
@@ -1206,6 +1222,7 @@ class GameState extends ChangeNotifier {
     confidence = confidence.clamp(0, 100).toDouble();
     if (confidence <= 0) fired = true;
     this._weeklyJobs();
+    this._intlTick();
 
     if (week == rounds.length ~/ 2 && ffpRatio > 0.85) {
       news.insert(0, '⚠️ تحذير اللعب المالي النظيف: الرواتب ${(ffpRatio * 100).round()}% من الإيرادات (الحد 85%)');
@@ -3142,10 +3159,12 @@ class GameState extends ChangeNotifier {
       ..addAll({for (final n in nat.pts.keys) n: nat.rating(n)});
     nat.rollSeason();
     _buildNatIdx();
-    nat.seasonWindow(rng, _natAdj, season);
+    this._finishWindows();
     for (final d in kNatTours) {
       if (season % d.cycle == d.offset) _playNatTour(d);
     }
+    nat.startSeason();
+    this._publishRanking();
     _natIdx = null;
     _adjCache.clear();
   }
