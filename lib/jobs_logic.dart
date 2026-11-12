@@ -98,6 +98,28 @@ extension JobsLogic on GameState {
     notifyListeners();
   }
 
+  /// متابعة الموسم بلا نادٍ (بعد الإقالة): تُلعب جولتك وكؤوسك آلياً ويستمر العالم، حتى تقبل عرضاً
+  void spectateRound() {
+    if (!fired || seasonOver) return;
+    fired = false;
+    try {
+      user.autoPick();
+      var guard = 0;
+      Cup? c;
+      while ((c = pendingCup) != null && guard++ < 8) {
+        startCupMatch(c!);
+        finishCurrent();
+      }
+      if (!seasonOver) {
+        startMatch();
+        finishMatchday();
+      }
+    } finally {
+      fired = true;
+    }
+    notifyListeners();
+  }
+
   /// قبول عرض: فوري داخل الدوري، أو مؤجل لبداية الموسم عند الانتقال لدرجة أخرى
   String? acceptJob(JobOffer o) {
     final nt = [...teams, ...upper, ...lower].where((t) => t.name == o.club).firstOrNull;

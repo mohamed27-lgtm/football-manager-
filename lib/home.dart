@@ -1037,7 +1037,7 @@ class DashboardTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(flex: 3, child: GradientButton(label: gs.intlBreak ? 'التوقف الدولي' : 'العب المباراة', icon: Icons.sports_soccer_rounded, onPressed: gs.fired ? null : () => playMatch(context, gs))),
+              Expanded(flex: 3, child: GradientButton(label: gs.fired ? (gs.seasonOver ? 'ابدأ موسماً جديداً' : 'متابعة الجولة (بلا نادٍ)') : (gs.intlBreak ? 'التوقف الدولي' : 'العب المباراة'), icon: Icons.sports_soccer_rounded, onPressed: gs.fired ? (gs.seasonOver ? gs.startNewSeason : gs.spectateRound) : () => playMatch(context, gs))),
             ]),
           ]),
         ),
@@ -1464,7 +1464,7 @@ class DashboardTab extends StatelessWidget {
             Text(label, style: const TextStyle(color: kMuted, fontSize: 11)),
           ]),
         );
-    final over = gs.seasonOver && !gs.fired;
+    final over = gs.seasonOver;
     return Container(
       decoration: const BoxDecoration(color: kBg, border: Border(top: BorderSide(color: kLine))),
       padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
@@ -1479,9 +1479,9 @@ class DashboardTab extends StatelessWidget {
             child: SizedBox(
               height: 56,
               child: GradientButton(
-                label: over ? 'ابدأ موسماً جديداً' : (gs.intlBreak ? 'التوقف الدولي' : 'العب'),
+                label: over ? 'ابدأ موسماً جديداً' : (gs.fired ? 'متابعة الجولة' : (gs.intlBreak ? 'التوقف الدولي' : 'العب')),
                 icon: Icons.play_arrow_rounded,
-                onPressed: gs.fired ? null : (over ? gs.startNewSeason : () => playMatch(context, gs)),
+                onPressed: over ? gs.startNewSeason : (gs.fired ? gs.spectateRound : () => playMatch(context, gs)),
               ),
             ),
           ),

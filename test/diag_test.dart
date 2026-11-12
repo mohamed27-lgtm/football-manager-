@@ -129,4 +129,21 @@ void main() {
     gs.startNewSeason();
     expect(gs.teams.contains(gs.user), true);
   });
+
+  test('المتابعة بلا نادٍ بعد الإقالة: موسم كامل ثم موسم جديد', () {
+    final r = Random(9);
+    final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];
+    final gs = GameState.fromData(teams, 3, 'تجريبي');
+    gs.fired = true;
+    var guard = 0;
+    while (!gs.seasonOver && guard++ < 200) {
+      gs.spectateRound();
+    }
+    expect(gs.seasonOver, true, reason: 'الموسم ينتهي رغم الإقالة');
+    expect(gs.fired, true);
+    expect(teams.every((t) => t.played == 38), true, reason: 'كل الفرق لعبت كامل جولاتها');
+    gs.startNewSeason();
+    expect(gs.seasonOver, false);
+    expect(gs.week, 0);
+  });
 }
