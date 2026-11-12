@@ -17,6 +17,18 @@ class Bundled {
     return j;
   }
 
+  /// فريق بالاسم الإنجليزي من الدوريات المضمّنة (يتطلب أن تكون القائمة محمّلة)
+  static ApiTeam? teamByName(String name) {
+    final c = _cache;
+    if (c == null) return null;
+    for (final l in c) {
+      for (final t in l.teams) {
+        if (t.name == name && t.players.isNotEmpty) return t;
+      }
+    }
+    return null;
+  }
+
   static Future<List<LeagueData>> list() async {
     if (_cache != null) return _cache!;
     final out = <LeagueData>[];

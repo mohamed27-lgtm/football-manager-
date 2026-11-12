@@ -135,7 +135,7 @@ class _RankingScreenState extends State<RankingScreen> {
     ];
   }
 
-  List<Player> _allPlayers() => [for (final t in gs.worldRanking) ...t.squad];
+  List<Player> _allPlayers() => [for (final t in gs.worldRanking) if (gs.hasRealSquad(t)) ...t.squad];
 
   /// ترتيب المنتخبات: نقاط فيفا (P = P0 + I × (W − We)) تتغير بعد كل مباراة دولية وبطولة
   List<Widget> _countries() {

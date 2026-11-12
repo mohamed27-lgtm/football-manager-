@@ -14,6 +14,10 @@ import 'calendar.dart';
 import 'sponsors.dart';
 import 'transfers.dart';
 import 'world.dart';
+import 'coaches.dart';
+import 'stadiums.dart';
+import 'importer.dart';
+import 'bundled.dart';
 
 part 'awards_logic.dart';
 part 'jobs_logic.dart';
@@ -3296,10 +3300,31 @@ class GameState extends ChangeNotifier {
     final id = 3000 + i;
     final e0 = elo[name] ?? reg.elo.toDouble();
     final s = 65 + (e0 - 1500) / 18;
-    foreign[id] = createTeam(rng, id, name, ((s - 55) / 3).round().clamp(1, 10));
+    final nt = createTeam(rng, id, name, ((s - 55) / 3).round().clamp(1, 10));
+    this._applyRealSquad(nt, s);
+    foreign[id] = nt;
     elo[name] = e0;
     return id;
   }
+
+  /// يستبدل التشكيلة المولَّدة بتشكيلة حقيقية من بيانات الدوريات المضمّنة إن وُجد النادي
+  void _applyRealSquad(Team t, double strength) {
+    final en = kClubAlias[t.name];
+    final src = en == null ? null : Bundled.teamByName(en);
+    if (src == null) return;
+    final squad = [for (final ap in src.players) playerFromApi(ap, strength.round().clamp(55, 90))]..sort((a, b) => b.overall.compareTo(a.overall));
+    if (squad.length > 28) squad.removeRange(28, squad.length);
+    t.squad
+      ..clear()
+      ..addAll(squad);
+    topUpSquad(t, rng);
+    t.venue = (src.venue != null && src.venue!.isNotEmpty) ? src.venue : stadiumFor(en!);
+    if (hasRealCoach(en!)) t.coach = coachFor(en);
+    t.autoPick();
+  }
+
+  /// هل تشكيلة هذا النادي حقيقية (وليست مولَّدة)؟
+  bool hasRealSquad(Team t) => t.id < 3000 || kClubAlias.containsKey(t.name);
 
   List<int> _weeksAt(List<double> fr) {
     final w = rounds.length;
