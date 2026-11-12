@@ -213,7 +213,9 @@ void main() {
       gs.finishMatchday();
     }
     final l = gs.wLeagues.first;
-    expect(l.round > 20, true, reason: 'الدوري الآخر يتقدم أسبوعياً');
+    expect(l.round > 0, true, reason: 'الدوري الآخر يتقدم أسبوعياً');
+    final exp = (gs.week * l.totalRounds / gs.rounds.length).floor();
+    expect((l.round - exp).abs() <= 3, true, reason: 'نفس رتم موسم المستخدم: round=${l.round} exp=$exp');
     // سلامة الجدول: لا يلعب فريق مرتين في جولة
     for (var rr = 0; rr < l.totalRounds; rr++) {
       final ps = l.pairs(rr);
