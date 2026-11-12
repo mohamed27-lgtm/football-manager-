@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
 import 'countries.dart' show countryByName;
 import 'widgets.dart';
+import 'logo_store.dart';
 
 /// رموز ISO للدول (بالأسماء العربية المستخدمة في الدوريات)
 const kCountryIso = <String, String>{
@@ -75,6 +77,21 @@ class CompLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = Icon(fallback, color: color, size: size);
     if (id == null || id == 0) return icon;
-    return Unfilter(child: Image.asset('assets/logos/$id.png', width: size, height: size, fit: BoxFit.contain, errorBuilder: (_, __, ___) => icon));
+    return ValueListenableBuilder<int>(
+      valueListenable: LogoStore.version,
+      builder: (_, __, ___) {
+        final f = LogoStore.file(id!);
+        final asset = Image.asset('assets/logos/$id.png', width: size, height: size, fit: BoxFit.contain, errorBuilder: (_, __, ___) => icon);
+        if (f == null) return Unfilter(child: asset);
+        return Unfilter(child: Image.file(f, width: size, height: size, fit: BoxFit.contain, errorBuilder: (_, __, ___) => asset));
+      },
+    );
   }
 }
+
+/// معرّفات شعارات بطولات المنتخبات (API-Sports)
+const kNatTourLogoId = <String, int>{'wc': 1, 'euro': 4, 'afcon': 6, 'asia': 7, 'copa': 9, 'gold': 22};
+
+/// معرّف شعار بطولة قارية حسب الاتحاد
+const kConfedCupLogoId = <String, int>{'uefa': 2, 'caf': 12, 'afc': 17, 'conmebol': 13, 'concacaf': 16};
+const kConfedSecondLogoId = <String, int>{'uefa': 3, 'conmebol': 11};

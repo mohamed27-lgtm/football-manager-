@@ -58,7 +58,7 @@ class _NatTourScreenState extends State<NatTourScreen> {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 150, height: 150, decoration: BoxDecoration(color: kCard, shape: BoxShape.circle), child: const Icon(Icons.emoji_events_rounded, size: 84, color: _gold)),
+          Container(width: 150, height: 150, decoration: BoxDecoration(color: kCard, shape: BoxShape.circle), child: Padding(padding: const EdgeInsets.all(30), child: CompLogo(kNatTourLogoId[d.key], fallback: Icons.emoji_events_rounded, color: _gold, size: 90))),
           const SizedBox(height: 20),
           const Text('لا توجد نسخة سابقة بعد', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
           const SizedBox(height: 8),
@@ -243,7 +243,7 @@ class _NatTourScreenState extends State<NatTourScreen> {
                 decoration: BoxDecoration(border: i == 0 ? null : const Border(top: BorderSide(color: kLine))),
                 child: Row(children: [
                   SizedBox(width: 62, child: Text('م${eds[i].season}', style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800))),
-                  const Icon(Icons.emoji_events_rounded, color: _gold, size: 20),
+                  CompLogo(kNatTourLogoId[def.key], fallback: Icons.emoji_events_rounded, color: _gold, size: 22),
                   const SizedBox(width: 8),
                   Expanded(child: _team(eds[i].champion ?? '—', bold: true)),
                   Text('الوصيف: ${eds[i].runnerUp ?? '—'}', style: const TextStyle(color: kMuted, fontSize: 11.5)),
@@ -269,7 +269,7 @@ class _NatTourScreenState extends State<NatTourScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: _gold, width: 1.4)),
                 child: Row(children: [
-                  const Icon(Icons.emoji_events_rounded, color: _gold, size: 46),
+                  CompLogo(kNatTourLogoId[d.key], fallback: Icons.emoji_events_rounded, color: _gold, size: 52),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -73,6 +73,39 @@ class _CompetitionsViewState extends State<CompetitionsView> {
         ]),
       );
 
+  /// شعار البطولة الحقيقي إن توفّر (مُنزَّل أو مضمّن) وإلا الكأس الملوّنة
+  Widget _logoChip(int? id, Color c, {double size = 46}) {
+    if (id == null) return _trophyChip(c, size: size);
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(size * 0.12),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.white, border: Border.all(color: kLine)),
+      child: CompLogo(id, fallback: Icons.emoji_events_outlined, color: c, size: size * 0.76),
+    );
+  }
+
+  int? _logoOf(String key) {
+    final cf = confedOf(gs.country);
+    switch (key) {
+      case 'league':
+        return gs.leagueId == 0 ? null : gs.leagueId;
+      case 'dom':
+        return kDomesticCupId[gs.leagueId];
+      case 'con':
+        return kConfedCupLogoId[cf.id];
+      case 'uel':
+        return kConfedSecondLogoId[cf.id];
+      case 'uecl':
+        return cf.id == 'uefa' ? 848 : null;
+      case 'sup':
+        return kSuperCupId[gs.leagueId] ?? 531;
+      case 'cwc':
+        return 15;
+    }
+    return null;
+  }
+
   Widget _trophyChip(Color c, {double size = 46}) => Container(
         width: size,
         height: size,
@@ -138,7 +171,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
           head('بطولات الأندية', dot: true),
           grid([
             for (final e in club)
-              card(e.$1, _trophyChip(e.$2, size: 38), mark: e.$4, hi: e.$3 == 'sup' && e.$4, onTap: () => _open(e.$3!)),
+              card(e.$1, _logoChip(_logoOf(e.$3!), e.$2, size: 38), mark: e.$4, hi: e.$3 == 'sup' && e.$4, onTap: () => _open(e.$3!)),
           ]),
           head('دوريات الدول'),
           grid([
@@ -155,7 +188,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
           head('بطولات المنتخبات'),
           grid([
             for (final d in kNatTours)
-              card(d.name, _trophyChip(const Color(0xFF2F5FB4), size: 38), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => NatTourScreen(gs: gs, tourKey: d.key)))),
+              card(d.name, _logoChip(kNatTourLogoId[d.key], const Color(0xFF2F5FB4), size: 38), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => NatTourScreen(gs: gs, tourKey: d.key)))),
           ]),
         ]),
       ),
@@ -259,7 +292,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
             // الشريحة المحددة أولاً
             bar.sort((a, b) => (b.$5 ? 1 : 0).compareTo(a.$5 ? 1 : 0));
           }
-          final lead = c.id == 'league' && gs.country.isNotEmpty ? FlagBadge(gs.country, size: 40) : _trophyChip(c.color, size: 44);
+          final lead = c.id == 'league' && gs.country.isNotEmpty ? FlagBadge(gs.country, size: 40) : _logoChip(_logoOf(c.id), c.color, size: 44);
           final title = c.id == 'league' ? (gs.country.isEmpty ? gs.leagueName : gs.country) : c.title;
           return Column(children: [
             _subHeader(title, lead),
@@ -557,7 +590,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
     final color = cwc ? const Color(0xFFE6B422) : const Color(0xFFA6812E);
     final name = cwc ? 'كأس العالم للأندية' : 'كأس إنتركونتيننتال';
     return Column(children: [
-      _subHeader(name, _trophyChip(color)),
+      _subHeader(name, _logoChip(_logoOf(key), color)),
       Expanded(
         child: ListView(padding: const EdgeInsets.all(16), children: [
           Container(

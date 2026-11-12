@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'logo_store.dart';
 import 'package:flutter/services.dart';
 import 'auth.dart';
 import 'auth_screen.dart';
@@ -11,6 +12,7 @@ import 'widgets.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppSettings.i.load();
+  await LogoStore.init();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const ManagerApp());
 }

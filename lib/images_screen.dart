@@ -5,6 +5,7 @@ import 'flags.dart';
 import 'i18n.dart';
 import 'league_store.dart';
 import 'pack_service.dart';
+import 'logo_store.dart';
 import 'widgets.dart';
 
 /// صفحة تنزيل الصور (شعارات الأندية وصور اللاعبين) لكل دوري — على غرار متجر الإضافات
@@ -121,6 +122,70 @@ class _ImagesScreenState extends State<ImagesScreen> {
     }
   }
 
+  bool logoBusy = false;
+  double logoProgress = 0;
+
+  Future<void> _logos() async {
+    _set(() {
+      logoBusy = true;
+      logoProgress = 0;
+    });
+    final fail = await LogoStore.download((v) => _set(() => logoProgress = v));
+    _set(() {
+      logoBusy = false;
+      if (fail > 0 && LogoStore.count == 0) error = 'تعذّر تنزيل الشعارات، تأكد من الاتصال بالإنترنت';
+    });
+  }
+
+  Future<void> _logosRemove() async {
+    await LogoStore.remove();
+    _set(() {});
+  }
+
+  Widget _logosCard() {
+    final n = LogoStore.count;
+    final full = n >= LogoStore.ids.toSet().length;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+      child: Column(children: [
+        Row(children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: kPrimary.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.emoji_events_rounded, color: kPrimary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('شعارات الدوريات والبطولات', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+              Text(full ? 'محمّلة ($n شعاراً)' : 'شعارات حقيقية للدوريات والكؤوس والبطولات القارية والمنتخبات', style: const TextStyle(color: kMuted, fontSize: 11.5)),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          if (logoBusy)
+            Text('${(logoProgress * 100).round()}%', style: const TextStyle(fontWeight: FontWeight.w900, color: kAccent))
+          else if (full) ...[
+            const Icon(Icons.check_circle, color: kAccent),
+            IconButton(onPressed: busy ? null : _logosRemove, icon: const Icon(Icons.delete_outline, color: Color(0xFFFF8A65))),
+          ] else
+            FilledButton.icon(
+              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+              onPressed: busy ? null : _logos,
+              icon: const Icon(Icons.download_rounded, size: 18),
+              label: Text(n == 0 ? 'تنزيل' : 'إكمال'),
+            ),
+        ]),
+        if (logoBusy) ...[
+          const SizedBox(height: 10),
+          ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: logoProgress, minHeight: 6)),
+        ],
+      ]),
+    );
+  }
+
   String _mb(int bytes) => '${(bytes / 1e6).toStringAsFixed(1)} MB';
 
   @override
@@ -162,6 +227,7 @@ class _ImagesScreenState extends State<ImagesScreen> {
                 ]),
               ),
               const SizedBox(height: 12),
+              _logosCard(),
               if (error != null)
                 Container(
                   margin: const EdgeInsets.only(bottom: 10),
