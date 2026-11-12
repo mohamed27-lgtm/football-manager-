@@ -1,5 +1,19 @@
+import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/services.dart' show rootBundle;
 import 'data.dart' show randomName;
+
+/// مدربون حقيقيون من assets/coaches.json (Transfermarkt Datasets) يُحمَّلون عند بدء التطبيق
+final Map<String, String> _realCoaches = {};
+
+Future<void> loadCoaches() async {
+  try {
+    final m = jsonDecode(await rootBundle.loadString('assets/coaches.json')) as Map<String, dynamic>;
+    _realCoaches
+      ..clear()
+      ..addAll({for (final e in m.entries) e.key: e.value as String});
+  } catch (_) {}
+}
 
 /// مدربون حقيقيون لأشهر الأندية (بيانات تقريبية وقد تتغير مع الواقع)، وغيرها يحصل على اسم مولَّد ثابت
 const _kCoaches = <String, String>{
@@ -29,7 +43,7 @@ const _kCoaches = <String, String>{
 /// اسم مدرب النادي: حقيقي إن عُرف، وإلا اسم مولَّد ثابت من اسم النادي
 String coachFor(String club) {
   final k = club.toLowerCase().trim();
-  final real = _kCoaches[k];
+  final real = _realCoaches[k] ?? _kCoaches[k];
   if (real != null) return real;
   var h = 17;
   for (final c in k.codeUnits) {

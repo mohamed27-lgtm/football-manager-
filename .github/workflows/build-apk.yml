@@ -56,6 +56,13 @@ jobs:
       - name: Bundle league data into the app
         run: python3 tools/make_assets.py
 
+      - name: Fetch real coaches (Transfermarkt Datasets)
+        continue-on-error: true
+        run: |
+          mkdir -p logs
+          python3 tools/fetch_coaches.py 2>&1 | tee logs/coaches.txt
+          [ -f assets/coaches.json ] || echo '{}' > assets/coaches.json
+
       - name: Fetch competition logos and store them in the repo
         continue-on-error: true
         run: |

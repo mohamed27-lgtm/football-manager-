@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'coaches.dart';
 import 'logo_store.dart';
 import 'package:flutter/services.dart';
 import 'auth.dart';
@@ -13,6 +14,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppSettings.i.load();
   await LogoStore.init();
+  await loadCoaches();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const ManagerApp());
 }
