@@ -350,7 +350,8 @@ class GameState extends ChangeNotifier {
   String? celebration;
   /// لقطة إحصاءات الفريق لحظة التتويج (قبل تصفير الموسم)
   Map<String, int>? celebStats;
-  void _snapCeleb() {
+  final Map<String, Map<String, int>> titleStats = {}; // إحصاءات كل لقب: 'البطولة|الموسم'
+  void _snapCeleb(String comp) {
     celebStats = {
       's': season,
       'pts': user.points,
@@ -362,7 +363,11 @@ class GameState extends ChangeNotifier {
       'pl': user.played,
       'top': user.squad.fold<int>(0, (a, p) => p.goals > a ? p.goals : a),
     };
+    final best = user.squad.fold<Player?>(null, (a, p) => a == null || p.goals > a.goals ? p : a);
+    titleStats['$comp|$season'] = {...celebStats!, 'pid': best?.id ?? -1};
+    titleScorers['$comp|$season'] = best?.name ?? '';
   }
+  final Map<String, String> titleScorers = {};
   void toggleWatch(Player p) {
     if (!watch.remove(p.id)) watch.add(p.id);
     notifyListeners();
@@ -606,6 +611,12 @@ class GameState extends ChangeNotifier {
     ((j['clh'] as Map?) ?? const {}).forEach((k, v) => clubHonours[k as String] = (v as List).cast<String>());
     ((j['wch'] as Map?) ?? const {}).forEach((k, v) => worldChamps[k as String] = v as String);
     worldFeed.addAll(((j['wf'] as List?) ?? const []).cast<String>());
+    for (final e in ((j['tst'] as Map?) ?? const {}).entries) {
+      titleStats['${e.key}'] = {for (final x in (e.value as Map).entries) '${x.key}': (x.value as num).toInt()};
+    }
+    for (final e in ((j['tsc'] as Map?) ?? const {}).entries) {
+      titleScorers['${e.key}'] = '${e.value}';
+    }
     pendingAwards = [for (final a in (j['pa'] as List?) ?? const []) Map<String, dynamic>.from(jsonDecode(jsonEncode(a)) as Map)];
     ceremony = j['cer'] == null ? null : Map<String, dynamic>.from(jsonDecode(jsonEncode(j['cer'])) as Map);
     freeAgents = [for (final p in (j['fa'] as List?) ?? const []) Player.fromJson(p as Map<String, dynamic>)];
@@ -852,6 +863,8 @@ class GameState extends ChangeNotifier {
         'clh': clubHonours,
         'wch': worldChamps,
         'wf': worldFeed,
+        'tst': titleStats,
+        'tsc': titleScorers,
         'rounds': [
           for (final r in rounds)
             [
@@ -2545,7 +2558,7 @@ class GameState extends ChangeNotifier {
         fin.add('prize', bonus);
         confidence = min(100, confidence + 10);
         honours.add('🏆 ${c.name} — الموسم $season');
-        this._snapCeleb();
+        this._snapCeleb(c.name);
         celebration = c.name;
         news.insert(0, '🏆🏆 بطل ${c.name}! مكافأة ${money1(bonus)}');
       } else {
@@ -2923,7 +2936,7 @@ class GameState extends ChangeNotifier {
     }
     if (pos == 1) {
       honours.add('🏆 الدوري — الموسم $season');
-      this._snapCeleb();
+      this._snapCeleb('الدوري');
       celebration = 'الدوري';
       news.insert(0, '🏆🏆 بطل الدوري!');
       fans = min(100, fans + 6);

@@ -18,6 +18,7 @@ import 'loans_screen.dart';
 import 'stadium_screen.dart';
 import 'fans_screen.dart';
 import 'trophies.dart';
+import 'cabinet_screen.dart';
 import 'world_screens.dart';
 import 'squad.dart';
 import 'tactics.dart';
@@ -25,80 +26,8 @@ import 'tactics.dart';
 class TrophyScreen extends StatelessWidget {
   final GameState gs;
   const TrophyScreen({super.key, required this.gs});
-
   @override
-  Widget build(BuildContext context) {
-    final h = gs.honours;
-    bool has(String h, String k) => h.contains(k);
-    final groups = <(String, IconData, Color, List<String>)>[
-      ('الدوري', Icons.emoji_events, kGold, [for (final x in h) if (x.startsWith('🏆 الدوري')) x]),
-      ('كأس الدوري', Icons.military_tech, const Color(0xFFBA68C8), [for (final x in h) if (has(x, 'كأس الدوري')) x]),
-      ('البطولة القارية', Icons.public, kBlue, [for (final x in h) if (has(x, 'القاري')) x]),
-      ('كأس السوبر', Icons.workspace_premium, kAccent, [for (final x in h) if (has(x, 'السوبر')) x]),
-    ];
-    final used = {for (final g in groups) ...g.$4};
-    final other = [for (final x in h) if (!used.contains(x)) x];
-    return Scaffold(
-      appBar: AppBar(title: const Text('🏆 خزانة البطولات')),
-      body: SafeArea(
-        child: ListView(padding: const EdgeInsets.all(14), children: [
-          if (h.isEmpty)
-            const Panel(child: EmptyState(icon: Icons.emoji_events_outlined, title: 'الخزانة فارغة', subtitle: 'ستُعرض هنا كل الألقاب التي تفوز بها. الطريق طويل!')),
-          if (h.isNotEmpty)
-            Unfilter(
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(22), gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF22345C), Color(0xFF0F1B33)])),
-                child: Builder(builder: (_) {
-                  final last = parseHonour(h.last);
-                  final comp = last?.$1 ?? 'الدوري';
-                  return Column(children: [
-                    Image.asset('assets/trophies/${trophyKey(comp == 'الدوري' ? gs.leagueName : comp, gs.leagueName, isLeague: comp == 'الدوري')}.png', height: 96, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Text('🏆', style: TextStyle(fontSize: 70))),
-                    const SizedBox(height: 8),
-                    Text('${h.length} لقباً في تاريخ النادي', style: const TextStyle(color: Color(0xFFFFFFFF), fontWeight: FontWeight.w900, fontSize: 19)),
-                    Text('آخرها: ${last == null ? h.last : '$comp • الموسم ${last.$2}'}', style: const TextStyle(color: Color(0xFF9FB0D0), fontSize: 12.5)),
-                  ]);
-                }),
-              ),
-            ),
-          for (final g in groups)
-            Panel(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  trophyImage(trophyKey(g.$1 == 'الدوري' ? gs.leagueName : (g.$1 == 'البطولة القارية' ? 'دوري أبطال أوروبا' : g.$1), gs.leagueName, isLeague: g.$1 == 'الدوري'), size: 52),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(g.$1, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16))),
-                  Text('${g.$4.length}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: g.$4.isEmpty ? kMuted : g.$3)),
-                ]),
-                if (g.$4.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Wrap(spacing: 14, runSpacing: 10, children: [
-                    for (final x in g.$4)
-                      Builder(builder: (_) {
-                        final ph = parseHonour(x);
-                        final comp = ph?.$1 ?? g.$1;
-                        return Column(mainAxisSize: MainAxisSize.min, children: [
-                          trophyImage(trophyKey(comp == 'الدوري' ? gs.leagueName : comp, gs.leagueName, isLeague: comp == 'الدوري'), size: 46),
-                          Text(ph == null ? x : 'م${ph.$2}', style: const TextStyle(color: kMuted, fontSize: 11)),
-                        ]);
-                      }),
-                  ]),
-                ],
-              ]),
-            ),
-          if (other.isNotEmpty) ...[
-            sectionTitle('جوائز فردية'),
-            Panel(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                for (final x in other) Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Text(x)),
-              ]),
-            ),
-          ],
-        ]),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => CabinetScreen(gs: gs);
 }
 
 class TrainingScreen extends StatelessWidget {

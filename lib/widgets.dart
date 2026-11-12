@@ -587,15 +587,25 @@ Color lightPre(Color c, bool light) {
 }
 
 /// يعكس المرشّح على الصور (شعارات/أعلام) كي تبقى بألوانها الأصلية في الوضع الفاتح
+class _InUnfilter extends InheritedWidget {
+  const _InUnfilter({required super.child});
+  @override
+  bool updateShouldNotify(_InUnfilter old) => false;
+}
+
+/// آمن للتداخل: داخل Unfilter آخر لا يعكس مرة ثانية (العكس المزدوج هو سبب تشوّه الألوان في الوضع الفاتح)
 class Unfilter extends StatelessWidget {
   final Widget child;
   const Unfilter({super.key, required this.child});
   @override
-  Widget build(BuildContext context) => ListenableBuilder(
-        listenable: AppSettings.i,
-        builder: (ctx, _) =>
-            AppSettings.i.lightFor(MediaQuery.platformBrightnessOf(ctx)) ? ColorFiltered(colorFilter: kLightFilter, child: child) : child,
-      );
+  Widget build(BuildContext context) {
+    if (context.getInheritedWidgetOfExactType<_InUnfilter>() != null) return child;
+    return ListenableBuilder(
+      listenable: AppSettings.i,
+      builder: (ctx, _) =>
+          AppSettings.i.lightFor(MediaQuery.platformBrightnessOf(ctx)) ? ColorFiltered(colorFilter: kLightFilter, child: _InUnfilter(child: child)) : child,
+    );
+  }
 }
 
 
