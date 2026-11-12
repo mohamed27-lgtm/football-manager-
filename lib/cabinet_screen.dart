@@ -7,6 +7,7 @@ import 'trophies.dart';
 import 'awards_screens.dart' show AwardMedal;
 import 'title_screen.dart';
 import 'widgets.dart';
+import 'match_pages.dart' show gameBar;
 
 const _cBg1 = Color(0xFF0B1226), _cBg2 = Color(0xFF05080F), _cGold = Color(0xFFE6B422), _cTile = Color(0xFF1B2236);
 

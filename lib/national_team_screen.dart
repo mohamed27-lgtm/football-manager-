@@ -5,7 +5,7 @@ import 'game_state.dart';
 import 'models.dart';
 import 'world.dart';
 import 'lineup_pages.dart';
-import 'match_pages.dart' show whiteBtn;
+import 'match_pages.dart' show whiteBtn, gameBar;
 import 'widgets.dart';
 
 /// صفحة منتخب: ترتيب فيفا، سجل حقيقي من المباريات والبطولات، أفضل تشكيلة، الهدّافون، وتدريب المنتخب

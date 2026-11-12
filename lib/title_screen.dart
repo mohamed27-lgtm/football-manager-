@@ -5,6 +5,7 @@ import 'game_state.dart';
 import 'i18n.dart';
 import 'trophies.dart';
 import 'widgets.dart';
+import 'match_pages.dart' show gameBar;
 
 /// شاشة نسخ لقب معيّن: كأس كبير مع أسهم للتنقل بين النسخ الفائزة وإحصاءات الموسم
 class TitleScreen extends StatefulWidget {
