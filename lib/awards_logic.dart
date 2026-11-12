@@ -133,7 +133,7 @@ extension SeasonCeremony on GameState {
         for (var i = 0; i < min(3, coaches.length); i++)
           {
             'k': 'c',
-            'n': 'مدرب ${coaches[i].name}',
+            'n': coaches[i].coachName,
             'c': coaches[i].name,
             't': coaches[i].id,
             'm': coaches[i] == user,

@@ -599,6 +599,9 @@ class GameState extends ChangeNotifier {
       for (final e in ((nj['past'] as Map?) ?? const {}).entries) {
         nat.past[e.key as String] = [for (final x in e.value as List) (x as num).toDouble()];
       }
+      for (final l in (nj['log'] as List?) ?? const []) {
+        nat.log.add(List<dynamic>.from(l as List));
+      }
       for (final h in (nj['hist'] as List?) ?? const []) {
         nat.history.add(NatTour.fromJson(h as Map<String, dynamic>));
       }
@@ -697,7 +700,7 @@ class GameState extends ChangeNotifier {
         'ban': transferBan,
         'ppn': pointsPenaltyNext,
         'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson(), 'eur': europa?.toJson(), 'uecl': conference?.toJson(), 'sup': superCup?.toJson(), 'cwc': cwc?.toJson(), 'ic': ic?.toJson()},
-        'nat': {'pts': nat.pts, 'start': nat.start, 'cur': nat.cur, 'past': nat.past, 'hist': [for (final t in nat.history) t.toJson()]},
+        'nat': {'pts': nat.pts, 'start': nat.start, 'cur': nat.cur, 'past': nat.past, 'log': nat.log, 'hist': [for (final t in nat.history) t.toJson()]},
         'cp': clubPts,
         'cc': contChamps,
         'ch': cupHist,
@@ -3073,7 +3076,7 @@ class GameState extends ChangeNotifier {
       ..addAll({for (final n in nat.pts.keys) n: nat.rating(n)});
     nat.rollSeason();
     _buildNatIdx();
-    nat.seasonWindow(rng, _natAdj);
+    nat.seasonWindow(rng, _natAdj, season);
     for (final d in kNatTours) {
       if (season % d.cycle == d.offset) _playNatTour(d);
     }

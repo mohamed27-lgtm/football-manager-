@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
 import 'flags.dart';
+import 'auth.dart';
 import 'game_state.dart';
 import 'models.dart';
 import 'world.dart';
@@ -17,6 +18,16 @@ class RankingScreen extends StatefulWidget {
 class _RankingScreenState extends State<RankingScreen> {
   GameState get gs => widget.gs;
   int tab = 0;
+  String? _me;
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService.current().then((a) {
+      if (mounted && a != null) setState(() => _me = a.name);
+    });
+  }
+
   String conf = 'all'; // فلتر الاتحاد القاري
 
   static const _medals = [Color(0xFFE6B422), Color(0xFFB8BECB), Color(0xFFC98B5B)];
@@ -147,16 +158,66 @@ class _RankingScreenState extends State<RankingScreen> {
       if (mine > 0) _summary(mine, FlagBadge(gs.country, size: 44), 'منتخب ${gs.country}', '${gs.nat.rating(gs.country).toStringAsFixed(1)} نقطة • من ${rank.length} منتخباً'),
       _confChips(),
       _card([
-        for (final e in shown.take(220)) _row(e.$1, FlagBadge(e.$2, size: 30), e.$2, kConfNames[gs.nat.conf[e.$2]] ?? '', trail(e.$2), me: e.$2 == gs.country),
+        for (final e in shown.take(220)) InkWell(onTap: () => _natMatches(e.$2), child: _row(e.$1, FlagBadge(e.$2, size: 30), e.$2, kConfNames[gs.nat.conf[e.$2]] ?? '', trail(e.$2), me: e.$2 == gs.country)),
       ]),
     ];
+  }
+
+  /// آخر المباريات الدولية لمنتخب: رسمية (تصفيات وبطولات) وودية
+  void _natMatches(String n) {
+    final rows = <(int, int, String, String, int, int, String)>[]; // موسم، ترتيب، أ، ب، هأ، هب، نوع
+    for (final l in gs.nat.log) {
+      if (l[2] == n || l[3] == n) rows.add((l[0] as int, l[1] as int, l[2] as String, l[3] as String, l[4] as int, l[5] as int, (l[6] as int) == 0 ? 'تصفيات رسمية' : 'ودية'));
+    }
+    for (final t in gs.nat.history) {
+      for (final m in t.matches) {
+        if (m.a == n || m.b == n) rows.add((t.season, 99, m.a, m.b, m.ag, m.bg, '${t.name} • ${m.stage}'));
+      }
+    }
+    rows.sort((a, b) {
+      final c = b.$1.compareTo(a.$1);
+      return c != 0 ? c : b.$2.compareTo(a.$2);
+    });
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: kBg,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.75,
+        builder: (_, sc) => ListView(controller: sc, padding: const EdgeInsets.all(14), children: [
+          Row(children: [
+            FlagBadge(n, size: 34),
+            const SizedBox(width: 10),
+            Expanded(child: Text('مباريات $n', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))),
+            Text('${gs.nat.rating(n).toStringAsFixed(1)} نقطة', style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800)),
+          ]),
+          const SizedBox(height: 10),
+          if (rows.isEmpty) const EmptyState(icon: Icons.sports_soccer, title: 'لا مباريات بعد', subtitle: 'تُلعب النوافذ الدولية في نهاية كل موسم.'),
+          for (final r in rows.take(60))
+            Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLine)),
+              child: Row(children: [
+                Expanded(child: Text(r.$3, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: r.$3 == n ? FontWeight.w900 : FontWeight.w600))),
+                Column(mainAxisSize: MainAxisSize.min, children: [
+                  Text('${r.$5} - ${r.$6}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                  Text('م${r.$1} • ${r.$7}', style: const TextStyle(color: kMuted, fontSize: 10.5)),
+                ]),
+                Expanded(child: Text(r.$4, textAlign: TextAlign.end, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: r.$4 == n ? FontWeight.w900 : FontWeight.w600))),
+              ]),
+            ),
+        ]),
+      ),
+    );
   }
 
   List<Widget> _players() {
     final all = _allPlayers()..sort((a, b) => b.overall.compareTo(a.overall));
     final club = {for (final t in gs.worldRanking) for (final p in t.squad) p.id: t};
     return [
-      for (var i = 0; i < all.length && i < 100; i++)
+      for (var i = 0; i < all.length && i < 300; i++)
         _row(
           i + 1,
           teamBadge(club[all[i].id] ?? gs.user, size: 30),
@@ -171,8 +232,8 @@ class _RankingScreenState extends State<RankingScreen> {
   List<Widget> _coaches() {
     final all = [...gs.worldRanking]..sort((a, b) => (gs.clubPts[b.name] ?? 0).compareTo(gs.clubPts[a.name] ?? 0));
     return [
-      for (var i = 0; i < all.length && i < 60; i++)
-        _row(i + 1, teamBadge(all[i], size: 30), 'مدرب ${all[i].name}', '${all[i].won} فوز • ${all[i].drawn} تعادل • ${all[i].lost} خسارة', Text((gs.clubPts[all[i].name] ?? 0).toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)), me: all[i] == gs.user),
+      for (var i = 0; i < all.length && i < 100; i++)
+        _row(i + 1, teamBadge(all[i], size: 30), all[i] == gs.user && _me != null ? _me! : all[i].coachName, '${all[i].name} • ${all[i].won} فوز • ${all[i].drawn} تعادل • ${all[i].lost} خسارة', Text((gs.clubPts[all[i].name] ?? 0).toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)), me: all[i] == gs.user),
     ];
   }
 

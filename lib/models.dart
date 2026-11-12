@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'coaches.dart';
 import 'nations.dart';
 
 enum Pos { gk, def, mid, att }
@@ -229,6 +230,8 @@ class Team {
   int played = 0, won = 0, drawn = 0, lost = 0, gf = 0, ga = 0;
   int stadium = 1, trainingLvl = 1, academy = 1;
   String? badge, venue;
+  String? coach; // اسم المدرب إن عُيّن؛ وإلا coachFor(name)
+  String get coachName => coach ?? coachFor(name);
 
   Team({
     required this.id,
@@ -352,6 +355,7 @@ class Team {
         'academy': academy,
         'badge': badge,
         'venue': venue,
+        'coach': coach,
         'pen': penalty,
         'form': form,
       };
@@ -392,6 +396,7 @@ class Team {
     t.academy = j['academy'] as int;
     t.badge = j['badge'] as String?;
     t.venue = j['venue'] as String?;
+    t.coach = j['coach'] as String?;
     t.penalty = (j['pen'] as int?) ?? 0;
     t.form = [for (final x in (j['form'] as List?) ?? const []) x as String];
     return t;

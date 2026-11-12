@@ -281,6 +281,8 @@ class NatState {
   final Map<String, String> conf = {};
   final Map<String, int> qp = {}, qgd = {}; // نتائج مباريات التصفيات للموسم
   final List<NatTour> history = [];
+  /// سجل المباريات الدولية (تصفيات/ودية): [موسم، جولة، أ، ب، أهداف أ، أهداف ب، النوع 0 تصفيات/1 ودية]
+  final List<List<dynamic>> log = [];
   // قوة المنتخب الداخلية (Elo مبدئي) تُستعمل لمحاكاة النتائج فقط؛ ولا تُعرض كنقاط
   // نقاط التصنيف المعروضة: صيغة فيفا الكلاسيكية M × I × T × C بمتوسطات المواسم (1 / 0.5 / 0.3 / 0.2)
   final Map<String, List<double>> cur = {}; // [مجموع نقاط المباريات، عدد المباريات] للموسم الجاري
@@ -405,31 +407,43 @@ class NatState {
     pts[b] = rb + db;
   }
 
-  /// نافذة المباريات الدولية للموسم: 6 مباريات لكل منتخب داخل اتحاده (4 تصفيات وزنها 25 + 2 ودية وزنها 10)
-  void seasonWindow(Random rng, double Function(String) adj) {
+  /// نوافذ المباريات الدولية للموسم: 4 جولات تصفيات رسمية داخل الاتحاد (وزن 25) و2 ودية بين منتخبات من أي اتحاد (وزن 10)
+  void seasonWindow(Random rng, double Function(String) adj, [int season = 0]) {
     qp.clear();
     qgd.clear();
     snapshotRanks();
     final byConf = <String, List<String>>{};
     conf.forEach((n, c) => byConf.putIfAbsent(c, () => []).add(n));
+    void play(String a, String b, int round, bool qual) {
+      final ra = pts[a]! + adj(a) + 40, rb = pts[b]! + adj(b);
+      final g = goals(rng, ra, rb);
+      apply(a, b, g.$1, g.$2, qual ? 25 : 10, fifa: qual ? 2.5 : 1.0);
+      log.add([season, round, a, b, g.$1, g.$2, qual ? 0 : 1]);
+      if (qual) {
+        qp[a] = (qp[a] ?? 0) + (g.$1 > g.$2 ? 3 : (g.$1 == g.$2 ? 1 : 0));
+        qp[b] = (qp[b] ?? 0) + (g.$2 > g.$1 ? 3 : (g.$1 == g.$2 ? 1 : 0));
+        qgd[a] = (qgd[a] ?? 0) + g.$1 - g.$2;
+        qgd[b] = (qgd[b] ?? 0) + g.$2 - g.$1;
+      }
+    }
+
     for (var round = 0; round < 6; round++) {
       final qual = round < 4;
-      for (final l in byConf.values) {
-        final x = [...l]..shuffle(rng);
-        for (var i = 0; i + 1 < x.length; i += 2) {
-          final a = x[i], b = x[i + 1];
-          final ra = pts[a]! + adj(a) + 40, rb = pts[b]! + adj(b);
-          final g = goals(rng, ra, rb);
-          apply(a, b, g.$1, g.$2, qual ? 25 : 10, fifa: qual ? 2.5 : 1.0);
-          if (qual) {
-            qp[a] = (qp[a] ?? 0) + (g.$1 > g.$2 ? 3 : (g.$1 == g.$2 ? 1 : 0));
-            qp[b] = (qp[b] ?? 0) + (g.$2 > g.$1 ? 3 : (g.$1 == g.$2 ? 1 : 0));
-            qgd[a] = (qgd[a] ?? 0) + g.$1 - g.$2;
-            qgd[b] = (qgd[b] ?? 0) + g.$2 - g.$1;
+      if (qual) {
+        for (final l in byConf.values) {
+          final x = [...l]..shuffle(rng);
+          for (var i = 0; i + 1 < x.length; i += 2) {
+            play(x[i], x[i + 1], round, true);
           }
+        }
+      } else {
+        final x = conf.keys.toList()..shuffle(rng);
+        for (var i = 0; i + 1 < x.length; i += 2) {
+          play(x[i], x[i + 1], round, false);
         }
       }
     }
+    if (log.length > 900) log.removeRange(0, log.length - 900);
   }
 
   /// أفضل منتخبات اتحاد في التصفيات (النقاط ثم فارق الأهداف ثم تصنيف فيفا)
