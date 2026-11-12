@@ -84,16 +84,16 @@ extension JobsLogic on GameState {
     return jobOffers;
   }
 
-  /// الاستقالة / فسخ العقد: تفقد وظيفتك الحالية وتتلقى عروضاً من أندية الدوري
+  /// الاستقالة / فسخ العقد: لا يتوقف شيء ولا يُمسح شيء؛ تستمر اللعبة كالمعتاد مع ناديك
+  /// حتى تقبل عرضاً من نادٍ آخر، وتصلك عروض الأندية فوراً.
   void resign() {
+    if (resigned) return;
     resigned = true;
-    fired = true;
-    jobsGen = false;
     mgrRep = max(30.0, mgrRep - 4 * (contractLeft - 1).clamp(0, 3).toInt());
-    news.insert(0, '✍️ قدّمت استقالتك من تدريب ${user.name}');
-    offers.clear();
-    boardKind = null;
+    news.insert(0, '✍️ قدّمت استقالتك من تدريب ${user.name}، وستواصل العمل حتى تقبل عرضاً جديداً');
+    jobsGen = true;
     jobOffers.clear();
+    _genJobs(force: 3);
     unawaited(save());
     notifyListeners();
   }

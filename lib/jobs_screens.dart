@@ -29,7 +29,7 @@ class _JobsScreenState extends State<JobsScreen> {
   Future<void> _resign() async {
     final ok = await confirmDialog(context,
         title: 'الاستقالة من المنصب',
-        body: 'ستترك تدريب ${gs.user.name} فوراً وتنخفض سمعتك كمدرب إن كان عقدك سارياً. ستصلك بعدها عروض من أندية أخرى في الدوري.',
+        body: 'ستعلن استقالتك من ${gs.user.name} وتنخفض سمعتك كمدرب إن كان عقدك سارياً. تستمر اللعبة كالمعتاد مع ناديك، وتصلك عروض من أندية أخرى تنتقل إليها متى شئت.',
         confirm: 'استقالة',
         danger: true);
     if (ok != true) return;
@@ -39,7 +39,7 @@ class _JobsScreenState extends State<JobsScreen> {
 
   Future<void> _accept(JobOffer o) async {
     final later = gs.seasonOver && !gs.fired;
-    final under = !gs.fired && gs.contractLeft > 1 && !later;
+    final under = !gs.fired && !gs.resigned && gs.contractLeft > 1 && !later;
     final ok = await confirmDialog(context,
         title: 'قبول عرض ${o.club}',
         body: later
@@ -92,7 +92,7 @@ class _JobsScreenState extends State<JobsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
           child: Column(children: [
-            _kv('النادي الحالي', gs.fired ? (gs.resigned ? 'مستقيل' : 'مُقال') : gs.user.name),
+            _kv('النادي الحالي', gs.fired ? (gs.resigned ? 'مستقيل' : 'مُقال') : (gs.resigned ? '${gs.user.name} (مستقيل)' : gs.user.name)),
             _kv('سمعتك كمدرب', '${gs.mgrTier} (${gs.mgrRep.round()})'),
             if (under) _kv('ثقة الإدارة', '${gs.confidence.round()}%', c: gs.confidence >= 50 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D)),
             if (under) _kv('المواسم المتبقية في العقد', '${gs.contractLeft}'),
@@ -106,7 +106,7 @@ class _JobsScreenState extends State<JobsScreen> {
           const Panel(child: EmptyState(icon: Icons.work_outline_rounded, title: 'لا عروض حالياً', subtitle: 'تصلك العروض من الأندية بحسب سمعتك ونتائجك وحاجتها لمدرب.'))
         else
           for (final o in jobs) _offer(o),
-        if (under) ...[
+        if (under && !gs.resigned) ...[
           const SizedBox(height: 14),
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(minimumSize: const Size(0, 50), foregroundColor: const Color(0xFFE5533D), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
