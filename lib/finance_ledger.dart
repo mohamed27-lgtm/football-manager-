@@ -3,7 +3,6 @@ import 'calendar.dart';
 import 'finance.dart';
 import 'game_state.dart';
 import 'i18n.dart';
-import 'lineup_pages.dart';
 import 'match_pages.dart';
 import 'widgets.dart';
 

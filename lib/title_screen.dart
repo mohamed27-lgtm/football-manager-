@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart' hide Text;
 import 'package:flutter/services.dart';
-import 'awards_logic.dart';
 import 'game_state.dart';
 import 'i18n.dart';
 import 'trophies.dart';
