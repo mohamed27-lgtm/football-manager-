@@ -395,7 +395,7 @@ Widget playerFace(Player p, double size, {Color? ring, double ringWidth = 2}) {
   if (ring == null) return inner;
   return Container(
     padding: EdgeInsets.all(ringWidth),
-    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white, border: Border.all(color: ring, width: ringWidth)),
+    decoration: BoxDecoration(shape: BoxShape.circle, color: kCard, border: Border.all(color: ring, width: ringWidth)),
     child: inner,
   );
 }

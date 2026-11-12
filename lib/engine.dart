@@ -111,6 +111,9 @@ class MatchSim {
   int minute = 0;
   final List<MatchEvent> events = [];
 
+  /// يُستدعى عند كل هدف: المسجّل، صانع الهدف (إن وُجد)، وفريقه — لتسجيل إحصاءات كل بطولة
+  void Function(Player shooter, Player? assister, Team team)? onGoal;
+
   /// موضع الكرة: x من 0 إلى 1 عرضاً، y من 0 (مرمى الضيف أعلى) إلى 1 (مرمى المضيف أسفل)
   double ballX = 0.5, ballY = 0.5;
   bool attackHome = true;
@@ -307,6 +310,7 @@ class MatchSim {
           a.bump(assister, 0.6);
         }
       }
+      onGoal?.call(shooter, assister, a.team);
       ballX = 0.5;
       ballY = a.isHome ? 0.01 : 0.99;
       _log(
@@ -344,6 +348,7 @@ class MatchSim {
       a.onTarget++;
       a.goals++;
       shooter.goals++;
+      onGoal?.call(shooter, null, a.team);
       a.bump(shooter, 1.0);
       if (gkP != null) d.bump(gkP, -0.3);
       ballY = a.isHome ? 0.01 : 0.99;

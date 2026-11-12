@@ -101,7 +101,14 @@ class Player {
     return max(0.1, (v * 10).round() / 10 + awardBoost);
   }
 
-  double get baseWage => (overall - 40).clamp(1, 60) * 0.0015;
+  /// الراتب الأسبوعي (M): مشتق من القيمة السوقية الحقيقية حين تتوفر (لا توجد رواتب حقيقية في المصادر المجانية)
+  double get baseWage {
+    if (mv0 != null) {
+      final w = 0.012 + 0.0042 * pow(max(value, 0.1), 0.85);
+      return ((w * 1000).round() / 1000).clamp(0.01, 0.6).toDouble();
+    }
+    return (overall - 40).clamp(1, 60) * 0.0015;
+  }
   double get wage => salary ?? baseWage;
 
   Map<String, dynamic> toJson() => {

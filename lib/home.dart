@@ -1008,7 +1008,7 @@ class DashboardTab extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 6),
                   child: Column(children: [
                     const Text('VS', style: TextStyle(color: Color(0xFF9FB0CC), fontWeight: FontWeight.w900)),
-                    Text(GameCalendar.dayNames[nm.date.weekday - 1], style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                    FittedBox(fit: BoxFit.scaleDown, child: Text(GameCalendar.dayNames[nm.date.weekday - 1], maxLines: 1, softWrap: false, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900))),
                     Text(GameCalendar.fmtShort(nm.date), style: const TextStyle(color: Color(0xFFC9D6EC), fontSize: 13, fontWeight: FontWeight.w700)),
                     Text(nm.time, style: const TextStyle(color: Color(0xFFFFC857), fontSize: 19, fontWeight: FontWeight.w900)),
                     const SizedBox(height: 4),

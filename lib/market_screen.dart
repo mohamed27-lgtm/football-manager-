@@ -342,10 +342,18 @@ class _TransfersTabState extends State<TransfersTab> {
         ),
         const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(height: 1, color: kLine)),
         Row(children: [
-          stat('القيمة', money(p.value)),
-          stat('الراتب/أسبوع', wageK(p.wage)),
-          stat('العقد', '$year'),
-          const Spacer(),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                stat('القيمة', money(p.value)),
+                stat('الراتب/أسبوع', wageK(p.wage)),
+                stat('العقد', '$year'),
+              ]),
+            ),
+          ),
+          const SizedBox(width: 6),
           GestureDetector(
             onTap: () => gs.toggleWatch(p),
             child: Container(width: 46, height: 46, decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(14)), child: Icon(watched ? Icons.favorite : Icons.favorite_border, color: kPrimary)),
@@ -355,7 +363,7 @@ class _TransfersTabState extends State<TransfersTab> {
             onTap: () => inMarket ? _offerSheet(context, p) : showPlayerSheet(context, gs, p),
             child: Container(
               height: 46,
-              padding: const EdgeInsets.symmetric(horizontal: 22),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
               alignment: Alignment.center,
               decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(14), boxShadow: const [BoxShadow(color: Color(0x66C2412A), offset: Offset(0, 3))]),
               child: const Unfilter(child: Text('عرض', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),

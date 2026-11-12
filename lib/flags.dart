@@ -71,7 +71,8 @@ class CompLogo extends StatelessWidget {
   final IconData fallback;
   final Color color;
   final double size;
-  const CompLogo(this.id, {super.key, required this.fallback, required this.color, this.size = 34});
+  final bool unfilter; // false حين تكون داخل Unfilter أصلاً
+  const CompLogo(this.id, {super.key, required this.fallback, required this.color, this.size = 34, this.unfilter = true});
 
   @override
   Widget build(BuildContext context) {
@@ -82,8 +83,8 @@ class CompLogo extends StatelessWidget {
       builder: (_, __, ___) {
         final f = LogoStore.file(id!);
         final asset = Image.asset('assets/logos/$id.png', width: size, height: size, fit: BoxFit.contain, errorBuilder: (_, __, ___) => icon);
-        if (f == null) return Unfilter(child: asset);
-        return Unfilter(child: Image.file(f, width: size, height: size, fit: BoxFit.contain, errorBuilder: (_, __, ___) => asset));
+        final w = f == null ? asset : Image.file(f, width: size, height: size, fit: BoxFit.contain, errorBuilder: (_, __, ___) => asset);
+        return unfilter ? Unfilter(child: w) : w;
       },
     );
   }

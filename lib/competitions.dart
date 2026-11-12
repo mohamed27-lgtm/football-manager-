@@ -6,6 +6,7 @@ import 'flags.dart';
 import 'game_state.dart';
 import 'models.dart';
 import 'national_screen.dart';
+import 'scorers_screen.dart';
 import 'world.dart';
 import 'widgets.dart';
 
@@ -79,12 +80,14 @@ class _CompetitionsViewState extends State<CompetitionsView> {
   /// شعار البطولة الحقيقي إن توفّر (مُنزَّل أو مضمّن) وإلا الكأس الملوّنة
   Widget _logoChip(int? id, Color c, {double size = 46}) {
     if (id == null) return _trophyChip(c, size: size);
-    return Container(
-      width: size,
-      height: size,
-      padding: EdgeInsets.all(size * 0.12),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.white, border: Border.all(color: kLine)),
-      child: CompLogo(id, fallback: Icons.emoji_events_outlined, color: c, size: size * 0.76),
+    return Unfilter(
+      child: Container(
+        width: size,
+        height: size,
+        padding: EdgeInsets.all(size * 0.12),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.white, border: Border.all(color: const Color(0x1F000000))),
+        child: CompLogo(id, fallback: Icons.emoji_events_outlined, color: c, size: size * 0.76, unfilter: false),
+      ),
     );
   }
 
@@ -230,7 +233,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
                     height: 40,
                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: it.$4.withOpacity(it.$5 ? 1 : 0.0)),
                     child: _barLogos[it.$1] != null
-                        ? Padding(padding: const EdgeInsets.all(3), child: Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.all(3), child: CompLogo(_barLogos[it.$1], fallback: it.$3, color: it.$4, size: 28)))
+                        ? Padding(padding: const EdgeInsets.all(3), child: Unfilter(child: Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.all(3), child: CompLogo(_barLogos[it.$1], fallback: it.$3, color: it.$4, size: 28, unfilter: false))))
                         : Icon(it.$3, color: it.$5 ? Colors.white : it.$4, size: 24),
                   ),
                   if (it.$5) ...[
@@ -309,7 +312,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
             _subHeader(title, lead),
             _chipBar(bar),
             Expanded(child: body),
-            if (c.id == 'league') _statsStrip(),
+            if (c.id != 'ic' || gs.ic != null) _statsStrip(c.id, c.id == 'league' ? gs.leagueName : c.title),
           ]);
         },
       );
@@ -680,54 +683,63 @@ class _CompetitionsViewState extends State<CompetitionsView> {
   }
 
   // ───────── شريط الهدّاف وصانع الألعاب ─────────
-  Widget _statsStrip() {
-    Player? best(int Function(Player) f) {
-      Player? b;
-      for (final p in gs.teams.expand((t) => t.squad)) {
-        if (f(p) > 0 && (b == null || f(p) > f(b))) b = p;
+  /// أفضل هدّاف وصانع ألعاب في البطولة الحالية؛ الضغط يفتح القائمة الكاملة
+  Widget _statsStrip(String key, String title) {
+    final stats = gs.compStats[key] ?? const <int, List<int>>{};
+    final players = <int, Player>{};
+    final clubs = <String, Team>{};
+    for (final t in [...gs.teams, ...gs.upper, ...gs.lower, ...gs.foreign.values]) {
+      clubs[t.name] = t;
+      for (final p in t.squad) {
+        players[p.id] = p;
+      }
+    }
+    (int, List<int>)? best(int i) {
+      (int, List<int>)? b;
+      for (final e in stats.entries) {
+        if (e.value[i] > 0 && (b == null || e.value[i] > b.$2[i] || (e.value[i] == b.$2[i] && e.value[1 - i] > b.$2[1 - i]))) b = (e.key, e.value);
       }
       return b;
     }
 
-    Team? clubOf(Player p) {
-      for (final t in gs.teams) {
-        if (t.squad.contains(p)) return t;
-      }
-      return null;
-    }
+    void open(int tab) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ScorersScreen(gs: gs, compKey: key, title: title, initialTab: tab)));
 
-    Widget card(String label, Player? p, int v, Color c, IconData ic) {
-      final t = p == null ? null : clubOf(p);
+    Widget card(String label, (int, List<int>)? b, int i, Color c, IconData ic) {
+      final p = b == null ? null : players[b.$1];
+      final nm = b == null ? null : gs.compNames[b.$1];
+      final t = nm == null ? null : clubs[nm[1]];
       return Expanded(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 5),
-          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border(bottom: BorderSide(color: c, width: 3))),
-          child: Row(children: [
-            if (p != null) playerFace(p, 44, ring: c, ringWidth: 2) else Container(width: 44, height: 44, decoration: BoxDecoration(color: kCard2, shape: BoxShape.circle), child: const Icon(Icons.person_rounded, color: kMuted)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                Text(label, style: const TextStyle(color: kMuted, fontSize: 11.5, fontWeight: FontWeight.w700)),
-                Text(p?.name ?? '—', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
-                if (t != null) Row(children: [teamBadge(t, size: 16), const SizedBox(width: 4), Expanded(child: Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 11)))]),
+        child: GestureDetector(
+          onTap: () => open(i),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 5),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border(bottom: BorderSide(color: c, width: 3))),
+            child: Row(children: [
+              if (p != null) playerFace(p, 44, ring: c, ringWidth: 2) else Container(width: 44, height: 44, decoration: BoxDecoration(color: kCard2, shape: BoxShape.circle), child: const Icon(Icons.person_rounded, color: kMuted)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Text(label, style: const TextStyle(color: kMuted, fontSize: 11.5, fontWeight: FontWeight.w700)),
+                  Text(p?.name ?? nm?[0] ?? '—', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                  if (nm != null) Row(children: [if (t != null) ...[teamBadge(t, size: 16), const SizedBox(width: 4)], Expanded(child: Text(nm[1], maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 11)))]),
+                ]),
+              ),
+              Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(ic, color: c, size: 18),
+                Text('${b?.$2[i] ?? 0}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
               ]),
-            ),
-            Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(ic, color: c, size: 18),
-              Text('$v', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
             ]),
-          ]),
+          ),
         ),
       );
     }
 
-    final g = best((p) => p.goals), a = best((p) => p.assists);
     return Padding(
       padding: const EdgeInsets.fromLTRB(9, 6, 9, 8),
       child: Row(children: [
-        card('الهدّاف', g, g?.goals ?? 0, kPrimary, Icons.sports_soccer_rounded),
-        card('صانع الألعاب', a, a?.assists ?? 0, _kGreen, Icons.trending_flat_rounded),
+        card('الهدّاف', best(0), 0, kPrimary, Icons.sports_soccer_rounded),
+        card('صانع الألعاب', best(1), 1, _kGreen, Icons.trending_flat_rounded),
       ]),
     );
   }

@@ -401,6 +401,24 @@ class GameState extends ChangeNotifier {
   /// ختم زمني لكل خبر (تاريخ اللعبة|الساعة) ليُجمَّع في صندوق الرسائل
   final Map<String, String> newsStamp = {};
   final Set<String> readMsgs = {};
+  /// إحصاءات كل بطولة على حدة: مفتاح البطولة ← معرّف اللاعب ← [أهداف، صناعة]
+  final Map<String, Map<int, List<int>>> compStats = {};
+  final Map<int, List<String>> compNames = {}; // معرّف اللاعب ← [الاسم، النادي]
+
+  MatchSim _newSim(Team h, Team a, String key, {bool userHome = false, bool userAway = false}) {
+    final s = MatchSim(h, a, userHome: userHome, userAway: userAway, random: rng);
+    s.onGoal = (sh, asst, tm) {
+      final m = compStats.putIfAbsent(key, () => {});
+      m.putIfAbsent(sh.id, () => [0, 0])[0]++;
+      compNames[sh.id] = [sh.name, tm.name];
+      if (asst != null) {
+        m.putIfAbsent(asst.id, () => [0, 0])[1]++;
+        compNames[asst.id] = [asst.name, tm.name];
+      }
+    };
+    return s;
+  }
+
   final List<JobOffer> jobOffers = []; // عروض تدريب من أندية أخرى
   String? pendingJob; // نادٍ ينتقل إليه المدرب مع بداية الموسم
   double mgrRep = 50; // سمعة المدرب
@@ -518,6 +536,14 @@ class GameState extends ChangeNotifier {
       jobOffers.add(JobOffer.fromJson(x as Map<String, dynamic>));
     }
     pendingJob = j['pj'] as String?;
+    for (final e in ((j['cs'] as Map?) ?? const {}).entries) {
+      compStats[e.key as String] = {
+        for (final x in (e.value as Map).entries) int.parse(x.key as String): [for (final n in x.value as List) n as int]
+      };
+    }
+    for (final e in ((j['cnm'] as Map?) ?? const {}).entries) {
+      compNames[int.parse(e.key as String)] = [for (final n in e.value as List) n as String];
+    }
     mgrRep = ((j['mr'] as num?) ?? 50).toDouble();
     mgrEnd = (j['me'] as int?) ?? 0;
     resigned = (j['rs'] as bool?) ?? false;
@@ -740,6 +766,8 @@ class GameState extends ChangeNotifier {
         'fired': fired,
         'jobs': [for (final o in jobOffers) o.toJson()],
         'pj': pendingJob,
+        'cs': {for (final e in compStats.entries) e.key: {for (final x in e.value.entries) '${x.key}': x.value}},
+        'cnm': {for (final e in compNames.entries) '${e.key}': e.value},
         'mr': mgrRep,
         'me': mgrEnd,
         'rs': resigned,
@@ -1020,7 +1048,7 @@ class GameState extends ChangeNotifier {
     };
     final h = team(f.home), a = team(f.away);
     _prepMatch();
-    sim = MatchSim(h, a, userHome: h == user, userAway: a == user, random: rng);
+    sim = _newSim(h, a, 'league', userHome: h == user, userAway: a == user);
     notifyListeners();
   }
 
@@ -1086,7 +1114,7 @@ class GameState extends ChangeNotifier {
     for (final fx in rounds[week]) {
       if (identical(fx, f)) continue;
       _aiTactics(team(fx.home), team(fx.away));
-      final m = MatchSim(team(fx.home), team(fx.away), random: rng)..simulateAll();
+      final m = _newSim(team(fx.home), team(fx.away), 'league')..simulateAll();
       _applyResult(fx, m.home.goals, m.away.goals);
       roundResults.add(
           '${team(fx.home).name} ${m.home.goals} - ${m.away.goals} ${team(fx.away).name}');
@@ -1854,6 +1882,8 @@ class GameState extends ChangeNotifier {
     _worldSeasonEnd();
     _ffpReview();
     fin.season.clear();
+    compStats.clear();
+    compNames.clear();
     for (final p in user.squad.where((p) => p.onLoan).toList()) {
       if (p.obligation && p.optionFee != null) {
         user.budget -= p.optionFee!;
@@ -2353,8 +2383,8 @@ class GameState extends ChangeNotifier {
     }
   }
 
-  void _playAiTie(Tie t, {bool pens = true, double w = 1.0}) {
-    final m = MatchSim(team(t.home), team(t.away), random: rng)..simulateAll();
+  void _playAiTie(Tie t, String key, {bool pens = true, double w = 1.0}) {
+    final m = _newSim(team(t.home), team(t.away), key)..simulateAll();
     _setTie(t, m.home.goals, m.away.goals, pens: pens, w: w);
   }
 
@@ -2473,7 +2503,7 @@ class GameState extends ChangeNotifier {
       while (!c.done && c.dueWeek != null && c.dueWeek! <= week) {
         if (c.userTie(user.id) != null) break;
         for (final t in c.ties.where((t) => !t.played)) {
-          _playAiTie(t, pens: !c.inGroups, w: _cupW(c));
+          _playAiTie(t, c.key, pens: !c.inGroups, w: _cupW(c));
         }
         _closeRoundIfDone(c);
       }
@@ -2518,7 +2548,7 @@ class GameState extends ChangeNotifier {
     final h = team(t.home), a = team(t.away);
     activeCup = c;
     _prepMatch();
-    sim = MatchSim(h, a, userHome: h == user, userAway: a == user, random: rng);
+    sim = _newSim(h, a, c.key, userHome: h == user, userAway: a == user);
     notifyListeners();
   }
 
@@ -2565,7 +2595,7 @@ class GameState extends ChangeNotifier {
     }
     _morale(user, won ? 3 : (lost ? -3 : 0));
     for (final o in c.ties.where((x) => !x.played)) {
-      _playAiTie(o, pens: !grp, w: _cupW(c));
+      _playAiTie(o, c.key, pens: !grp, w: _cupW(c));
     }
     _closeRoundIfDone(c);
     _advanceCups();
