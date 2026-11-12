@@ -9,6 +9,7 @@ import 'calendar.dart';
 import 'world.dart';
 import 'widgets.dart';
 import 'world_screens.dart';
+import 'national_team_screen.dart';
 
 /// الترتيب العالمي: أندية (Elo) / دول (من جنسيات اللاعبين) / لاعبون / مدربون
 class RankingScreen extends StatefulWidget {
@@ -226,6 +227,19 @@ class _RankingScreenState extends State<RankingScreen> {
             Text('${gs.nat.rating(n).toStringAsFixed(1)} نقطة', style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800)),
           ]),
           const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => NationScreen(gs: gs, nation: n)));
+            },
+            child: Container(
+              height: 46,
+              margin: const EdgeInsets.only(bottom: 10),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(12)),
+              child: const Unfilter(child: Text('صفحة المنتخب • التشكيلة والتدريب', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
+            ),
+          ),
           if (rows.isEmpty) const EmptyState(icon: Icons.sports_soccer, title: 'لا مباريات بعد', subtitle: 'تُلعب النوافذ الدولية في نهاية كل موسم.'),
           for (final r in rows.take(60))
             Container(

@@ -505,12 +505,12 @@ class NatState {
 
   /// نافذة دولية (0 سبتمبر، 1 أكتوبر، 2 نوفمبر، 3 مارس، 4 يونيو): جولة تصفيات رسمية داخل الاتحاد (0–3)
   /// ومباريات ودية بين منتخبات من أي اتحاد (كل النوافذ عدا أكتوبر)
-  int playWindow(int wid, Random rng, double Function(String) adj, int season) {
+  int playWindow(int wid, Random rng, double Function(String) adj, int season, {(int, int)? Function(String, String, bool)? custom}) {
     snapshotRanks();
     var n = 0;
     void play(String a, String b, bool qual) {
       final ra = pts[a]! + adj(a) + 40, rb = pts[b]! + adj(b);
-      final g = goals(rng, ra, rb);
+      final g = custom?.call(a, b, qual) ?? goals(rng, ra, rb);
       apply(a, b, g.$1, g.$2, qual ? 25 : 10, fifa: qual ? 2.5 : 1.0);
       log.add([season, wid, a, b, g.$1, g.$2, qual ? 0 : 1]);
       n++;

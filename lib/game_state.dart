@@ -24,6 +24,7 @@ part 'awards_logic.dart';
 part 'jobs_logic.dart';
 part 'intl_logic.dart';
 part 'world_leagues.dart';
+part 'national_logic.dart';
 
 class NextMatch {
   final String comp, round, time;
@@ -131,6 +132,9 @@ class GameState extends ChangeNotifier {
   /// دوريات العالم الأخرى تُلعب آلياً، وخزائن ألقاب كل الأندية (مفتاح النادي ← ألقابه)
   final List<WorldLeague> wLeagues = [];
   final Map<String, List<String>> clubHonours = {};
+  String? natJob; // المنتخب الذي تدرّبه بجانب ناديك
+  List<int> natCall = [];
+  final List<List<dynamic>> natJobLog = []; // [موسم، خصم، لنا، علينا، 0 رسمية/1 ودية، 1 أرض/0 خارج]
   final Map<int, Map<String, Team>> wTeams = {}; // فرق الدوريات العالمية (مؤقتة، تُبنى عند الحاجة)
   final Map<String, String> worldChamps = {};
   final List<String> worldFeed = [];
@@ -614,6 +618,11 @@ class GameState extends ChangeNotifier {
     for (final e in ((j['tst'] as Map?) ?? const {}).entries) {
       titleStats['${e.key}'] = {for (final x in (e.value as Map).entries) '${x.key}': (x.value as num).toInt()};
     }
+    natJob = j['nj'] as String?;
+    natCall = ((j['ncl'] as List?) ?? const []).cast<int>().toList();
+    for (final r in ((j['njl'] as List?) ?? const [])) {
+      natJobLog.add(List<dynamic>.from(r as List));
+    }
     for (final e in ((j['tsc'] as Map?) ?? const {}).entries) {
       titleScorers['${e.key}'] = '${e.value}';
     }
@@ -864,6 +873,9 @@ class GameState extends ChangeNotifier {
         'wch': worldChamps,
         'wf': worldFeed,
         'tst': titleStats,
+        'nj': natJob,
+        'ncl': natCall,
+        'njl': natJobLog,
         'tsc': titleScorers,
         'rounds': [
           for (final r in rounds)

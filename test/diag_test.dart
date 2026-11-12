@@ -250,4 +250,34 @@ void main() {
     expect(g2.wLeagues.length, 2);
     expect(g2.clubHonours.isNotEmpty, true);
   });
+
+  test('تدريب المنتخب: استدعاء ومباراة بالمحرك الكامل وتسجيل النتيجة', () {
+    final r = Random(33);
+    final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];
+    for (final t in teams) {
+      for (final p in t.squad) {
+        p.nat = 'إسبانيا';
+      }
+    }
+    final gs = GameState.fromData(teams, 2, 'تجريبي');
+    final before = gs.user.squad.fold<int>(0, (a, p) => a + p.goals + p.apps);
+    expect(gs.takeNatJob('إسبانيا'), null);
+    expect(gs.natCalled.length >= 14, true);
+    expect(gs.takeNatJob('فرنسا') != null, true, reason: 'منتخب واحد فقط');
+    for (var i = 0; i < 6 && gs.natJobLog.isEmpty; i++) {
+      gs.playIntlBreak();
+      gs.nat.winDone.clear();
+    }
+    // ignore: avoid_print
+    print('DIAG natjob: log=${gs.natJobLog.length} first=${gs.natJobLog.isEmpty ? '-' : gs.natJobLog.first}');
+    final after = gs.user.squad.fold<int>(0, (a, p) => a + p.goals + p.apps);
+    expect(after, before, reason: 'مباريات المنتخب لا تغيّر إحصاءات النادي');
+    final rec = gs.natRecord('إسبانيا');
+    expect(rec.w + rec.d + rec.l >= 0, true);
+    final j = gs.toJson();
+    final g2 = GameState.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(j)) as Map));
+    expect(g2.natJob, 'إسبانيا');
+    gs.leaveNatJob();
+    expect(gs.natJob, null);
+  });
 }

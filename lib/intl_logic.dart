@@ -65,7 +65,7 @@ extension IntlLogic on GameState {
   int _playIntl(int wid) {
     ensureNat();
     _buildNatIdx();
-    final n = nat.playWindow(wid, rng, _natAdj, season);
+    final n = nat.playWindow(wid, rng, _natAdj, season, custom: this._natJobMatch);
     final c = country;
     final mine = <String>[];
     if (c.isNotEmpty) {
