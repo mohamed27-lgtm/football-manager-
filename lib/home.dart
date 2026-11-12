@@ -300,7 +300,7 @@ class _StartScreenState extends State<StartScreen> {
       height: size,
       padding: EdgeInsets.all(size * 0.1),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(size * 0.28)),
-      child: Unfilter(child: CachedNetworkImage(imageUrl: m.badge!, errorWidget: (_, __, ___) => fb)),
+      child: appImage(m.badge!, w: size * 0.8, h: size * 0.8, fallback: fb),
     );
   }
 
@@ -1194,13 +1194,7 @@ class DashboardTab extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
                 decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
                 child: Column(children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: const BoxDecoration(color: Color(0xFFE6E9F2), shape: BoxShape.circle),
-                    clipBehavior: Clip.antiAlias,
-                    child: e.$1.photo != null ? appImage(e.$1.photo!, w: 64, h: 64, fit: BoxFit.cover, fallback: const Icon(Icons.person, size: 38, color: Color(0xFF6A6FC4))) : const Icon(Icons.person, size: 38, color: Color(0xFF6A6FC4)),
-                  ),
+                  playerFace(e.$1, 66, ring: const Color(0xFF6A6FC4), ringWidth: 2),
                   const SizedBox(height: 8),
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Flexible(child: Text(e.$1.name.split(' ').last, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900))),
@@ -1439,7 +1433,7 @@ class DashboardTab extends StatelessWidget {
             const Text('القيمة', style: TextStyle(color: kMuted, fontSize: 10.5)),
           ]),
           const SizedBox(width: 12),
-          RatingBadge(p.overall, size: 48),
+          ratingRing(p.overall, size: 46),
         ]),
       ),
     );

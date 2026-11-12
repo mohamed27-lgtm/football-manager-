@@ -631,7 +631,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
           padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
           decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border(bottom: BorderSide(color: c, width: 3))),
           child: Row(children: [
-            Container(width: 44, height: 44, decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.person_rounded, color: kMuted)),
+            if (p != null) playerFace(p, 44, ring: c, ringWidth: 2) else Container(width: 44, height: 44, decoration: BoxDecoration(color: kCard2, shape: BoxShape.circle), child: const Icon(Icons.person_rounded, color: kMuted)),
             const SizedBox(width: 8),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [

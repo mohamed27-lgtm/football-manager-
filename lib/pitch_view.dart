@@ -93,6 +93,31 @@ class LivePitch extends StatelessWidget {
   }
 
   Widget _dotCircle(Slot sl, Color color, bool carrier, double r, bool isGk) {
+    final face = r >= 9;
+    if (face) {
+      return SizedBox(
+        width: 2 * r + 2,
+        height: 2 * r + 2,
+        child: Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(blurRadius: carrier ? 8 : 2, color: carrier ? const Color(0xAAFFEB3B) : Colors.black45)],
+            ),
+            child: playerFace(sl.p, 2 * r - 4, ring: carrier ? const Color(0xFFFFEB3B) : (isGk ? const Color(0xFFFFB300) : color), ringWidth: carrier ? 2.5 : 2),
+          ),
+          Positioned(
+            right: -3,
+            bottom: -3,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 0.5),
+              decoration: BoxDecoration(color: isGk ? const Color(0xFFFFB300) : color, borderRadius: BorderRadius.circular(7), border: Border.all(color: Colors.white, width: 1)),
+              child: Text(isGk ? 'GK' : '${sl.p.overall}', style: TextStyle(fontSize: max(7.5, r * 0.55), fontWeight: FontWeight.w900, color: Colors.white)),
+            ),
+          ),
+        ]),
+      );
+    }
     return Container(
       width: 2 * r,
       height: 2 * r,
@@ -129,7 +154,7 @@ class LivePitch extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: LayoutBuilder(builder: (context, cons) {
         final w = cons.maxWidth, h = cons.maxHeight;
-        final r = (w * 0.032).clamp(10.0, 15.0).toDouble();
+        final r = (w * 0.04).clamp(11.0, 16.0).toDouble();
         final sides = [sim.home, sim.away];
         final layouts = [for (final s in sides) _layout(s)];
 

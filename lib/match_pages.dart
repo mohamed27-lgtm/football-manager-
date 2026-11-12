@@ -214,13 +214,10 @@ class _MatchSummaryScreenState extends State<MatchSummaryScreen> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
           child: Row(children: [
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(color: kCard2, shape: BoxShape.circle),
-              clipBehavior: Clip.antiAlias,
-              child: momP?.photo != null ? appImage(momP!.photo!, w: 70, h: 70, fit: BoxFit.cover, fallback: const Icon(Icons.person, size: 40, color: kMuted)) : const Icon(Icons.person, size: 40, color: kMuted),
-            ),
+            if (momP != null)
+              playerFace(momP, 72, ring: kGold, ringWidth: 2.5)
+            else
+              Container(width: 70, height: 70, decoration: BoxDecoration(color: kCard2, shape: BoxShape.circle), child: const Icon(Icons.person, size: 40, color: kMuted)),
             const SizedBox(width: 14),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -479,13 +476,7 @@ class NextMatchScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
                     decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
                     child: Column(children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: const BoxDecoration(color: Color(0xFFE6E9F2), shape: BoxShape.circle),
-                        clipBehavior: Clip.antiAlias,
-                        child: p.photo != null ? appImage(p.photo!, w: 56, h: 56, fit: BoxFit.cover, fallback: const Icon(Icons.person, color: _purple, size: 34)) : const Icon(Icons.person, color: _purple, size: 34),
-                      ),
+                      playerFace(p, 58, ring: _purple, ringWidth: 2),
                       const SizedBox(height: 6),
                       Text(p.name.split(' ').last, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900)),
                       const SizedBox(height: 6),
@@ -523,12 +514,18 @@ class NextMatchScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: kLine))),
                         child: Row(children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(color: const Color(0xFFFFD9D2), borderRadius: BorderRadius.circular(12)),
-                            child: p.injuredWeeks > 0 ? const Icon(Icons.add_box_outlined, color: Color(0xFFE5533D)) : Center(child: Container(width: 14, height: 20, decoration: BoxDecoration(color: const Color(0xFFE5533D), borderRadius: BorderRadius.circular(3)))),
-                          ),
+                          Stack(clipBehavior: Clip.none, children: [
+                            playerFace(p, 44, ring: const Color(0xFFE5533D), ringWidth: 2),
+                            Positioned(
+                              right: -4,
+                              bottom: -4,
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(color: const Color(0xFFE5533D), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 1.5)),
+                                child: p.injuredWeeks > 0 ? const Icon(Icons.add, color: Colors.white, size: 12) : Container(width: 7, height: 10, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(1.5))),
+                              ),
+                            ),
+                          ]),
                           const SizedBox(width: 12),
                           Expanded(child: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))),
                           Text(p.injuredWeeks > 0 ? 'إصابة • ${p.injuredWeeks} أسابيع' : 'إيقاف • ${p.suspendedMatches} مباراة', style: const TextStyle(color: kMuted)),

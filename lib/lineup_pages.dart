@@ -93,13 +93,7 @@ class LineupPitch extends StatelessWidget {
                 onTap: onTap == null ? null : () => onTap!(idx),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Stack(clipBehavior: Clip.none, children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: posColor(p.pos), border: Border.all(color: Colors.white, width: 2)),
-                      child: Text('${idx + 1}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.white)),
-                    ),
+                    playerFace(p, 38, ring: Colors.white, ringWidth: 2),
                     if (showRating)
                       Positioned(
                         right: -10,
@@ -184,7 +178,7 @@ class LineupScreen extends StatelessWidget {
         for (var i = 0; i < t.lineup.length; i++)
           ListTile(
             dense: true,
-            leading: RatingBadge(t.lineup[i].overall),
+            leading: PlayerAvatar(t.lineup[i]),
             title: Text(t.lineup[i].name),
             subtitle: Text(t.slots[i].label),
             onTap: () {
@@ -239,12 +233,7 @@ class LineupScreen extends StatelessWidget {
                         width: 62,
                         margin: const EdgeInsets.only(left: 8),
                         child: Column(children: [
-                          Container(
-                            width: 46,
-                            height: 46,
-                            decoration: BoxDecoration(shape: BoxShape.circle, color: kCard2, border: Border.all(color: kLine)),
-                            child: Icon(Icons.person_rounded, color: posColor(p.pos)),
-                          ),
+                          playerFace(p, 46, ring: posColor(p.pos), ringWidth: 2),
                           const SizedBox(height: 3),
                           Text(p.name.split(' ').last, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                           Text('${p.overall}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: ratingColor(p.overall))),
@@ -280,7 +269,7 @@ void pickPlayerForSlotSheet(BuildContext context, GameState gs, int idx) {
           child: ListView(children: [
             for (final p in cands)
               ListTile(
-                leading: RatingBadge(p.overall),
+                leading: PlayerAvatar(p),
                 title: Text(p.name),
                 subtitle: Row(children: [
                   PosChip(p.pos),

@@ -31,13 +31,7 @@ class PlayerTile extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: kCard2, border: Border.all(color: kLine)),
-            clipBehavior: Clip.antiAlias,
-            child: p.photo == null ? Icon(Icons.person_rounded, color: posColor(p.pos), size: 30) : appImage(p.photo!, w: 46, h: 46, fit: BoxFit.cover, fallback: Icon(Icons.person_rounded, color: posColor(p.pos), size: 30)),
-          ),
+          playerFace(p, 48, ring: posColor(p.pos), ringWidth: 2),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

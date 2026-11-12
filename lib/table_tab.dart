@@ -86,9 +86,11 @@ class TableTab extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Row(children: [
-                      teamBadge(e.value, size: 16),
+                      playerFace(e.key, 32),
                       const SizedBox(width: 8),
-                      Expanded(child: Text('${e.key.name} • ${e.value.name}', style: const TextStyle(fontSize: 13))),
+                      teamBadge(e.value, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text('${e.key.name} • ${e.value.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
                       Text('⚽ ${e.key.goals}', style: const TextStyle(fontWeight: FontWeight.w700)),
                       const SizedBox(width: 10),
                       Text('🎯 ${e.key.assists}', style: const TextStyle(color: kMuted)),

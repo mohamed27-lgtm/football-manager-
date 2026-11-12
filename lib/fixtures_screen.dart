@@ -95,7 +95,18 @@ class _FixturesScreenState extends State<FixturesScreen> {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text('${m.comp} • ${m.round}', style: TextStyle(color: _colors[m.key] ?? kPrimary, fontWeight: FontWeight.w900, fontSize: 12.5)),
                       const SizedBox(height: 4),
-                      Text(m.home == null ? 'يُحدد الخصم بعد القرعة' : '${m.home!.name}  ×  ${m.away!.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
+                      if (m.home == null)
+                        const Text('يُحدد الخصم بعد القرعة', style: TextStyle(fontWeight: FontWeight.w800))
+                      else
+                        Row(children: [
+                          teamBadge(m.home!, size: 24),
+                          const SizedBox(width: 6),
+                          Flexible(child: Text(m.home!.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
+                          const Padding(padding: EdgeInsets.symmetric(horizontal: 5), child: Text('×', style: TextStyle(color: kMuted))),
+                          teamBadge(m.away!, size: 24),
+                          const SizedBox(width: 6),
+                          Flexible(child: Text(m.away!.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
+                        ]),
                     ]),
                   ),
                 ),

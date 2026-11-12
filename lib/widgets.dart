@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' show min;
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
 import 'settings.dart';
@@ -338,7 +339,10 @@ Widget _appImage(String path,
       width: w,
       height: h,
       fit: fit,
-      cacheWidth: (w * 3).round(),
+      alignment: fit == BoxFit.cover ? Alignment.topCenter : Alignment.center,
+      filterQuality: FilterQuality.high,
+      isAntiAlias: true,
+      cacheWidth: min(640, (w * 4).round()),
       errorBuilder: (_, __, ___) => fallback,
     );
   }
@@ -347,6 +351,9 @@ Widget _appImage(String path,
     width: w,
     height: h,
     fit: fit,
+    alignment: fit == BoxFit.cover ? Alignment.topCenter : Alignment.center,
+    filterQuality: FilterQuality.high,
+    memCacheWidth: min(640, (w * 4).round()),
     placeholder: (_, __) => fallback,
     errorWidget: (_, __, ___) => fallback,
   );
@@ -362,6 +369,37 @@ Widget teamBadge(Team t, {double size = 24}) {
   );
 }
 
+/// صورة اللاعب الدائرية بجودة عالية، أو صورة رمزية موحّدة بلون ثابت من هويته إن لم تتوفر صورة
+Widget playerFace(Player p, double size, {Color? ring, double ringWidth = 2}) {
+  final hue = (p.id * 47 % 360).toDouble();
+  final bg = HSLColor.fromAHSL(1, hue, 0.35, 0.84).toColor();
+  final tone = HSLColor.fromAHSL(1, hue, 0.3, 0.42).toColor();
+  final fb = Unfilter(
+    child: Container(
+      width: size,
+      height: size,
+      color: bg,
+      child: Stack(alignment: Alignment.bottomCenter, children: [
+        Positioned(top: size * 0.16, child: Container(width: size * 0.34, height: size * 0.34, decoration: BoxDecoration(color: tone, shape: BoxShape.circle))),
+        Positioned(bottom: -size * 0.22, child: Container(width: size * 0.78, height: size * 0.62, decoration: BoxDecoration(color: tone, shape: BoxShape.circle))),
+      ]),
+    ),
+  );
+  final inner = ClipOval(
+    child: SizedBox(
+      width: size,
+      height: size,
+      child: p.photo == null ? fb : appImage(p.photo!, w: size, h: size, fit: BoxFit.cover, fallback: fb),
+    ),
+  );
+  if (ring == null) return inner;
+  return Container(
+    padding: EdgeInsets.all(ringWidth),
+    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white, border: Border.all(color: ring, width: ringWidth)),
+    child: inner,
+  );
+}
+
 class PlayerAvatar extends StatelessWidget {
   final Player p;
   final double size;
@@ -369,28 +407,17 @@ class PlayerAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // لاعب بلا صورة (موهبة مولَّدة): صورة رمزية موحّدة بلون ثابت من هويته بدل شكل ناقص
-    final hue = (p.id * 47 % 360).toDouble();
-    final fb = Container(
-      width: size,
-      height: size,
-      color: HSLColor.fromAHSL(1, hue, 0.35, 0.82).toColor(),
-      child: Stack(alignment: Alignment.bottomCenter, children: [
-        Positioned(top: size * 0.16, child: Container(width: size * 0.34, height: size * 0.34, decoration: BoxDecoration(color: HSLColor.fromAHSL(1, hue, 0.3, 0.42).toColor(), shape: BoxShape.circle))),
-        Positioned(bottom: -size * 0.22, child: Container(width: size * 0.78, height: size * 0.62, decoration: BoxDecoration(color: HSLColor.fromAHSL(1, hue, 0.3, 0.42).toColor(), shape: BoxShape.circle))),
-      ]),
-    );
     return SizedBox(
       width: size + 4,
       height: size + 4,
       child: Stack(clipBehavior: Clip.none, children: [
-        ClipOval(child: p.photo == null ? fb : appImage(p.photo!, w: size, h: size, fit: BoxFit.cover, fallback: fb)),
+        playerFace(p, size),
         Positioned(
           right: -2,
           bottom: -2,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(color: ratingColor(p.overall), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: ratingColor(p.overall), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white, width: 1)),
             child: Text('${p.overall}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.black)),
           ),
         ),

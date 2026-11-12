@@ -202,7 +202,7 @@ void pickPlayerForSlot(BuildContext context, GameState gs, int idx) {
           child: ListView(children: [
             for (final p in cands)
               ListTile(
-                leading: RatingBadge(p.overall),
+                leading: PlayerAvatar(p),
                 title: Text(p.name),
                 subtitle: Row(children: [
                   PosChip(p.pos),

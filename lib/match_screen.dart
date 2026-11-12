@@ -158,7 +158,7 @@ class _MatchScreenState extends State<MatchScreen> {
                   ? ListView(children: [
                       for (final sl in side.slots)
                         ListTile(
-                          leading: RatingBadge(sl.p.overall),
+                          leading: PlayerAvatar(sl.p),
                           title: Text(sl.p.name),
                           subtitle: Text('${sl.p.pos.label} • لياقة ${sl.p.fitness.round()}%'),
                           onTap: () => set(() => sel = sl.p),
@@ -169,7 +169,7 @@ class _MatchScreenState extends State<MatchScreen> {
                       : ListView(children: [
                           for (final b in bench)
                             ListTile(
-                              leading: RatingBadge(b.overall),
+                              leading: PlayerAvatar(b),
                               title: Text(b.name),
                               subtitle: Text('${b.pos.label} • لياقة ${b.fitness.round()}%'),
                               onTap: () {
