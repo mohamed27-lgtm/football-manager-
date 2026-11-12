@@ -297,16 +297,8 @@ class NatState {
   Map<String, int> _rk = {};
   static const _confCoef = {'uefa': 1.0, 'conmebol': 1.0, 'concacaf': 0.88, 'afc': 0.86, 'caf': 0.86, 'ofc': 0.85};
 
-  double rating(String n) {
-    final c = cur[n];
-    var r = (c == null || c[1] == 0) ? 0.0 : c[0] / c[1];
-    final p = past[n] ?? const <double>[];
-    const ws = [0.5, 0.3, 0.2];
-    for (var i = 0; i < p.length && i < 3; i++) {
-      r += p[p.length - 1 - i] * ws[i];
-    }
-    return r * 100;
-  }
+  /// نقاط التصنيف الرسمية بصيغة فيفا الحالية: P = P0 + I × (W − We)، بنقاط ابتدائية قريبة من التصنيف الحقيقي
+  double rating(String n) => pts[n] ?? 0;
 
   void snapshotRanks() {
     final l = pts.keys.toList()
