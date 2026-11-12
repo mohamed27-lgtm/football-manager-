@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'coaches.dart';
+import 'photo_index.dart';
 import 'logo_store.dart';
 import 'package:flutter/services.dart';
 import 'auth.dart';
@@ -15,6 +17,7 @@ Future<void> main() async {
   await AppSettings.i.load();
   await LogoStore.init();
   await loadCoaches();
+  unawaited(PhotoIndex.build());
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const ManagerApp());
 }

@@ -6,6 +6,7 @@ import 'i18n.dart';
 import 'settings.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'models.dart';
+import 'photo_index.dart';
 
 const kBg = Color(0xFF0D0F14);
 const kCard = Color(0xFF000000);
@@ -361,7 +362,15 @@ Widget _appImage(String path,
 
 Widget teamBadge(Team t, {double size = 24}) {
   final fallback = ClubCrest(t, size: size);
-  if (t.badge == null) return fallback;
+  if (t.badge == null) {
+    return ValueListenableBuilder<int>(
+      valueListenable: PhotoIndex.version,
+      builder: (_, __, ___) {
+        final lg = PhotoIndex.logoOf(t.name);
+        return lg == null ? fallback : SizedBox(width: size, height: size, child: appImage(lg, w: size, h: size, fallback: fallback));
+      },
+    );
+  }
   return SizedBox(
     width: size,
     height: size,
@@ -389,7 +398,15 @@ Widget playerFace(Player p, double size, {Color? ring, double ringWidth = 2}) {
     child: SizedBox(
       width: size,
       height: size,
-      child: p.photo == null ? fb : appImage(p.photo!, w: size, h: size, fit: BoxFit.cover, fallback: fb),
+      child: p.photo != null
+          ? appImage(p.photo!, w: size, h: size, fit: BoxFit.cover, fallback: fb)
+          : ValueListenableBuilder<int>(
+              valueListenable: PhotoIndex.version,
+              builder: (_, __, ___) {
+                final ph = PhotoIndex.lookup(p);
+                return ph == null ? fb : appImage(ph, w: size, h: size, fit: BoxFit.cover, fallback: fb);
+              },
+            ),
     ),
   );
   if (ring == null) return inner;

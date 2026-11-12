@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'photo_index.dart';
 import 'package:flutter/material.dart' hide Text;
 import 'api_football.dart';
 import 'bundled.dart';
@@ -88,6 +90,7 @@ class _ImagesScreenState extends State<ImagesScreen> {
     try {
       await PackService.download(await PackService.getBase(), p, (v) => _set(() => progress = v));
       _set(() => have.add(_k(d)));
+      unawaited(PhotoIndex.build());
     } on ApiException catch (e) {
       _set(() => error = e.message);
     } catch (_) {
@@ -111,6 +114,7 @@ class _ImagesScreenState extends State<ImagesScreen> {
       await LeagueStore.delete(d.id, d.season);
     }
     _set(() => have.remove(_k(d)));
+    unawaited(PhotoIndex.build());
   }
 
   Future<void> _all() async {
