@@ -47,5 +47,16 @@ for f in pathlib.Path('assets/leagues').glob('*_*.json'):
             if s > bs: best, bs = c, s
         if best and bs >= 0.85:
             out[t['name'].lower().strip()] = best
+# إكمال الناقص من API-Football (data/coaches_api.json) لما لا يغطيه Transfermarkt
+try:
+    api = json.loads(pathlib.Path('data/coaches_api.json').read_text(encoding='utf-8'))
+    add = 0
+    for v in api.values():
+        k = v['team'].lower().strip()
+        if v.get('coach') and k not in out:
+            out[k] = v['coach']; add += 1
+    print('added from API-Football:', add)
+except Exception as e:
+    print('no api coaches:', repr(e)[:80])
 print(f'matched {len(out)} / {total} teams')
 pathlib.Path('assets/coaches.json').write_text(json.dumps(out, ensure_ascii=False), encoding='utf-8')
