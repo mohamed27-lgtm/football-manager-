@@ -32,6 +32,7 @@ class _Comp {
 
 class _CompetitionsViewState extends State<CompetitionsView> {
   String? sel; // null = صفحة اختيار البطولة
+  Map<String, int?> _barLogos = {};
   int sub = 0; // 0 جدول/مجموعات، 1 شجرة
   GameState get gs => widget.gs;
 
@@ -42,6 +43,8 @@ class _CompetitionsViewState extends State<CompetitionsView> {
         if (gs.europa != null) _Comp('uel', gs.europa!.name, Icons.emoji_events_rounded, const Color(0xFFE8841C), gs.europa),
         if (gs.conference != null) _Comp('uecl', gs.conference!.name, Icons.emoji_events_rounded, _kGreen, gs.conference),
         if (gs.superCup != null) _Comp('sup', 'كأس السوبر', Icons.emoji_events_rounded, _kPurple, gs.superCup),
+        if (gs.upper.isNotEmpty && gs.upperName.isNotEmpty) _Comp('up', gs.upperName, Icons.emoji_events_rounded, const Color(0xFF1FA58A)),
+        if (gs.lower.isNotEmpty && gs.lowerName.isNotEmpty) _Comp('lo', gs.lowerName, Icons.emoji_events_rounded, const Color(0xFF6A6FC4)),
         if (gs.ic != null) _Comp('ic', gs.ic!.name, Icons.emoji_events_rounded, const Color(0xFFA6812E), gs.ic),
         if (gs.cwc != null) _Comp('cwc', gs.cwc!.name, Icons.emoji_events_rounded, const Color(0xFFE6B422), gs.cwc),
       ];
@@ -226,7 +229,9 @@ class _CompetitionsViewState extends State<CompetitionsView> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: it.$4.withOpacity(it.$5 ? 1 : 0.0)),
-                    child: Icon(it.$3, color: it.$5 ? Colors.white : it.$4, size: 24),
+                    child: _barLogos[it.$1] != null
+                        ? Padding(padding: const EdgeInsets.all(3), child: Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.all(3), child: CompLogo(_barLogos[it.$1], fallback: it.$3, color: it.$4, size: 28)))
+                        : Icon(it.$3, color: it.$5 ? Colors.white : it.$4, size: 24),
                   ),
                   if (it.$5) ...[
                     const SizedBox(width: 10),
@@ -258,6 +263,9 @@ class _CompetitionsViewState extends State<CompetitionsView> {
           if (c.id == 'league') {
             body = _leagueBody();
             chipSub = 'الجولة ${(gs.week + (gs.seasonOver ? 0 : 1)).clamp(1, gs.rounds.length).toInt()} من ${gs.rounds.length}';
+          } else if (c.id == 'up' || c.id == 'lo') {
+            body = _divBody(c.id == 'up' ? gs.upper : gs.lower, c.id == 'up');
+            chipSub = c.id == 'up' ? 'الدرجة الأعلى' : 'الدرجة الأدنى';
           } else if (c.id == 'sup') {
             body = _superBody(cup!);
             chipSub = cup.done ? 'انتهت' : cup.roundName;
@@ -283,14 +291,17 @@ class _CompetitionsViewState extends State<CompetitionsView> {
             bar[0] = (bar[0].$1, cup.inGroups ? (cup.kind == 2 ? 'المباراة ${cup.round + 1} من ${cup.lpRounds}' : 'الجولة ${cup.round + 1} من ${cup.lpRounds}') : 'انتهت', bar[0].$3, c.color, sub == 0, bar[0].$6);
             bar[1] = (bar[1].$1, cup.kind == 2 ? 'الملحق ثم دور الـ16' : (cup.groups.length > 4 ? 'من دور الـ16' : 'من ربع النهائي'), bar[1].$3, c.color, sub == 1, bar[1].$6);
           } else {
-            for (final o in cs) {
+            const domIds = ['league', 'dom', 'sup', 'up', 'lo'];
+            final isDom = domIds.contains(c.id);
+            final shownCs = [for (final o in cs) if (domIds.contains(o.id) == isDom) o];
+            shownCs.sort((a, b) => (isDom ? domIds : const ['con', 'uel', 'uecl', 'cwc', 'ic']).indexOf(a.id).compareTo((isDom ? domIds : const ['con', 'uel', 'uecl', 'cwc', 'ic']).indexOf(b.id)));
+            _barLogos = {for (final o in shownCs) o.title: _logoOf(o.id)};
+            for (final o in shownCs) {
               bar.add((o.title, o.id == sel ? chipSub : '', Icons.emoji_events_outlined, o.color, o.id == sel, () => setState(() {
                     sel = o.id;
                     sub = 0;
                   })));
             }
-            // الشريحة المحددة أولاً
-            bar.sort((a, b) => (b.$5 ? 1 : 0).compareTo(a.$5 ? 1 : 0));
           }
           final lead = c.id == 'league' && gs.country.isNotEmpty ? FlagBadge(gs.country, size: 40) : _logoChip(_logoOf(c.id), c.color, size: 44);
           final title = c.id == 'league' ? (gs.country.isEmpty ? gs.leagueName : gs.country) : c.title;
@@ -302,6 +313,35 @@ class _CompetitionsViewState extends State<CompetitionsView> {
           ]);
         },
       );
+
+  // ───────── درجات الدوري الأخرى ─────────
+  Widget _divBody(List<Team> teams, bool upper) {
+    final l = [...teams]..sort((a, b) => b.reputation.compareTo(a.reputation));
+    return ListView(padding: const EdgeInsets.fromLTRB(14, 8, 14, 14), children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(2, 4, 2, 10),
+        child: Text(upper ? 'أندية الدرجة الأعلى — يصعد إليها أبطال دوريك بنهاية الموسم' : 'أندية الدرجة الأدنى — يهبط إليها أصحاب المراكز الأخيرة', style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
+      ),
+      Container(
+        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLine)),
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: [
+          for (var i = 0; i < l.length; i++)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(border: i == 0 ? null : const Border(top: BorderSide(color: kLine))),
+              child: Row(children: [
+                SizedBox(width: 26, child: Text('${i + 1}', style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800))),
+                teamBadge(l[i], size: 30),
+                const SizedBox(width: 10),
+                Expanded(child: Text(l[i].name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800))),
+                Text('${l[i].reputation}', style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800)),
+              ]),
+            ),
+        ]),
+      ),
+    ]);
+  }
 
   // ───────── دوري الدولة ─────────
   Widget _leagueBody() {
