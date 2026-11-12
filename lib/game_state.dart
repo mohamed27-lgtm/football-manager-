@@ -22,6 +22,7 @@ import 'bundled.dart';
 part 'awards_logic.dart';
 part 'jobs_logic.dart';
 part 'intl_logic.dart';
+part 'world_leagues.dart';
 
 class NextMatch {
   final String comp, round, time;
@@ -126,6 +127,11 @@ class GameState extends ChangeNotifier {
   Map<String, dynamic>? ceremony;
   /// جوائز مُحتسبة ومؤجَّلة لموعدها الحقيقي (الكرة الذهبية، ذا بيست، الولد الذهبي)
   List<Map<String, dynamic>> pendingAwards = [];
+  /// دوريات العالم الأخرى تُلعب آلياً، وخزائن ألقاب كل الأندية (مفتاح النادي ← ألقابه)
+  final List<WorldLeague> wLeagues = [];
+  final Map<String, List<String>> clubHonours = {};
+  final Map<String, String> worldChamps = {};
+  final List<String> worldFeed = [];
   void touch() {
     notifyListeners();
     unawaited(save());
@@ -592,6 +598,12 @@ class GameState extends ChangeNotifier {
     market = [
       for (final p in j['market'] as List) Player.fromJson(p as Map<String, dynamic>)
     ];
+    for (final x in (j['wl'] as List?) ?? const []) {
+      wLeagues.add(WorldLeague.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(x)) as Map)));
+    }
+    ((j['ch'] as Map?) ?? const {}).forEach((k, v) => clubHonours[k as String] = (v as List).cast<String>());
+    ((j['wc'] as Map?) ?? const {}).forEach((k, v) => worldChamps[k as String] = v as String);
+    worldFeed.addAll(((j['wf'] as List?) ?? const []).cast<String>());
     pendingAwards = [for (final a in (j['pa'] as List?) ?? const []) Map<String, dynamic>.from(jsonDecode(jsonEncode(a)) as Map)];
     ceremony = j['cer'] == null ? null : Map<String, dynamic>.from(jsonDecode(jsonEncode(j['cer'])) as Map);
     freeAgents = [for (final p in (j['fa'] as List?) ?? const []) Player.fromJson(p as Map<String, dynamic>)];
@@ -834,6 +846,10 @@ class GameState extends ChangeNotifier {
         'fa': [for (final p in freeAgents) p.toJson()],
         'cer': ceremony,
         'pa': pendingAwards,
+        'wl': [for (final l in wLeagues) l.toJson()],
+        'ch': clubHonours,
+        'wc': worldChamps,
+        'wf': worldFeed,
         'rounds': [
           for (final r in rounds)
             [
@@ -1262,6 +1278,7 @@ class GameState extends ChangeNotifier {
     this._weeklyJobs();
     this._intlTick();
     this._awardsTick();
+    this._worldTick();
 
     if (week == rounds.length ~/ 2 && ffpRatio > 0.85) {
       news.insert(0, '⚠️ تحذير اللعب المالي النظيف: الرواتب ${(ffpRatio * 100).round()}% من الإيرادات (الحد 85%)');
@@ -1936,6 +1953,7 @@ class GameState extends ChangeNotifier {
     final aw = _seasonAwards(pos);
     _recordSeason(pos, aw);
     _worldSeasonEnd();
+    this._worldLeaguesSeasonEnd();
     _ffpReview();
     fin.season.clear();
     compStats.clear();
@@ -2515,6 +2533,7 @@ class GameState extends ChangeNotifier {
       for (final pl in team(winners.first).squad) {
         pl.awards.add({'s': season, 'c': c.name, 'k': 'cup'});
       }
+      clubTitle(team(winners.first).name, c.name);
       if (winners.first == user.id) {
         final bonus = c.continental ? 10.0 : (c.key == 'sup' ? 2.0 : 3.0);
         user.budget += bonus;
@@ -2893,6 +2912,7 @@ class GameState extends ChangeNotifier {
       'scorer': top.isEmpty || top.first.goals == 0 ? '-' : '${top.first.name} (${top.first.goals})',
       'awards': awards,
     });
+    clubTitle(table.first.name, leagueName);
     for (final pl in table.first.squad) {
       pl.awards.add({'s': season, 'c': leagueName, 'k': 'league'});
     }
@@ -3189,10 +3209,17 @@ class GameState extends ChangeNotifier {
       contChamps[champKey(season, cf.id)] = team(cc).name;
     } else {
       final l = _confClubs(cf.id)..sort((a, b) => b.$2.compareTo(a.$2));
-      if (l.isNotEmpty) contChamps[champKey(season, cf.id)] = l.first.$1;
+      if (l.isNotEmpty) {
+        contChamps[champKey(season, cf.id)] = l.first.$1;
+        clubTitle(l.first.$1, 'بطولة ${kConfNames[cf.id] ?? cf.id} للأندية');
+      }
     }
     for (final c in kConfNames.keys) {
-      if (c != cf.id) contChamps[champKey(season, c)] = _ghostChampion(c);
+      if (c != cf.id) {
+        final gc = _ghostChampion(c);
+        contChamps[champKey(season, c)] = gc;
+        clubTitle(gc, 'بطولة ${kConfNames[c] ?? c} للأندية');
+      }
     }
     ensureNat();
     nat.start

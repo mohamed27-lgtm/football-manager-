@@ -18,6 +18,7 @@ import 'loans_screen.dart';
 import 'stadium_screen.dart';
 import 'fans_screen.dart';
 import 'trophies.dart';
+import 'world_screens.dart';
 import 'squad.dart';
 import 'tactics.dart';
 
@@ -258,6 +259,7 @@ class _MoreTabState extends State<MoreTab> {
         (Icons.emoji_events_rounded, 'الكؤوس', () => _tab(3)),
         (Icons.calendar_month_rounded, 'الجدول', () => _tab(3)),
         (Icons.public_rounded, 'العالم', () => _push(RankingScreen(gs: gs))),
+        (Icons.sports_soccer_rounded, 'دوريات العالم', () => _push(WorldLeaguesScreen(gs: gs))),
       ]),
     ];
     final ql = q.trim().toLowerCase();

@@ -8,6 +8,7 @@ import 'models.dart';
 import 'calendar.dart';
 import 'world.dart';
 import 'widgets.dart';
+import 'world_screens.dart';
 
 /// الترتيب العالمي: أندية (Elo) / دول (من جنسيات اللاعبين) / لاعبون / مدربون
 class RankingScreen extends StatefulWidget {
@@ -45,7 +46,12 @@ class _RankingScreenState extends State<RankingScreen> {
     );
   }
 
-  Widget _row(int i, Widget lead, String title, String sub, Widget trail, {bool me = false}) => Container(
+  Widget _row(int i, Widget lead, String title, String sub, Widget trail, {bool me = false, String? club}) => InkWell(
+        onTap: club == null ? null : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ClubCabinetScreen(gs: gs, club: club))),
+        child: _rowBody(i, lead, title, sub, trail, me: me),
+      );
+
+  Widget _rowBody(int i, Widget lead, String title, String sub, Widget trail, {bool me = false}) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(color: me ? kPrimary.withOpacity(0.1) : kCard, border: const Border(bottom: BorderSide(color: kLine))),
         child: Row(children: [
@@ -130,7 +136,7 @@ class _RankingScreenState extends State<RankingScreen> {
       _confChips(),
       _card([
         for (final e in shown.take(150))
-          _row(e.$1, e.$2.$4 != null ? teamBadge(e.$2.$4!, size: 30) : _initial(e.$2.$1), e.$2.$1, kConfNames[e.$2.$2] ?? '', Text(e.$2.$3.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)), me: e.$2.$4 == gs.user),
+          _row(e.$1, e.$2.$4 != null ? teamBadge(e.$2.$4!, size: 30) : _initial(e.$2.$1), e.$2.$1, kConfNames[e.$2.$2] ?? '', Text(e.$2.$3.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)), me: e.$2.$4 == gs.user, club: e.$2.$1),
       ]),
     ];
   }

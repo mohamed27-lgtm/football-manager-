@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -190,5 +191,45 @@ void main() {
     print('DIAG awards events: $seen pending=${gs.pendingAwards.length}');
     expect(seen.any((e) => e.startsWith('ballon')), true);
     expect(seen.any((e) => e.startsWith('fifa')), true);
+  });
+
+  test('دوريات العالم تُلعب آلياً وتُسجَّل الألقاب في خزائن الأندية', () {
+    final r = Random(21);
+    final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];
+    final gs = GameState.fromData(teams, 2, 'تجريبي');
+    final names = [for (var i = 0; i < 18; i++) 'Club $i'];
+    gs.wLeagues.add(WorldLeague(900, 'دوري تجريبي', 'بلد', 1, names, [for (var i = 0; i < 18; i++) 80.0 - i]));
+    gs.wLeagues.add(WorldLeague(901, 'دوري فردي', 'بلد', 1, names.take(15).toList(), [for (var i = 0; i < 15; i++) 70.0 - i]));
+    var guard = 0;
+    while (!gs.seasonOver && guard++ < 800) {
+      gs.confidence = 100;
+      final c = gs.pendingCup;
+      if (c != null) {
+        gs.startCupMatch(c);
+        gs.finishCurrent();
+        continue;
+      }
+      gs.startMatch();
+      gs.finishMatchday();
+    }
+    final l = gs.wLeagues.first;
+    expect(l.round > 20, true, reason: 'الدوري الآخر يتقدم أسبوعياً');
+    // سلامة الجدول: لا يلعب فريق مرتين في جولة
+    for (var rr = 0; rr < l.totalRounds; rr++) {
+      final ps = l.pairs(rr);
+      final seen = <int>{};
+      for (final (a, b) in ps) {
+        expect(seen.add(a) && seen.add(b), true);
+      }
+    }
+    gs.startNewSeason();
+    expect(gs.worldChamps.containsKey('900|1'), true);
+    expect(gs.clubHonours['Club 0']?.isNotEmpty ?? false, true, reason: 'الأقوى غالباً بطل');
+    expect(gs.wLeagues.first.round, 0);
+    // حفظ وتحميل
+    final j = gs.toJson();
+    final g2 = GameState.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(j)) as Map));
+    expect(g2.wLeagues.length, 2);
+    expect(g2.clubHonours.isNotEmpty, true);
   });
 }

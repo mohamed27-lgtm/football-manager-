@@ -5,6 +5,7 @@ import 'api_football.dart';
 /// بيانات الدوريات المضمّنة داخل التطبيق (أسماء الأندية واللاعبين) بدون صور
 class Bundled {
   static List<LeagueData>? _cache;
+  static List<LeagueData>? get cached => _cache;
 
   static Map<String, dynamic> _stripImages(Map<String, dynamic> j) {
     j['logo'] = null;
