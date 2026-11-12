@@ -1337,6 +1337,25 @@ class DashboardTab extends StatelessWidget {
         )
       else
         _matchCard(context),
+      if (!gs.seasonOver && gs.ceremony != null && gs.ceremony!['ev'] != null && ((gs.ceremony!['a'] as List).any((a) => a['rev'] != true) || (gs.ceremony!['paid'] != true && gs.myAwardWins().isNotEmpty))) ...[
+        const SizedBox(height: 10),
+        Panel(
+          child: Row(children: [
+            const Text('🏆', style: TextStyle(fontSize: 30)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(kEventTitle[gs.ceremony!['ev']] ?? 'حفل الجوائز', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                Text('موسم ${gs.ceremony!['s']} • أُعلنت النتائج', style: const TextStyle(color: kMuted, fontSize: 12)),
+              ]),
+            ),
+            GestureDetector(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AwardsHubScreen(gs: gs))),
+              child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(12)), child: const Text('الحفل', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
+            ),
+          ]),
+        ),
+      ],
       if (!gs.fired && !gs.seasonOver) ...[
         const Padding(padding: EdgeInsets.fromLTRB(2, 4, 2, 8), child: Text('حالة الفريق', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17))),
         _teamStatus(),

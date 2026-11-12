@@ -9,10 +9,24 @@ class AwardInfo {
 }
 
 const kAwardInfo = <String, AwardInfo>{
-  'bd': AwardInfo('الكرة الذهبية', '⚽', 'أفضل لاعب في العالم هذا الموسم', 0.5, 10, 4),
+  // فرانس فوتبول + UEFA (حفل الكرة الذهبية، أواخر سبتمبر)
+  'bd': AwardInfo('الكرة الذهبية', '⚽', 'أفضل لاعب في العالم • فرانس فوتبول وUEFA', 0.5, 10, 4),
+  'kopa': AwardInfo('جائزة كوبا', '⭐', 'أفضل لاعب شاب تحت 21 • فرانس فوتبول وUEFA', 0.2, 6, 5),
+  'yashin': AwardInfo('جائزة ياشين', '🧤', 'أفضل حارس مرمى • فرانس فوتبول وUEFA', 0.25, 8, 2),
+  'gerd': AwardInfo('جائزة جيرد مولر', '🥅', 'أفضل هدّاف (نادٍ ومنتخب) • فرانس فوتبول وUEFA', 0.3, 8, 3),
+  'socrates': AwardInfo('جائزة سقراط', '🤝', 'الأعمال الإنسانية والخيرية • فرانس فوتبول وUEFA', 0.1, 6, 1),
+  'cruyff': AwardInfo('جائزة يوهان كرويف', '🎖️', 'أفضل مدرب للعام • فرانس فوتبول وUEFA', 0, 0, 0),
+  // الفيفا (حفل ذا بيست، منتصف ديسمبر)
+  'fifa': AwardInfo('ذا بيست: أفضل لاعب', '🏆', 'أفضل لاعب في العالم • الفيفا', 0.5, 10, 4),
+  'fifa_gk': AwardInfo('ذا بيست: أفضل حارس', '🧤', 'أفضل حارس مرمى • الفيفا', 0.25, 8, 2),
+  'fifa_coach': AwardInfo('ذا بيست: أفضل مدرب', '🎖️', 'أفضل مدرب للرجال • الفيفا', 0, 0, 0),
+  'puskas': AwardInfo('جائزة بوشكاش', '🚀', 'أجمل هدف في العام (محاكاة) • الفيفا', 0.2, 6, 2),
+  // صحفية
+  'goldenboy': AwardInfo('جائزة الولد الذهبي', '🌟', 'أفضل شاب تحت 21 في أوروبا • توتو سبورت', 0.2, 6, 5),
+  'eboot': AwardInfo('الحذاء الذهبي الأوروبي', '👟', 'هدّاف الدوريات الأوروبية • اتحاد الصحف الرياضية ESM', 0.3, 8, 3),
+  // جوائز الموسم المحلية (تبقى)
   'boot': AwardInfo('الحذاء الذهبي', '👟', 'هدّاف الموسم', 0.3, 8, 3),
   'glove': AwardInfo('القفاز الذهبي', '🧤', 'أفضل حارس مرمى', 0.25, 8, 2),
-  'kopa': AwardInfo('أفضل لاعب شاب', '⭐', 'تحت 21 سنة', 0.2, 6, 5),
   'pm': AwardInfo('أفضل صانع ألعاب', '🎯', 'الأكثر تمريرات حاسمة', 0.2, 6, 2),
   'def': AwardInfo('أفضل مدافع', '🛡️', 'مدافع الموسم', 0.2, 6, 2),
   'mid': AwardInfo('أفضل لاعب وسط', '🧠', 'وسط الموسم', 0.2, 6, 2),
@@ -22,6 +36,31 @@ const kAwardInfo = <String, AwardInfo>{
   'nation': AwardInfo('أفضل منتخب', '🌍', 'أفضل منتخب في التصنيف العالمي', 0, 0, 0),
   'xi': AwardInfo('فريق الموسم', '👕', 'التشكيلة المثالية 4-3-3', 0.1, 4, 1),
 };
+
+/// موعد إعلان كل جائزة: season = نهاية الموسم، والبقية في الموسم التالي بتواريخها الحقيقية
+const kAwardEvent = <String, String>{
+  'bd': 'ballon', 'kopa': 'ballon', 'yashin': 'ballon', 'gerd': 'ballon', 'socrates': 'ballon', 'cruyff': 'ballon',
+  'fifa': 'fifa', 'fifa_gk': 'fifa', 'fifa_coach': 'fifa', 'puskas': 'fifa',
+  'goldenboy': 'boy',
+};
+
+const kEventTitle = <String, String>{
+  'season': 'حفل نهاية الموسم',
+  'ballon': 'حفل الكرة الذهبية (فرانس فوتبول وUEFA)',
+  'fifa': 'حفل ذا بيست (الفيفا)',
+  'boy': 'جائزة الولد الذهبي (توتو سبورت)',
+};
+
+/// تاريخ الحفل: يخص موسم [ss] لكنه يقام في العام التالي (الكرة الذهبية 22 سبتمبر، الولد الذهبي 8 ديسمبر، ذا بيست 15 ديسمبر)
+DateTime awardEventDate(int ss, String ev) {
+  final y = 2026 + ss;
+  return switch (ev) {
+    'ballon' => DateTime.utc(y, 9, 22),
+    'boy' => DateTime.utc(y, 12, 8),
+    'fifa' => DateTime.utc(y, 12, 15),
+    _ => DateTime.utc(y, 5, 25),
+  };
+}
 
 extension SeasonCeremony on GameState {
   void estimateOtherStats() {
@@ -50,7 +89,47 @@ extension SeasonCeremony on GameState {
 
   void ensureCeremony() {
     if (ceremony != null && ceremony!['s'] == season) return;
-    ceremony = _buildCeremony();
+    final c = _buildCeremony();
+    // الجوائز التي موعدها لاحق (الكرة الذهبية، ذا بيست، الولد الذهبي) تُحفظ للموسم التالي بتاريخها
+    final now = <dynamic>[];
+    pendingAwards.removeWhere((a) => a['ss'] == season);
+    for (final a in (c['a'] as List)) {
+      final ev = kAwardEvent[a['id']];
+      if (ev == null) {
+        now.add(a);
+      } else {
+        pendingAwards.add({...Map<String, dynamic>.from(a as Map), 'ev': ev, 'ss': season});
+      }
+    }
+    c['a'] = now;
+    ceremony = c;
+  }
+
+  /// كل أسبوع: يُقام أي حفل حلّ موعده (تواريخ حقيقية)
+  void _awardsTick() {
+    if (pendingAwards.isEmpty) return;
+    final end = GameCalendar.weekStart(season, week.clamp(0, 60).toInt()).add(const Duration(days: 7));
+    final due = <String>{};
+    for (final a in pendingAwards) {
+      if (awardEventDate(a['ss'] as int, a['ev'] as String).isBefore(end)) due.add('${a['ss']}|${a['ev']}');
+    }
+    for (final k in due) {
+      final parts = k.split('|');
+      final ss = int.parse(parts[0]);
+      final ev = parts[1];
+      final list = [for (final a in pendingAwards) if (a['ss'] == ss && a['ev'] == ev) a];
+      pendingAwards.removeWhere((a) => a['ss'] == ss && a['ev'] == ev);
+      for (final a in list) {
+        a['rev'] = false;
+        for (final n in (a['nom'] as List).cast<Map>()) {
+          if (n['k'] == 'p') n['m'] = user.squad.any((p) => p.id == n['id']);
+        }
+      }
+      ceremony = {'s': ss, 'ev': ev, 'paid': false, 'a': list};
+      final out = this._applyAwards(list, ss);
+      news.insert(0, '🏆 ${kEventTitle[ev] ?? 'حفل الجوائز'}: ${out.take(2).join(' • ')}');
+    }
+    touch();
   }
 
   /// نسب التصويت: تتناسب مع قوة الملف، ومجموعها 100
@@ -96,7 +175,7 @@ extension SeasonCeremony on GameState {
     }
 
     final awards = <Map<String, dynamic>>[];
-    void player(String id, Iterable<(Player, Team)> src, double Function((Player, Team)) f) {
+    void player(String id, Iterable<(Player, Team)> src, double Function((Player, Team)) f, {List<List<String>> Function(Player)? extra}) {
       final l = src.toList()..sort((a, b) => f(b).compareTo(f(a)));
       if (l.isEmpty) return;
       final top = l.take(3).toList();
@@ -105,10 +184,15 @@ extension SeasonCeremony on GameState {
         'id': id,
         'rev': false,
         'nom': [
-          for (var i = 0; i < top.length; i++) {..._nomP(top[i].$1, top[i].$2), 'v': v[i]}
+          for (var i = 0; i < top.length; i++) {..._nomP(top[i].$1, top[i].$2), 'v': v[i], if (extra != null) 'st': extra(top[i].$1)}
         ],
       });
     }
+
+    ensureNat();
+    double jit(Player p, int salt) => ((p.id * 7919 + season * 31 + salt * 101) % 100) / 50.0; // 0..2
+    double natB(Player p) => p.nat == null ? 0 : nat.rating(p.nat!) / 100;
+    final euro = confedOf(country).id == 'uefa';
 
     player('bd', all, sc);
     player('boot', all, (e) => e.$1.goals * 100.0 + e.$1.assists + e.$1.overall * 0.01);
@@ -118,6 +202,25 @@ extension SeasonCeremony on GameState {
     player('def', all.where((e) => e.$1.pos == Pos.def), (e) => sc(e) + e.$1.overall * 0.4 - e.$2.ga * 0.05);
     player('mid', all.where((e) => e.$1.pos == Pos.mid), sc);
     player('att', all.where((e) => e.$1.pos == Pos.att), (e) => e.$1.goals * 2.0 + e.$1.assists + e.$1.overall * 0.2);
+
+    // فرانس فوتبول + UEFA (تُعلن في حفل الكرة الذهبية)
+    player('yashin', all.where((e) => e.$1.pos == Pos.gk), (e) => e.$1.gk - e.$2.ga * 0.5 + jit(e.$1, 1));
+    player('gerd', all, (e) => e.$1.goals * 100.0 + e.$1.assists + natB(e.$1) + jit(e.$1, 2) * 0.1);
+    player('socrates', all.where((e) => e.$1.age >= 24 && e.$1.overall >= 68), (e) => jit(e.$1, 3) * 10 + e.$1.age * 0.1 + e.$1.overall * 0.05,
+        extra: (p) => [['مبادرات', '${3 + p.id % 9}'], ['مستفيدون', '${10 + p.id % 40}K'], ['سنوات', '${1 + p.id % 8}']]);
+    // الفيفا (ذا بيست)
+    player('fifa', all, (e) {
+      final r = rankOf(e.$2);
+      return e.$1.goals * 1.8 + e.$1.assists * 1.5 + e.$1.overall * 0.3 + natB(e.$1) * 0.5 + jit(e.$1, 4) * 2 + (r == 0 ? (eloOf(e.$2) - 1500) / 40.0 : (teams.length - r) * 0.2);
+    });
+    player('fifa_gk', all.where((e) => e.$1.pos == Pos.gk), (e) => e.$1.gk - e.$2.ga * 0.5 + natB(e.$1) + jit(e.$1, 5));
+    player('puskas', all.where((e) => e.$1.goals >= 3), (e) => jit(e.$1, 6) * 10 + e.$1.goals * 0.2,
+        extra: (p) => [['المسافة', '${18 + (p.id * 13) % 22} م'], ['الدقيقة', '${5 + (p.id * 7) % 85}'], ['النوع', const ['صاروخية', 'مقصية', 'مراوغة', 'حرة'][p.id % 4]]]);
+    // الصحفية: أوروبا فقط
+    if (euro) {
+      player('goldenboy', all.where((e) => e.$1.age <= 20), sc);
+      player('eboot', all, (e) => e.$1.goals * 100.0 + e.$1.assists + e.$1.overall * 0.01);
+    }
 
     // مدرب العام: أكبر تفوق على ترتيب القوة
     final byStrength = [...teams]..sort((a, b) => b.strength.compareTo(a.strength));
@@ -185,8 +288,31 @@ extension SeasonCeremony on GameState {
       });
     }
 
+    // جوائز المدربين (كرويف وذا بيست): مدربو أفضل الأندية
+    Map<String, dynamic> coachNom(Team t, int v) => {
+          'k': 'c',
+          'n': t.coachName,
+          'c': t.name,
+          't': t.id,
+          'm': t == user,
+          'v': v,
+          'st': [
+            ['هدف', '${t.gf}'],
+            ['نقطة', '${t.points}'],
+            ['القوة', '${t.strength.round()}'],
+          ],
+        };
+    if (clubs.length >= 3) {
+      final c1 = clubs.take(3).toList();
+      final v1 = _shares([for (final t in c1) cands[t]!]);
+      awards.add({'id': 'cruyff', 'rev': false, 'nom': [for (var i = 0; i < 3; i++) coachNom(c1[i], v1[i])]});
+      final c2 = clubs.take(4).toList()..sort((a, b) => (cands[b]! + (b.id * 37 + season) % 7).compareTo(cands[a]! + (a.id * 37 + season) % 7));
+      final c3 = c2.take(3).toList();
+      final v2 = _shares([for (final t in c3) cands[t]!]);
+      awards.add({'id': 'fifa_coach', 'rev': false, 'nom': [for (var i = 0; i < 3; i++) coachNom(c3[i], v2[i])]});
+    }
+
     // أفضل منتخب: أعلى التصنيف العالمي
-    ensureNat();
     final rk = nat.ranking;
     if (rk.isNotEmpty && nat.rating(rk.first) > 0) {
       final top = rk.take(3).toList();
@@ -235,10 +361,14 @@ extension SeasonCeremony on GameState {
 
   /// يُنفَّذ عند بدء الموسم الجديد: يسجّل الجوائز على اللاعبين والألقاب والأخبار
   List<String> _applyCeremony() {
-    final out = <String>[];
     final c = ceremony;
-    if (c == null) return out;
-    for (final a in (c['a'] as List)) {
+    if (c == null) return <String>[];
+    return this._applyAwards((c['a'] as List).cast<Map>(), (c['s'] as int?) ?? season);
+  }
+
+  List<String> _applyAwards(List<Map> awards, int ssn) {
+    final out = <String>[];
+    for (final a in awards) {
       final id = a['id'] as String;
       final info = kAwardInfo[id]!;
       final noms = (a['nom'] as List).cast<Map>();
@@ -247,12 +377,12 @@ extension SeasonCeremony on GameState {
         var mine = 0;
         for (final n in noms) {
           final p = playerById(n['id'] as int);
-          p?.awards.add({'s': season, 'c': info.title, 'k': 'indiv'});
+          p?.awards.add({'s': ssn, 'c': info.title, 'k': 'indiv'});
           if (n['m'] == true) mine++;
         }
         out.add('⭐ التشكيلة المثالية: ${noms.map((n) => n['n']).join('، ')}');
         if (mine > 0) {
-          honours.add('${info.title} — $mine من لاعبيك (الموسم $season)');
+          honours.add('${info.title} — $mine من لاعبيك (الموسم $ssn)');
           news.insert(0, '⭐ $mine من لاعبيك في فريق الموسم!');
         }
         continue;
@@ -261,7 +391,7 @@ extension SeasonCeremony on GameState {
       switch (w['k']) {
         case 'p':
           final p = playerById(w['id'] as int);
-          p?.awards.add({'s': season, 'c': info.title, 'k': 'indiv'});
+          p?.awards.add({'s': ssn, 'c': info.title, 'k': 'indiv'});
           final extra = switch (id) {
             'boot' => ' — ${w['g']} هدف',
             'pm' => ' — ${w['a']} تمريرة حاسمة',
@@ -270,21 +400,21 @@ extension SeasonCeremony on GameState {
           };
           out.add('${info.icon} ${info.title}: ${w['n']} (${w['c']})$extra');
           if (isMine) {
-            honours.add('${info.title} — ${w['n']} (الموسم $season)');
+            honours.add('${info.title} — ${w['n']} (الموسم $ssn)');
             fans = min(100, fans + 3);
             news.insert(0, '🥇 ${info.title} لاعبك ${w['n']}!');
           }
         case 'c':
-          out.add('🎖️ مدرب العام: ${w['n']}');
+          out.add('${info.icon} ${info.title}: ${w['n']}');
           if (isMine) {
-            honours.add('🎖️ مدرب العام — الموسم $season');
+            honours.add('${info.icon} ${info.title} — الموسم $ssn');
             confidence = min(100, confidence + 6);
-            news.insert(0, '🎖️ اخترت مدرب العام!');
+            news.insert(0, '${info.icon} فزت بـ${info.title}!');
           }
         case 'b':
           out.add('🏟️ نادي العام: ${w['n']}');
           if (isMine) {
-            honours.add('🏟️ نادي العام — الموسم $season');
+            honours.add('🏟️ نادي العام — الموسم $ssn');
             fans = min(100, fans + 5);
             news.insert(0, '🏟️ ناديك هو نادي العام!');
           }

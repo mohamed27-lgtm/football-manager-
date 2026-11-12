@@ -36,8 +36,8 @@ class TitleScreen extends StatelessWidget {
     final won = <(String, String, String)>[];
     for (final p in u.squad) {
       for (final a in p.awards) {
-        final k = a['k'];
-        if (a['s'] == ssn && kAwardInfo.containsKey(k)) won.add((kAwardInfo[k]!.icon, kAwardInfo[k]!.title, p.name));
+        final info = kAwardInfo.values.where((x) => x.title == a['c']).firstOrNull;
+        if (a['s'] == ssn && info != null) won.add((info.icon, info.title, p.name));
       }
     }
     final gd = v('gf', u.gf) - v('ga', u.ga);

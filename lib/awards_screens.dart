@@ -162,14 +162,14 @@ class AwardsHubScreen extends StatelessWidget {
         final done = list.where((a) => a['rev'] == true).length;
         final cur = _current(gs);
         return Scaffold(
-          appBar: AppBar(title: const Text('جوائز الموسم')),
+          appBar: AppBar(title: Text(kEventTitle[gs.ceremony?['ev'] ?? 'season'] ?? 'جوائز الموسم', style: const TextStyle(fontSize: 16))),
           body: list.isEmpty
               ? const Center(child: EmptyState(icon: Icons.emoji_events_outlined, title: 'لا حفل جوائز الآن', subtitle: 'يقام الحفل عند نهاية كل موسم'))
               : ListView(padding: const EdgeInsets.all(14), children: [
                   Row(children: [
-                    Expanded(child: Panel(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Row(children: [const Text('موسم', style: TextStyle(color: kMuted)), const SizedBox(width: 8), Text('${gs.season}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))]))),
+                    Expanded(child: Panel(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Row(children: [const Text('موسم', style: TextStyle(color: kMuted)), const SizedBox(width: 8), Text('${gs.ceremony?['s'] ?? gs.season}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))]))),
                     const SizedBox(width: 10),
-                    _chip('حفل نهاية الموسم', const Color(0xFFFBEBB5), const Color(0xFF7A5A00)),
+                    _chip((gs.ceremony?['ev'] ?? 'season') == 'season' ? 'حفل نهاية الموسم' : 'حفل رسمي', const Color(0xFFFBEBB5), const Color(0xFF7A5A00)),
                   ]),
                   const SizedBox(height: 12),
                   Unfilter(
@@ -355,6 +355,7 @@ class AwardNomineesScreen extends StatelessWidget {
 }
 
 List<(String, String)> _stats(Map n) {
+  if (n['st'] != null) return [for (final s in (n['st'] as List)) ((s as List)[0] as String, s[1] as String)];
   if (n['k'] == 'p') return [('تمريرة', '${n['a']}'), ('هدف', '${n['g']}'), ('التقييم', '${n['r']}')];
   return [for (final s in (n['st'] as List)) ((s as List)[0] as String, s[1] as String)];
 }
@@ -398,7 +399,7 @@ class AwardWinnerScreen extends StatelessWidget {
         body: Stack(children: [
           Positioned.fill(child: CustomPaint(painter: _Confetti(id.hashCode))),
           ListView(padding: const EdgeInsets.fromLTRB(14, 10, 14, 100), children: [
-            Center(child: Text('⭐ ${info.title} ${gs.season} ⭐', style: const TextStyle(color: _gold, fontWeight: FontWeight.w900, fontSize: 15))),
+            Center(child: Text('⭐ ${info.title} ${gs.ceremony?['s'] ?? gs.season} ⭐', style: const TextStyle(color: _gold, fontWeight: FontWeight.w900, fontSize: 15))),
             const SizedBox(height: 14),
             Center(
               child: Stack(alignment: Alignment.center, children: [
@@ -488,7 +489,7 @@ class AwardWinnerScreen extends StatelessWidget {
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Color(0x55FFFFFF)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                   onPressed: () {
-                    Clipboard.setData(ClipboardData(text: '🏆 ${info.title} ${gs.season}: ${w['n']} (${w['c']})'));
+                    Clipboard.setData(ClipboardData(text: '🏆 ${info.title} ${gs.ceremony?['s'] ?? gs.season}: ${w['n']} (${w['c']})'));
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم نسخ النتيجة')));
                   },
                   icon: const Icon(Icons.share, size: 18),

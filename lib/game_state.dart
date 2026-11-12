@@ -124,6 +124,8 @@ class GameState extends ChangeNotifier {
   List<Player> freeAgents = [];
   /// حفل جوائز نهاية الموسم: يُبنى عند انتهاء الدوري ويُمسح عند بدء الموسم الجديد
   Map<String, dynamic>? ceremony;
+  /// جوائز مُحتسبة ومؤجَّلة لموعدها الحقيقي (الكرة الذهبية، ذا بيست، الولد الذهبي)
+  List<Map<String, dynamic>> pendingAwards = [];
   void touch() {
     notifyListeners();
     unawaited(save());
@@ -590,6 +592,7 @@ class GameState extends ChangeNotifier {
     market = [
       for (final p in j['market'] as List) Player.fromJson(p as Map<String, dynamic>)
     ];
+    pendingAwards = [for (final a in (j['pa'] as List?) ?? const []) Map<String, dynamic>.from(jsonDecode(jsonEncode(a)) as Map)];
     ceremony = j['cer'] == null ? null : Map<String, dynamic>.from(jsonDecode(jsonEncode(j['cer'])) as Map);
     freeAgents = [for (final p in (j['fa'] as List?) ?? const []) Player.fromJson(p as Map<String, dynamic>)];
     rounds = [
@@ -830,6 +833,7 @@ class GameState extends ChangeNotifier {
         'market': [for (final p in market) p.toJson()],
         'fa': [for (final p in freeAgents) p.toJson()],
         'cer': ceremony,
+        'pa': pendingAwards,
         'rounds': [
           for (final r in rounds)
             [
@@ -1257,6 +1261,7 @@ class GameState extends ChangeNotifier {
     if (confidence <= 0) fired = true;
     this._weeklyJobs();
     this._intlTick();
+    this._awardsTick();
 
     if (week == rounds.length ~/ 2 && ffpRatio > 0.85) {
       news.insert(0, '⚠️ تحذير اللعب المالي النظيف: الرواتب ${(ffpRatio * 100).round()}% من الإيرادات (الحد 85%)');

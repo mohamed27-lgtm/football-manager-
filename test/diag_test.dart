@@ -146,4 +146,48 @@ void main() {
     expect(gs.seasonOver, false);
     expect(gs.week, 0);
   });
+
+  test('جوائز فرانس فوتبول/الفيفا/الولد الذهبي بمواعيدها الحقيقية', () {
+    final r = Random(11);
+    final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];
+    final gs = GameState.fromData(teams, 4, 'تجريبي');
+    var guard = 0;
+    while (!gs.seasonOver && guard++ < 800) {
+      gs.confidence = 100;
+      final c = gs.pendingCup;
+      if (c != null) {
+        gs.startCupMatch(c);
+        gs.finishCurrent();
+        continue;
+      }
+      gs.startMatch();
+      gs.finishMatchday();
+    }
+    expect(gs.seasonOver, true);
+    final ids = [for (final a in (gs.ceremony!['a'] as List)) a['id']];
+    expect(ids.contains('bd'), false, reason: 'الكرة الذهبية لا تُعلن نهاية الموسم');
+    expect(gs.pendingAwards.any((a) => a['id'] == 'bd'), true);
+    expect(gs.pendingAwards.any((a) => a['id'] == 'yashin'), true);
+    expect(gs.pendingAwards.any((a) => a['id'] == 'fifa_coach'), true);
+    gs.startNewSeason();
+    final seen = <String>{};
+    guard = 0;
+    while (!gs.seasonOver && guard++ < 800) {
+      gs.confidence = 100;
+      final c = gs.pendingCup;
+      if (c != null) {
+        gs.startCupMatch(c);
+        gs.finishCurrent();
+        continue;
+      }
+      gs.startMatch();
+      gs.finishMatchday();
+      final ev = gs.ceremony?['ev'];
+      if (ev != null) seen.add('$ev@${GameCalendar.fmt(GameCalendar.weekStart(gs.season, gs.week - 1))}');
+    }
+    // ignore: avoid_print
+    print('DIAG awards events: $seen pending=${gs.pendingAwards.length}');
+    expect(seen.any((e) => e.startsWith('ballon')), true);
+    expect(seen.any((e) => e.startsWith('fifa')), true);
+  });
 }
