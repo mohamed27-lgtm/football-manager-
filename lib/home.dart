@@ -11,6 +11,7 @@ import 'matches_screen.dart';
 import 'leagues_screen.dart';
 import 'more_screen.dart';
 import 'squad.dart';
+import 'market_screen.dart';
 import 'business_screens.dart';
 import 'club_screens.dart';
 import 'activity_screen.dart';

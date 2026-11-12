@@ -5,14 +5,22 @@ import 'squad.dart';
 import 'widgets.dart';
 
 /// الإعارات: لاعبون معارون إلينا ولاعبون أعرناهم
-class LoansScreen extends StatefulWidget {
+class LoansScreen extends StatelessWidget {
   final GameState gs;
   const LoansScreen({super.key, required this.gs});
   @override
-  State<LoansScreen> createState() => _LoansScreenState();
+  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('الإعارات')), body: LoansBody(gs: gs));
 }
 
-class _LoansScreenState extends State<LoansScreen> {
+/// محتوى الإعارات (يُستخدم داخل شاشة الانتقالات وشاشة الإعارات)
+class LoansBody extends StatefulWidget {
+  final GameState gs;
+  const LoansBody({super.key, required this.gs});
+  @override
+  State<LoansBody> createState() => _LoansBodyState();
+}
+
+class _LoansBodyState extends State<LoansBody> {
   GameState get gs => widget.gs;
   int tab = 0;
 
@@ -30,9 +38,7 @@ class _LoansScreenState extends State<LoansScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('الإعارات')),
-      body: ListenableBuilder(
+    return ListenableBuilder(
         listenable: gs,
         builder: (context, _) {
           final into = gs.user.squad.where((p) => p.onLoan).toList();
@@ -89,7 +95,6 @@ class _LoansScreenState extends State<LoansScreen> {
               ),
           ]);
         },
-      ),
     );
   }
 }
