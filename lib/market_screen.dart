@@ -8,6 +8,7 @@ import 'loans_screen.dart';
 import 'models.dart';
 import 'negotiation.dart';
 import 'squad.dart';
+import 'transfers.dart';
 import 'widgets.dart';
 
 const _okGreen = Color(0xFF1FA58A);
