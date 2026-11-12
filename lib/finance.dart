@@ -6,6 +6,11 @@ class Finance {
   final Map<String, double> season = {};
   final List<double> history = [];
 
+  /// دفتر المعاملات: كل إدخال [موسم، أسبوع، يوم، بند، مبلغ موقّع (+دخل / −مصروف)، ملاحظة]
+  final List<List<dynamic>> ledger = [];
+  static const _ledgerMax = 400;
+  int Function()? clockSeason, clockWeek, clockDay;
+
   static const incomeKeys = ['tickets', 'broadcast', 'sponsor', 'prize', 'sales', 'loanout'];
   static const expenseKeys = [
     'wages',
@@ -43,7 +48,13 @@ class Finance {
     'scouting': 'مهام الكشافة',
   };
 
-  void add(String key, double v) => season[key] = (season[key] ?? 0) + v;
+  void add(String key, double v, {String note = ''}) {
+    season[key] = (season[key] ?? 0) + v;
+    if (v.abs() < 0.0005) return;
+    final inc = incomeKeys.contains(key);
+    ledger.add([clockSeason?.call() ?? 1, clockWeek?.call() ?? 0, clockDay?.call() ?? 0, key, inc ? v.abs() : -v.abs(), note]);
+    if (ledger.length > _ledgerMax) ledger.removeRange(0, ledger.length - _ledgerMax);
+  }
 
   double get totalIncome =>
       incomeKeys.fold(0.0, (a, k) => a + (season[k] ?? 0));
@@ -60,6 +71,7 @@ class Finance {
         'debt': debt,
         'season': season,
         'history': history,
+        'ledger': ledger,
       };
 
   factory Finance.fromJson(Map<String, dynamic> j) {
@@ -70,6 +82,9 @@ class Finance {
     });
     for (final v in (j['history'] as List?) ?? const []) {
       f.history.add((v as num).toDouble());
+    }
+    for (final e in (j['ledger'] as List?) ?? const []) {
+      f.ledger.add(List<dynamic>.from(e as List));
     }
     return f;
   }

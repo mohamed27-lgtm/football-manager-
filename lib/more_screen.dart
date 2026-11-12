@@ -43,6 +43,24 @@ class TrophyScreen extends StatelessWidget {
         child: ListView(padding: const EdgeInsets.all(14), children: [
           if (h.isEmpty)
             const Panel(child: EmptyState(icon: Icons.emoji_events_outlined, title: 'الخزانة فارغة', subtitle: 'ستُعرض هنا كل الألقاب التي تفوز بها. الطريق طويل!')),
+          if (h.isNotEmpty)
+            Unfilter(
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(22), gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF22345C), Color(0xFF0F1B33)])),
+                child: Builder(builder: (_) {
+                  final last = parseHonour(h.last);
+                  final comp = last?.$1 ?? 'الدوري';
+                  return Column(children: [
+                    Image.asset('assets/trophies/${trophyKey(comp == 'الدوري' ? gs.leagueName : comp, gs.leagueName, isLeague: comp == 'الدوري')}.png', height: 96, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Text('🏆', style: TextStyle(fontSize: 70))),
+                    const SizedBox(height: 8),
+                    Text('${h.length} لقباً في تاريخ النادي', style: const TextStyle(color: Color(0xFFFFFFFF), fontWeight: FontWeight.w900, fontSize: 19)),
+                    Text('آخرها: ${last == null ? h.last : '$comp • الموسم ${last.$2}'}', style: const TextStyle(color: Color(0xFF9FB0D0), fontSize: 12.5)),
+                  ]);
+                }),
+              ),
+            ),
           for (final g in groups)
             Panel(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

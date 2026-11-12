@@ -131,6 +131,11 @@ class GameState extends ChangeNotifier {
 
   MatchSim? sim;
   Finance fin = Finance();
+  void _wireFin() {
+    fin.clockSeason = () => season;
+    fin.clockWeek = () => week;
+    fin.clockDay = () => dayCursor;
+  }
   final List<Offer> offers = [];
   final Set<int> watch = {};
   LastMatch? lastMatch;
@@ -333,6 +338,21 @@ class GameState extends ChangeNotifier {
   }
 
   String? celebration;
+  /// لقطة إحصاءات الفريق لحظة التتويج (قبل تصفير الموسم)
+  Map<String, int>? celebStats;
+  void _snapCeleb() {
+    celebStats = {
+      's': season,
+      'pts': user.points,
+      'w': user.won,
+      'd': user.drawn,
+      'l': user.lost,
+      'gf': user.gf,
+      'ga': user.ga,
+      'pl': user.played,
+      'top': user.squad.fold<int>(0, (a, p) => p.goals > a ? p.goals : a),
+    };
+  }
   void toggleWatch(Player p) {
     if (!watch.remove(p.id)) watch.add(p.id);
     notifyListeners();
@@ -512,6 +532,7 @@ class GameState extends ChangeNotifier {
       }
     }
     user = teams.firstWhere((x) => x.id == userId);
+    _wireFin();
     _buildFixtures();
     _setupCups(null);
     _setupWorldCups();
@@ -538,6 +559,7 @@ class GameState extends ChangeNotifier {
     objective = j['objective'] as int;
     leagueName = (j['league'] as String?) ?? leagueName;
     if (j['fin'] != null) fin = Finance.fromJson(j['fin'] as Map<String, dynamic>);
+    _wireFin();
     confidence = (j['conf'] as num).toDouble();
     training = migrateTraining(j['training'] as String);
     trainIntensity = (j['tint'] as int?) ?? 1;
@@ -2494,6 +2516,7 @@ class GameState extends ChangeNotifier {
         fin.add('prize', bonus);
         confidence = min(100, confidence + 10);
         honours.add('🏆 ${c.name} — الموسم $season');
+        this._snapCeleb();
         celebration = c.name;
         news.insert(0, '🏆🏆 بطل ${c.name}! مكافأة ${money1(bonus)}');
       } else {
@@ -2870,6 +2893,7 @@ class GameState extends ChangeNotifier {
     }
     if (pos == 1) {
       honours.add('🏆 الدوري — الموسم $season');
+      this._snapCeleb();
       celebration = 'الدوري';
       news.insert(0, '🏆🏆 بطل الدوري!');
       fans = min(100, fans + 6);

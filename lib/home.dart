@@ -27,6 +27,7 @@ import 'sections_page.dart';
 import 'lang_sheet.dart';
 import 'settings.dart';
 import 'widgets.dart';
+import 'title_screen.dart';
 import 'scouting_screen.dart';
 import 'loans_screen.dart';
 import 'stadium_screen.dart';
@@ -470,32 +471,7 @@ class _HomeShellState extends State<HomeShell> {
           gs.celebration = null;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            showDialog(
-              context: context,
-              builder: (c) => Dialog(
-                backgroundColor: kCard,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: const BorderSide(color: kGold)),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0.2, end: 1),
-                      duration: const Duration(milliseconds: 900),
-                      curve: Curves.elasticOut,
-                      builder: (_, v, ch) => Transform.scale(scale: v, child: ch),
-                      child: const Text('🏆', style: TextStyle(fontSize: 84)),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text('مبروك! بطل', style: TextStyle(color: kMuted)),
-                    Text(name, textAlign: TextAlign.center, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: kGold)),
-                    const SizedBox(height: 6),
-                    Text('أُضيف اللقب إلى خزانة البطولات', style: const TextStyle(color: kMuted, fontSize: 12.5)),
-                    const SizedBox(height: 16),
-                    GradientButton(label: 'رائع!', onPressed: () => Navigator.pop(c)),
-                  ]),
-                ),
-              ),
-            );
+            Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TitleScreen(gs: gs, comp: name)));
           });
         }
         final pages = <Widget>[
