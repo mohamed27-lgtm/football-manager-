@@ -1251,7 +1251,9 @@ class GameState extends ChangeNotifier {
     final broadcast = (0.35 + 0.1 * user.reputation) * divFactor * (0.85 + 0.3 * (teams.length - position) / max(1, teams.length - 1));
     final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +
         dealsIncome * (0.9 + 0.2 * fans / 100);
-    final sponsorX = sponsor * (1 + 0.05 * mk);
+    // تسويق نجومك: قمصان وحقوق صورة تتناسب مع هالة الجوائز وشعبية النادي
+    final merch = user.squad.fold<double>(0, (a, p) => a + p.awardBoost) * 0.5 * (0.5 + fans / 100);
+    final sponsorX = (sponsor + merch) * (1 + 0.05 * mk);
     final maintenance = 0.03 * (user.stadium + user.trainingLvl);
     final interest = fin.debt * 0.004;
     // مصاريف التشغيل والإدارة (طاقم غير لاعبين، الأمن، السفر، التسويق...) نحو 22% من الإيرادات
@@ -2012,6 +2014,7 @@ class GameState extends ChangeNotifier {
       for (final p in [...t.squad]) {
         p.age++;
         p.contract--;
+        p.awardBoost *= 0.6;
         final played = p.apps >= 15;
         final form = p.rated == 0 ? 0 : (p.avgRating >= 7.3 ? 1 : (p.avgRating <= 6.2 && played ? -1 : 0));
         _develop(p, form, t == user && user.trainingLvl >= 3 ? 1 : 0);
@@ -3016,11 +3019,17 @@ class GameState extends ChangeNotifier {
     sponsorOffers = {};
     for (final type in sponsorTypes.keys) {
       if (deals.any((d) => d.type == type)) continue;
-      final pool = sponsorBrands[type]!.where((b) => tierFans[b.$2]! <= fans).toList()..shuffle(rng);
+      // مكانة النادي (0..1): السمعة + الجماهير → تحدد من يرغب برعايتك وبكم
+      final standing = (0.55 * (user.reputation / 5.0) + 0.45 * (fans / 100.0)).clamp(0.05, 1.0);
+      final all = sponsorBrands[type]!;
+      var pool = all.where((b) => tierFans[b.$2]! <= fans && (b.$2 > 1 || standing >= 0.7) && (b.$2 > 2 || standing >= 0.4)).toList()..shuffle(rng);
+      // الشركات الصغيرة لا تهتم بالأندية الكبرى بسعر منخفض؛ الكبرى تحتاج مكانة
+      if (pool.length < 2) pool = all.where((b) => b.$2 == 3).toList()..shuffle(rng);
       final offers = <SponsorOffer>[];
       for (final b in pool.take(3)) {
         final years = 1 + rng.nextInt(4);
-        final base = (0.2 + 0.09 * user.reputation) * typeMult[type]! * tierMult[b.$2]! * (1 + 0.05 * (4 - years));
+        final tierF = b.$2 == 1 ? 1.25 : (b.$2 == 2 ? 1.0 : 0.8);
+        final base = (0.1 + 1.2 * pow(standing, 2.2)) * typeMult[type]! * tierF * (0.92 + 0.16 * rng.nextDouble()) * (1 + 0.05 * (4 - years));
         final weekly = (base * 100).round() / 100;
         final bonus = years >= 3 ? (weekly * 4 * 10).round() / 10 : 0.0;
         offers.add(SponsorOffer(SponsorDeal(type, b.$1, weekly, years), bonus));

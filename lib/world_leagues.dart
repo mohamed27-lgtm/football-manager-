@@ -147,8 +147,14 @@ extension WorldLeagues on GameState {
     _initWorldLeagues();
     if (wLeagues.isEmpty) return;
     final feed = <String>[];
+    // نفس رتمك: توزَّع جولات كل دوري على أسابيع موسمك فينتهي الجميع معك
+    final span = max(1, rounds.length);
     for (final l in wLeagues) {
-      _playRound(l, feed: _kTopLeagueIds.contains(l.id) ? feed : null);
+      final target = (((week + 1) * l.totalRounds) / span).floor().clamp(1, l.totalRounds);
+      var guard = 0;
+      while (l.round < target && !l.done && guard++ < 8) {
+        _playRound(l, feed: _kTopLeagueIds.contains(l.id) ? feed : null);
+      }
     }
     if (feed.isNotEmpty) {
       worldFeed.insertAll(0, feed);

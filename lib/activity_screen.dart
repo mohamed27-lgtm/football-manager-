@@ -27,6 +27,7 @@ class ActivityScreen extends StatefulWidget {
 }
 
 class _ActivityScreenState extends State<ActivityScreen> {
+  bool showAll = false; // false = الرسائل المهمة فقط
   int tab = 0; // 0 الكل، 1 انتقالات، 2 إدارة، 3 مباريات، 4 إصابات، 5 تحديات
   GameState get gs => widget.gs;
 
@@ -40,6 +41,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
     if (RegExp(r'أصيب|إصابة|🚑|تعافى').hasMatch(n)) return 3;
     return 2;
   }
+
+  /// الرسائل المهمة فقط: عروض، قرارات الإدارة، صفقاتي، الإصابات، العقود، الألقاب والجوائز، المالية
+  static final _important = RegExp(
+      r'^(📨|💰|💼|🙅|🩺|🏃|📄|🚑|⚖️|⛔|⚠️|🎯|😕|😠|🤝|🔼|🔽|🏅|📋|🥇|⭐|🏆🏆|🏆 أنهيت|🏟️ ناديك|🏛️ (دعاك|وصل)|✍️ (جدّدت|قدّمت)|📤 انتهى|👋 ودّعت|مرحباً)|فزت بـ|حفل|الكرة الذهبية');
 
   DateTime _parseDay(String? stamp) {
     if (stamp == null) return gs.today;
@@ -56,7 +61,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
       out.add(_Msg('t:${t.id}', t.title, t.body, switch (t.action) { TaskAction.offers => 'الانتقالات', TaskAction.injuries => 'الطاقم الطبي', TaskAction.job => 'عرض تدريب', _ => 'الإدارة' }, '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}', cat, gs.today,
           reply: t.action == TaskAction.offers || t.action == TaskAction.board || t.action == TaskAction.job, task: t));
     }
-    for (final n in gs.news.take(60)) {
+    for (final n in gs.news.take(showAll ? 60 : 200)) {
+      if (!showAll && !_important.hasMatch(n)) continue;
       final st = gs.newsStamp[n];
       final c = _catOfNews(n);
       out.add(_Msg('n:$n', n.split('\n').first, n, _catNames[c], _time(st), c, _parseDay(st)));
@@ -176,7 +182,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   _chip('التحديات', 0, 5),
                 ]),
               ),
-              if (tab != 5) Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 6), child: Row(children: [Text('$unreadN غير مقروءة', style: const TextStyle(color: kMuted, fontSize: 12))])),
+              if (tab != 5) Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 6), child: Row(children: [
+                Text('$unreadN غير مقروءة', style: const TextStyle(color: kMuted, fontSize: 12)),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => setState(() => showAll = !showAll),
+                  child: Text(showAll ? 'المهمة فقط' : 'عرض كل الرسائل', style: const TextStyle(color: kPrimary, fontSize: 12, fontWeight: FontWeight.w800)),
+                ),
+              ])),
               Expanded(
                 child: tab == 5
                     ? ListView(padding: const EdgeInsets.only(top: 8), children: [

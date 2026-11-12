@@ -455,7 +455,8 @@ extension SeasonCeremony on GameState {
       final p = w.pid == null ? null : user.squad.where((x) => x.id == w.pid).firstOrNull;
       if (p != null) {
         p.morale = min(100, p.morale + w.morale);
-        p.awardBoost += w.value;
+        p.awardBoost = min(0.35, p.awardBoost + w.value * 0.04);
+        fans = (fans + w.value * 0.4).clamp(0, 100).toDouble();
       }
     }
     if (total > 0) {
