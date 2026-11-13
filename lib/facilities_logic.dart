@@ -144,7 +144,7 @@ extension FacilitiesLogic on GameState {
     final vipF = (0.8 + 0.1 * user.stadium) * (pos > 0 && pos <= 4 ? 1.1 : 0.95);
     return (
       season: base * 0.35,
-      single: base * 0.45 * ticketMult[ticketLevel] * (fillRate / baseFill) * opp,
+      single: base * 0.45 * GameState.ticketMult[ticketLevel] * (fillRate / baseFill) * opp,
       vip: base * 0.20 * vipF * opp,
     );
   }
