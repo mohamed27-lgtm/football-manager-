@@ -65,6 +65,19 @@ class WorldLeague {
 
 const _kTopLeagueIds = {39, 140, 135, 78, 61};
 
+/// درجة الدوري داخل بلده (1 الأعلى)، مستنتجة من اسمه لأن درجات المصدر غير متسقة
+int worldDivOf(WorldLeague l) {
+  if (l.name.contains('الثالثة')) return 3;
+  if (l.name.contains('الثانية') || l.name.contains('تشامبيونشيب')) return 2;
+  return 1;
+}
+
+/// عدد فرق الصعود والهبوط بين درجتين
+int worldMoveCount(WorldLeague up, WorldLeague low) {
+  final m = min(up.n, low.n);
+  return min(m < 16 ? 2 : 3, m ~/ 4);
+}
+
 extension WorldLeagues on GameState {
   /// مفتاح موحّد لخزينة النادي (الاسم الإنجليزي إن وُجد له اسم عربي في السجل)
   String honourKey(String club) => kClubAlias[club] ?? club;
@@ -135,6 +148,8 @@ extension WorldLeagues on GameState {
       for (final p in [...t.squad]) {
         p.age++;
         p.apps = 0;
+        p.goals = 0;
+        p.assists = 0;
         _develop(p, 0, 0);
         if (_retires(p)) {
           if (p.overall >= 55 && !p.filler) {
@@ -242,11 +257,7 @@ extension WorldLeagues on GameState {
   }
 
   /// ترتيب الدرجة داخل البلد من اسم الدوري (بيانات الدرجات في المصدر غير متسقة بين البلدان)
-  static int _divOf(WorldLeague l) {
-    if (l.name.contains('الثالثة')) return 3;
-    if (l.name.contains('الثانية') || l.name.contains('تشامبيونشيب')) return 2;
-    return 1;
-  }
+  static int _divOf(WorldLeague l) => worldDivOf(l);
 
   /// صعود وهبوط بين درجات كل بلد: يصعد الأوائل ويهبط الأواخر، وتنتقل معهم فرقهم وقوتهم
   void _worldPromotions() {
@@ -262,7 +273,7 @@ extension WorldLeagues on GameState {
       for (var d = 0; d + 1 < ls.length; d++) {
         final up = ls[d], low = ls[d + 1];
         if (_divOf(up) == _divOf(low)) continue;
-        final k = min(min(up.n, low.n) < 16 ? 2 : 3, min(up.n, low.n) ~/ 4);
+        final k = worldMoveCount(up, low);
         if (k < 1) continue;
         final goDown = ords[up.id]!.sublist(up.n - k); // آخر فرق الدرجة الأعلى
         final goUp = ords[low.id]!.take(k).toList(); // أول فرق الدرجة الأدنى
