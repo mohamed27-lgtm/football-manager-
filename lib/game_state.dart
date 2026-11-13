@@ -1289,13 +1289,24 @@ class GameState extends ChangeNotifier {
 
     final home = f.home == user.id;
     final mk = staff['marketing'] ?? 0;
-    final gate = home ? (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (0.75 + 0.5 * fans / 100) * (1 + 0.04 * mk) * ticketMult[ticketLevel] : 0.0;
+    // الإيراد = السعر × الحضور: رفع السعر يقلل الامتلاء، ومباريات الأندية الكبرى تجذب جمهوراً أكبر
+    final baseFill = 0.42 + 0.5 * fans / 100;
+    final oppRep = (() {
+      try {
+        return team(home ? f.away : f.home).reputation;
+      } catch (_) {
+        return 3;
+      }
+    })();
+    final gate = home
+        ? (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (0.75 + 0.5 * fans / 100) * (1 + 0.04 * mk) * ticketMult[ticketLevel] * (fillRate / baseFill) * (0.92 + 0.04 * oppRep)
+        : 0.0;
     if (home) {
       attHist.add(attendance);
       if (attHist.length > 12) attHist.removeAt(0);
     }
     if (home) fans = (fans + (ticketLevel == 0 ? 0.3 : ticketLevel == 2 ? -0.4 : 0.0)).clamp(0, 100).toDouble();
-    final broadcast = (0.35 + 0.1 * user.reputation) * divFactor * (0.85 + 0.3 * (teams.length - position) / max(1, teams.length - 1));
+    final broadcast = (0.35 + 0.1 * user.reputation) * divFactor * (0.85 + 0.3 * (teams.length - position) / max(1, teams.length - 1)) * (0.92 + 0.16 * fans / 100);
     final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +
         dealsIncome * (0.9 + 0.2 * fans / 100);
     // تسويق نجومك: قمصان وحقوق صورة تتناسب مع هالة الجوائز وشعبية النادي
