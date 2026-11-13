@@ -194,6 +194,49 @@ void main() {
     expect(seen.any((e) => e.startsWith('fifa')), true);
   });
 
+  test('معايرة إحصاءات المباراة (تسديدات، بطاقات، ركنيات...)', () {
+    final r = Random(11);
+    const n = 3000;
+    var shots = 0, sot = 0, corners = 0, fouls = 0, off = 0, passes = 0, passOk = 0, goals = 0;
+    var yel = 0, red = 0, inj = 0, pen = 0, penGoal = 0, vars = 0;
+    double xg = 0, poss = 0;
+    var maxPoss = 0;
+    for (var k = 0; k < n; k++) {
+      final h = createTeam(r, 0, 'H', 3 + r.nextInt(3));
+      final a = createTeam(r, 1, 'A', 3 + r.nextInt(3));
+      final m = MatchSim(h, a, random: r)..simulateAll();
+      for (final s in [m.home, m.away]) {
+        shots += s.shots;
+        sot += s.onTarget;
+        corners += s.corners;
+        fouls += s.fouls;
+        off += s.offsides;
+        passes += s.passes;
+        passOk += s.passOk;
+        goals += s.goals;
+        xg += s.xg;
+      }
+      poss += (m.homePoss - 50).abs();
+      if (m.homePoss > maxPoss) maxPoss = m.homePoss;
+      for (final e in m.events) {
+        if (e.type == 'yellow') yel++;
+        if (e.type == 'red') red++;
+        if (e.type == 'injury') inj++;
+        if (e.type == 'penalty') pen++;
+        if (e.text.contains('VAR')) vars++;
+      }
+    }
+    String f(num v) => (v / n).toStringAsFixed(2);
+    // ignore: avoid_print
+    print('CALIB per-match: goals=${f(goals)} xg=${f(xg)} shots=${f(shots)} onTarget=${f(sot)} corners=${f(corners)} fouls=${f(fouls)} offsides=${f(off)} yellows=${f(yel)} reds=${f(red)} injuries=${f(inj)} pens=${f(pen)} var=${f(vars)} passes=${f(passes)} passAcc=${(passOk * 100 / passes).toStringAsFixed(1)}% possGap=${f(poss)} maxPoss=$maxPoss');
+    // مراجع واقعية تقريبية للمباراة الواحدة (الفريقان معاً)
+    expect(goals / n, inInclusiveRange(2.3, 3.1));
+    expect(shots / n, inInclusiveRange(18, 32));
+    expect(yel / n, inInclusiveRange(2.5, 5.0));
+    expect(red / n, inInclusiveRange(0.03, 0.22));
+    expect(corners / n, inInclusiveRange(7, 13));
+  });
+
   test('تقييمات الأداء من أحداث المباراة وطقس وحكم', () {
     final r = Random(61);
     final rs = <double>[];
