@@ -2231,7 +2231,8 @@ class GameState extends ChangeNotifier {
         p.fitness = 100;
         p.morale = 70;
         p.load = 0;
-        if (p.injuredWeeks > 0 && p.injuredWeeks < 12) XX
+        p.injuredWeeks = max(0, p.injuredWeeks - 12);
+        p.suspendedMatches = 0;
         p.goals = 0;
         p.assists = 0;
         p.apps = 0;
