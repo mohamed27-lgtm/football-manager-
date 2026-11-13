@@ -44,7 +44,7 @@ extension IntlLogic on GameState {
     }
     final away = <String>[], hurt = <String>[];
     for (final p in user.squad) {
-      final n = p.nat;
+      final n = p.natRep;
       if (n == null || !played.contains(n)) continue;
       if (!(p.overall >= 76 || (n == country && p.overall >= 70))) continue;
       away.add('${p.name} ($n)');

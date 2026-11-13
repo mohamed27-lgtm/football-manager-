@@ -35,6 +35,9 @@ class Player {
   String? photo;
   String? nat, sub, foot; // الجنسية، المركز الدقيق، القدم
   String? nat2; // جنسية ثانية (للاعبين المُنشأين)
+  String? swNat; // المنتخب الذي اختار تمثيله بعد الإقناع (بدل جنسيته الأساسية)
+  int swTry = 0, swWeek = -99; // محاولات الإقناع وأسبوع آخر محاولة
+  String? get natRep => swNat ?? nat; // المنتخب الذي يمثّله فعلياً
   List<int>? sk; // المهارات الست للاعب المُنشأ: سرعة، تسديد، تمرير، مراوغة، دفاع، قوة
   List<String> traits = [];
   String? club; // ناديه الحالي (لاعبو السوق الحقيقيون)
@@ -158,7 +161,7 @@ class Player {
         'obl': obligation,
         'career': career,
         'aw': awards,
-        'nat2': nat2, 'sk': sk, 'tr': traits,
+        'nat2': nat2, 'sw': swNat, 'swt': swTry, 'sww': swWeek, 'sk': sk, 'tr': traits,
         'club': club, 'nat': nat, 'sub': sub, 'ft': foot, 'ht': height, 'mv0': mv0, 'ov0': ov0, 'age0': age0,
       };
 
@@ -198,6 +201,9 @@ class Player {
         ..club = j['club'] as String?
         ..nat = natArabic(j['nat'] as String?)
         ..nat2 = natArabic(j['nat2'] as String?)
+        ..swNat = natArabic(j['sw'] as String?)
+        ..swTry = (j['swt'] as int?) ?? 0
+        ..swWeek = (j['sww'] as int?) ?? -99
         ..sk = (j['sk'] as List?)?.cast<int>()
         ..traits = [for (final t in (j['tr'] as List?) ?? const []) t as String]
         ..sub = j['sub'] as String?

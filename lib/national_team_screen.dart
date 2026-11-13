@@ -5,6 +5,7 @@ import 'game_state.dart';
 import 'models.dart';
 import 'world.dart';
 import 'lineup_pages.dart';
+import 'dual_screen.dart';
 import 'match_pages.dart' show whiteBtn, gameBar;
 import 'widgets.dart';
 
@@ -92,6 +93,8 @@ class NationScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   Row(children: [
                     Expanded(child: blueBtn('الاستدعاءات', () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => CallupScreen(gs: gs))), icon: Icons.groups_rounded)),
+                    const SizedBox(width: 8),
+                    Expanded(child: blueBtn('مزدوجو الجنسية', () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => DualScreen(gs: gs))), icon: Icons.swap_horiz_rounded)),
                     const SizedBox(width: 8),
                     Expanded(child: whiteBtn('استقالة', () async {
                       final ok = await confirmDialog(context, title: 'مغادرة المنتخب', body: 'هل تريد التوقف عن تدريب منتخب $nation؟', confirm: 'استقالة', danger: true);

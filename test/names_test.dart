@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:football_manager/data.dart';
 import 'package:football_manager/names.dart';
 import 'package:football_manager/models.dart';
+import 'package:football_manager/game_state.dart';
+import 'package:football_manager/countries.dart';
 
 void main() {
   test('generated players get a nationality and a matching Latin name', () {
@@ -25,5 +27,15 @@ void main() {
       if (makePlayer(rng, Pos.def, 60, 20, preferNat: 'اليابان').nat == 'اليابان') home++;
     }
     expect(home, greaterThan(360));
+  });
+  test('diaspora map uses real country names', () {
+    final names = {for (final c in kAllCountries) c.name};
+    kDiaspora.forEach((k, v) {
+      expect(names.contains(k), isTrue, reason: k);
+      for (final x in v) {
+        expect(names.contains(x), isTrue, reason: '$k -> $x');
+        expect(x == k, isFalse);
+      }
+    });
   });
 }

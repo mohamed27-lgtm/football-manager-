@@ -25,6 +25,7 @@ part 'awards_logic.dart';
 part 'facilities_logic.dart';
 part 'tickets_logic.dart';
 part 'club_logic.dart';
+part 'dual_logic.dart';
 part 'jobs_logic.dart';
 part 'intl_logic.dart';
 part 'world_leagues.dart';
@@ -3333,7 +3334,7 @@ class GameState extends ChangeNotifier {
     final m = <String, List<(Player, Team)>>{};
     for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
       for (final p in t.squad) {
-        final n = p.nat;
+        final n = p.natRep;
         if (n == null || n.isEmpty) continue;
         m.putIfAbsent(n, () => []).add((p, t));
       }
@@ -3527,12 +3528,12 @@ class GameState extends ChangeNotifier {
       nat.history.remove(same.removeAt(0));
     }
     news.insert(0, '🌍 ${d.name}: ${t.champion} بطلاً على ${t.runnerUp}');
-    final mine = [for (final p in user.squad) if (p.nat != null && teams.contains(p.nat)) p];
+    final mine = [for (final p in user.squad) if (p.natRep != null && teams.contains(p.natRep)) p];
     if (mine.isNotEmpty) {
       news.insert(0, '🌍 شارك ${mine.length} من لاعبيك مع منتخباتهم في ${d.name}');
       for (final p in mine) {
-        p.morale = min(100, p.morale + (p.nat == t.champion ? 8 : 2));
-        if (p.nat == t.champion) p.awards.add({'s': season, 'c': d.name, 'k': 'cup'});
+        p.morale = min(100, p.morale + (p.natRep == t.champion ? 8 : 2));
+        if (p.natRep == t.champion) p.awards.add({'s': season, 'c': d.name, 'k': 'cup'});
       }
     }
     for (final e in t.scorers.entries) {
