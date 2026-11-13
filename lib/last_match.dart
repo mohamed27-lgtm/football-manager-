@@ -72,6 +72,7 @@ class LastMatch {
       'fouls': [s.home.fouls, s.away.fouls],
       'offside': [s.home.offsides, s.away.offsides],
       'xg': [xg(s.home), xg(s.away)],
+      'big': [s.home.bigChances, s.away.bigChances],
     };
 
     final rt = <Map<String, dynamic>>[];

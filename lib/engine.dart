@@ -40,7 +40,7 @@ class Side {
   final Map<Player, PerfStat> perf = {};
   PerfStat ps(Player p) => perf.putIfAbsent(p, PerfStat.new);
   int goals = 0, shots = 0, onTarget = 0, poss = 0, subsLeft = 3, fouls = 0, corners = 0;
-  int passes = 0, passOk = 0, offsides = 0;
+  int passes = 0, passOk = 0, offsides = 0, bigChances = 0, bigMissed = 0;
   double xg = 0;
 
   /// مهارة التمرير: متوسط تمرير اللاعبين الميدانيين
@@ -372,9 +372,21 @@ class MatchSim {
             0.025 * (a.team.width - 1) -
             0.02 * (a.team.passing - 1))
         .clamp(0.2, 0.6);
-    a.xg += onT * (0.275 * pow(q / max(20, gkR), 1.4)).clamp(0.06, 0.65);
-    if (rng.nextDouble() > onT) {
-      if (rng.nextDouble() < 0.35) {
+    // جودة الفرصة: فرصة محققة (12%) ، قريبة (25%) ، بعيدة/ضغط (63%)
+    final cr = rng.nextDouble();
+    final big = cr < 0.12;
+    final qf = big ? 2.3 : (cr < 0.37 ? 1.25 : 0.68);
+    final xgShot = (0.275 * pow(q / max(20, gkR), 1.4) * qf).clamp(0.03, 0.85).toDouble();
+    final onTf = big ? (onT + 0.12).clamp(0.2, 0.8).toDouble() : onT.toDouble();
+    a.xg += onTf * xgShot;
+    if (big) a.bigChances++;
+    if (rng.nextDouble() > onTf) {
+      if (big) {
+        a.bigMissed++;
+        a.bump(shooter, -0.25);
+        _log('miss', '😱 ${shooter.name} يهدر فرصة محققة!', a.isHome);
+      }
+      if (!big && rng.nextDouble() < 0.35) {
         _log('miss', '${shooter.name} يسدد بعيداً عن المرمى', a.isHome,
             major: false);
       }
@@ -383,7 +395,7 @@ class MatchSim {
     }
     a.onTarget++;
     a.ps(shooter).onTarget++;
-    final pg = (0.275 * pow(q / max(20, gkR), 1.4)).clamp(0.06, 0.65);
+    final pg = xgShot;
     if (rng.nextDouble() < pg) {
       // مراجعة الفيديو: أحياناً يُلغى الهدف (تسلل أو خطأ قبله)
       if (rng.nextDouble() < 0.035) {
@@ -417,8 +429,9 @@ class MatchSim {
           '⚽ هدف! ${shooter.name}${assister != null ? ' (تمريرة ${assister.name})' : ''}',
           a.isHome);
     } else {
+      if (big) a.bigMissed++;
       if (gkP != null) {
-        d.bump(gkP, 0.4);
+        d.bump(gkP, big ? 0.7 : 0.4);
         d.ps(gkP).saves++;
       }
       if (rng.nextDouble() < 0.55) _corner(a);

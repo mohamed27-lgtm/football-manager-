@@ -280,8 +280,8 @@ class _MatchSummaryScreenState extends State<MatchSummaryScreen> {
 
   Widget _statsTab() {
     final s = m.stats;
-    num h(String k) => s[k]![0];
-    num a(String k) => s[k]![1];
+    num h(String k) => (s[k]?[0] ?? 0);
+    num a(String k) => (s[k]?[1] ?? 0);
     return Column(children: [
       Container(
         padding: const EdgeInsets.only(top: 12, bottom: 4),
@@ -304,6 +304,7 @@ class _MatchSummaryScreenState extends State<MatchSummaryScreen> {
           _statRow('الركنيات', h('corners'), a('corners')),
           _statRow('الأخطاء', h('fouls'), a('fouls'), lowerBetter: true),
           _statRow('التسلل', h('offside'), a('offside'), lowerBetter: true),
+          _statRow('فرص محققة', h('big'), a('big')),
         ]),
       ),
       const SizedBox(height: 12),
