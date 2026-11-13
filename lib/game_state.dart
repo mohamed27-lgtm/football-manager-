@@ -2056,6 +2056,24 @@ class GameState extends ChangeNotifier {
 
   void _topUp(Team t) => topUpSquad(t, rng);
 
+  /// أكاديمية النادي: تُخرّج مواهب شابة كل موسم بحسب مستواها
+  void _academyIntake() {
+    final lvl = user.academy.clamp(1, 5);
+    final n = (rng.nextDouble() < 0.5 + 0.1 * lvl ? 1 : 0) + (lvl >= 3 && rng.nextDouble() < 0.5 ? 1 : 0) + (lvl >= 5 ? 1 : 0);
+    for (var i = 0; i < n && user.squad.length < 30; i++) {
+      final pos = Pos.values[rng.nextInt(Pos.values.length)];
+      final age = 16 + rng.nextInt(3);
+      final ov = 40 + lvl * 2 + rng.nextInt(7);
+      final p = makePlayer(rng, pos, ov, age, name: randomName(rng));
+      p
+        ..potential = min(92, ov + 14 + lvl * 4 + rng.nextInt(12))
+        ..contract = 3
+        ..club = user.name;
+      user.squad.add(p);
+      news.insert(0, '🎓 تخرّج من أكاديميتك ${p.name} (${p.age} سنة) — موهبة بإمكانات ${p.potential}');
+    }
+  }
+
   void startNewSeason() {
     final pos = position;
     final finalTable = table;
@@ -2090,11 +2108,18 @@ class GameState extends ChangeNotifier {
     }
     if (loanedOut.isNotEmpty) {
       for (final p in loanedOut) {
+        // الشاب المعار يكتسب خبرة المباريات: ينمو أكثر إن كان لديه مجال
+        if (p.age <= 22 && p.overall < p.potential) {
+          final g = min(p.potential - p.overall, 1 + rng.nextInt(3));
+          _grow(p, g);
+          news.insert(0, '📈 تطور ${p.name} خلال إعارته (+$g)');
+        }
         user.squad.add(p);
         news.insert(0, '↩️ عاد ${p.name} من الإعارة');
       }
       loanedOut.clear();
     }
+    _academyIntake();
     offers.clear();
     if (boardPledge) {
       if (pos <= 3) {
