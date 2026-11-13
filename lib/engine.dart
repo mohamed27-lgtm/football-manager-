@@ -54,6 +54,7 @@ class Side {
     if (isUser) {
       team.repairLineup();
     } else {
+      team.applyAiStyle();
       team.autoPick();
     }
     final s = team.slots;
@@ -260,7 +261,8 @@ class MatchSim {
             (1 + 0.08 * (a.team.tempo - 1)) *
             (1 + 0.05 * (a.team.width - 1)) *
             (1 + 0.06 * (a.team.passing - 1)) *
-            (1 + 0.07 * (d.team.defLine - 1)))
+            (1 + 0.07 * (d.team.defLine - 1)) *
+            _matchup(a, d))
         .clamp(0.05, 0.6)
         .toDouble();
     if (rng.nextDouble() < pShot) {
@@ -275,10 +277,46 @@ class MatchSim {
     final hs = 1 + 1.6 * tire(home), as = 1 + 1.6 * tire(away);
     if (rng.nextDouble() < 0.0015 * (hs + as) / 2) _injury(rng.nextDouble() * (hs + as) < hs ? home : away);
 
+    if (minute == 60) _insights();
     if (minute == 45) _log('info', '⏸ نهاية الشوط الأول', true);
     if (minute == 90) {
       _finalRatings();
       _log('info', '🏁 نهاية المباراة', true);
+    }
+  }
+
+  /// خطة ضد خطة: اللعب العريض يستغل ثلاثي الدفاع ويتعثر أمام الخماسي، والكتلة المنخفضة تُصعّب التمرير القصير
+  double _matchup(Side a, Side d) {
+    var m = 1.0;
+    final back = d.count(Pos.def);
+    if (a.team.width >= 2) m *= back >= 5 ? 0.92 : (back <= 3 ? 1.08 : 1.0);
+    if (a.team.width == 0) m *= back <= 3 ? 0.95 : 1.02;
+    if (d.team.defLine == 0 && a.team.passing == 0) m *= 0.9;
+    if (d.team.defLine == 0 && a.team.passing == 2 && a.team.tempo >= 2) m *= 0.97;
+    if (d.team.pressing >= 2 && a.team.passing == 0 && a.passSkill < 62) m *= 0.94;
+    final mid = a.count(Pos.mid) - d.count(Pos.mid);
+    m *= 1 + 0.015 * mid.clamp(-2, 2);
+    return m;
+  }
+
+  /// ملاحظات تكتيكية للمدرب عند الدقيقة 60
+  void _insights() {
+    for (final s in [home, away]) {
+      if (!s.isUser || s.slots.isEmpty) continue;
+      final o = identical(s, home) ? away : home;
+      final fit = s.slots.fold<double>(0, (a, e) => a + e.p.fitness) / s.slots.length;
+      if (fit < 68 && (s.team.pressing >= 2 || s.team.tempo >= 2)) {
+        _log('info', '💡 الضغط والإيقاع العاليان أنهكا لاعبيك (لياقة ${fit.round()}%). فكّر بالتبديل أو خفض الضغط', s.isHome, major: false);
+      }
+      if (o.team.defLine == 2 && s.team.passing == 2) {
+        _log('info', '💡 خط دفاع الخصم مرتفع: الكرات المباشرة خلفه فعّالة', s.isHome, major: false);
+      }
+      if (o.team.defLine == 0 && s.team.passing == 0) {
+        _log('info', '💡 الخصم متراجع بكتلة منخفضة: جرّب الكرات المباشرة أو اللعب العريض', s.isHome, major: false);
+      }
+      if (s.team.width >= 2 && o.count(Pos.def) >= 5) {
+        _log('info', '💡 دفاع الخصم بخمسة مدافعين يخنق الأطراف: ضيّق اللعب أو ادفع بمهاجم إضافي', s.isHome, major: false);
+      }
     }
   }
 

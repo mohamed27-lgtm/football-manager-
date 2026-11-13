@@ -314,6 +314,36 @@ class Team {
     return c.first;
   }
 
+  /// هوية تكتيكية ثابتة لأندية الذكاء الاصطناعي (تتحدد من اسم النادي وقوته)
+  void applyAiStyle() {
+    var h = 0;
+    for (final c in name.codeUnits) {
+      h = (h * 31 + c) & 0x7fffffff;
+    }
+    var k = h % 6;
+    if (reputation <= 2 && k == 1) k = 2; // الأضعف لا يلعب هجومياً مفتوحاً
+    switch (k) {
+      case 1: // هجومي
+        formation = formations[1];
+        mentality = 3; tempo = 2; width = 2; defLine = 2; pressing = 2; passing = 1;
+      case 2: // دفاع ومرتدات
+        formation = formations[3];
+        mentality = 1; tempo = 2; width = 1; defLine = 0; pressing = 0; passing = 2;
+      case 3: // استحواذ
+        formation = formations[1];
+        mentality = 2; tempo = 0; width = 1; defLine = 1; pressing = 2; passing = 0;
+      case 4: // ضغط عالٍ
+        formation = formations[5];
+        mentality = 3; tempo = 2; width = 1; defLine = 2; pressing = 2; passing = 1;
+      case 5: // لعب على الأطراف
+        formation = formations[0];
+        mentality = 2; tempo = 1; width = 2; defLine = 1; pressing = 1; passing = 1;
+      default: // متوازن
+        formation = formations[h % 2 == 0 ? 0 : 5];
+        mentality = 2; tempo = 1; width = 1; defLine = 1; pressing = 1; passing = 1;
+    }
+  }
+
   void autoPick() {
     final used = <Player>{};
     final res = <Player>[];
