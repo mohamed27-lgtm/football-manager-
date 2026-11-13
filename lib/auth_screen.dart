@@ -80,21 +80,7 @@ class _AuthScreenState extends State<AuthScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                    width: 84,
-                    height: 84,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: kCard,
-                      border: Border.all(color: kAccent, width: 2),
-                    ),
-                    child: const Center(child: Text('⚽', style: TextStyle(fontSize: 42))),
-                  ),
-                  const SizedBox(height: 14),
-                  const Text('مدرب كرة القدم', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
-                  const SizedBox(height: 4),
-                  Text(signup ? 'أنشئ حسابك وابدأ مسيرتك' : 'أهلاً بعودتك أيها المدرب',
-                      style: const TextStyle(color: kMuted)),
+                  CoachHero(height: 240, title: 'مدرب كرة القدم', subtitle: signup ? 'أنشئ حسابك وابدأ مسيرتك' : 'أهلاً بعودتك أيها المدرب'),
                   const SizedBox(height: 24),
                   SegmentedButton<bool>(
                     showSelectedIcon: false,

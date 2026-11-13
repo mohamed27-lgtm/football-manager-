@@ -162,11 +162,7 @@ class _StartScreenState extends State<StartScreen> {
   Widget _homeList(List<SaveMeta> saves, String name, String initial, int total, int cur, bool dark) =>
       ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 16), children: [
               Row(children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: kAccent,
-                  child: Text(initial, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.black)),
-                ),
+                const CoachAvatar(radius: 26),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -195,7 +191,9 @@ class _StartScreenState extends State<StartScreen> {
                   ),
                 ),
               ]),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
+              CoachHero(height: 170, title: name, subtitle: 'مرحباً بعودتك أيها المدرب'),
+              const SizedBox(height: 14),
               InkWell(
                 onTap: _images,
                 borderRadius: BorderRadius.circular(20),

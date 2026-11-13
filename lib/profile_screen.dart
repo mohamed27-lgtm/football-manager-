@@ -29,7 +29,6 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial = name.trim().isEmpty ? '⚽' : name.trim().characters.first.toUpperCase();
     final weeks = saves.fold<int>(0, (a, m) => a + m.week);
     final mb = saves.fold<int>(0, (a, m) => a + m.bytes) / 1e6;
     final ach = <(IconData, String, Color, bool)>[
@@ -45,11 +44,7 @@ class ProfileScreen extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: kAccent.withOpacity(0.5), width: 2)),
-            child: CircleAvatar(
-              radius: 46,
-              backgroundColor: kAccent,
-              child: Text(initial, style: const TextStyle(fontSize: 42, fontWeight: FontWeight.w900, color: Colors.black)),
-            ),
+            child: const CoachAvatar(radius: 46),
           ),
         ),
         const SizedBox(height: 12),

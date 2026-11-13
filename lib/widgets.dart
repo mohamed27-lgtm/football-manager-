@@ -674,3 +674,53 @@ Widget statusFace(Player p, double size, {Color? ring, double ringWidth = 2}) {
   if (ic == null) return face;
   return Stack(clipBehavior: Clip.none, children: [face, PositionedDirectional(end: -3, bottom: -3, child: ic)]);
 }
+
+
+/// صورة المدرب الدائرية (بروفيل): تبقى بألوانها الأصلية في الوضع الفاتح
+class CoachAvatar extends StatelessWidget {
+  final double radius;
+  const CoachAvatar({super.key, this.radius = 26});
+  @override
+  Widget build(BuildContext context) => Unfilter(
+        child: Container(
+          width: radius * 2,
+          height: radius * 2,
+          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFFFFB74D), width: 1.5)),
+          child: ClipOval(child: Image.asset('assets/brand/coach_avatar.jpg', fit: BoxFit.cover, errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFFFFB74D)))),
+        ),
+      );
+}
+
+/// غلاف مشهد البداية: صورة المدرب والملعب عند الغروب مع نصوص بيضاء فوقها
+class CoachHero extends StatelessWidget {
+  final double height;
+  final String? title, subtitle;
+  const CoachHero({super.key, this.height = 200, this.title, this.subtitle});
+  @override
+  Widget build(BuildContext context) => Unfilter(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: SizedBox(
+            height: height,
+            width: double.infinity,
+            child: Stack(fit: StackFit.expand, children: [
+              Image.asset('assets/brand/coach_scene.jpg', fit: BoxFit.cover, alignment: const Alignment(0, -0.35), errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFF3A1A0A))),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00000000), Color(0xCC000000)], stops: [0.35, 1]),
+                ),
+              ),
+              Positioned(
+                right: 16,
+                left: 16,
+                bottom: 14,
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  if (title != null) Text(title!, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                  if (subtitle != null) Text(subtitle!, style: const TextStyle(color: Color(0xFFFFD9A8), fontSize: 13)),
+                ]),
+              ),
+            ]),
+          ),
+        ),
+      );
+}
