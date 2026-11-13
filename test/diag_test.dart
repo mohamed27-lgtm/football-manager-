@@ -226,10 +226,11 @@ void main() {
     expect(gs.startProject('stadium'), null);
     expect(gs.startProject('stadium') != null, true, reason: 'مشروع ثانٍ لنفس المنشأة مرفوض');
     expect(gs.startProject('medical'), null);
-    expect(gs.startProject('training') != null, true, reason: 'حد مشروعين');
+    expect(gs.startProject('training'), null);
+    expect(gs.startProject('academy') != null, true, reason: 'حد 3 فرق بناء');
     expect(gs.stadiumCapacity < cap0, true, reason: 'السعة تنخفض أثناء البناء');
     final g2 = GameState.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(gs.toJson())) as Map));
-    expect(g2.projects.length, 2);
+    expect(g2.projects.length, 3);
     expect(g2.projects.first.left, gs.projects.first.left);
     expect(gs.rushProject('medical'), null);
     var guard = 0;
