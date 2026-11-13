@@ -2667,4 +2667,7 @@ const Map<String, List<String>> kTr = {
   '🎯 ركلة حرة خطيرة لصالح {}': ['🎯 Dangerous free kick for {}', '🎯 Coup franc dangereux pour {}', '🎯 Falta peligrosa a favor del {}'],
   '{} يسدد الركلة الحرة وتمر بجوار القائم': ['{} takes the free kick and it goes just wide', '{} frappe le coup franc, juste à côté du poteau', '{} lanza la falta y pasa rozando el poste'],
   '🎯 {} يتقدم لتنفيذ الركلة': ['🎯 {} steps up to take the kick', '🎯 {} s\'avance pour tirer le penalty', '🎯 {} se adelanta para ejecutar el penalti'],
+  '🏃 خطف {} {} أثناء تفاوضك ({})': ['🏃 {} snatched {} while you were negotiating ({})', '🏃 {} a raflé {} pendant vos négociations ({})', '🏃 {} se llevó a {} mientras negociabas ({})'],
+  'تدخّل {} بعرض أعلى وخطف اللاعب!': ['{} stepped in with a higher offer and took the player!', '{} est intervenu avec une offre plus haute et a pris le joueur !', '¡{} intervino con una oferta mayor y se llevó al jugador!'],
+  'تلقّى النادي البائع اهتماماً من {} باللاعب فرفع سعره': ['The selling club received interest from {} in the player and raised its price', 'Le club vendeur a reçu l\'intérêt de {} pour le joueur et a relevé son prix', 'El club vendedor recibió interés de {} por el jugador y subió su precio'],
 };

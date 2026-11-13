@@ -1512,11 +1512,29 @@ class GameState extends ChangeNotifier {
     final reserve = _reserve.putIfAbsent(p.id, () => ask * (0.84 + rng.nextDouble() * 0.12) * (1 - 0.02 * (staff['director'] ?? 0)));
     if (offer >= ask - 0.0001) return const NegoResult('accept', null, 'وافق النادي البائع.');
     if (offer >= reserve) return const NegoResult('accept', null, 'وافق النادي على عرضك.');
-    if (round >= 2 && rng.nextDouble() < 0.1 + (p.overall >= 75 ? 0.08 : 0.0)) {
-      market.remove(p);
+    final rivals = p.free ? <Team>[] : (teams.where((t) => t != user && t.name != p.club && t.budget >= ask && t.squad.length < 30).toList()..sort((a, b) => b.budget.compareTo(a.budget)));
+    final hot = p.overall >= 72 || (p.age <= 21 && p.potential >= 80);
+    if (round >= 2 && rivals.isNotEmpty && rng.nextDouble() < 0.1 + (p.overall >= 75 ? 0.08 : 0.0)) {
+      final rival = rivals[rng.nextInt(min(4, rivals.length))];
       _reserve.remove(p.id);
-      news.insert(0, '🏃 خطف نادٍ منافس ${p.name} أثناء تفاوضك');
-      return const NegoResult('reject', null, 'تدخّل نادٍ منافس بعرض أعلى وخطف اللاعب!');
+      final from = teams.where((t) => t.name == p.club).firstOrNull;
+      if (from != null) {
+        _moveAi(p, from, rival, ask);
+      } else {
+        market.remove(p);
+        rival.squad.add(p..contract = 2 + rng.nextInt(3));
+        rival.budget -= ask;
+        rival.autoPick();
+        news.insert(0, '🏃 خطف ${rival.name} ${p.name} أثناء تفاوضك (${money1(ask)})');
+      }
+      return NegoResult('reject', null, 'تدخّل ${rival.name} بعرض أعلى وخطف اللاعب!');
+    }
+    // دخول منافس يرفع السعر مرة واحدة في كل تفاوض
+    if (round == 1 && hot && rivals.isNotEmpty && !_rivalHeat.contains(p.id) && rng.nextDouble() < 0.3) {
+      _rivalHeat.add(p.id);
+      final rival = rivals[rng.nextInt(min(4, rivals.length))];
+      _reserve[p.id] = reserve * 1.1;
+      return NegoResult('counter', min(ask, ((max(reserve * 1.1, offer + (ask - offer) * 0.5)) * 10).round() / 10), 'تلقّى النادي البائع اهتماماً من ${rival.name} باللاعب فرفع سعره');
     }
     if (round >= 3) return const NegoResult('reject', null, 'انسحب البائع من المفاوضات. جرّب لاحقاً.');
     final c = max(reserve, offer + (ask - offer) * 0.5);
@@ -1524,7 +1542,11 @@ class GameState extends ChangeNotifier {
     return NegoResult('counter', counter, 'عرض مضاد من البائع: ${money1(counter)}');
   }
 
-  void endNegotiation(Player p) => _reserve.remove(p.id);
+  final Set<int> _rivalHeat = {};
+  void endNegotiation(Player p) {
+    _reserve.remove(p.id);
+    _rivalHeat.remove(p.id);
+  }
 
   /// استعداد اللاعب للانضمام: 0 يرحّب، 1 متردد، 2 يرفض
   int joinOutlook(Player p) {
