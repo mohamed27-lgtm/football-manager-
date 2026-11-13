@@ -9,6 +9,7 @@ import 'data.dart';
 import 'engine.dart';
 import 'finance.dart';
 import 'models.dart';
+import 'names.dart';
 import 'last_match.dart';
 import 'calendar.dart';
 import 'sponsors.dart';
@@ -2106,7 +2107,7 @@ class GameState extends ChangeNotifier {
       final pos = Pos.values[rng.nextInt(Pos.values.length)];
       final age = 16 + rng.nextInt(3);
       final ov = 40 + lvl * 2 + rng.nextInt(7);
-      final p = makePlayer(rng, pos, ov, age, name: randomName(rng));
+      final p = makePlayer(rng, pos, ov, age, preferNat: dominantNat(user.squad.map((q) => q.nat)));
       p
         ..potential = min(92, ov + 14 + lvl * 4 + rng.nextInt(12))
         ..contract = 3

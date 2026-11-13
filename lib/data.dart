@@ -1,31 +1,16 @@
 import 'dart:math';
 import 'models.dart';
+import 'names.dart';
 import 'stadiums.dart';
 
-
-const _first = [
-  'كريم', 'يوسف', 'أمين', 'سمير', 'هشام', 'طارق', 'ياسين', 'عمر', 'زياد',
-  'وليد', 'مهدي', 'رضا', 'بلال', 'أيوب', 'نبيل', 'فاروق', 'حمزة', 'إلياس',
-  'سعيد', 'جلال', 'مراد', 'نزار', 'رياض', 'عادل', 'فيصل', 'هيثم', 'ماجد',
-  'لؤي', 'شادي', 'أنس',
-];
-const _last = [
-  'الحداد', 'المنصوري', 'الفاسي', 'بنعلي', 'الشرقاوي', 'العلوي', 'التازي',
-  'القاسمي', 'الزعيم', 'البدوي', 'الصغير', 'الكبير', 'العمراني', 'السعدي',
-  'الجزائري', 'التونسي', 'المصري', 'الحربي', 'الشامي', 'النجار', 'الخطيب',
-  'الرفاعي', 'الهاشمي', 'الأنصاري', 'الحمداني', 'المرابط', 'الصالحي', 'الدرعي',
-  'الغالي', 'السبتي',
-];
 
 int _pid = 0;
 int get pidCounter => _pid;
 set pidCounter(int v) => _pid = v;
 
-String randomName(Random rng) =>
-    '${_first[rng.nextInt(_first.length)]} ${_last[rng.nextInt(_last.length)]}';
-
 Player makePlayer(Random rng, Pos pos, int ov, int age,
-    {String? name, String? photo}) {
+    {String? name, String? photo, String? nat, String? preferNat}) {
+  final genNat = name == null ? (nat ?? pickNat(rng, prefer: preferNat)) : nat;
   int n(int v, [int spread = 3]) =>
       (v + rng.nextInt(spread * 2 + 1) - spread).clamp(20, 95).toInt();
   var atk = 10, def = 10, pas = 10, gk = 10;
@@ -50,7 +35,7 @@ Player makePlayer(Random rng, Pos pos, int ov, int age,
   }
   final p = Player(
     id: ++_pid,
-    name: name ?? randomName(rng),
+    name: name ?? nameFor(rng, genNat!),
     photo: photo,
     age: age,
     pos: pos,
@@ -61,6 +46,7 @@ Player makePlayer(Random rng, Pos pos, int ov, int age,
     potential: 0,
     contract: 1 + rng.nextInt(4),
   );
+  if (genNat != null) p.nat = genNat;
   final pot = age < 24
       ? min(95, p.overall + 2 + rng.nextInt(12))
       : p.overall + rng.nextInt(3);
@@ -103,20 +89,21 @@ List<Player> generateMarket(Random rng) {
 }
 
 /// لاعب أكاديمية: مستواه يتبع مستوى ناديه (الأندية القوية تُخرّج مواهب أفضل) كي لا ينهار مستوى الدوري مع الزمن
-Player makeYouth(Random rng, Pos pos, {int level = 0}) =>
-    makePlayer(rng, pos, level > 0 ? level - 3 + rng.nextInt(8) : 50 + rng.nextInt(8), 17 + rng.nextInt(3));
+Player makeYouth(Random rng, Pos pos, {int level = 0, String? preferNat}) =>
+    makePlayer(rng, pos, level > 0 ? level - 3 + rng.nextInt(8) : 50 + rng.nextInt(8), 17 + rng.nextInt(3), preferNat: preferNat);
 
 /// يضمن الحد الأدنى من اللاعبين في كل مركز (يملأ النقص بلاعبين شباب)
 void topUpSquad(Team t, Random rng) {
   const minimum = {Pos.gk: 2, Pos.def: 6, Pos.mid: 6, Pos.att: 3};
   final lvl = (t.strength - 8).round().clamp(48, 76);
+  final home = dominantNat(t.squad.map((p) => p.nat));
   minimum.forEach((pos, n) {
     while (t.squad.where((p) => p.pos == pos).length < n) {
-      t.squad.add(makeYouth(rng, pos, level: lvl)..filler = true);
+      t.squad.add(makeYouth(rng, pos, level: lvl, preferNat: home)..filler = true);
     }
   });
   while (t.squad.length < 20) {
-    t.squad.add(makeYouth(rng, Pos.values[1 + rng.nextInt(3)], level: lvl)..filler = true);
+    t.squad.add(makeYouth(rng, Pos.values[1 + rng.nextInt(3)], level: lvl, preferNat: home)..filler = true);
   }
 }
 
