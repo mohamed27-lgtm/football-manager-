@@ -35,6 +35,7 @@ class _Comp {
 class _CompetitionsViewState extends State<CompetitionsView> {
   String? sel; // null = صفحة اختيار البطولة
   Map<String, int?> _barLogos = {};
+  String _q = '';
   int sub = 0; // 0 جدول/مجموعات، 1 شجرة
   GameState get gs => widget.gs;
 
@@ -132,10 +133,14 @@ class _CompetitionsViewState extends State<CompetitionsView> {
       ('كأس العالم للأندية', const Color(0xFFE6B422), 'cwc', inCup(gs.cwc)),
       ('كأس إنتركونتيننتال', const Color(0xFFA6812E), 'ic', inCup(gs.ic)),
     ];
+    final seen = <String>{};
     final nations = <String>[
       if (gs.country.isNotEmpty) gs.country,
-      ...kContinentalOrder.where((c) => c != gs.country).take(7),
-    ];
+      ...kContinentalOrder,
+      for (final c in kConfeds) ...c.order,
+      for (final l in gs.wLeagues) l.country,
+      ...gs.nat.pts.keys,
+    ].where((c) => c.isNotEmpty && seen.add(c)).where((c) => _q.isEmpty || c.contains(_q)).toList();
     Widget card(String t, Widget lead, {bool mark = false, bool hi = false, required VoidCallback onTap}) => GestureDetector(
           onTap: onTap,
           child: Container(
@@ -180,7 +185,21 @@ class _CompetitionsViewState extends State<CompetitionsView> {
             for (final e in club)
               card(e.$1, _logoChip(_logoOf(e.$3!), e.$2, size: 38), mark: e.$4, hi: e.$3 == 'sup' && e.$4, onTap: () => _open(e.$3!)),
           ]),
-          head('دوريات الدول'),
+          head('دول العالم (${nations.length})'),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: TextField(
+              onChanged: (v) => setState(() => _q = v.trim()),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search_rounded),
+                hintText: 'ابحث عن دولة...',
+                filled: true,
+                fillColor: kCard,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+              ),
+            ),
+          ),
           grid([
             for (final n in nations)
               card(n, SizedBox(width: 46, child: FlagBadge(n, size: 34)), mark: n == gs.country, onTap: () {
