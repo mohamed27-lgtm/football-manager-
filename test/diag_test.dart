@@ -217,6 +217,39 @@ void main() {
     expect(w.length >= 2, true);
   });
 
+  test('مشاريع المنشآت: مدة وتسريع وحفظ', () {
+    final r = Random(5);
+    final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];
+    final gs = GameState.fromData(teams, 2, 'تجريبي');
+    gs.user.budget = 500;
+    final cap0 = gs.stadiumCapacity;
+    expect(gs.startProject('stadium'), null);
+    expect(gs.startProject('stadium') != null, true, reason: 'مشروع ثانٍ لنفس المنشأة مرفوض');
+    expect(gs.startProject('medical'), null);
+    expect(gs.startProject('training') != null, true, reason: 'حد مشروعين');
+    expect(gs.stadiumCapacity < cap0, true, reason: 'السعة تنخفض أثناء البناء');
+    final g2 = GameState.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(gs.toJson())) as Map));
+    expect(g2.projects.length, 2);
+    expect(g2.projects.first.left, gs.projects.first.left);
+    expect(gs.rushProject('medical'), null);
+    var guard = 0;
+    while (gs.projects.isNotEmpty && guard++ < 60) {
+      gs.confidence = 100;
+      final c = gs.pendingCup;
+      if (c != null) {
+        gs.startCupMatch(c);
+        gs.finishCurrent();
+        continue;
+      }
+      gs.startMatch();
+      gs.finishMatchday();
+    }
+    expect(gs.projects.isEmpty, true, reason: 'المشاريع تنتهي');
+    expect(gs.user.stadium, 2);
+    expect(gs.user.medical, 2);
+    expect(gs.stadiumCapacity > cap0, true);
+  });
+
   test('صعود وهبوط في دوريات العالم', () {
     final r = Random(33);
     final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];

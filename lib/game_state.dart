@@ -21,6 +21,7 @@ import 'bundled.dart';
 import 'api_football.dart';
 
 part 'awards_logic.dart';
+part 'facilities_logic.dart';
 part 'jobs_logic.dart';
 part 'intl_logic.dart';
 part 'world_leagues.dart';
@@ -448,7 +449,8 @@ class GameState extends ChangeNotifier {
   double fans = 50;
   int ticketLevel = 1; // 0 رخيصة، 1 عادية، 2 مرتفعة
   static const ticketMult = [0.8, 1.0, 1.25];
-  int get stadiumCapacity => 12000 + 8000 * user.stadium;
+  int get stadiumCapacity => ((12000 + 8000 * user.stadium) * (stadiumBuilding ? 0.85 : 1.0)).round();
+  final List<Project> projects = [];
   double get fillRate => (0.42 + 0.5 * fans / 100 - 0.12 * (ticketLevel - 1)).clamp(0.2, 1.0).toDouble();
   int get attendance => (stadiumCapacity * fillRate).round();
   void setTicketLevel(int v) { ticketLevel = v; notifyListeners(); unawaited(save()); }
@@ -770,6 +772,9 @@ class GameState extends ChangeNotifier {
     }
     ffpBreaches = (j['ffpB'] as int?) ?? 0;
     transferBan = (j['ban'] as bool?) ?? false;
+    for (final x in (j['prj'] as List?) ?? const []) {
+      projects.add(Project.fromJson(Map<String, dynamic>.from(x as Map)));
+    }
     ((j['so'] as Map?) ?? const {}).forEach((k, v) => sellOns[k as String] = (v as num).toDouble());
     pointsPenaltyNext = (j['ppn'] as int?) ?? 0;
     final cj = j['cups'] as Map<String, dynamic>?;
@@ -852,6 +857,7 @@ class GameState extends ChangeNotifier {
         },
         'ffpB': ffpBreaches,
         'ban': transferBan,
+        'prj': [for (final p in projects) p.toJson()],
         'so': sellOns,
         'ppn': pointsPenaltyNext,
         'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson(), 'eur': europa?.toJson(), 'uecl': conference?.toJson(), 'sup': superCup?.toJson(), 'cwc': cwc?.toJson(), 'ic': ic?.toJson()},
@@ -1269,8 +1275,8 @@ class GameState extends ChangeNotifier {
         if (_injBefore.contains(p) && p.injuredWeeks > 0) p.injuredWeeks--;
         var rec = 22.0;
         if (t == user) {
-          rec += 1.5 * (staff['doctor'] ?? 0);
-          if (p.injuredWeeks > 1 && rng.nextDouble() < 0.1 * (staff['doctor'] ?? 0)) p.injuredWeeks--;
+          rec += 1.5 * (staff['doctor'] ?? 0) + 0.8 * (user.medical - 1);
+          if (p.injuredWeeks > 1 && rng.nextDouble() < 0.1 * (staff['doctor'] ?? 0) + 0.07 * (user.medical - 1)) p.injuredWeeks--;
           if (training == 'mental') rec += 8;
           if (training == 'physical') rec += 4;
           if (training != 'mental') rec += intensityRec[trainIntensity];
@@ -1289,8 +1295,7 @@ class GameState extends ChangeNotifier {
 
     final home = f.home == user.id;
     final mk = staff['marketing'] ?? 0;
-    // الإيراد = السعر × الحضور: رفع السعر يقلل الامتلاء، ومباريات الأندية الكبرى تجذب جمهوراً أكبر
-    final baseFill = 0.42 + 0.5 * fans / 100;
+    // إيراد المباراة: اشتراكات موسمية + تذاكر منفردة (تتأثر بالسعر) + ضيافة VIP
     final oppRep = (() {
       try {
         return team(home ? f.away : f.home).reputation;
@@ -1298,21 +1303,20 @@ class GameState extends ChangeNotifier {
         return 3;
       }
     })();
-    final gate = home
-        ? (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (0.75 + 0.5 * fans / 100) * (1 + 0.04 * mk) * ticketMult[ticketLevel] * (fillRate / baseFill) * (0.92 + 0.04 * oppRep)
-        : 0.0;
+    final gp = gateParts(oppRep: oppRep);
+    final gate = home ? gp.season + gp.single + gp.vip : 0.0;
     if (home) {
       attHist.add(attendance);
       if (attHist.length > 12) attHist.removeAt(0);
     }
-    if (home) fans = (fans + (ticketLevel == 0 ? 0.3 : ticketLevel == 2 ? -0.4 : 0.0)).clamp(0, 100).toDouble();
+    if (home) fans = (fans + (ticketLevel == 0 ? 0.3 : ticketLevel == 2 ? -0.4 : 0.0) + 0.05 * (user.fanZone - 1)).clamp(0, 100).toDouble();
     final broadcast = (0.35 + 0.1 * user.reputation) * divFactor * (0.85 + 0.3 * (teams.length - position) / max(1, teams.length - 1)) * (0.92 + 0.16 * fans / 100);
     final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +
         dealsIncome * (0.9 + 0.2 * fans / 100);
     // تسويق نجومك: قمصان وحقوق صورة تتناسب مع هالة الجوائز وشعبية النادي
     final merch = user.squad.fold<double>(0, (a, p) => a + p.awardBoost) * 0.5 * (0.5 + fans / 100);
-    final sponsorX = (sponsor + merch) * (1 + 0.05 * mk);
-    final maintenance = 0.03 * (user.stadium + user.trainingLvl);
+    final sponsorX = (sponsor + merch) * (1 + 0.05 * mk) * (1 + 0.03 * (user.fanZone - 1));
+    final maintenance = 0.03 * (user.stadium + user.trainingLvl) + 0.02 * (user.academy + user.medical + user.fanZone) + (projects.isEmpty ? 0.0 : 0.04 * projects.length);
     final interest = fin.debt * 0.004;
     // مصاريف التشغيل والإدارة (طاقم غير لاعبين، الأمن، السفر، التسويق...) نحو 22% من الإيرادات
     final ops = 0.22 * (gate + broadcast + sponsorX);
@@ -1343,6 +1347,7 @@ class GameState extends ChangeNotifier {
     confidence = confidence.clamp(0, 100).toDouble();
     if (confidence <= 0) fired = true;
     this._weeklyJobs();
+    this._projectsTick();
     this._renewalTick(position);
     this._intlTick();
     this._awardsTick();
@@ -1918,33 +1923,8 @@ class GameState extends ChangeNotifier {
     return null;
   }
 
-  // ───────── المنشآت ─────────
+  // ───────── المنشآت (مشاريع الإنشاء في facilities_logic.dart) ─────────
   double upgradeCost(int level) => 6.0 + 6.0 * level;
-
-  String? upgrade(String kind) {
-    final lvl = switch (kind) {
-      'stadium' => user.stadium,
-      'training' => user.trainingLvl,
-      _ => 1,
-    };
-    if (lvl >= 5) return 'وصلت إلى أقصى مستوى';
-    final cost = upgradeCost(lvl);
-    if (cost > user.budget) return 'الميزانية غير كافية';
-    user.budget -= cost;
-    fin.add('upgrades', cost);
-    switch (kind) {
-      case 'stadium':
-        user.stadium++;
-      case 'training':
-        user.trainingLvl++;
-      default:
-        break;
-    }
-    news.insert(0, '🏗️ تمت ترقية المنشأة (${money1(cost)})');
-    unawaited(save());
-    notifyListeners();
-    return null;
-  }
 
   String money1(double v) => '${v.toStringAsFixed(1)}M';
 

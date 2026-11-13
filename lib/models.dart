@@ -248,7 +248,7 @@ class Team {
   List<Player> lineup = [];
   double budget;
   int played = 0, won = 0, drawn = 0, lost = 0, gf = 0, ga = 0;
-  int stadium = 1, trainingLvl = 1, academy = 1;
+  int stadium = 1, trainingLvl = 1, academy = 1, medical = 1, fanZone = 1;
   String? badge, venue;
   String? coach; // اسم المدرب إن عُيّن؛ وإلا coachFor(name)
   String get coachName {
@@ -378,6 +378,8 @@ class Team {
         'stadium': stadium,
         'trainingLvl': trainingLvl,
         'academy': academy,
+        'med': medical,
+        'fz': fanZone,
         'badge': badge,
         'venue': venue,
         'coach': coach,
@@ -419,6 +421,8 @@ class Team {
     t.stadium = j['stadium'] as int;
     t.trainingLvl = j['trainingLvl'] as int;
     t.academy = j['academy'] as int;
+    t.medical = (j['med'] as int?) ?? 1;
+    t.fanZone = (j['fz'] as int?) ?? 1;
     t.badge = j['badge'] as String?;
     t.venue = j['venue'] as String?;
     t.coach = j['coach'] as String?;

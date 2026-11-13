@@ -114,6 +114,31 @@ class _StadiumScreenState extends State<StadiumScreen> {
                 const SizedBox(height: 10),
                 Text(_desc[gs.ticketLevel], style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
               ])),
+              _card(Builder(builder: (_) {
+                final g = gs.gateParts();
+                final tot = g.season + g.single + g.vip;
+                Widget row(String l, String d, double v, Color c) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Column(children: [
+                        Row(children: [
+                          Text(l, style: const TextStyle(fontWeight: FontWeight.w800)),
+                          const Spacer(),
+                          Text(money(v), style: const TextStyle(fontWeight: FontWeight.w900)),
+                        ]),
+                        const SizedBox(height: 4),
+                        ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: tot == 0 ? 0 : v / tot, minHeight: 7, color: c, backgroundColor: kCard2)),
+                        const SizedBox(height: 3),
+                        Align(alignment: AlignmentDirectional.centerStart, child: Text(d, style: const TextStyle(color: kMuted, fontSize: 11.5))),
+                      ]),
+                    );
+                return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('مصادر إيراد المباراة (تقدير لخصم متوسط)', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                  const SizedBox(height: 10),
+                  row('اشتراكات موسمية', 'ثابتة لا تتأثر بسياسة الأسعار', g.season, kPrimary),
+                  row('تذاكر منفردة', 'تتأثر بالسعر والشعبية وقوة الخصم', g.single, _teal),
+                  row('ضيافة VIP', 'ترتفع بمستوى الملعب وتصدّر الترتيب', g.vip, const Color(0xFFF5A524)),
+                ]);
+              })),
               _card(Column(children: [
                 for (var i = 0; i < 3; i++)
                   Padding(
@@ -141,17 +166,32 @@ class _StadiumScreenState extends State<StadiumScreen> {
               _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 const Text('توسعة الملعب', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
                 const SizedBox(height: 8),
-                Text(lvl >= 5 ? 'وصل الملعب إلى أقصى مستوى.' : 'المستوى التالي: السعة ${_n(12000 + 8000 * (lvl + 1))} ودخل أعلى لكل مباراة.', style: const TextStyle(color: kMuted, fontSize: 12.5)),
+                if (lvl >= 5)
+                  const Text('وصل الملعب إلى أقصى مستوى.', style: TextStyle(color: kMuted, fontSize: 12.5))
+                else ...[
+                  Text('المستوى التالي: السعة ${_n(12000 + 8000 * (lvl + 1))} (+${_n(8000)}) ودخل أعلى من الضيافة والتذاكر.', style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
+                  const SizedBox(height: 6),
+                  Text('التكلفة ${money(gs.facCost('stadium', lvl))} • مدة الأشغال ${gs.facWeeks('stadium', lvl)} أسبوعاً • السعة تنخفض 15% أثناء البناء.', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                ],
                 const SizedBox(height: 12),
-                if (lvl < 5)
+                if (gs.projectOf('stadium') case final pr?) ...[
+                  ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: pr.progress, minHeight: 9, color: kPrimary, backgroundColor: kCard2)),
+                  const SizedBox(height: 6),
+                  Text('قيد التنفيذ: متبقٍ ${pr.left} أسبوعاً${pr.delays > 0 ? ' • تأخر ${pr.delays}×' : ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                  if (!pr.rushed && pr.left > 1)
+                    TextButton(
+                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(gs.rushProject('stadium') ?? 'تم تسريع الأشغال ⚡'))),
+                      child: Text('تسريع (${money(gs.rushCost(pr))})'),
+                    ),
+                ] else if (lvl < 5)
                   SizedBox(
                     width: double.infinity,
                     child: GradientButton(
-                      label: 'ترقية الملعب (${money(gs.upgradeCost(lvl))})',
-                      icon: Icons.upgrade_rounded,
+                      label: 'بدء مشروع التوسعة (${money(gs.facCost('stadium', lvl))})',
+                      icon: Icons.construction_rounded,
                       onPressed: () {
-                        final err = gs.upgrade('stadium');
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تمت ترقية الملعب 🏗️')));
+                        final err = gs.startProject('stadium');
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'بدأت أشغال التوسعة 🏗️')));
                       },
                     ),
                   ),
