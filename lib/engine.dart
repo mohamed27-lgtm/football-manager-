@@ -401,9 +401,12 @@ class MatchSim {
 
   void _injury(Side s) {
     if (s.slots.isEmpty) return;
-    final sl = _weighted(s.slots, s.slots.map((x) => 110 - x.p.fitness).toList());
+    // الأكثر إرهاقاً والأكبر سناً ومن تكررت إصاباته أكثر عرضة
+    double risk(Player x) => (110 - x.fitness) * (x.age >= 31 ? 1.5 : x.age >= 28 ? 1.2 : 1.0) * (1 + 0.12 * min(x.injuryCount, 5));
+    final sl = _weighted(s.slots, s.slots.map((x) => risk(x.p)).toList());
     final p = sl.p;
-    p.injuredWeeks = 1 + rng.nextInt(5) + (rng.nextDouble() < 0.15 ? 4 : 0);
+    final old = p.age >= 31 ? 2 : p.age >= 28 ? 1 : 0;
+    p.injuredWeeks = 1 + rng.nextInt(5) + old + (rng.nextDouble() < (0.15 + 0.03 * min(p.injuryCount, 4)) ? 4 : 0);
     p.injuryCount++;
     _log('injury', '🚑 إصابة ${p.name} (${p.injuredWeeks} أسابيع)', s.isHome);
     Player? rep;
