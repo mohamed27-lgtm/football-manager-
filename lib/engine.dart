@@ -206,6 +206,7 @@ class MatchSim {
       final wf = weather == 'hot' ? 1.25 : weather == 'rain' ? 1.08 : 1.0;
       for (final sl in s.slots) {
         sl.p.fitness = max(0, sl.p.fitness - f * wf);
+        sl.p.load = min(100, sl.p.load + 0.14 * wf);
       }
     }
 
@@ -274,8 +275,9 @@ class MatchSim {
     _discipline(d);
     // خطر الإصابة يرتفع مع إرهاق التشكيلة (متوسط اللياقة)
     double tire(Side x) => x.slots.isEmpty ? 0.0 : 1 - x.slots.fold<double>(0, (a, e) => a + e.p.fitness) / (100.0 * x.slots.length);
-    final hs = 1 + 1.6 * tire(home), as = 1 + 1.6 * tire(away);
-    if (rng.nextDouble() < 0.0015 * (hs + as) / 2) _injury(rng.nextDouble() * (hs + as) < hs ? home : away);
+    double ld(Side x) => x.slots.isEmpty ? 0.0 : x.slots.fold<double>(0, (a, e) => a + e.p.load) / (100.0 * x.slots.length);
+    final hs = 1 + 1.6 * tire(home) + 1.2 * ld(home), as = 1 + 1.6 * tire(away) + 1.2 * ld(away);
+    if (rng.nextDouble() < 0.0012 * (hs + as) / 2) _injury(rng.nextDouble() * (hs + as) < hs ? home : away);
 
     if (minute == 60) _insights();
     if (minute == 45) _log('info', '⏸ نهاية الشوط الأول', true);
@@ -521,13 +523,43 @@ class MatchSim {
   void _injury(Side s) {
     if (s.slots.isEmpty) return;
     // الأكثر إرهاقاً والأكبر سناً ومن تكررت إصاباته أكثر عرضة
-    double risk(Player x) => (110 - x.fitness) * (x.age >= 31 ? 1.5 : x.age >= 28 ? 1.2 : 1.0) * (1 + 0.12 * min(x.injuryCount, 5));
+    double risk(Player x) => (110 - x.fitness) * (x.age >= 31 ? 1.5 : x.age >= 28 ? 1.2 : 1.0) * (1 + 0.12 * min(x.injuryCount, 5)) * (1 + x.load / 70);
     final sl = _weighted(s.slots, s.slots.map((x) => risk(x.p)).toList());
     final p = sl.p;
     final old = p.age >= 31 ? 2 : p.age >= 28 ? 1 : 0;
-    p.injuredWeeks = 1 + rng.nextInt(5) + old + (rng.nextDouble() < (0.15 + 0.03 * min(p.injuryCount, 4)) ? 4 : 0);
+    // نوع الإصابة: الإرهاق يزيد الشدّ العضلي والأوتار؛ الاحتكاك يسبّب الكاحل والركبة والكدمات
+    final lf = p.load / 100;
+    final kinds = <(String, double, int, int)>[
+      ('شد عضلي', 26 + 30 * lf, 1, 4),
+      ('إصابة الأوتار الخلفية', 12 + 16 * lf, 2, 6),
+      ('التواء الكاحل', 18, 1, 5),
+      ('كدمة قوية', 14, 1, 2),
+      ('ارتجاج', 3, 1, 2),
+      ('إصابة الركبة', 7, 4, 12),
+      ('كسر', 2.5, 6, 12),
+      ('تمزق الرباط الصليبي', 1.1 + 0.6 * lf, 24, 40),
+    ];
+    var r = rng.nextDouble() * kinds.fold<double>(0, (a, e) => a + e.$2);
+    var kind = kinds.first;
+    for (final k in kinds) {
+      r -= k.$2;
+      if (r < 0) {
+        kind = k;
+        break;
+      }
+    }
+    p.injType = kind.$1;
+    p.injuredWeeks = kind.$3 + rng.nextInt(kind.$4 - kind.$3 + 1) + (kind.$4 <= 6 ? old : old * 2) + (rng.nextDouble() < 0.03 * min(p.injuryCount, 4) ? 2 : 0);
+    if (kind.$4 >= 40) {
+      // الرباط الصليبي يترك أثراً دائماً خفيفاً على القدرات
+      int d(int v) => max(20, v - 1 - rng.nextInt(3));
+      p
+        ..atk = d(p.atk)
+        ..def = d(p.def)
+        ..pas = d(p.pas);
+    }
     p.injuryCount++;
-    _log('injury', '🚑 إصابة ${p.name} (${p.injuredWeeks} أسابيع)', s.isHome);
+    _log('injury', '🚑 إصابة ${p.name} — ${kind.$1} (${p.injuredWeeks} أسابيع)', s.isHome);
     Player? rep;
     if (s.subsLeft > 0) {
       final same = s.bench.where((b) => b.pos == sl.pos).toList();

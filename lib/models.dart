@@ -51,6 +51,8 @@ class Player {
   double fitness = 100;
   double morale = 70;
   int injuredWeeks = 0;
+  String? injType; // نوع آخر إصابة (للعرض)
+  double load = 0; // إرهاق تراكمي 0..100 (دقائق اللعب المتواصلة)
   int suspendedMatches = 0;
   int goals = 0, assists = 0, apps = 0, yellows = 0;
   double ratingSum = 0;
@@ -141,6 +143,8 @@ class Player {
         'fit': fitness,
         'mor': morale,
         'inj': injuredWeeks,
+        'it': injType,
+        'ld': double.parse(load.toStringAsFixed(1)),
         'sus': suspendedMatches,
         'goals': goals,
         'ast': assists,
@@ -180,6 +184,8 @@ class Player {
         ..fitness = (j['fit'] as num).toDouble()
         ..morale = (j['mor'] as num).toDouble()
         ..injuredWeeks = j['inj'] as int
+        ..injType = j['it'] as String?
+        ..load = ((j['ld'] as num?) ?? 0).toDouble()
         ..suspendedMatches = j['sus'] as int
         ..goals = j['goals'] as int
         ..assists = j['ast'] as int

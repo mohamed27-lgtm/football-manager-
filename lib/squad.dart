@@ -10,12 +10,12 @@ import 'widgets.dart';
 import 'trophies.dart';
 
 String? statusOf(Player p) => p.injuredWeeks > 0
-    ? 'مصاب (${p.injuredWeeks} أسبوع)'
+    ? (p.injType == null ? 'مصاب (${p.injuredWeeks} أسبوع)' : 'مصاب: ${p.injType} (${p.injuredWeeks} أسبوع)')
     : p.suspendedMatches > 0
         ? 'موقوف'
         : !p.registered
             ? 'غير مسجّل'
-            : (p.yellows % 5 == 4 ? 'إنذار من الإيقاف (${p.yellows})' : null);
+            : (p.yellows % 5 == 4 ? 'إنذار من الإيقاف (${p.yellows})' : (p.load >= 65 ? 'مرهق — خطر إصابة' : null));
 
 class PlayerTile extends StatelessWidget {
   final Player p;

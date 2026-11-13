@@ -1310,12 +1310,20 @@ class GameState extends ChangeNotifier {
           rec += 1.5 * (user.trainingLvl - 1);
           _train(p);
         }
-        p.fitness = min(100, p.fitness + rec);
+        p.fitness = min(100, p.fitness + rec * (1 - p.load / 320));
+        // الإرهاق التراكمي يتراجع بالراحة (أسرع مع التدريب الذهني/الخفيف)
+        p.load = max(0, p.load * (t == user && (training == 'mental' || trainIntensity == 0) ? 0.72 : 0.8) - 1);
+        if (t == user && p.injuredWeeks == 0 && !_injBefore.contains(p)) _trainingInjury(p);
       }
     }
     for (final p in user.squad) {
       if (p.injuredWeeks > 0 && !_injBefore.contains(p)) {
-        news.insert(0, '🚑 أُصيب ${p.name} لمدة ${p.injuredWeeks} أسابيع');
+        news.insert(0, p.injType == null ? '🚑 أُصيب ${p.name} لمدة ${p.injuredWeeks} أسابيع' : '🚑 إصابة ${p.name} — ${p.injType}: غياب ${p.injuredWeeks} أسابيع');
+      }
+    }
+    for (final p in user.squad) {
+      if (p.injuredWeeks == 0 && p.load >= 75 && rng.nextDouble() < 0.25) {
+        news.insert(0, '😮‍💨 ${p.name} يبدو مرهقاً من كثرة المباريات — فكّر في إراحته');
       }
     }
 
@@ -1587,6 +1595,7 @@ class GameState extends ChangeNotifier {
     var note = '';
     if (rng.nextDouble() < 0.1) {
       p.injuredWeeks = 1 + rng.nextInt(3);
+      p.injType = 'كدمة قوية';
       note = ' (إصابة طفيفة اكتُشفت في الفحص الطبي)';
     }
     p.club = null;
@@ -2221,8 +2230,8 @@ class GameState extends ChangeNotifier {
         p.rated = 0;
         p.fitness = 100;
         p.morale = 70;
-        p.injuredWeeks = 0;
-        p.suspendedMatches = 0;
+        p.load = 0;
+        if (p.injuredWeeks > 0 && p.injuredWeeks < 12) XX
         p.goals = 0;
         p.assists = 0;
         p.apps = 0;
@@ -2811,6 +2820,17 @@ class GameState extends ChangeNotifier {
     if (ids.length == 11) lastXI = ids;
   }
 
+  /// إصابات التدريب (للاعبي فريقك): تزيد مع شدة الحصص والإرهاق التراكمي
+  void _trainingInjury(Player p) {
+    final base = const [0.0008, 0.0025, 0.0065][trainIntensity];
+    final ch = base * (1 + p.load / 45) * (p.age >= 31 ? 1.4 : p.age >= 28 ? 1.15 : 1.0) * (1 - 0.06 * (user.medical - 1) - 0.04 * (staff['doctor'] ?? 0));
+    if (rng.nextDouble() >= ch) return;
+    p.injType = rng.nextDouble() < 0.7 ? 'شد عضلي' : 'التواء الكاحل';
+    p.injuredWeeks = 1 + rng.nextInt(3);
+    p.injuryCount++;
+    news.insert(0, '🚑 ${p.name} أُصيب في التدريب (${p.injType}) لمدة ${p.injuredWeeks} أسابيع');
+  }
+
   void startCupMatch(Cup c) {
     final t = c.userTie(user.id);
     if (t == null) return;
@@ -2855,7 +2875,7 @@ class GameState extends ChangeNotifier {
       if (_injBefore.contains(p) && p.injuredWeeks > 0) p.injuredWeeks--;
       p.fitness = min(100, p.fitness + 8);
       if (p.injuredWeeks > 0 && !_injBefore.contains(p)) {
-        news.insert(0, '🚑 أُصيب ${p.name} لمدة ${p.injuredWeeks} أسابيع');
+        news.insert(0, p.injType == null ? '🚑 أُصيب ${p.name} لمدة ${p.injuredWeeks} أسابيع' : '🚑 إصابة ${p.name} — ${p.injType}: غياب ${p.injuredWeeks} أسابيع');
       }
     }
     if (won) {
