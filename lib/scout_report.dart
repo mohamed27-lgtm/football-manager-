@@ -43,7 +43,8 @@ class ScoutCard extends StatelessWidget {
       if (weak == Pos.def) 'دفاعهم هو الحلقة الأضعف: كثّف الهجوم.',
       if (weak == Pos.gk) 'حارسهم أضعف من المعتاد: التسديد من بعيد مجدٍ.',
     ];
-    final form = opp.form.isEmpty ? '—' : opp.form.reversed.take(5).map((r) => r == 'W' ? '✅' : r == 'L' ? '❌' : '➖').join(' ');
+    final fm = gs.formOf(opp);
+    final form = fm.isEmpty ? '—' : fm.reversed.take(5).map((r) => r == 'W' ? '✅' : r == 'L' ? '❌' : '➖').join(' ');
     Widget row(String k, String v) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 3),
           child: Row(children: [

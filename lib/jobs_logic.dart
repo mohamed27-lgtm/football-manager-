@@ -61,8 +61,35 @@ extension JobsLogic on GameState {
     }
   }
 
+  /// عالم الأندية: إقالات وتعيينات مدربين، واستحواذات تغيّر ميزانيات الأندية الأخرى
+  void _clubsTick() {
+    if (fired || seasonOver || week < 6) return;
+    for (final t in teams) {
+      if (t == user) continue;
+      final f = formOf(t, 6);
+      // إقالة بعد سلسلة نتائج سيئة (تتكرر بحسب صبر الإدارة)
+      if (f.length >= 5 && f.where((r) => r == 'L').length >= 4 && rng.nextDouble() < 0.18) {
+        final old = t.coachName;
+        t.coach = randomName(rng);
+        t.cohesion = min(100, t.cohesion + 6); // ارتداد المدرب الجديد
+        if (t.reputation >= 3) news.insert(0, '🪓 ${t.name} يقيل $old ويعيّن ${t.coach} مدرباً جديداً');
+      }
+    }
+    // استحواذ: مُلّاك جدد ينقذون نادياً متعثراً أو يضخّون أموالاً في نادٍ طموح
+    if (rng.nextDouble() < 0.012) {
+      final pool = teams.where((t) => t != user && (t.budget < 4 || (t.reputation >= 3 && rng.nextDouble() < 0.2))).toList();
+      if (pool.isNotEmpty) {
+        final t = pool[rng.nextInt(pool.length)];
+        final cash = 25.0 + rng.nextInt(90);
+        t.budget += cash;
+        news.insert(0, '🏦 استحواذ جديد على ${t.name}: ضخ ${money1(cash)} ويعلن طموحاً كبيراً');
+      }
+    }
+  }
+
   /// كل أسبوع: تقادم العروض القديمة واحتمال وصول عرض جديد
   void _weeklyJobs() {
+    this._clubsTick();
     jobOffers.removeWhere((o) => --o.ttl <= 0);
     this._natOffersTick();
     if (fired || seasonOver) return;
