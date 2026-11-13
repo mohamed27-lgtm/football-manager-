@@ -152,7 +152,7 @@ class _LedgerScreenState extends State<LedgerScreen> {
         TextField(
           onChanged: (v) => setState(() => q = v.trim()),
           decoration: InputDecoration(
-            hintText: 'ابحث في المعاملات',
+            hintText: tr('ابحث في المعاملات'),
             prefixIcon: const Icon(Icons.search_rounded),
             filled: true,
             fillColor: kCard,

@@ -197,7 +197,7 @@ class _CreatePlayerScreenState extends State<CreatePlayerScreen> {
           controller: name,
           onChanged: (_) => setState(() {}),
           style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-          decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), hintText: 'اكتب الاسم', hintStyle: TextStyle(color: kMuted)),
+          decoration: InputDecoration(border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), hintText: tr('اكتب الاسم'), hintStyle: const TextStyle(color: kMuted)),
         ),
       ),
       _label('الجنسية'),
@@ -431,7 +431,7 @@ class _CountrySheetState extends State<_CountrySheet> {
             decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(14)),
             child: TextField(
               onChanged: (v) => setState(() => q = v.trim()),
-              decoration: InputDecoration(border: InputBorder.none, prefixIcon: const Icon(Icons.search_rounded), hintText: 'ابحث بين ${kAllCountries.length} دولة...', contentPadding: const EdgeInsets.symmetric(vertical: 14)),
+              decoration: InputDecoration(border: InputBorder.none, prefixIcon: const Icon(Icons.search_rounded), hintText: tr('ابحث بين ${kAllCountries.length} دولة...'), contentPadding: const EdgeInsets.symmetric(vertical: 14)),
             ),
           ),
         ),

@@ -46,7 +46,7 @@ class _RankingScreenState extends State<RankingScreen> {
           }),
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search_rounded),
-            hintText: 'ابحث بالاسم...',
+            hintText: tr('ابحث بالاسم...'),
             filled: true,
             fillColor: kCard,
             contentPadding: const EdgeInsets.symmetric(vertical: 10),

@@ -344,7 +344,7 @@ class _CountryScreenState extends State<CountryScreen> {
         title: Text(country),
         actions: [
           IconButton(
-            tooltip: 'تغيير الدولة',
+            tooltip: tr('تغيير الدولة'),
             icon: const Icon(Icons.public_rounded),
             onPressed: () => showCountrySwitcher(context, gs, current: country, replace: true),
           ),
@@ -502,7 +502,7 @@ class _CountryListState extends State<CountryList> {
         onChanged: (v) => setState(() => q = v.trim()),
         decoration: InputDecoration(
           prefixIcon: const Icon(Icons.search_rounded),
-          hintText: 'ابحث عن دولة...',
+          hintText: tr('ابحث عن دولة...'),
           filled: true,
           fillColor: kCard,
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
