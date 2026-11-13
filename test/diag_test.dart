@@ -287,6 +287,9 @@ void main() {
     final j = gs.toJson();
     final g2 = GameState.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(j)) as Map));
     expect(g2.wLeagues.length, 2);
+    gs.sellOns['77'] = 0.1;
+    final g3 = GameState.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(gs.toJson())) as Map));
+    expect(g3.sellOns['77'], 0.1);
     expect(g2.clubHonours.isNotEmpty, true);
   });
 

@@ -523,6 +523,7 @@ class GameState extends ChangeNotifier {
   Map<String, List<SponsorOffer>> sponsorOffers = {};
   int ffpBreaches = 0;
   bool transferBan = false;
+  final Map<String, double> sellOns = {}; // معرّف اللاعب -> نسبة من بيعه لاحقاً تعود لنادي المستخدم
   int pointsPenaltyNext = 0;
   final Map<int, double> _renewRes = {};
 
@@ -769,6 +770,7 @@ class GameState extends ChangeNotifier {
     }
     ffpBreaches = (j['ffpB'] as int?) ?? 0;
     transferBan = (j['ban'] as bool?) ?? false;
+    ((j['so'] as Map?) ?? const {}).forEach((k, v) => sellOns[k as String] = (v as num).toDouble());
     pointsPenaltyNext = (j['ppn'] as int?) ?? 0;
     final cj = j['cups'] as Map<String, dynamic>?;
     if (cj != null) {
@@ -850,6 +852,7 @@ class GameState extends ChangeNotifier {
         },
         'ffpB': ffpBreaches,
         'ban': transferBan,
+        'so': sellOns,
         'ppn': pointsPenaltyNext,
         'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson(), 'eur': europa?.toJson(), 'uecl': conference?.toJson(), 'sup': superCup?.toJson(), 'cwc': cwc?.toJson(), 'ic': ic?.toJson()},
         'nat': {'pts': nat.pts, 'start': nat.start, 'cur': nat.cur, 'past': nat.past, 'log': nat.log, 'qp': nat.qp, 'qgd': nat.qgd, 'wd': nat.winDone.toList(), 'pub': nat.pub, 'prk': nat.prevRk, 'pd': nat.pubDate, 'pr': nat.pendRel, 'hist': [for (final t in nat.history) t.toJson()]},
@@ -1655,6 +1658,7 @@ class GameState extends ChangeNotifier {
     user.squad.remove(o.player);
     user.budget += o.amount;
     fin.add('sales', o.amount);
+    if (o.player.overall >= 62 && o.player.age <= 28) sellOns['${o.player.id}'] = o.player.age <= 23 ? 0.15 : 0.10;
     offers.remove(o);
     user.repairLineup();
     news.insert(0, '💰 بعت ${o.player.name} إلى ${o.club} مقابل ${money1(o.amount)}');
@@ -1691,7 +1695,63 @@ class GameState extends ChangeNotifier {
         }
       }
     }
-    if (windowOpen) _aiTransfers();
+    // شرط جزائي: ناقٍ غني يفعّل شرط نجم عندك فيصلك عرض بقيمته الكاملة
+    if (windowOpen && offers.length < 3 && user.squad.length > 17) {
+      for (final p in user.squad.where((p) => p.overall >= 72 && p.age <= 31 && !offers.any((o) => o.player == p))) {
+        if (rng.nextDouble() > 0.03) continue;
+        final clause = ((p.value * 2.2) * 10).round() / 10;
+        final rich = teams.where((t) => t != user && t.budget >= clause && p.overall >= t.strength - 4).toList();
+        if (rich.isEmpty) continue;
+        final club = rich[rng.nextInt(rich.length)];
+        offers.add(Offer(p, club.name, clause, 2));
+        news.insert(0, '📨 ${club.name} يفعّل الشرط الجزائي في عقد ${p.name}: ${money1(clause)}');
+        break;
+      }
+    }
+    if (windowOpen) {
+      _distressSales();
+      _aiTransfers();
+    }
+  }
+
+  /// أندية مفلسة تبيع نجومها لتغطية العجز (تصل لأغنى الأندية)
+  void _distressSales() {
+    final pool = teams.where((t) => t != user).toList();
+    if (pool.length < 6 || rng.nextDouble() > 0.35) return;
+    final poor = pool.where((t) => t.budget < 3 && t.squad.length > 20).toList();
+    if (poor.isEmpty) return;
+    final from = poor[rng.nextInt(poor.length)];
+    final c = from.squad.where((p) => !p.onLoan && !p.filler && p.value >= 4).toList()..sort((a, b) => b.value.compareTo(a.value));
+    if (c.isEmpty) return;
+    final p = c.first;
+    final buyers = pool.where((t) => t != from && t.budget >= p.value * 1.1 && t.squad.length < 28).toList()..sort((a, b) => b.budget.compareTo(a.budget));
+    if (buyers.isEmpty) return;
+    final to = buyers[rng.nextInt(min(3, buyers.length))];
+    _moveAi(p, from, to, ((p.value * (0.8 + rng.nextDouble() * 0.2)) * 10).round() / 10, distress: true);
+  }
+
+  /// تنفيذ انتقال بين ناديين غير المستخدم، مع نسبة البيع اللاحق لنادي المستخدم إن وُجدت
+  void _moveAi(Player p, Team from, Team to, double fee, {bool distress = false}) {
+    from.squad.remove(p);
+    to.squad.add(p..contract = 2 + rng.nextInt(3));
+    from.budget += fee;
+    to.budget -= fee;
+    from.repairLineup();
+    to.autoPick();
+    final inMarket = market.any((x) => x.id == p.id);
+    market.removeWhere((x) => x.id == p.id);
+    final so = sellOns.remove('${p.id}');
+    if (so != null && fee > 0) {
+      final cut = max(0.1, (fee * so * 10).round() / 10);
+      user.budget += cut;
+      fin.add('sales', cut);
+      news.insert(0, '💸 استلمت ${money1(cut)} نسبة بيع لاحق من انتقال ${p.name} إلى ${to.name}');
+    }
+    news.insert(0, distress
+        ? '🆘 ${from.name} يبيع ${p.name} إلى ${to.name} (${money1(fee)}) لتغطية العجز'
+        : inMarket
+            ? '🏃 سبقك ${to.name} إلى ضم ${p.name} من ${from.name} (${money1(fee)})'
+            : '🔁 ${p.name} ينتقل من ${from.name} إلى ${to.name} (${money1(fee)})');
   }
 
   /// لاعبون أحرار في بداية اللعبة: من اللاعبين الحقيقيين الذين لا يضمنون مكاناً أساسياً
@@ -1736,7 +1796,9 @@ class GameState extends ChangeNotifier {
     if (pool.length < 4) return;
     final n = rng.nextDouble() < 0.5 ? 2 : 1;
     for (var i = 0; i < n; i++) {
-      final to = pool[rng.nextInt(pool.length)];
+      // الأغنى أكثر نشاطاً في الشراء
+      final w = [...pool]..sort((a, b) => b.budget.compareTo(a.budget));
+      final to = rng.nextDouble() < 0.5 ? w[rng.nextInt(max(1, w.length ~/ 3))] : pool[rng.nextInt(pool.length)];
       if (to.squad.length >= 28) continue;
       final need = _needOf(to);
       if (need == null) continue;
@@ -1775,17 +1837,7 @@ class GameState extends ChangeNotifier {
       }
       if (best == null || from == null) continue;
       final fee = (best.value * (0.9 + rng.nextDouble() * 0.4) * 10).round() / 10;
-      from.squad.remove(best);
-      to.squad.add(best..contract = 2 + rng.nextInt(3));
-      from.budget += fee;
-      to.budget -= fee;
-      from.repairLineup();
-      to.autoPick();
-      final inMarket = market.any((x) => x.id == best!.id);
-      market.removeWhere((x) => x.id == best!.id);
-      news.insert(0, inMarket
-          ? '🏃 سبقك ${to.name} إلى ضم ${best.name} من ${from.name} (${money1(fee)})'
-          : '🔁 ${best.name} ينتقل من ${from.name} إلى ${to.name} (${money1(fee)})');
+      _moveAi(best, from, to, fee);
     }
     if (news.length > 150) news.removeRange(150, news.length);
   }
