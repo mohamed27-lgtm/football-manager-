@@ -376,7 +376,7 @@ class MatchSim {
     final cr = rng.nextDouble();
     final big = cr < 0.12;
     final qf = big ? 2.3 : (cr < 0.37 ? 1.25 : 0.68);
-    final xgShot = (0.275 * pow(q / max(20, gkR), 1.4) * qf).clamp(0.03, 0.85).toDouble();
+    final xgShot = (0.255 * pow(q / max(20, gkR), 1.4) * qf).clamp(0.03, 0.85).toDouble();
     final onTf = big ? (onT + 0.12).clamp(0.2, 0.8).toDouble() : onT.toDouble();
     a.xg += onTf * xgShot;
     if (big) a.bigChances++;
@@ -496,7 +496,10 @@ class MatchSim {
         _sendOff(d, sl, 'إنذار ثانٍ وطرد', 1);
       } else {
         _log('yellow', '🟨 إنذار للاعب ${p.name}', d.isHome);
-        if (p.yellows % 4 == 0) p.suspendedMatches = max(p.suspendedMatches, 1);
+        if (p.yellows % 5 == 0) {
+          p.suspendedMatches = max(p.suspendedMatches, p.yellows >= 10 ? 2 : 1);
+          _log('info', '⛔ ${p.name} بلغ ${p.yellows} إنذارات ويغيب عن المباراة القادمة', d.isHome, major: false);
+        }
       }
     }
     if (rng.nextDouble() < 0.00028) {

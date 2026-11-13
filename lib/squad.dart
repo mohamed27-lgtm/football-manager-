@@ -15,7 +15,7 @@ String? statusOf(Player p) => p.injuredWeeks > 0
         ? 'موقوف'
         : !p.registered
             ? 'غير مسجّل'
-            : null;
+            : (p.yellows % 5 == 4 ? 'إنذار من الإيقاف (${p.yellows})' : null);
 
 class PlayerTile extends StatelessWidget {
   final Player p;
