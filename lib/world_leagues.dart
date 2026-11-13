@@ -121,7 +121,32 @@ extension WorldLeagues on GameState {
     if (have != null) return have;
     final src = Bundled.cached?.where((x) => x.id == l.id).firstOrNull;
     if (src == null) return null;
-    return wTeams[l.id] = worldTeamsOf(src, rng);
+    final ts = wTeams[l.id] = worldTeamsOf(src, rng);
+    // البيانات من 2023: نُقدّم اللاعبين بعدد المواسم التي مرّت في مسيرتك
+    for (var y = 1; y < season; y++) {
+      _ageWorldTeams(ts);
+    }
+    return ts;
+  }
+
+  /// موسم واحد من الزمن لفرق العالم: يكبر اللاعبون ويتطورون، يعتزل الكبار ويظهر شباب جدد
+  void _ageWorldTeams(Map<String, Team> ts) {
+    for (final t in ts.values) {
+      for (final p in [...t.squad]) {
+        p.age++;
+        p.apps = 0;
+        _develop(p, 0, 0);
+        if (_retires(p)) {
+          if (p.overall >= 55 && !p.filler) {
+            rebirth(rng, p);
+          } else {
+            t.squad.remove(p);
+          }
+        }
+      }
+      topUpSquad(t, rng);
+      t.autoPick();
+    }
   }
 
   /// مباراة بالمحرك الكامل نفسه الذي تُلعب به مبارياتك: خطوط، لياقة، تكتيك، تبديلات، إصابات
@@ -278,6 +303,9 @@ extension WorldLeagues on GameState {
       worldChamps['${l.id}|$season'] = champ;
     }
     _worldPromotions();
+    for (final ts in wTeams.values) {
+      _ageWorldTeams(ts);
+    }
     for (final l in wLeagues) {
       // تصفير الجدول وانجراف بسيط في القوة نحو المتوسط
       l.round = 0;

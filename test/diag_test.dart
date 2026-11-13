@@ -279,7 +279,9 @@ void main() {
       }
     }
     final champ0 = l.names[l.order.first];
+    final ageB = gs.wTeams[900]!['Club 0']!.squad.fold<int>(0, (a, p) => a + p.age);
     gs.startNewSeason();
+    expect(gs.wTeams[900]!['Club 0']!.squad.fold<int>(0, (a, p) => a + p.age) > ageB, true, reason: 'لاعبو العالم يكبرون');
     expect(gs.worldChamps.containsKey('900|1'), true);
     expect(gs.clubHonours[champ0]?.isNotEmpty ?? false, true, reason: 'بطل الدوري يُسجَّل في خزينته');
     expect(gs.wLeagues.first.round, 0);
