@@ -232,9 +232,12 @@ void main() {
     // مراجع واقعية تقريبية للمباراة الواحدة (الفريقان معاً)
     expect(goals / n, inInclusiveRange(2.3, 3.1));
     expect(shots / n, inInclusiveRange(18, 32));
-    expect(yel / n, inInclusiveRange(2.5, 5.0));
-    expect(red / n, inInclusiveRange(0.03, 0.22));
-    expect(corners / n, inInclusiveRange(7, 13));
+    expect(yel / n, inInclusiveRange(3.0, 5.0));
+    expect(red / n, inInclusiveRange(0.04, 0.16));
+    expect(corners / n, inInclusiveRange(8, 12.5));
+    expect(fouls / n, inInclusiveRange(18, 27));
+    expect(pen / n, inInclusiveRange(0.2, 0.45));
+    expect((xg - goals).abs() / n < 0.35, true, reason: 'xG قريب من الأهداف');
   });
 
   test('تقييمات الأداء من أحداث المباراة وطقس وحكم', () {

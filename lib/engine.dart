@@ -265,7 +265,7 @@ class MatchSim {
         .toDouble();
     if (rng.nextDouble() < pShot) {
       _shot(a, d);
-    } else if (rng.nextDouble() < 0.0022 * refStrict) {
+    } else if (rng.nextDouble() < 0.0045 * refStrict) {
       _penalty(a, d);
     }
 
@@ -340,7 +340,7 @@ class MatchSim {
         _log('miss', '${shooter.name} يسدد بعيداً عن المرمى', a.isHome,
             major: false);
       }
-      if (rng.nextDouble() < 0.25) _corner(a);
+      if (rng.nextDouble() < 0.38) _corner(a);
       return;
     }
     a.onTarget++;
@@ -383,7 +383,7 @@ class MatchSim {
         d.bump(gkP, 0.4);
         d.ps(gkP).saves++;
       }
-      if (rng.nextDouble() < 0.4) _corner(a);
+      if (rng.nextDouble() < 0.55) _corner(a);
       if (rng.nextDouble() < 0.6) {
         _log('save', '🧤 تصدٍّ رائع لتسديدة ${shooter.name}', a.isHome,
             major: false);
@@ -426,14 +426,14 @@ class MatchSim {
 
   void _discipline(Side d) {
     if (d.slots.isEmpty) return;
-    if (rng.nextDouble() < 0.13 * refStrict * (1 + 0.25 * (d.team.pressing - 1))) d.fouls++;
-    if (rng.nextDouble() < 0.03 * refStrict * (1 + 0.4 * (d.team.pressing - 1))) {
+    if (rng.nextDouble() < 0.24 * refStrict * (1 + 0.25 * (d.team.pressing - 1))) d.fouls++;
+    if (rng.nextDouble() < 0.04 * refStrict * (1 + 0.4 * (d.team.pressing - 1))) {
       final c = d.slots.where((s) => s.pos != Pos.gk).toList();
       if (c.isEmpty) return;
       final sl = _weighted(
           c,
           c
-              .map((s) => (s.pos == Pos.def ? 3.0 : s.pos == Pos.mid ? 2.5 : 1.0) * (s.p.trait == 'متقلب' ? 1.8 : 1.0))
+              .map((s) => (s.pos == Pos.def ? 3.0 : s.pos == Pos.mid ? 2.5 : 1.0) * (s.p.trait == 'متقلب' ? 1.8 : 1.0) * ((d.yellowCount[s.p.id] ?? 0) > 0 ? 0.3 : 1.0))
               .toList());
       final p = sl.p;
       final n = (d.yellowCount[p.id] ?? 0) + 1;
@@ -441,13 +441,14 @@ class MatchSim {
       p.yellows++;
       d.bump(p, -0.3);
       if (n >= 2) {
+        _log('yellow', '🟨 إنذار ثانٍ للاعب ${p.name}', d.isHome);
         _sendOff(d, sl, 'إنذار ثانٍ وطرد', 1);
       } else {
         _log('yellow', '🟨 إنذار للاعب ${p.name}', d.isHome);
         if (p.yellows % 4 == 0) p.suspendedMatches = max(p.suspendedMatches, 1);
       }
     }
-    if (rng.nextDouble() < 0.0006) {
+    if (rng.nextDouble() < 0.00028) {
       final c = d.slots.where((s) => s.pos != Pos.gk).toList();
       if (c.isNotEmpty) {
         _sendOff(d, c[rng.nextInt(c.length)], 'بطاقة حمراء مباشرة', 2);
