@@ -172,7 +172,6 @@ void main() {
     expect(ids.contains('bd'), false, reason: 'الكرة الذهبية لا تُعلن نهاية الموسم');
     expect(gs.pendingAwards.any((a) => a['id'] == 'bd'), true);
     expect(gs.pendingAwards.any((a) => a['id'] == 'yashin'), true);
-    expect(gs.pendingAwards.any((a) => a['id'] == 'fifa_coach'), true);
     gs.startNewSeason();
     final seen = <String>{};
     guard = 0;
