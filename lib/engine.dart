@@ -484,7 +484,7 @@ class MatchSim {
       final sl = _weighted(
           c,
           c
-              .map((s) => (s.pos == Pos.def ? 3.0 : s.pos == Pos.mid ? 2.5 : 1.0) * (s.p.trait == 'متقلب' ? 1.8 : 1.0) * ((d.yellowCount[s.p.id] ?? 0) > 0 ? 0.3 : 1.0))
+              .map((s) => (s.pos == Pos.def ? 3.0 : s.pos == Pos.mid ? 2.5 : 1.0) * (s.p.trait == 'متقلب' ? 1.8 : 1.0) * ((d.yellowCount[s.p.id] ?? 0) > 0 ? 0.2 : 1.0))
               .toList());
       final p = sl.p;
       final n = (d.yellowCount[p.id] ?? 0) + 1;
@@ -502,7 +502,7 @@ class MatchSim {
         }
       }
     }
-    if (rng.nextDouble() < 0.00028) {
+    if (rng.nextDouble() < 0.00018) {
       final c = d.slots.where((s) => s.pos != Pos.gk).toList();
       if (c.isNotEmpty) {
         _sendOff(d, c[rng.nextInt(c.length)], 'بطاقة حمراء مباشرة', 2);
