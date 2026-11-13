@@ -1507,6 +1507,14 @@ class GameState extends ChangeNotifier {
     if (price + fee + extra > user.budget) {
       return 'الميزانية غير كافية (السعر + العمولات ${money1(price + fee + extra)})';
     }
+    // قاعدة تكلفة التشكيلة: لا تتجاوز الرواتب مجمل الإيرادات المتوقعة (حد اللعب المالي النظيف)
+    if (week >= 6 && ffpRevenue > 0) {
+      final weeklyRev = ffpRevenue / week;
+      final proj = (weeklyWages + staffWages + (wage ?? p.wage)) / weeklyRev;
+      if (proj > 1.0) {
+        return 'اللعب المالي النظيف: الصفقة سترفع الرواتب إلى ${(proj * 100).round()}% من إيراداتك (الحد 100%)';
+      }
+    }
     if (rng.nextDouble() < 0.06) {
       market.remove(p);
       news.insert(0, '🩺 فشل ${p.name} في الفحص الطبي وانسحبت الصفقة');
