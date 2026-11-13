@@ -84,6 +84,16 @@ class Player {
   double get effective =>
       overall * (0.55 + 0.45 * fitness / 100) * (0.92 + 0.16 * morale / 100);
 
+  /// شخصية اللاعب (ثابتة من هويته): تؤثر في تطوره وانضباطه وطموحه
+  String get trait {
+    final h = ((id * 2654435761) >> 9) % 100;
+    if (h < 26) return 'محترف';
+    if (h < 44) return 'متقلب';
+    if (h < 56 && age >= 26) return 'قائد';
+    if (h < 76) return 'طموح';
+    return 'عادي';
+  }
+
   bool get available => injuredWeeks == 0 && suspendedMatches == 0 && registered;
 
   static double _ageF(int a) => a <= 21 ? 1.25 : a <= 24 ? 1.1 : a <= 28 ? 1.0 : a <= 31 ? 0.8 : a <= 34 ? 0.5 : 0.3;

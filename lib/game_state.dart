@@ -1486,6 +1486,10 @@ class GameState extends ChangeNotifier {
 
   String? _refusal(Player p) {
     final o = joinOutlook(p);
+    if (p.trait == 'طموح' && p.overall >= 70 && user.reputation < 3 && !p.free) {
+      news.insert(0, '🙅 رفض ${p.name} الانضمام إلى ${user.name}');
+      return 'رفض ${p.name} الانتقال: لاعب طموح لا يرى مشروعك كبيراً بما يكفي';
+    }
     if (o == 2 || (o == 1 && (p.id + week) % 2 == 0)) {
       news.insert(0, '🙅 رفض ${p.name} الانضمام إلى ${user.name}');
       return 'رفض ${p.name} الانتقال: يرى ناديك أقل من طموحه الآن';
@@ -1699,6 +1703,27 @@ class GameState extends ChangeNotifier {
           final club = cands[rng.nextInt(cands.length)];
           offers.add(Offer(p, club.name, max(0.1, amount), 3));
           news.insert(0, '📨 عرض من ${club.name} لشراء ${p.name}: ${money1(amount)}');
+          break;
+        }
+      }
+    }
+    // شخصيات اللاعبين ووكلاؤهم: طلب رحيل من الطموحين وتسريبات اهتمام قبل نهاية العقد
+    if (windowOpen && user.squad.length > 17) {
+      final tbl = table;
+      final pos = tbl.indexOf(user) + 1;
+      for (final p in user.squad.where((p) => !p.onLoan && !p.listed)) {
+        if (p.trait == 'طموح' && p.overall >= 68 && pos > teams.length * 0.5 && rng.nextDouble() < 0.012) {
+          p
+            ..listed = true
+            ..morale = max(0, p.morale - 8);
+          news.insert(0, '😕 ${p.name} يطلب الرحيل: ناديك لا يلبّي طموحه ويبحث عن مشروع أكبر');
+          break;
+        }
+        if (p.contract <= 1 && p.overall >= 70 && rng.nextDouble() < 0.02) {
+          final c = teams.where((t) => t != user && t.reputation >= user.reputation).toList();
+          if (c.isEmpty) continue;
+          p.morale = max(0, p.morale - 4);
+          news.insert(0, '🕵️ وكيل ${p.name} يسرّب اهتمام ${c[rng.nextInt(c.length)].name} بضمه مع اقتراب عقده من النهاية');
           break;
         }
       }
@@ -1970,7 +1995,8 @@ class GameState extends ChangeNotifier {
       final gap = p.potential - p.overall;
       if (gap > 0) {
         final rate = p.age <= 21 ? 0.32 : (p.age <= 24 ? 0.24 : 0.14);
-        final g = (gap * rate * gf + playing * 0.8 + form * 0.7 + train * 0.6 + rng.nextDouble() * 1.6 - 0.4).round();
+        final tf = p.trait == 'محترف' ? 1.15 : p.trait == 'متقلب' ? 0.92 : 1.0;
+        final g = (gap * rate * gf * tf + playing * 0.8 + form * 0.7 + train * 0.6 + rng.nextDouble() * 1.6 - 0.4).round();
         _grow(p, max(0, min(g, gap)));
       }
       if (p.age <= 23) {

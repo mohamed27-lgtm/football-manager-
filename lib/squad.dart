@@ -487,6 +487,7 @@ class _PlayerCardState extends State<_PlayerCard> {
           _row('الراتب الأسبوعي', money(p.wage)),
           const Divider(height: 1),
           _row('القيمة السوقية', money(p.value)),
+          _row('الشخصية', p.trait),
           const Divider(height: 1),
           if (!market) _row('ينتهي العقد', 'بعد ${p.contract} ${p.contract <= 1 ? 'سنة' : 'سنوات'}', vc: p.contract <= 1 ? const Color(0xFFE5533D) : null),
           if (market)

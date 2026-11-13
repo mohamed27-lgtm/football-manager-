@@ -86,7 +86,7 @@ class Side {
   double get _man => pow(slots.length / 11, 1.5).toDouble();
 
   /// الانسجام وتحليل الطاقم
-  double get _form => (0.97 + 0.06 * team.cohesion / 100) * (1 + 0.008 * team.analystLvl);
+  double get _form => (0.97 + 0.06 * team.cohesion / 100) * (1 + 0.008 * team.analystLvl) * (slots.any((s) => s.p.trait == 'قائد') ? 1.01 : 1.0);
 
   double get attackPower =>
       (0.55 * lineAvg(Pos.att) + 0.45 * lineAvg(Pos.mid)) *
@@ -433,7 +433,7 @@ class MatchSim {
       final sl = _weighted(
           c,
           c
-              .map((s) => s.pos == Pos.def ? 3.0 : s.pos == Pos.mid ? 2.5 : 1.0)
+              .map((s) => (s.pos == Pos.def ? 3.0 : s.pos == Pos.mid ? 2.5 : 1.0) * (s.p.trait == 'متقلب' ? 1.8 : 1.0))
               .toList());
       final p = sl.p;
       final n = (d.yellowCount[p.id] ?? 0) + 1;
