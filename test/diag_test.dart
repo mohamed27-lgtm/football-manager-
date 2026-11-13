@@ -387,4 +387,47 @@ void main() {
     gs.leaveNatJob();
     expect(gs.natJob, null);
   });
+
+  test('تذاكر المدرجات وبطاقات الموسم والحملات', () {
+    final r = Random(7);
+    final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];
+    final gs = GameState.fromData(teams, 2, 'تجريبي');
+    gs.user.budget = 200;
+    final t0 = gs.ticketForecast();
+    expect(t0.attendance <= t0.capacity, true);
+    expect(t0.revenue > 0.05 && t0.revenue < 6, true, reason: 'إيراد ${t0.revenue}');
+    for (final st in t0.stands) {
+      expect(st.att >= st.subs && st.att <= st.cap, true);
+    }
+    gs.standMult[0] = 2.0;
+    final t1 = gs.ticketForecast();
+    expect(t1.stands[0].fill < t0.stands[0].fill, true, reason: 'السعر الأعلى يقلل الامتلاء');
+    gs.standMult[0] = 1.0;
+    final sug = gs.suggestedMults();
+    expect(sug.every((m) => m >= 0.6 && m <= 1.5), true);
+    gs.seasonMult = 1.3;
+    final lowSubs = gs.ticketForecast().subs;
+    gs.seasonMult = 1.0;
+    expect(lowSubs < gs.ticketForecast().subs, true, reason: 'رفع سعر البطاقات يقلل المشتركين');
+    gs.standMult[2] = 1.15;
+    final g2 = GameState.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(gs.toJson())) as Map));
+    expect(g2.standMult[2], 1.15);
+    expect(gs.startCampaign('membership'), null);
+    expect(gs.startCampaign('membership') != null, true);
+    final f0 = gs.fans;
+    var guard = 0;
+    while (gs.campaigns.isNotEmpty && guard++ < 30) {
+      gs.confidence = 100;
+      final c = gs.pendingCup;
+      if (c != null) {
+        gs.startCupMatch(c);
+        gs.finishCurrent();
+        continue;
+      }
+      gs.startMatch();
+      gs.finishMatchday();
+    }
+    expect(gs.campaigns.isEmpty, true);
+    expect(gs.fans >= f0 - 3, true);
+  });
 }
