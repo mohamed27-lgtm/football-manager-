@@ -6,6 +6,7 @@ import 'club_ui.dart';
 import 'match_pages.dart';
 import 'facilities_screen.dart';
 import 'tickets_screen.dart';
+import 'lineup_pages.dart';
 
 String _n(int v) => v.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
 
