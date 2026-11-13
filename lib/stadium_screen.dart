@@ -2,204 +2,190 @@ import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
 import 'game_state.dart';
 import 'widgets.dart';
+import 'club_ui.dart';
+import 'match_pages.dart';
+import 'facilities_screen.dart';
+import 'tickets_screen.dart';
 
-class StadiumScreen extends StatefulWidget {
+String _n(int v) => v.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
+
+/// الملعب: مخطط المدرجات، الحالة، المشروع الجاري، المزايا وحقوق التسمية
+class StadiumScreen extends StatelessWidget {
   final GameState gs;
   const StadiumScreen({super.key, required this.gs});
-  @override
-  State<StadiumScreen> createState() => _StadiumScreenState();
-}
-
-class _StadiumScreenState extends State<StadiumScreen> {
-  GameState get gs => widget.gs;
-  int tab = 0;
-  static const _teal = Color(0xFF1FA58A);
-  static const _names = ['أسعار رخيصة', 'أسعار عادية', 'أسعار مرتفعة'];
-  static const _desc = [
-    'حضور أعلى ورضا جماهيري، لكن دخل أقل (×0.8).',
-    'توازن بين الدخل والحضور (×1.0).',
-    'دخل أعلى (×1.25) لكن الحضور والرضا ينخفضان.',
-  ];
-
-  Widget _tile(String v, String l, Color c) => Expanded(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
-          child: Column(children: [
-            Text(v, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: c)),
-            Text(l, style: const TextStyle(color: kMuted, fontSize: 12)),
-          ]),
-        ),
-      );
-
-  Widget _card(Widget child) => Container(
-        margin: const EdgeInsets.only(top: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
-        child: child,
-      );
-
-  String _n(int v) => v.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
-
-  Widget _bar(String l, double v, Color c, String r) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Column(children: [
-          Row(children: [
-            Text(l, style: const TextStyle(fontWeight: FontWeight.w700)),
-            const Spacer(),
-            Text(r, style: const TextStyle(fontWeight: FontWeight.w900)),
-          ]),
-          const SizedBox(height: 5),
-          ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: v.clamp(0, 1).toDouble(), minHeight: 8, color: c, backgroundColor: kCard2)),
-        ]),
-      );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('الملعب')),
-      body: ListenableBuilder(
-        listenable: gs,
-        builder: (context, _) {
-          final lvl = gs.user.stadium;
-          final cap = gs.stadiumCapacity;
-          final att = gs.attendance;
-          final gate = (0.3 + 0.12 * gs.user.reputation) * (0.7 + 0.15 * lvl) * (0.75 + 0.5 * gs.fans / 100) * GameState.ticketMult[gs.ticketLevel];
-          return ListView(padding: const EdgeInsets.all(14), children: [
-            SegmentedButton<int>(
-              showSelectedIcon: false,
-              expandedInsets: EdgeInsets.zero,
-              segments: const [
-                ButtonSegment(value: 0, label: Text('نظرة عامة', style: TextStyle(fontSize: 12))),
-                ButtonSegment(value: 1, label: Text('التذاكر', style: TextStyle(fontSize: 12))),
-                ButtonSegment(value: 2, label: Text('الحضور', style: TextStyle(fontSize: 12))),
-                ButtonSegment(value: 3, label: Text('التوسعة', style: TextStyle(fontSize: 12))),
-              ],
-              selected: {tab},
-              onSelectionChanged: (v) => setState(() => tab = v.first),
-            ),
-            const SizedBox(height: 12),
-            Row(children: [
-              _tile(_n(cap), 'السعة', kPrimary),
-              _tile('${(gs.fillRate * 100).round()}%', 'الإشغال', _teal),
-              _tile(money(gate), 'دخل المباراة', const Color(0xFFF5A524)),
-            ]),
-            if (tab == 0) ...[
-              _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  const Icon(Icons.stadium_rounded, color: kPrimary),
-                  const SizedBox(width: 8),
-                  Text(gs.user.venue ?? 'ملعب ${gs.user.name}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                  const Spacer(),
-                  Text('المستوى $lvl/5', style: const TextStyle(color: kMuted)),
-                ]),
-                const SizedBox(height: 12),
-                _bar('الحضور المتوقع', att / cap, _teal, _n(att)),
-                _bar('الشعبية', gs.fans / 100, kPrimary, '${gs.fans.round()}%'),
-                _bar('مستوى الملعب', lvl / 5, const Color(0xFF6A6FC4), '$lvl/5'),
-              ])),
-            ],
-            if (tab == 1) ...[
-              _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('سياسة أسعار التذاكر', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-                const SizedBox(height: 10),
-                SegmentedButton<int>(
-                  showSelectedIcon: false,
-                  expandedInsets: EdgeInsets.zero,
-                  segments: [for (var i = 0; i < 3; i++) ButtonSegment(value: i, label: Text(_names[i], style: const TextStyle(fontSize: 12)))],
-                  selected: {gs.ticketLevel},
-                  onSelectionChanged: (v) => gs.setTicketLevel(v.first),
-                ),
-                const SizedBox(height: 10),
-                Text(_desc[gs.ticketLevel], style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
-              ])),
-              _card(Builder(builder: (_) {
-                final g = gs.gateParts();
-                final tot = g.season + g.single + g.vip;
-                Widget row(String l, String d, double v, Color c) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Column(children: [
-                        Row(children: [
-                          Text(l, style: const TextStyle(fontWeight: FontWeight.w800)),
-                          const Spacer(),
-                          Text(money(v), style: const TextStyle(fontWeight: FontWeight.w900)),
-                        ]),
-                        const SizedBox(height: 4),
-                        ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: tot == 0 ? 0 : v / tot, minHeight: 7, color: c, backgroundColor: kCard2)),
-                        const SizedBox(height: 3),
-                        Align(alignment: AlignmentDirectional.centerStart, child: Text(d, style: const TextStyle(color: kMuted, fontSize: 11.5))),
+      appBar: gameBar(context, gs, 'الملعب'),
+      body: SafeArea(
+        child: ListenableBuilder(
+          listenable: gs,
+          builder: (context, _) {
+            final lvl = gs.user.stadium;
+            final cap = gs.stadiumCapacity;
+            final pr = gs.projectOf('stadium');
+            final tf = gs.ticketForecast(oppRep: gs.nextOppRep);
+            final atmos = (gs.fans * 0.6 + tf.attendance / (cap == 0 ? 1 : cap) * 40).round().clamp(0, 100);
+            final naming = gs.deals.where((d) => d.type == 'stadium').toList();
+            final feats = <(IconData, Color, String, String, int)>[
+              (Icons.tv_rounded, const Color(0xFF2F7BE6), 'الشاشة', lvl >= 2 ? 'شاشة LED عملاقة' : 'شاشة عادية', lvl),
+              (Icons.bolt_rounded, const Color(0xFFF5A524), 'الإضاءة', lvl >= 3 ? 'ملعب ليلي • أجواء +${(lvl - 2) * 2}%' : 'إضاءة أساسية', lvl),
+              (Icons.roofing_rounded, const Color(0xFF6A6FC4), 'السقف', 'تغطية ${(lvl * 20).clamp(0, 100)}% من المقاعد', lvl),
+              (Icons.shield_outlined, const Color(0xFF1FA58A), 'الأمان', 'تصنيف ${const ['D', 'C', 'B', 'B', 'A', 'A'][lvl.clamp(0, 5)]}', lvl),
+            ];
+            return ListView(padding: const EdgeInsets.all(14), children: [
+              CardBox(
+                child: Column(children: [
+                  Row(children: [
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(gs.user.venue ?? 'ملعب ${gs.user.name}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                        const SizedBox(height: 2),
+                        Text(gs.user.name, style: const TextStyle(color: kMuted, fontSize: 12.5)),
                       ]),
-                    );
-                return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('مصادر إيراد المباراة (تقدير لخصم متوسط)', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-                  const SizedBox(height: 10),
-                  row('اشتراكات موسمية', 'ثابتة لا تتأثر بسياسة الأسعار', g.season, kPrimary),
-                  row('تذاكر منفردة', 'تتأثر بالسعر والشعبية وقوة الخصم', g.single, _teal),
-                  row('ضيافة VIP', 'ترتفع بمستوى الملعب وتصدّر الترتيب', g.vip, const Color(0xFFF5A524)),
-                ]);
-              })),
-              _card(Column(children: [
-                for (var i = 0; i < 3; i++)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(children: [
-                      Text(_names[i], style: TextStyle(fontWeight: i == gs.ticketLevel ? FontWeight.w900 : FontWeight.w500, color: i == gs.ticketLevel ? kPrimary : null)),
-                      const Spacer(),
-                      Text('×${GameState.ticketMult[i]}', style: const TextStyle(fontWeight: FontWeight.w900)),
+                    ),
+                    Pill('المستوى $lvl', const Color(0xFFB07A00)),
+                  ]),
+                  const SizedBox(height: 12),
+                  const _Pitch(),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    _stat(_n(cap), 'السعة', kPrimary),
+                    _stat('$atmos', 'الأجواء', const Color(0xFF2F7BE6)),
+                    _stat('${(tf.attendance * 100 / (cap == 0 ? 1 : cap)).round()}%', 'الإشغال', const Color(0xFF1FA58A)),
+                    _stat(money(tf.revenue), 'دخل المباراة', const Color(0xFFF5A524)),
+                  ]),
+                ]),
+              ),
+              if (pr != null)
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProjectScreen(gs: gs, kind: 'stadium'))),
+                  child: CardBox(
+                    border: const Color(0xFFF5A524),
+                    color: const Color(0xFFF5A524).withOpacity(0.08),
+                    child: Column(children: [
+                      Row(children: [
+                        const IconBox(Icons.construction_rounded, Color(0xFFF5A524), size: 44),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            const Text('توسعة الملعب', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                            Text('إلى المستوى ${pr.toLevel} • السعة ${_n(12000 + 8000 * pr.toLevel)}', style: const TextStyle(color: kMuted, fontSize: 12)),
+                          ]),
+                        ),
+                        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                          const Text('المتبقي', style: TextStyle(color: kMuted, fontSize: 11)),
+                          Text(weeksText(pr.left), style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFB07A00))),
+                        ]),
+                      ]),
+                      const SizedBox(height: 10),
+                      Bar(pr.progress, const Color(0xFFF5A524), h: 9),
+                      const SizedBox(height: 6),
+                      Row(children: [
+                        Text('${(pr.progress * 100).round()}%', style: const TextStyle(color: kMuted, fontSize: 12)),
+                        const Spacer(),
+                        Text(pr.progress < 0.2 ? 'مرحلة الحفر' : (pr.progress < 0.45 ? 'مرحلة الأساسات' : (pr.progress < 0.75 ? 'مرحلة الهيكل' : 'التشطيب والفحص')), style: const TextStyle(color: kMuted, fontSize: 12)),
+                      ]),
                     ]),
                   ),
-              ])),
-            ],
-            if (tab == 2) ...[
-              _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('عوامل الحضور', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-                const SizedBox(height: 12),
-                _bar('الشعبية', gs.fans / 100, kPrimary, '${gs.fans.round()}%'),
-                _bar('سياسة الأسعار', 1 - gs.ticketLevel * 0.25, const Color(0xFFF5A524), _names[gs.ticketLevel]),
-                _bar('الإشغال', gs.fillRate, _teal, '${(gs.fillRate * 100).round()}%'),
-                const SizedBox(height: 4),
-                Text('الحضور المتوقع: ${_n(att)} من ${_n(cap)} متفرج. الفوز المتكرر والألقاب ترفع الشعبية.', style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
-              ])),
-            ],
-            if (tab == 3) ...[
-              _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('توسعة الملعب', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-                const SizedBox(height: 8),
-                if (lvl >= 5)
-                  const Text('وصل الملعب إلى أقصى مستوى.', style: TextStyle(color: kMuted, fontSize: 12.5))
-                else ...[
-                  Text('المستوى التالي: السعة ${_n(12000 + 8000 * (lvl + 1))} (+${_n(8000)}) ودخل أعلى من الضيافة والتذاكر.', style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
-                  const SizedBox(height: 6),
-                  Text('التكلفة ${money(gs.facCost('stadium', lvl))} • مدة الأشغال ${gs.facWeeks('stadium', lvl)} أسبوعاً • السعة تنخفض 15% أثناء البناء.', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                ),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.55,
+                children: [
+                  for (final f in feats)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: [
+                          IconBox(f.$1, f.$2, size: 32),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(f.$3, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14))),
+                        ]),
+                        const Spacer(),
+                        LevelDots(level: f.$5, color: f.$2),
+                        const SizedBox(height: 6),
+                        Text(f.$4, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 11.5)),
+                      ]),
+                    ),
                 ],
-                const SizedBox(height: 12),
-                if (gs.projectOf('stadium') case final pr?) ...[
-                  ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: pr.progress, minHeight: 9, color: kPrimary, backgroundColor: kCard2)),
-                  const SizedBox(height: 6),
-                  Text('قيد التنفيذ: متبقٍ ${pr.left} أسبوعاً${pr.delays > 0 ? ' • تأخر ${pr.delays}×' : ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                  if (!pr.rushed && pr.left > 1)
-                    TextButton(
-                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(gs.rushProject('stadium') ?? 'تم تسريع الأشغال ⚡'))),
-                      child: Text('تسريع (${money(gs.rushCost(pr))})'),
-                    ),
-                ] else if (lvl < 5)
-                  SizedBox(
-                    width: double.infinity,
-                    child: GradientButton(
-                      label: 'بدء مشروع التوسعة (${money(gs.facCost('stadium', lvl))})',
-                      icon: Icons.construction_rounded,
-                      onPressed: () {
-                        final err = gs.startProject('stadium');
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'بدأت أشغال التوسعة 🏗️')));
-                      },
-                    ),
-                  ),
-              ])),
-            ],
-          ]);
-        },
+              ),
+              const SizedBox(height: 12),
+              CardBox(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Column(children: [
+                  KvRow('حقوق تسمية الملعب', naming.isEmpty ? 'غير مُباع' : '${naming.first.brand}', sub: naming.isEmpty ? 'تُعرض عروض الرعاة في صفحة الرعاة' : 'متبقٍ ${naming.first.years} سنوات • ${money(naming.first.weekly * 52)} سنوياً', vc: naming.isEmpty ? kMuted : const Color(0xFF1FA58A)),
+                  const Divider(height: 1, color: kLine),
+                  KvRow('مشتركو بطاقات الموسم', _n(tf.subs), sub: 'معدل التجديد ${(gs.renewalRate * 100).round()}%'),
+                  const Divider(height: 1, color: kLine),
+                  KvRow('الصيانة الأسبوعية', money(0.03 * lvl + 0.04 * (pr == null ? 0 : 1))),
+                ]),
+              ),
+              Row(children: [
+                Expanded(child: blueBtn('التذاكر', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TicketsScreen(gs: gs))), icon: Icons.confirmation_number_outlined)),
+                const SizedBox(width: 10),
+                Expanded(child: GradientButton(label: 'المنشآت', icon: Icons.construction_rounded, onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FacilitiesScreen(gs: gs))))),
+              ]),
+            ]);
+          },
+        ),
       ),
     );
   }
+
+  Widget _stat(String v, String l, Color c) => Expanded(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(color: kCard2, borderRadius: BorderRadius.circular(14)),
+          child: Column(children: [
+            FittedBox(fit: BoxFit.scaleDown, child: Text(v, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: c))),
+            Text(l, style: const TextStyle(color: kMuted, fontSize: 11)),
+          ]),
+        ),
+      );
+}
+
+/// مخطط الملعب من الأعلى مع المدرجات الأربعة
+class _Pitch extends StatelessWidget {
+  const _Pitch();
+  @override
+  Widget build(BuildContext context) => AspectRatio(
+        aspectRatio: 2.1,
+        child: CustomPaint(painter: _PitchPainter()),
+      );
+}
+
+class _PitchPainter extends CustomPainter {
+  @override
+  void paint(Canvas c, Size s) {
+    final bg = RRect.fromRectAndRadius(Offset.zero & s, const Radius.circular(18));
+    c.drawRRect(bg, Paint()..color = kNavy);
+    RRect r(double l, double t, double w, double h) => RRect.fromRectAndRadius(Rect.fromLTWH(l, t, w, h), const Radius.circular(10));
+    final pw = s.width, ph = s.height;
+    // مدرجا الطول (الشعبي والشرفة)
+    for (final y in [ph * 0.06, ph * 0.80]) {
+      c.drawRRect(r(pw * 0.08, y, pw * 0.84, ph * 0.14), Paint()..color = const Color(0xFF6A6FC4));
+      c.drawRRect(r(pw * 0.14, y + ph * 0.03, pw * 0.72, ph * 0.08), Paint()..color = const Color(0xFFF5A524));
+    }
+    c.drawRRect(r(pw * 0.01, ph * 0.22, pw * 0.08, ph * 0.56), Paint()..color = const Color(0xFFA9D4F8));
+    c.drawRRect(r(pw * 0.91, ph * 0.22, pw * 0.08, ph * 0.56), Paint()..color = const Color(0xFFE5533D));
+    final f = Rect.fromLTWH(pw * 0.13, ph * 0.23, pw * 0.74, ph * 0.54);
+    c.drawRRect(RRect.fromRectAndRadius(f, const Radius.circular(8)), Paint()..color = const Color(0xFF21A988));
+    final line = Paint()..color = Colors.white70..style = PaintingStyle.stroke..strokeWidth = 1.6;
+    c.drawRRect(RRect.fromRectAndRadius(f, const Radius.circular(8)), line);
+    c.drawLine(Offset(f.center.dx, f.top), Offset(f.center.dx, f.bottom), line);
+    c.drawCircle(f.center, ph * 0.11, line);
+    c.drawRect(Rect.fromLTWH(f.left, f.center.dy - ph * 0.12, pw * 0.07, ph * 0.24), line);
+    c.drawRect(Rect.fromLTWH(f.right - pw * 0.07, f.center.dy - ph * 0.12, pw * 0.07, ph * 0.24), line);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter o) => false;
 }

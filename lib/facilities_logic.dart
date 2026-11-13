@@ -172,18 +172,11 @@ extension FacilitiesLogic on GameState {
   /// تأثير التوسعة: الملعب أثناء البناء يعمل بسعة أقل (15%)
   bool get stadiumBuilding => projectOf('stadium') != null;
 
-  /// تقدير إيراد مباراة على أرضك مقسّماً: اشتراكات موسمية (ثابتة)، تذاكر منفردة (تتأثر بالسعر)، وضيافة VIP
+  /// تقدير إيراد مباراة على أرضك مقسّماً: اشتراكات موسمية، تذاكر منفردة، وضيافة VIP
   ({double season, double single, double vip}) gateParts({int oppRep = 3}) {
     final mk = staff['marketing'] ?? 0;
-    final base = (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (0.75 + 0.5 * fans / 100) * (1 + 0.04 * mk) * (1 + 0.04 * (user.fanZone - 1));
-    final baseFill = 0.42 + 0.5 * fans / 100;
-    final opp = 0.92 + 0.04 * oppRep;
-    final pos = table.indexOf(user) + 1;
-    final vipF = (0.8 + 0.1 * user.stadium) * (pos > 0 && pos <= 4 ? 1.1 : 0.95);
-    return (
-      season: base * 0.35,
-      single: base * 0.45 * GameState.ticketMult[ticketLevel] * (fillRate / baseFill) * opp,
-      vip: base * 0.20 * vipF * opp,
-    );
+    final t = ticketForecast(oppRep: oppRep);
+    final k = (1 + 0.04 * mk) * (1 + 0.04 * (user.fanZone - 1));
+    return (season: t.seasonRev * k, single: t.singleRev * k, vip: t.vipRev * k);
   }
 }

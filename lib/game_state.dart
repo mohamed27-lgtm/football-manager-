@@ -22,6 +22,7 @@ import 'api_football.dart';
 
 part 'awards_logic.dart';
 part 'facilities_logic.dart';
+part 'tickets_logic.dart';
 part 'jobs_logic.dart';
 part 'intl_logic.dart';
 part 'world_leagues.dart';
@@ -447,13 +448,11 @@ class GameState extends ChangeNotifier {
   bool boardPledge = false; // تعهّد للإدارة بإنهاء الدوري ضمن الثلاثة الأوائل
   List<int> lastXI = [];
   double fans = 50;
-  int ticketLevel = 1; // 0 رخيصة، 1 عادية، 2 مرتفعة
-  static const ticketMult = [0.8, 1.0, 1.25];
+  final List<double> standMult = [1.0, 1.0, 1.0, 1.0]; // مضاعف سعر كل مدرج نسبةً للسعر المرجعي
+  double seasonMult = 1.0; // مضاعف سعر بطاقات الموسم
+  bool dynPricing = true; // تسعير ديناميكي حسب الطلب
   int get stadiumCapacity => ((12000 + 8000 * user.stadium) * (stadiumBuilding ? 0.85 : 1.0)).round();
   final List<Project> projects = [];
-  double get fillRate => (0.42 + 0.5 * fans / 100 - 0.12 * (ticketLevel - 1)).clamp(0.2, 1.0).toDouble();
-  int get attendance => (stadiumCapacity * fillRate).round();
-  void setTicketLevel(int v) { ticketLevel = v; notifyListeners(); unawaited(save()); }
   int difficulty = 1; // 0 سهل، 1 عادي، 2 صعب
   bool introSeen = false;
   /// ختم زمني لكل خبر (تاريخ اللعبة|الساعة) ليُجمَّع في صندوق الرسائل
@@ -700,7 +699,13 @@ class GameState extends ChangeNotifier {
     boardPledge = (j['bp'] as bool?) ?? false;
     lastXI = [for (final x in (j['lxi'] as List?) ?? const []) x as int];
     fans = (j['fans'] as num?)?.toDouble() ?? (20.0 + user.reputation * 12);
-    ticketLevel = (j['tl'] as int?) ?? 1;
+    final tl = (j['tl'] as int?) ?? 1;
+    final sm = (j['sm'] as List?)?.map((e) => (e as num).toDouble()).toList();
+    for (var i = 0; i < 4; i++) {
+      standMult[i] = sm != null && sm.length == 4 ? sm[i] : const [0.8, 1.0, 1.25][tl.clamp(0, 2)];
+    }
+    seasonMult = (j['xm'] as num?)?.toDouble() ?? 1.0;
+    dynPricing = (j['dp'] as bool?) ?? true;
     difficulty = (j['diff'] as int?) ?? 1;
     introSeen = (j['intro'] as bool?) ?? true;
     for (final h in (j['history'] as List?) ?? const []) {
@@ -843,6 +848,9 @@ class GameState extends ChangeNotifier {
         'lxi': lastXI,
         'fans': fans,
         'tl': ticketLevel,
+        'sm': standMult,
+        'xm': seasonMult,
+        'dp': dynPricing,
         'diff': difficulty,
         'intro': introSeen,
         'history': history,
@@ -1306,10 +1314,10 @@ class GameState extends ChangeNotifier {
     final gp = gateParts(oppRep: oppRep);
     final gate = home ? gp.season + gp.single + gp.vip : 0.0;
     if (home) {
-      attHist.add(attendance);
+      attHist.add(ticketForecast(oppRep: oppRep).attendance);
       if (attHist.length > 12) attHist.removeAt(0);
     }
-    if (home) fans = (fans + (ticketLevel == 0 ? 0.3 : ticketLevel == 2 ? -0.4 : 0.0) + 0.05 * (user.fanZone - 1)).clamp(0, 100).toDouble();
+    if (home) fans = (fans + ((1 - priceIndex) * 1.6).clamp(-0.6, 0.5) + 0.05 * (user.fanZone - 1)).clamp(0, 100).toDouble();
     final broadcast = (0.35 + 0.1 * user.reputation) * divFactor * (0.85 + 0.3 * (teams.length - position) / max(1, teams.length - 1)) * (0.92 + 0.16 * fans / 100);
     final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +
         dealsIncome * (0.9 + 0.2 * fans / 100);
