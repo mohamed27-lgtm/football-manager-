@@ -132,6 +132,8 @@ class GameState extends ChangeNotifier {
   /// دوريات العالم الأخرى تُلعب آلياً، وخزائن ألقاب كل الأندية (مفتاح النادي ← ألقابه)
   final List<WorldLeague> wLeagues = [];
   final Map<String, List<String>> clubHonours = {};
+  final List<JobOffer> natOffers = []; // عروض تدريب منتخبات
+  int natObjective = 0;
   String? natJob; // المنتخب الذي تدرّبه بجانب ناديك
   List<int> natCall = [];
   int natFriendlyWeek = -1;
@@ -472,6 +474,8 @@ class GameState extends ChangeNotifier {
     return s;
   }
 
+  JobOffer? renewal; // عرض تجديد العقد من إدارة ناديك
+  int renewDecidedSeason = -1;
   final List<JobOffer> jobOffers = []; // عروض تدريب من أندية أخرى
   String? pendingJob; // نادٍ ينتقل إليه المدرب مع بداية الموسم
   double mgrRep = 50; // سمعة المدرب
@@ -601,6 +605,8 @@ class GameState extends ChangeNotifier {
     }
     mgrRep = ((j['mr'] as num?) ?? 50).toDouble();
     mgrEnd = (j['me'] as int?) ?? 0;
+    renewDecidedSeason = (j['rds'] as int?) ?? -1;
+    renewal = j['rn'] == null ? null : JobOffer.fromJson(Map<String, dynamic>.from(j['rn'] as Map));
     resigned = (j['rs'] as bool?) ?? false;
     jobsGen = (j['jg'] as bool?) ?? false;
     seasonOver = j['over'] as bool;
@@ -620,6 +626,10 @@ class GameState extends ChangeNotifier {
       titleStats['${e.key}'] = {for (final x in (e.value as Map).entries) '${x.key}': (x.value as num).toInt()};
     }
     natJob = j['nj'] as String?;
+    natObjective = (j['nob'] as int?) ?? 0;
+    for (final x in ((j['nof'] as List?) ?? const [])) {
+      natOffers.add(JobOffer.fromJson(Map<String, dynamic>.from(x as Map)));
+    }
     natCall = ((j['ncl'] as List?) ?? const []).cast<int>().toList();
     for (final r in ((j['njl'] as List?) ?? const [])) {
       natJobLog.add(List<dynamic>.from(r as List));
@@ -858,6 +868,8 @@ class GameState extends ChangeNotifier {
         'cnm': {for (final e in compNames.entries) '${e.key}': e.value},
         'mr': mgrRep,
         'me': mgrEnd,
+        'rds': renewDecidedSeason,
+        'rn': renewal?.toJson(),
         'rs': resigned,
         'jg': jobsGen,
         'over': seasonOver,
@@ -875,6 +887,8 @@ class GameState extends ChangeNotifier {
         'wf': worldFeed,
         'tst': titleStats,
         'nj': natJob,
+        'nob': natObjective,
+        'nof': [for (final o in natOffers) o.toJson()],
         'ncl': natCall,
         'njl': natJobLog,
         'tsc': titleScorers,
@@ -1301,11 +1315,18 @@ class GameState extends ChangeNotifier {
               .indexOf(user) +
           1;
       confidence += (expected - position) * 0.5;
+      // الأداء الفعلي: المتصدر والمنافس على اللقب يكسبان ثقة تدريجياً حتى لو تطابق ترتيبهما مع المتوقع
+      if (position == 1) {
+        confidence += 0.8;
+      } else if (position <= 3) {
+        confidence += 0.4;
+      }
     }
     if (user.budget < -5) confidence -= 2;
     confidence = confidence.clamp(0, 100).toDouble();
     if (confidence <= 0) fired = true;
     this._weeklyJobs();
+    this._renewalTick(position);
     this._intlTick();
     this._awardsTick();
     this._worldTick();
@@ -2022,6 +2043,11 @@ class GameState extends ChangeNotifier {
       }
       boardPledge = false;
     }
+    if (pos == 1) {
+      // بطل الدوري: ثقة كبيرة ولا تقل عن مستوى مريح
+      confidence = max(min(100, confidence + 15), 72);
+      news.insert(0, '🏛️ الإدارة تشيد ببطولتك للدوري وترفع ثقتها بك');
+    }
     if (pos <= objective) {
       confidence = min(100, confidence + 12);
       user.budget += 2;
@@ -2116,6 +2142,7 @@ class GameState extends ChangeNotifier {
     }
     deals.removeWhere((d) => d.years <= 0);
     _movePyramid(finalTable, pos);
+    this._contractExpiry();
     this._applyPendingJob();
     jobOffers.clear();
     season++;
@@ -2569,7 +2596,8 @@ class GameState extends ChangeNotifier {
         final bonus = c.continental ? 10.0 : (c.key == 'sup' ? 2.0 : 3.0);
         user.budget += bonus;
         fin.add('prize', bonus);
-        confidence = min(100, confidence + 10);
+        // الألقاب تكسب ثقة الإدارة بقدر قيمتها: قارية أكثر من محلية، والسوبر أقل
+        confidence = min(100, confidence + (c.continental ? 22 : (c.key == 'sup' ? 4 : 13)));
         honours.add('🏆 ${c.name} — الموسم $season');
         this._snapCeleb(c.name);
         celebration = c.name;

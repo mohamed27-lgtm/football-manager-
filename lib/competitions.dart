@@ -8,6 +8,7 @@ import 'models.dart';
 import 'national_screen.dart';
 import 'scorers_screen.dart';
 import 'world.dart';
+import 'world_screens.dart';
 import 'widgets.dart';
 
 const _kGreen = Color(0xFF1FA58A);
@@ -186,7 +187,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
                 if (n == gs.country) {
                   _open('league');
                 } else {
-                  _snack('لا تُحاكى دوري الدول الأخرى في هذه النسخة — ما يظهر منها أنديتها المشاركة قارياً');
+                  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => CountryScreen(gs: gs, country: n)));
                 }
               }),
           ]),

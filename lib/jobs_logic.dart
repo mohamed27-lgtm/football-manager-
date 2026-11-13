@@ -13,6 +13,14 @@ class JobOffer {
 }
 
 extension JobsLogic on GameState {
+  /// فريق بالاسم من كل الدرجات والأندية العالمية (أو بديل بشعار من الفهرس)
+  Team clubNamed(String n) {
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+      if (t.name == n) return t;
+    }
+    return Team(id: -1, name: n, reputation: 3, squad: [], budget: 0);
+  }
+
   /// المواسم المتبقية في عقد المدرب مع النادي الحالي
   int get contractLeft => max(0, (mgrEnd == 0 ? season + 2 : mgrEnd) - season + 1);
 
@@ -56,6 +64,7 @@ extension JobsLogic on GameState {
   /// كل أسبوع: تقادم العروض القديمة واحتمال وصول عرض جديد
   void _weeklyJobs() {
     jobOffers.removeWhere((o) => --o.ttl <= 0);
+    this._natOffersTick();
     if (fired || seasonOver) return;
     final p = 0.04 + max(0.0, mgrRep - 50) / 500 + (confidence < 35 ? 0.04 : 0.0);
     if (rng.nextDouble() < p) {
@@ -63,6 +72,65 @@ extension JobsLogic on GameState {
       _genJobs();
       if (jobOffers.length > before) news.insert(0, '💼 وصلك عرض تدريب من ${jobOffers.last.club}');
     }
+  }
+
+  /// تجديد العقد: في موسمك الأخير تقرر الإدارة حسب نتائجك وثقتها ورغبتها (مرة واحدة في الموسم)
+  void _renewalTick(int pos) {
+    if (fired || resigned || pendingJob != null || renewal != null || renewDecidedSeason == season) return;
+    if (contractLeft > 1 || week < rounds.length * 0.5) return;
+    renewDecidedSeason = season;
+    final good = pos <= objective || pos <= 3;
+    final want = confidence >= 62 && good ? 2 : (confidence >= 45 || good ? 1 : 0);
+    if (want == 0) {
+      news.insert(0, '📄 الإدارة غير راضية ولا تنوي تجديد عقدك حالياً');
+      return;
+    }
+    final years = want == 2 ? 3 + (confidence >= 80 ? 1 : 0) : 1;
+    final obj = want == 2 ? max(1, min(objective, pos)) : objective;
+    renewal = JobOffer(user.name, want == 2 ? 'الإدارة راضية عن نتائجك وتريد الاستمرار معك لمشروع طويل' : 'تعرض الإدارة تمديداً قصيراً وتنتظر نتائج أفضل قبل الالتزام أكثر', years, obj, div, user.budget, 99);
+    news.insert(0, '📄 الإدارة تعرض عليك تجديد العقد لـ $years ${years == 1 ? 'موسم' : 'مواسم'}');
+    notifyListeners();
+  }
+
+  String? acceptRenewal() {
+    final r = renewal;
+    if (r == null) return 'لا يوجد عرض تجديد';
+    mgrEnd = season + r.years - 1;
+    objective = r.objective;
+    confidence = min(100, confidence + 5);
+    renewal = null;
+    news.insert(0, '📄 جدّدت عقدك مع ${user.name} حتى الموسم ${mgrEnd + 1}');
+    unawaited(save());
+    notifyListeners();
+    return null;
+  }
+
+  void rejectRenewal() {
+    renewal = null;
+    renewDecidedSeason = season;
+    news.insert(0, '📄 رفضت عرض تجديد العقد وستنهي الموسم بالعقد الحالي');
+    unawaited(save());
+    notifyListeners();
+  }
+
+  /// آخر الموسم: إن انتهى العقد دون تجديد يُمدَّد سنة أو تنفصل الإدارة عنك
+  void _contractExpiry() {
+    if (fired || resigned || pendingJob != null || contractLeft > 1) {
+      renewal = null;
+      return;
+    }
+    if (renewal != null) {
+      mgrEnd = season;
+      news.insert(0, '📄 انتهت مهلة عرض التجديد، فمدّدت الإدارة عقدك موسماً واحداً');
+      mgrEnd = season + 1;
+    } else if (confidence < 35) {
+      fired = true;
+      news.insert(0, '📄 انتهى عقدك ولم تجدد الإدارة معك');
+    } else {
+      mgrEnd = season + 1;
+      news.insert(0, '📄 مددت الإدارة عقدك موسماً واحداً بنفس الشروط');
+    }
+    renewal = null;
   }
 
   /// نهاية الموسم: عروض أوفر للمدرب الناجح

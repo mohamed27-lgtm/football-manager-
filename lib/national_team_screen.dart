@@ -127,18 +127,10 @@ class NationScreen extends StatelessWidget {
                   ),
                 ]))
               else if (gs.natJob == null)
-                _box(Row(children: [
-                  const Icon(Icons.flag_rounded, color: kPrimary),
-                  const SizedBox(width: 10),
-                  const Expanded(child: Text('تولَّ تدريب هذا المنتخب إلى جانب ناديك: تستدعي اللاعبين وتلعب مبارياته الدولية بالمحرك الكامل.', style: TextStyle(fontSize: 12.5, height: 1.4))),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 100,
-                    child: blueBtn('تولّي', () {
-                      final err = gs.takeNatJob(nation);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'أصبحت مدرباً لمنتخب $nation ✅')));
-                    }),
-                  ),
+                _box(Row(children: const [
+                  Icon(Icons.flag_rounded, color: kPrimary),
+                  SizedBox(width: 10),
+                  Expanded(child: Text('تصلك عروض المنتخبات حسب حاجتها ونتائجك، من «عقدي والعروض». ولا يمكن تدريب نادٍ ومنتخب معاً.', style: TextStyle(fontSize: 12.5, height: 1.4))),
                 ])),
               sectionTitle('أفضل تشكيلة (4-3-3) • متوسط ${avg.toStringAsFixed(1)}'),
               if (xi.isEmpty)

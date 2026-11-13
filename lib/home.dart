@@ -29,6 +29,7 @@ import 'settings.dart';
 import 'widgets.dart';
 import 'title_screen.dart';
 import 'world_hub.dart';
+import 'national_home.dart';
 import 'fixtures_screen.dart' show FixturesScreen;
 import 'scouting_screen.dart';
 import 'loans_screen.dart';
@@ -478,10 +479,10 @@ class _HomeShellState extends State<HomeShell> {
         }
         final pages = <Widget>[
           DashboardTab(gs: gs, onRestart: widget.onRestart, onNavigate: (i) => setState(() => tab = i), onTask: _openTask),
-          TeamTab(gs: gs),
-          TransfersTab(gs: gs),
+          gs.natJob != null ? NatLocked(gs: gs) : TeamTab(gs: gs),
+          gs.natJob != null ? NatLocked(gs: gs) : TransfersTab(gs: gs),
           MatchesTab(gs: gs),
-          MoreTab(gs: gs, onRestart: widget.onRestart, onLogout: widget.onLogout, onNavigate: (i) => setState(() => tab = i)),
+          gs.natJob != null ? NatLocked(gs: gs) : MoreTab(gs: gs, onRestart: widget.onRestart, onLogout: widget.onLogout, onNavigate: (i) => setState(() => tab = i)),
         ];
         return Scaffold(
           appBar: PreferredSize(
@@ -1306,6 +1307,7 @@ class DashboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (gs.natJob != null) return NationalDashboard(gs: gs);
     return ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 20), children: [
       if (gs.fired)
         Panel(

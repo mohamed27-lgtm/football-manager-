@@ -3,6 +3,7 @@ import 'i18n.dart';
 import 'game_state.dart';
 import 'match_pages.dart' show whiteBtn;
 import 'widgets.dart';
+import 'flags.dart';
 
 /// عقدي: ثقة الإدارة وسمعة المدرب، عروض الأندية الأخرى، والاستقالة
 class JobsScreen extends StatefulWidget {
@@ -61,8 +62,12 @@ class _JobsScreenState extends State<JobsScreen> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kPrimary.withOpacity(0.5))),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(o.club, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
-          const SizedBox(height: 4),
+          Row(children: [
+            teamBadge(gs.clubNamed(o.club), size: 44),
+            const SizedBox(width: 10),
+            Expanded(child: Text(o.club, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))),
+          ]),
+          const SizedBox(height: 6),
           Text(o.reason, style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
           const SizedBox(height: 8),
           _kv('الدوري', _divName(o.div)),
@@ -75,6 +80,50 @@ class _JobsScreenState extends State<JobsScreen> {
             const SizedBox(width: 8),
             Expanded(child: whiteBtn('رفض', () {
               gs.rejectJob(o);
+              setState(() {});
+            })),
+          ]),
+        ]),
+      );
+
+  Future<void> _acceptNat(JobOffer o) async {
+    final ok = await confirmDialog(context,
+        title: 'منتخب ${o.club}',
+        body: gs.natJob != null
+            ? 'تدرّب منتخباً بالفعل.'
+            : 'تدريب المنتخب يعني ترك ${gs.user.name}: لا يمكن تدريب نادٍ ومنتخب معاً. يواصل ناديك اللعب آلياً دون تدخلك. هل تقبل؟',
+        confirm: 'قبول وترك النادي',
+        danger: true);
+    if (ok != true) return;
+    final err = gs.acceptNatOffer(o);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'أصبحت مدرباً لمنتخب ${o.club} ✅')));
+    if (err == null) Navigator.of(context).pop();
+    setState(() {});
+  }
+
+  Widget _natOffer(JobOffer o) => Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kGold.withOpacity(0.7))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            FlagBadge(o.club, size: 44),
+            const SizedBox(width: 10),
+            Expanded(child: Text('منتخب ${o.club}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))),
+          ]),
+          const SizedBox(height: 6),
+          Text(o.reason, style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
+          const SizedBox(height: 8),
+          _kv('مدة العقد', '${o.years} مواسم'),
+          _kv('هدف الاتحاد', 'تصنيف فيفا ${o.objective} أو أفضل'),
+          const SizedBox(height: 10),
+          Row(children: [
+            Expanded(child: GradientButton(label: 'قبول العرض', icon: Icons.check_rounded, onPressed: () => _acceptNat(o))),
+            const SizedBox(width: 8),
+            Expanded(child: whiteBtn('رفض', () {
+              gs.natOffers.remove(o);
+              gs.touch();
               setState(() {});
             })),
           ]),
@@ -99,6 +148,37 @@ class _JobsScreenState extends State<JobsScreen> {
             if (gs.pendingJob != null) _kv('وجهتك القادمة', gs.pendingJob!, c: kPrimary),
           ]),
         ),
+        if (gs.renewal != null) ...[
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kGold)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                teamBadge(gs.user, size: 40),
+                const SizedBox(width: 10),
+                const Expanded(child: Text('عرض تجديد العقد', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: kGold))),
+              ]),
+              const SizedBox(height: 6),
+              Text(gs.renewal!.reason, style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
+              const SizedBox(height: 8),
+              _kv('مدة العقد الجديدة', '${gs.renewal!.years} ${gs.renewal!.years == 1 ? 'موسم' : 'مواسم'}'),
+              _kv('هدف الإدارة', 'المركز ${gs.renewal!.objective} أو أفضل'),
+              const SizedBox(height: 10),
+              Row(children: [
+                Expanded(child: GradientButton(label: 'تجديد العقد', icon: Icons.check_rounded, onPressed: () {
+                  gs.acceptRenewal();
+                  setState(() {});
+                })),
+                const SizedBox(width: 8),
+                Expanded(child: whiteBtn('رفض', () {
+                  gs.rejectRenewal();
+                  setState(() {});
+                })),
+              ]),
+            ]),
+          ),
+        ],
         const SizedBox(height: 16),
         Text('عروض التدريب (${jobs.length})', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
         const SizedBox(height: 8),
@@ -106,6 +186,12 @@ class _JobsScreenState extends State<JobsScreen> {
           const Panel(child: EmptyState(icon: Icons.work_outline_rounded, title: 'لا عروض حالياً', subtitle: 'تصلك العروض من الأندية بحسب سمعتك ونتائجك وحاجتها لمدرب.'))
         else
           for (final o in jobs) _offer(o),
+        if (gs.natOffers.isNotEmpty && gs.natJob == null) ...[
+          const SizedBox(height: 16),
+          Text('عروض المنتخبات (${gs.natOffers.length})', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          const SizedBox(height: 8),
+          for (final o in gs.natOffers) _natOffer(o),
+        ],
         if (under && !gs.resigned) ...[
           const SizedBox(height: 14),
           OutlinedButton.icon(

@@ -118,26 +118,7 @@ class _MatchesTabState extends State<MatchesTab> {
     );
   }
 
+  /// المسابقات: بطولات الأندية والدول والمنتخبات ونتائجها (الجدول انتقل إلى الرئيسية)
   @override
-  Widget build(BuildContext context) {
-    final gs = widget.gs;
-    return Column(children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-        child: SizedBox(
-          width: double.infinity,
-          child: SegmentedButton<int>(
-            showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(value: 0, label: Text('المباريات')),
-              ButtonSegment(value: 1, label: Text('المسابقات')),
-            ],
-            selected: {view},
-            onSelectionChanged: (s) => setState(() => view = s.first),
-          ),
-        ),
-      ),
-      Expanded(child: view == 0 ? _fixtures(context) : CompetitionsView(gs: gs)),
-    ]);
-  }
+  Widget build(BuildContext context) => CompetitionsView(gs: widget.gs);
 }

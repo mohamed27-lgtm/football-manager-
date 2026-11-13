@@ -91,23 +91,65 @@ extension NationalLogic on GameState {
     return l.length >= 14 ? l : natBestCall(job);
   }
 
-  String? takeNatJob(String nation) {
-    if (natJob != null) return 'تدرّب منتخب $natJob بالفعل — استقل منه أولاً';
-    final n = natPlayers(nation).length;
-    if (n < 11) return 'لا يملك منتخب $nation لاعبين كافيين في عالم اللعبة';
-    natJob = nation;
-    natCall = [for (final p in natBestCall(nation)) p.id];
-    news.insert(0, '🤝 أصبحت مدرباً لمنتخب $nation إلى جانب ناديك');
+  /// عروض المنتخبات تأتي حسب حاجة المنتخب: نتائج متعثرة أو تصنيف يتراجع، وبما يناسب سمعتك
+  void _natOffersTick() {
+    natOffers.removeWhere((o) => --o.ttl <= 0);
+    if (natJob != null || seasonOver || natOffers.length >= 2 || mgrRep < 55) return;
+    if (rng.nextDouble() > 0.035 + (mgrRep - 55) / 900) return;
+    ensureNat();
+    final rank = nat.pubRanking;
+    // مستوى المنتخبات المناسب لسمعتك: كلما زادت سمعتك طُرحت عليك منتخبات أقوى
+    final top = (60 - (mgrRep - 55) * 1.1).clamp(5, 70).toInt();
+    final cand = <(String, double)>[];
+    for (var i = 0; i < min(rank.length, top + 40); i++) {
+      final n = rank[i];
+      if (natOffers.any((o) => o.club == n) || natPlayers(n).length < 14) continue;
+      final r = natRecord(n);
+      final games = r.w + r.d + r.l;
+      final need = games == 0 ? 0.35 : (r.l + 0.5 * r.d) / games;
+      final fit = 1 - ((i - top).abs() / 50).clamp(0.0, 1.0).toDouble();
+      cand.add((n, 0.55 * need + 0.35 * fit + 0.1 * rng.nextDouble()));
+    }
+    if (cand.isEmpty) return;
+    cand.sort((a, b) => b.$2.compareTo(a.$2));
+    final n = cand.first.$1;
+    final pos = rank.indexOf(n) + 1;
+    final r = natRecord(n);
+    final why = r.l > r.w
+        ? 'يمرّ المنتخب بنتائج متعثرة ويبحث اتحاده عن مدرب يعيد إليه التوازن'
+        : 'يريد اتحاد اللعبة مدرباً بسمعتك لقيادة مرحلة جديدة للمنتخب';
+    natOffers.add(JobOffer(n, why, 2, max(1, pos - 6), 0, 0, 14));
+    news.insert(0, '💼 اتحاد $n يعرض عليك تدريب المنتخب');
+  }
+
+  /// قبول منتخب = ترك النادي (لا تدريب نادٍ ومنتخب معاً). يواصل ناديك اللعب آلياً دون تدخلك.
+  String? acceptNatOffer(JobOffer o) {
+    if (natJob != null) return 'تدرّب منتخباً بالفعل';
+    final n = natPlayers(o.club).length;
+    if (n < 11) return 'لا يملك منتخب ${o.club} لاعبين كافيين في عالم اللعبة';
+    final old = user.name;
+    natJob = o.club;
+    natObjective = o.objective;
+    natCall = [for (final p in natBestCall(o.club)) p.id];
+    natOffers.clear();
+    jobOffers.clear();
+    renewal = null;
+    fired = true;
+    resigned = true;
+    jobsGen = true;
+    news.insert(0, '🤝 تركت تدريب $old وأصبحت مدرباً لمنتخب ${o.club}');
     notifyListeners();
     unawaited(save());
     return null;
   }
 
+  /// ترك المنتخب: تعود بلا نادٍ وتصلك عروض الأندية
   void leaveNatJob() {
     if (natJob == null) return;
     news.insert(0, '👋 غادرت تدريب منتخب $natJob');
     natJob = null;
     natCall = [];
+    jobsGen = false; // تُولَّد عروض الأندية عند فتح صفحة العروض
     notifyListeners();
     unawaited(save());
   }

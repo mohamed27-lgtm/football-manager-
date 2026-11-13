@@ -2,6 +2,8 @@ import 'package:flutter/material.dart' hide Text;
 import 'game_state.dart';
 import 'i18n.dart';
 import 'widgets.dart';
+import 'flags.dart';
+import 'national_team_screen.dart';
 
 /// دوريات العالم تُلعب آلياً: آخر النتائج وجداول كل الدوريات
 class WorldLeaguesScreen extends StatelessWidget {
@@ -157,6 +159,86 @@ class ClubCabinetScreen extends StatelessWidget {
                 Text(([...c.value]..sort()).map((s) => 'م$s').join(' • '), style: const TextStyle(color: kMuted, fontSize: 12)),
               ]),
             ),
+      ]),
+    );
+  }
+}
+
+
+/// صفحة دولة: دورياتها ومتصدريها وتاريخ أبطالها ومنتخبها
+class CountryScreen extends StatelessWidget {
+  final GameState gs;
+  final String country;
+  const CountryScreen({super.key, required this.gs, required this.country});
+
+  @override
+  Widget build(BuildContext context) {
+    final ls = gs.wLeagues.where((l) => l.country == country).toList();
+    final champs = <(String, int, String)>[
+      for (final l in ls)
+        for (final e in gs.worldChamps.entries)
+          if (e.key.startsWith('${l.id}|')) (l.name, int.parse(e.key.split('|')[1]), e.value)
+    ]..sort((a, b) => b.$2.compareTo(a.$2));
+    return Scaffold(
+      appBar: AppBar(title: Text(country)),
+      body: ListView(padding: const EdgeInsets.all(14), children: [
+        Row(children: [
+          FlagBadge(country, size: 56),
+          const SizedBox(width: 14),
+          Expanded(child: Text(country, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 22))),
+          if (gs.nat.pts.containsKey(country))
+            GestureDetector(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => NationScreen(gs: gs, nation: country))),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(color: kPrimary.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+                child: const Text('المنتخب', style: TextStyle(color: kPrimary, fontWeight: FontWeight.w900)),
+              ),
+            ),
+        ]),
+        const SizedBox(height: 14),
+        if (ls.isEmpty)
+          const Panel(child: EmptyState(icon: Icons.public_rounded, title: 'لا دوري محاكى لهذه الدولة', subtitle: 'تظهر هنا الدوريات التي تُلعب آلياً في اللعبة (الدوريات الكبرى في العالم).'))
+        else ...[
+          const Text('الدوريات', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          const SizedBox(height: 8),
+          for (final l in ls)
+            GestureDetector(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => WorldTableScreen(gs: gs, league: l))),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+                child: Row(children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(l.name, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5)),
+                      Text('الدرجة ${l.tier} • جولة ${l.round}/${l.totalRounds}', style: const TextStyle(color: kMuted, fontSize: 12)),
+                    ]),
+                  ),
+                  Text(l.round == 0 ? '—' : l.names[l.order.first], style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const Icon(Icons.chevron_left_rounded, color: kMuted),
+                ]),
+              ),
+            ),
+          if (champs.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text('أبطال الدوري', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+            const SizedBox(height: 8),
+            Panel(
+              child: Column(children: [
+                for (final c in champs.take(15))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Row(children: [
+                      Expanded(child: Text('${c.$1} • الموسم ${c.$2}', style: const TextStyle(color: kMuted, fontSize: 12.5))),
+                      Text(c.$3, style: const TextStyle(fontWeight: FontWeight.w900)),
+                    ]),
+                  ),
+              ]),
+            ),
+          ],
+        ],
       ]),
     );
   }

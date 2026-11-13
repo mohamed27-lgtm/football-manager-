@@ -262,9 +262,11 @@ void main() {
     }
     final gs = GameState.fromData(teams, 2, 'تجريبي');
     final before = gs.user.squad.fold<int>(0, (a, p) => a + p.goals + p.apps);
-    expect(gs.takeNatJob('إسبانيا'), null);
+    final off = JobOffer('إسبانيا', 'اختبار', 2, 5, 0, 0, 10);
+    expect(gs.acceptNatOffer(off), null);
+    expect(gs.fired, true, reason: 'تدريب المنتخب يعني ترك النادي');
     expect(gs.natCalled.length >= 14, true);
-    expect(gs.takeNatJob('فرنسا') != null, true, reason: 'منتخب واحد فقط');
+    expect(gs.acceptNatOffer(JobOffer('فرنسا', 'x', 2, 5, 0, 0, 10)) != null, true, reason: 'منتخب واحد فقط');
     for (var i = 0; i < 6 && gs.natJobLog.isEmpty; i++) {
       gs.playIntlBreak();
       gs.nat.winDone.clear();

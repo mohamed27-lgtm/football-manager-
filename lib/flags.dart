@@ -25,7 +25,7 @@ String? _emoji(String? iso) {
   return String.fromCharCodes(iso.toUpperCase().codeUnits.map((c) => 0x1F1E6 + c - 65));
 }
 
-/// علم دائري احترافي: صورة من الإنترنت مع بديل إيموجي يعمل بدون اتصال
+/// علم مستطيل طبيعي (نسبة 4:3) كما هو في كل صفحات اللعبة: صورة من الإنترنت مع بديل إيموجي يعمل بدون اتصال
 class FlagBadge extends StatelessWidget {
   final String country;
   final double size;
@@ -35,16 +35,16 @@ class FlagBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final iso = kCountryIso[country] ?? countryByName(country)?.iso;
     final fallback = Center(
-      child: Text(_emoji(iso) ?? '🌍', style: TextStyle(fontSize: size * 0.55)),
+      child: Text(_emoji(iso) ?? '🌍', style: TextStyle(fontSize: size * 0.5)),
     );
+    final h = size * 0.74;
     return Container(
-      width: size,
-      height: size,
+      width: size * 1.1,
+      height: h,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(size * 0.08 + 1),
         color: kCard2,
-        border: Border.all(color: Colors.white24, width: 1.5),
-        boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2))],
+        border: Border.all(color: Colors.black26, width: 0.8),
       ),
       clipBehavior: Clip.antiAlias,
       child: iso == null

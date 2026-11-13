@@ -7,6 +7,8 @@ DateTime intlWindowDate(int season, int wid) {
 }
 
 extension IntlLogic on GameState {
+  DateTime windowDate(int w) => intlWindowDate(season, w);
+
   /// النافذة القادمة (أو null إن انتهت نوافذ الموسم)
   int? get nextWindow {
     for (var w = 0; w < 5; w++) {
