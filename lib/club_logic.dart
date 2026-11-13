@@ -106,3 +106,64 @@ extension ClubLogic on GameState {
     return null;
   }
 }
+
+extension EuroSuper on GameState {
+  /// بطل الدوري الأوروبي الافتراضي (للمواسم التي لا يلعب فيها المستخدم بأوروبا): أحد أقوى الأندية بعد أبطال الأبطال
+  String _ghostEuropa(String exclude) {
+    final l = _confClubs('uefa')..sort((a, b) => b.$2.compareTo(a.$2));
+    final pool = [for (final x in l.skip(4).take(28)) if (x.$1 != exclude) x];
+    if (pool.isEmpty) return l.isEmpty ? exclude : l.first.$1;
+    final w = [for (final x in pool) exp((x.$2 - pool.first.$2) / 90)];
+    final tot = w.fold(0.0, (a, b) => a + b);
+    var r = rng.nextDouble() * tot;
+    for (var i = 0; i < pool.length; i++) {
+      r -= w[i];
+      if (r <= 0) {
+        clubTitle(pool[i].$1, 'الدوري الأوروبي');
+        return pool[i].$1;
+      }
+    }
+    return pool.first.$1;
+  }
+
+  /// السوبر الأوروبي: بطل دوري الأبطال × بطل الدوري الأوروبي للموسم المنتهي
+  void _setupEuroSuper() {
+    final cl = contChamps[champKey(season - 1, 'uefa')];
+    if (cl == null) return;
+    var el = contChamps[champKey(season - 1, 'uel')];
+    if (el == null || el == cl) {
+      el = _ghostEuropa(cl);
+      contChamps[champKey(season - 1, 'uel')] = el;
+    }
+    final a = _clubIdByName(cl), b = _clubIdByName(el);
+    if (a < 0 || b < 0 || a == b) return;
+    final mine = a == user.id || b == user.id;
+    if (mine) {
+      final c = Cup(key: 'esup', name: 'كأس السوبر الأوروبي', continental: false, schedule: [1], size: 2, alive: [a, b]);
+      euroSuper = c;
+      _draw(c);
+      news.insert(0, '🌍 كأس السوبر الأوروبي: $cl × $el');
+      return;
+    }
+    // مباراة بين ناديين آخرين: تُحسم بالمحرك الكامل (التعادل بركلات الترجيح حسب القوة)
+    var hg = 0, ag = 0;
+    try {
+      final s = MatchSim(team(a), team(b), random: rng)..simulateAll();
+      hg = s.home.goals;
+      ag = s.away.goals;
+    } catch (_) {
+      hg = rng.nextInt(3);
+      ag = rng.nextInt(3);
+    }
+    var win = hg > ag ? cl : el;
+    var txt = '$hg-$ag';
+    if (hg == ag) {
+      final pa = 1 / (1 + exp((eloOf(team(b)) - eloOf(team(a))) / 400 * ln10));
+      win = rng.nextDouble() < pa ? cl : el;
+      txt = '$hg-$ag (ركلات الترجيح)';
+    }
+    clubTitle(win, 'كأس السوبر الأوروبي');
+    clubPts[win] = (clubPts[win] ?? 0) + 3.0;
+    news.insert(0, '🏆 $win بطل كأس السوبر الأوروبي على حساب ${win == cl ? el : cl} ($txt)');
+  }
+}

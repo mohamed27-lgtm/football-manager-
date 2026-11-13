@@ -24,6 +24,7 @@ class _FixturesScreenState extends State<FixturesScreen> {
     'uel': Color(0xFFF5A524),
     'uecl': Color(0xFF1FA58A),
     'sup': Color(0xFF6A6FC4),
+    'esup': Color(0xFF2F5FB4),
   };
 
   @override

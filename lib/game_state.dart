@@ -398,9 +398,9 @@ class GameState extends ChangeNotifier {
 
   final List<Player> loanedOut = [];
   final Map<int, double> _reserve = {};
-  Cup? domestic, continental, europa, conference, superCup, cwc, ic;
+  Cup? domestic, continental, europa, conference, superCup, cwc, ic, euroSuper;
   int userSlotsEl = 0, userSlotsCo = 0;
-  List<Cup> get allCups => [for (final c in [domestic, continental, europa, conference, superCup, ic, cwc]) if (c != null) c];
+  List<Cup> get allCups => [for (final c in [domestic, continental, europa, conference, superCup, euroSuper, ic, cwc]) if (c != null) c];
   Cup? activeCup;
   final Map<int, Team> foreign = {};
   /// تصنيف Elo للأندية (الترتيب العالمي) بالاسم؛ يبدأ من قوة الفريق ويتغير بالنتائج
@@ -409,6 +409,8 @@ class GameState extends ChangeNotifier {
 
   /// نقاط تصنيف الأندية: تراكمية من الصفر، تزيد فقط بنتائج مباريات حقيقية (فوز 3، تعادل 1) × وزن البطولة
   final Map<String, double> clubPts = {};
+  /// ترتيب الأندية العالمي في بداية الموسم (لسهم الصعود والهبوط)
+  final Map<String, int> clubRkBase = {};
   void _award(String h, String a, int hg, int ag, double w) {
     double s(int x, int y) => x > y ? 3.0 : (x == y ? 1.0 : 0.0);
     clubPts[h] = (clubPts[h] ?? 0) + s(hg, ag) * w;
@@ -772,6 +774,9 @@ class GameState extends ChangeNotifier {
     for (final e in ((j['cp'] as Map?) ?? const {}).entries) {
       clubPts[e.key as String] = (e.value as num).toDouble();
     }
+    for (final e in ((j['crk'] as Map?) ?? const {}).entries) {
+      clubRkBase[e.key as String] = (e.value as num).toInt();
+    }
     for (final e in ((j['cc'] as Map?) ?? const {}).entries) {
       contChamps[e.key as String] = e.value as String;
     }
@@ -796,6 +801,7 @@ class GameState extends ChangeNotifier {
       if (cj['eur'] != null) europa = Cup.fromJson(cj['eur'] as Map<String, dynamic>);
       if (cj['uecl'] != null) conference = Cup.fromJson(cj['uecl'] as Map<String, dynamic>);
       if (cj['sup'] != null) superCup = Cup.fromJson(cj['sup'] as Map<String, dynamic>);
+      if (cj['esup'] != null) euroSuper = Cup.fromJson(cj['esup'] as Map<String, dynamic>);
       if (cj['cwc'] != null) cwc = Cup.fromJson(cj['cwc'] as Map<String, dynamic>);
       if (cj['ic'] != null) ic = Cup.fromJson(cj['ic'] as Map<String, dynamic>);
     } else {
@@ -877,9 +883,10 @@ class GameState extends ChangeNotifier {
         'fh': fanHist,
         'so': sellOns,
         'ppn': pointsPenaltyNext,
-        'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson(), 'eur': europa?.toJson(), 'uecl': conference?.toJson(), 'sup': superCup?.toJson(), 'cwc': cwc?.toJson(), 'ic': ic?.toJson()},
+        'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson(), 'eur': europa?.toJson(), 'uecl': conference?.toJson(), 'sup': superCup?.toJson(), 'esup': euroSuper?.toJson(), 'cwc': cwc?.toJson(), 'ic': ic?.toJson()},
         'nat': {'pts': nat.pts, 'start': nat.start, 'cur': nat.cur, 'past': nat.past, 'log': nat.log, 'qp': nat.qp, 'qgd': nat.qgd, 'wd': nat.winDone.toList(), 'pub': nat.pub, 'prk': nat.prevRk, 'pd': nat.pubDate, 'pr': nat.pendRel, 'hist': [for (final t in nat.history) t.toJson()]},
         'cp': clubPts,
+        'crk': clubRkBase,
         'cc': contChamps,
         'ch': cupHist,
         'loanedOut': [for (final p in loanedOut) p.toJson()],
@@ -2110,6 +2117,7 @@ class GameState extends ChangeNotifier {
   }
 
   void startNewSeason() {
+    clubRkBase.clear();
     fanHist.add(fans);
     if (fanHist.length > 12) fanHist.removeAt(0);
     final pos = position;
@@ -2292,6 +2300,7 @@ class GameState extends ChangeNotifier {
       superCup = null;
     }
     _setupWorldCups();
+    this.worldClubTable();
     market = _scoutedMarket();
     ceremony = null;
     _setObjective();
@@ -2718,11 +2727,11 @@ class GameState extends ChangeNotifier {
       }
       clubTitle(team(winners.first).name, c.name);
       if (winners.first == user.id) {
-        final bonus = c.continental ? 10.0 : (c.key == 'sup' ? 2.0 : 3.0);
+        final bonus = c.continental ? 10.0 : (c.key == 'sup' ? 2.0 : (c.key == 'esup' ? 4.0 : 3.0));
         user.budget += bonus;
         fin.add('prize', bonus);
         // الألقاب تكسب ثقة الإدارة بقدر قيمتها: قارية أكثر من محلية، والسوبر أقل
-        confidence = min(100, confidence + (c.continental ? 22 : (c.key == 'sup' ? 4 : 13)));
+        confidence = min(100, confidence + (c.continental ? 22 : (c.key == 'sup' ? 4 : (c.key == 'esup' ? 8 : 13))));
         honours.add('🏆 ${c.name} — الموسم $season');
         this._snapCeleb(c.name);
         celebration = c.name;
@@ -3395,6 +3404,7 @@ class GameState extends ChangeNotifier {
     if (!realWorld) return;
     final cf = confedOf(country);
     final cc = continental?.champion;
+    if (cf.id == 'uefa' && europa?.champion != null) contChamps[champKey(season, 'uel')] = team(europa!.champion!).name;
     if (cc != null) {
       contChamps[champKey(season, cf.id)] = team(cc).name;
     } else {
@@ -3587,7 +3597,9 @@ class GameState extends ChangeNotifier {
   void _setupWorldCups() {
     ic = null;
     cwc = null;
+    euroSuper = null;
     if (!realWorld) return;
+    this._setupEuroSuper();
     final userConf = confedOf(country).id;
     // إنتركونتيننتال: أبطال الاتحادات الستة، الأفضل تصنيفاً يتجاوز الدور الأول
     final names = <String>[];
@@ -3646,26 +3658,28 @@ class GameState extends ChangeNotifier {
       return uc;
     }
 
-    final out = <(String, String, double, Team?)>[for (final t in worldRanking) (t.name, confOf(t), clubPts[t.name] ?? 0, t)];
+    final out = <(String, String, double, Team?)>[for (final t in worldRanking) (t.name, confOf(t), eloOf(t), t)];
     final have = {for (final e in out) e.$1};
     if (realWorld) {
       for (final c in kWorldClubs) {
         if (c.conf == uc || have.contains(c.name)) continue;
-        out.add((c.name, c.conf, clubPts[c.name] ?? 0, null));
+        out.add((c.name, c.conf, elo[c.name] ?? c.elo.toDouble(), null));
       }
     }
-    // أندية الدوريات العالمية المحاكاة (كل دول الدوريات المتوفرة)
+    // أندية الدوريات العالمية المحاكاة (تصنيفها من قوتها ثم من نتائجها)
     for (final l in wLeagues) {
       final cf = confedOf(l.country).id;
-      for (final n in l.names) {
-        if (have.add(n)) out.add((n, cf, clubPts[n] ?? 0, null));
+      for (var i = 0; i < l.names.length; i++) {
+        final n = l.names[i];
+        if (have.add(n)) out.add((n, cf, elo[n] ?? this._seedElo(n, l.str[i]), null));
       }
     }
-    double seed(String n) => elo[n] ?? kWorldClubs.where((c) => c.name == n).map((c) => c.elo.toDouble()).followedBy([1500.0]).first;
-    out.sort((a, b) {
-      final c = b.$3.compareTo(a.$3);
-      return c != 0 ? c : seed(b.$1).compareTo(seed(a.$1));
-    });
+    out.sort((a, b) => b.$3.compareTo(a.$3));
+    if (clubRkBase.isEmpty) {
+      for (var i = 0; i < out.length; i++) {
+        clubRkBase[out[i].$1] = i + 1;
+      }
+    }
     return out;
   }
 

@@ -45,6 +45,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
         if (gs.europa != null) _Comp('uel', gs.europa!.name, Icons.emoji_events_rounded, const Color(0xFFE8841C), gs.europa),
         if (gs.conference != null) _Comp('uecl', gs.conference!.name, Icons.emoji_events_rounded, _kGreen, gs.conference),
         if (gs.superCup != null) _Comp('sup', 'كأس السوبر', Icons.emoji_events_rounded, _kPurple, gs.superCup),
+        if (gs.euroSuper != null) _Comp('esup', gs.euroSuper!.name, Icons.emoji_events_rounded, const Color(0xFF2F5FB4), gs.euroSuper),
         if (gs.upper.isNotEmpty && gs.upperName.isNotEmpty) _Comp('up', gs.upperName, Icons.emoji_events_rounded, const Color(0xFF1FA58A)),
         if (gs.lower.isNotEmpty && gs.lowerName.isNotEmpty) _Comp('lo', gs.lowerName, Icons.emoji_events_rounded, const Color(0xFF6A6FC4)),
         if (gs.ic != null) _Comp('ic', gs.ic!.name, Icons.emoji_events_rounded, const Color(0xFFA6812E), gs.ic),
@@ -107,6 +108,8 @@ class _CompetitionsViewState extends State<CompetitionsView> {
         return cf.id == 'uefa' ? 848 : null;
       case 'sup':
         return kSuperCupId[gs.leagueId] ?? 531;
+      case 'esup':
+        return 531;
       case 'cwc':
         return 15;
     }
@@ -129,6 +132,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
       if (gs.europa != null) (gs.europa!.name, const Color(0xFFE8841C), 'uel', inCup(gs.europa)),
       if (gs.conference != null) (gs.conference!.name, _kGreen, 'uecl', inCup(gs.conference)),
       if (gs.superCup != null) ('كأس السوبر', _kPurple, 'sup', inCup(gs.superCup)),
+      if (gs.euroSuper != null) ('كأس السوبر الأوروبي', const Color(0xFF2F5FB4), 'esup', inCup(gs.euroSuper)),
       ('كأس العالم للأندية', const Color(0xFFE6B422), 'cwc', inCup(gs.cwc)),
       ('كأس إنتركونتيننتال', const Color(0xFFA6812E), 'ic', inCup(gs.ic)),
     ];
@@ -289,7 +293,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
           } else if (c.id == 'up' || c.id == 'lo') {
             body = _divBody(c.id == 'up' ? gs.upper : gs.lower, c.id == 'up');
             chipSub = c.id == 'up' ? 'الدرجة الأعلى' : 'الدرجة الأدنى';
-          } else if (c.id == 'sup') {
+          } else if (c.id == 'sup' || c.id == 'esup') {
             body = _superBody(cup!);
             chipSub = cup.done ? 'انتهت' : cup.roundName;
           } else if (cup!.kind > 0) {
@@ -306,7 +310,7 @@ class _CompetitionsViewState extends State<CompetitionsView> {
             chipSub = cup.done ? 'انتهت' : cup.roundName;
           }
           final bar = <(String, String, IconData, Color, bool, VoidCallback)>[];
-          if (cup != null && cup.kind > 0 && c.id != 'sup') {
+          if (cup != null && cup.kind > 0 && c.id != 'sup' && c.id != 'esup') {
             bar
               ..add((cup.kind == 2 ? 'مرحلة الدوري' : 'مرحلة المجموعات', chipSub, Icons.emoji_events_outlined, c.color, sub == 0, () => setState(() => sub = 0)))
               ..add(('الأدوار الإقصائية', chipSub, Icons.account_tree_outlined, c.color, sub == 1, () => setState(() => sub = 1)));
@@ -315,9 +319,10 @@ class _CompetitionsViewState extends State<CompetitionsView> {
             bar[1] = (bar[1].$1, cup.kind == 2 ? 'الملحق ثم دور الـ16' : (cup.groups.length > 4 ? 'من دور الـ16' : 'من ربع النهائي'), bar[1].$3, c.color, sub == 1, bar[1].$6);
           } else {
             const domIds = ['league', 'dom', 'sup', 'up', 'lo'];
+            // السوبر الأوروبي مع القارية
             final isDom = domIds.contains(c.id);
             final shownCs = [for (final o in cs) if (domIds.contains(o.id) == isDom) o];
-            shownCs.sort((a, b) => (isDom ? domIds : const ['con', 'uel', 'uecl', 'cwc', 'ic']).indexOf(a.id).compareTo((isDom ? domIds : const ['con', 'uel', 'uecl', 'cwc', 'ic']).indexOf(b.id)));
+            shownCs.sort((a, b) => (isDom ? domIds : const ['con', 'uel', 'uecl', 'esup', 'cwc', 'ic']).indexOf(a.id).compareTo((isDom ? domIds : const ['con', 'uel', 'uecl', 'esup', 'cwc', 'ic']).indexOf(b.id)));
             _barLogos = {for (final o in shownCs) o.title: _logoOf(o.id)};
             for (final o in shownCs) {
               bar.add((o.title, o.id == sel ? chipSub : '', Icons.emoji_events_outlined, o.color, o.id == sel, () => setState(() {

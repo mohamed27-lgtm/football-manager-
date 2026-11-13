@@ -184,6 +184,23 @@ extension WorldLeagues on GameState {
     }
   }
 
+  /// تصنيف Elo لأندية دوريات العالم: يبدأ من قوة النادي ويتغير بالنتائج
+  void _eloWorld(String hn, double hs, String an, double as, int hg, int ag) {
+    final eh = elo[hn] ?? _seedElo(hn, hs), ea = elo[an] ?? _seedElo(an, as);
+    final exp = 1 / (1 + pow(10, (ea - (eh + 50)) / 400));
+    final res = hg > ag ? 1.0 : (hg == ag ? 0.5 : 0.0);
+    final k = 14.0 * (1 + (hg - ag).abs().clamp(0, 4) * 0.2);
+    elo[hn] = eh + k * (res - exp);
+    elo[an] = ea - k * (res - exp);
+  }
+
+  double _seedElo(String name, double str) {
+    for (final c in kWorldClubs) {
+      if (c.name == name) return c.elo.toDouble();
+    }
+    return 1500 + (str - 65) * 18;
+  }
+
   void _playRound(WorldLeague l, {List<String>? feed}) {
     if (l.done || l.round >= l.totalRounds) return;
     final ts = _teamsOfWorld(l);
@@ -211,6 +228,7 @@ extension WorldLeagues on GameState {
 
       put(a, gh, ga);
       put(b, ga, gh);
+      _eloWorld(l.names[a], l.str[a], l.names[b], l.str[b], gh, ga);
       if (feed != null) feed.add('${l.name}: ${l.names[a]} $gh-$ga ${l.names[b]}');
     }
     l.round++;

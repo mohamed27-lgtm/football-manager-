@@ -153,6 +153,15 @@ class _RankingScreenState extends State<RankingScreen> {
         child: Text(n.isEmpty ? '?' : n.substring(0, 1), style: const TextStyle(fontWeight: FontWeight.w900, color: kMuted)),
       );
 
+  Widget _clubTrail(int rank, String name, double elo) {
+    final was = gs.clubRkBase[name] ?? rank;
+    final d = was - rank;
+    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+      Text('${elo.round()}', style: const TextStyle(fontWeight: FontWeight.w900)),
+      Text(d == 0 ? '—' : '${d > 0 ? '▲' : '▼'} ${d.abs()}', style: TextStyle(fontSize: 11, color: d == 0 ? kMuted : (d > 0 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D)))),
+    ]);
+  }
+
   List<Widget> _clubs() {
     final all = gs.worldClubTable();
     final mine = all.indexWhere((e) => e.$4 == gs.user) + 1;
@@ -161,11 +170,11 @@ class _RankingScreenState extends State<RankingScreen> {
         if ((conf == 'all' || all[i].$2 == conf) && _hit(all[i].$1)) (i + 1, all[i])
     ];
     return [
-      _summary(mine, teamBadge(gs.user, size: 44), gs.user.name, '${(gs.clubPts[gs.user.name] ?? 0).toStringAsFixed(1)} نقطة • من ${all.length} نادياً'),
+      _summary(mine, teamBadge(gs.user, size: 44), gs.user.name, '${gs.eloOf(gs.user).round()} نقطة Elo • من ${all.length} نادياً'),
       _confChips(),
       _card([
         for (final e in shown.take(lim))
-          _row(e.$1, e.$2.$4 != null ? teamBadge(e.$2.$4!, size: 30) : _initial(e.$2.$1), e.$2.$1, kConfNames[e.$2.$2] ?? '', Text(e.$2.$3.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)), me: e.$2.$4 == gs.user, club: e.$2.$1),
+          _row(e.$1, e.$2.$4 != null ? teamBadge(e.$2.$4!, size: 30) : _initial(e.$2.$1), e.$2.$1, kConfNames[e.$2.$2] ?? '', _clubTrail(e.$1, e.$2.$1, e.$2.$3), me: e.$2.$4 == gs.user, club: e.$2.$1),
       ]),
       _moreBtn(shown.length),
     ];
@@ -309,10 +318,10 @@ class _RankingScreenState extends State<RankingScreen> {
   }
 
   List<Widget> _coaches() {
-    final all = [for (final t in gs.worldRanking) if ((t == gs.user || t.hasCoachName) && (_hit(t.coachName) || _hit(t.name))) t]..sort((a, b) => (gs.clubPts[b.name] ?? 0).compareTo(gs.clubPts[a.name] ?? 0));
+    final all = [for (final t in gs.worldRanking) if ((t == gs.user || t.hasCoachName) && (_hit(t.coachName) || _hit(t.name))) t]..sort((a, b) => gs.eloOf(b).compareTo(gs.eloOf(a)));
     return [
       for (var i = 0; i < all.length && i < lim; i++)
-        _row(i + 1, teamBadge(all[i], size: 30), all[i] == gs.user && _me != null ? _me! : all[i].coachName, '${all[i].name} • ${all[i].won} فوز • ${all[i].drawn} تعادل • ${all[i].lost} خسارة', Text((gs.clubPts[all[i].name] ?? 0).toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)), me: all[i] == gs.user),
+        _row(i + 1, teamBadge(all[i], size: 30), all[i] == gs.user && _me != null ? _me! : all[i].coachName, '${all[i].name} • ${all[i].won} فوز • ${all[i].drawn} تعادل • ${all[i].lost} خسارة', Text('${gs.eloOf(all[i]).round()}', style: const TextStyle(fontWeight: FontWeight.w900)), me: all[i] == gs.user),
       _moreBtn(all.length),
     ];
   }

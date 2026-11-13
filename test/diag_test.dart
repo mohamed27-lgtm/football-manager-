@@ -376,6 +376,12 @@ void main() {
     // ignore: avoid_print
     print('DIAG world engine: matches=$gp goals/match=${(gf / gp).toStringAsFixed(2)} top=${l.names[l.order.first]}');
     expect(gf / gp > 1.5 && gf / gp < 4.5, true, reason: 'معدل أهداف واقعي بالمحرك الكامل');
+    final tbl = gs.worldClubTable();
+    for (var i = 1; i < tbl.length; i++) {
+      expect(tbl[i - 1].$3 >= tbl[i].$3, true, reason: 'الترتيب العالمي مرتب بتصنيف Elo');
+    }
+    expect(tbl.first.$3 - tbl.last.$3 > 150, true, reason: 'فروق حقيقية بين الأندية: ${tbl.first.$3} - ${tbl.last.$3}');
+    expect(gs.elo['Club 0'] != null && gs.elo['Club 0']! > (gs.elo['Club 17'] ?? 0), true, reason: 'Elo يتحدث بنتائج دوريات العالم');
     // سلامة الجدول: لا يلعب فريق مرتين في جولة
     for (var rr = 0; rr < l.totalRounds; rr++) {
       final ps = l.pairs(rr);
