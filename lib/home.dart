@@ -26,6 +26,7 @@ import 'images_screen.dart';
 import 'sections_page.dart';
 import 'lang_sheet.dart';
 import 'settings.dart';
+import 'scout_report.dart';
 import 'widgets.dart';
 import 'title_screen.dart';
 import 'world_hub.dart';
@@ -1376,6 +1377,7 @@ class DashboardTab extends StatelessWidget {
       if (!gs.fired && !gs.seasonOver) ...[
         const Padding(padding: EdgeInsets.fromLTRB(2, 4, 2, 8), child: Text('حالة الفريق', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17))),
         _teamStatus(),
+        ScoutCard(gs: gs),
         _lastMatchCard(context),
         _weekPlayers(context),
       ],
