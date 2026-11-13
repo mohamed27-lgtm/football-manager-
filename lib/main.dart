@@ -86,9 +86,15 @@ class _ManagerAppState extends State<ManagerApp> {
     }
   }
 
+  bool opening = false;
+
   Future<void> _continue(SaveMeta m) async {
+    setState(() => opening = true);
     final g = await GameState.load(m.id);
-    if (g != null && mounted) setState(() => gs = g);
+    if (mounted) setState(() {
+      opening = false;
+      if (g != null) gs = g;
+    });
   }
 
   Future<void> _delete(SaveMeta m) async {
@@ -111,7 +117,9 @@ class _ManagerAppState extends State<ManagerApp> {
     final light = AppSettings.i.lightFor(WidgetsBinding.instance.platformDispatcher.platformBrightness);
     Widget home;
     if (loading) {
-      home = const Scaffold(body: Center(child: CircularProgressIndicator()));
+      home = const CoachSplash();
+    } else if (opening) {
+      home = const CoachSplash(message: 'جارٍ تجهيز مسيرتك...');
     } else if (acct == null) {
       home = AuthScreen(onAuthed: _enter);
     } else if (gs == null) {
@@ -123,11 +131,15 @@ class _ManagerAppState extends State<ManagerApp> {
         onOpen: _continue,
         onDelete: _delete,
         onStartReal: (List<Team> teams, int id, String name, {Pyramid? pyramid}) async {
+          setState(() => opening = true);
           final sid = await GameState.newSaveId();
           GameState.activeId = sid;
           final g = GameState.fromData(teams, id, name, pyramid: pyramid)..saveId = sid;
           await g.save();
-          if (mounted) setState(() => gs = g);
+          if (mounted) setState(() {
+            opening = false;
+            gs = g;
+          });
         },
       );
     } else {

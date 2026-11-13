@@ -65,23 +65,25 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF0B2A1A), kBg],
+      body: Unfilter(
+        child: Stack(fit: StackFit.expand, children: [
+          Image.asset('assets/brand/coach_scene.jpg', fit: BoxFit.cover, alignment: Alignment.topCenter, errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFF1B1F3B))),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x33000000), Color(0xF20E1624)], stops: [0.2, 0.62]),
+            ),
           ),
-        ),
-        child: SafeArea(
+          SafeArea(
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(22),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  CoachHero(height: 240, title: 'مدرب كرة القدم', subtitle: signup ? 'أنشئ حسابك وابدأ مسيرتك' : 'أهلاً بعودتك أيها المدرب'),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 40),
+                  const Text('مدرب كرة القدم', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900, shadows: [Shadow(blurRadius: 12, color: Colors.black54)])),
+                  Text(signup ? 'أنشئ حسابك وابدأ مسيرتك' : 'أهلاً بعودتك أيها المدرب', style: const TextStyle(color: Color(0xFFFFD9A8), fontSize: 14)),
+                  const SizedBox(height: 190),
                   SegmentedButton<bool>(
                     showSelectedIcon: false,
                     segments: const [
@@ -170,6 +172,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
         ),
+        ]),
       ),
     );
   }

@@ -7,6 +7,8 @@ on:
       - 'lib/**'
       - 'pubspec.yaml'
       - 'tools/make_assets.py'
+      - 'tools/android_brand.py'
+      - 'assets/brand/**'
       - 'tools/tm_leagues.json.gz'
       - 'tools/fetch_logos.py'
       - 'assets/logos/**'
@@ -52,6 +54,12 @@ jobs:
           s = re.sub(r'android:label="[^"]*"', 'android:label="مدرب كرة القدم"', s, count=1)
           p.write_text(s, encoding='utf-8')
           EOF
+
+      - name: Apply app icon and launch screen (coach artwork)
+        continue-on-error: true
+        run: |
+          pip install --quiet pillow
+          python3 tools/android_brand.py
 
       - name: Bundle league data into the app
         run: python3 tools/make_assets.py

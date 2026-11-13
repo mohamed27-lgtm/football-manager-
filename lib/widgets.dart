@@ -724,3 +724,39 @@ class CoachHero extends StatelessWidget {
         ),
       );
 }
+
+
+/// شاشة البداية/التحميل: مشهد المدرب والملعب بملء الشاشة مع شريط تقدم
+class CoachSplash extends StatelessWidget {
+  final String message;
+  const CoachSplash({super.key, this.message = 'جارٍ التحميل...'});
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: const Color(0xFF1B1F3B),
+        body: Unfilter(
+          child: Stack(fit: StackFit.expand, children: [
+            Image.asset('assets/brand/coach_scene.jpg', fit: BoxFit.cover, alignment: Alignment.topCenter, errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFF1B1F3B))),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x00000000), Color(0xE6000000)], stops: [0.45, 1]),
+              ),
+            ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
+                child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  const Text('مدرب كرة القدم', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900, shadows: [Shadow(blurRadius: 12, color: Colors.black54)])),
+                  const SizedBox(height: 6),
+                  Text(message, style: const TextStyle(color: Color(0xFFFFD9A8), fontSize: 14)),
+                  const SizedBox(height: 18),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: const LinearProgressIndicator(minHeight: 5, color: Color(0xFFFFB74D), backgroundColor: Color(0x33FFFFFF)),
+                  ),
+                ]),
+              ),
+            ),
+          ]),
+        ),
+      );
+}

@@ -191,9 +191,7 @@ class _StartScreenState extends State<StartScreen> {
                   ),
                 ),
               ]),
-              const SizedBox(height: 14),
-              CoachHero(height: 170, title: name, subtitle: 'مرحباً بعودتك أيها المدرب'),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               InkWell(
                 onTap: _images,
                 borderRadius: BorderRadius.circular(20),
