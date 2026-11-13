@@ -195,6 +195,29 @@ void main() {
     expect(seen.any((e) => e.startsWith('fifa')), true);
   });
 
+  test('تقييمات الأداء من أحداث المباراة وطقس وحكم', () {
+    final r = Random(61);
+    final rs = <double>[];
+    final w = <String>{};
+    var var_ = 0;
+    for (var i = 0; i < 120; i++) {
+      final h = createTeam(r, 1, 'أ$i', 4), a = createTeam(r, 2, 'ب$i', 3);
+      final sim = MatchSim(h, a, random: r)..simulateAll();
+      w.add(sim.weather);
+      var_ += sim.events.where((e) => e.text.contains('VAR')).length;
+      for (final s in [sim.home, sim.away]) {
+        rs.addAll(s.ratings.values);
+      }
+    }
+    final m = rs.reduce((a, b) => a + b) / rs.length;
+    final sd = sqrt(rs.fold<double>(0, (a, b) => a + (b - m) * (b - m)) / rs.length);
+    // ignore: avoid_print
+    print('DIAG ratings mean=${m.toStringAsFixed(2)} sd=${sd.toStringAsFixed(2)} weathers=$w var=$var_');
+    expect(m > 5.8 && m < 7.3, true, reason: 'متوسط التقييم $m');
+    expect(sd > 0.3, true, reason: 'تباين التقييمات $sd');
+    expect(w.length >= 2, true);
+  });
+
   test('صعود وهبوط في دوريات العالم', () {
     final r = Random(33);
     final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];

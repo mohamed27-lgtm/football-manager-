@@ -24,6 +24,11 @@ class Slot {
   }
 }
 
+/// إحصاءات أداء لاعب في المباراة (تُبنى منها التقييمات)
+class PerfStat {
+  int passes = 0, passOk = 0, keyPasses = 0, shots = 0, onTarget = 0, tackles = 0, saves = 0;
+}
+
 class Side {
   final Team team;
   final bool isHome;
@@ -32,6 +37,8 @@ class Side {
   final Set<Player> out = {};
   final Map<int, int> yellowCount = {};
   final Map<Player, double> ratings = {};
+  final Map<Player, PerfStat> perf = {};
+  PerfStat ps(Player p) => perf.putIfAbsent(p, PerfStat.new);
   int goals = 0, shots = 0, onTarget = 0, poss = 0, subsLeft = 3, fouls = 0, corners = 0;
   int passes = 0, passOk = 0, offsides = 0;
   double xg = 0;
@@ -118,6 +125,15 @@ class MatchSim {
   double ballX = 0.5, ballY = 0.5;
   bool attackHome = true;
 
+  /// الحكم: 0.75 متساهل … 1.3 صارم. والطقس: صافٍ/ممطر/حار/رياح
+  late final double refStrict = 0.75 + rng.nextDouble() * 0.55;
+  late final String weather = () {
+    final r = rng.nextDouble();
+    return r < 0.62 ? 'clear' : r < 0.78 ? 'rain' : r < 0.9 ? 'hot' : 'wind';
+  }();
+  String get weatherText => switch (weather) { 'rain' => '🌧 أجواء ممطرة', 'hot' => '☀️ حرارة مرتفعة', 'wind' => '💨 رياح قوية', _ => '⛅ طقس معتدل' };
+  String get refText => refStrict > 1.12 ? 'حكم صارم' : refStrict < 0.9 ? 'حكم متساهل' : 'حكم متوازن';
+
   MatchSim(Team h, Team a,
       {bool userHome = false, bool userAway = false, Random? random})
       : home = Side(h, true, userHome),
@@ -175,7 +191,10 @@ class MatchSim {
   void step() {
     if (finished) return;
     minute++;
-    if (minute == 1) _log('info', '🟢 صافرة البداية', true, major: false);
+    if (minute == 1) {
+      _log('info', '🟢 صافرة البداية', true, major: false);
+      _log('info', '$weatherText • $refText', true, major: false);
+    }
 
     for (final s in [home, away]) {
       final f = 0.2 *
@@ -183,8 +202,9 @@ class MatchSim {
               0.3 * (s.team.pressing - 1) +
               0.2 * (s.team.tempo - 1) +
               0.1 * (s.team.defLine - 1));
+      final wf = weather == 'hot' ? 1.25 : weather == 'rain' ? 1.08 : 1.0;
       for (final sl in s.slots) {
-        sl.p.fitness = max(0, sl.p.fitness - f);
+        sl.p.fitness = max(0, sl.p.fitness - f * wf);
       }
     }
 
@@ -206,13 +226,29 @@ class MatchSim {
     a.poss++;
     // تمريرات الاستحواذ: العدد يتبع أسلوب التمرير، والدقة تتبع مهارة اللاعبين
     final k = 5 + rng.nextInt(6) + (a.team.passing - 1);
-    final okRate = (0.58 + 0.0042 * a.passSkill - 0.02 * (a.team.passing - 1) - 0.012 * (d.team.pressing - 1)).clamp(0.55, 0.93);
+    final okRate = (0.58 + 0.0042 * a.passSkill - 0.02 * (a.team.passing - 1) - 0.012 * (d.team.pressing - 1) - (weather == 'rain' ? 0.03 : weather == 'wind' ? 0.015 : 0)).clamp(0.55, 0.93);
     var ok = 0;
     for (var i = 0; i < k; i++) {
       if (rng.nextDouble() < okRate) ok++;
     }
     a.passes += k;
     a.passOk += ok;
+    // نسب التمريرات للاعبين (الوسط والخلف أكثر تمريراً)
+    final pc = a.slots.where((x) => x.pos != Pos.gk || rng.nextDouble() < 0.3).toList();
+    if (pc.isNotEmpty) {
+      final c1 = _weighted(pc, pc.map((x) => x.p.pas * (x.pos == Pos.mid ? 1.6 : x.pos == Pos.def ? 1.2 : 0.8)).toList()).p;
+      final st = a.ps(c1);
+      st.passes += k;
+      st.passOk += ok;
+    }
+    // تدخل دفاعي للخصم
+    if (rng.nextDouble() < 0.33) {
+      final dc = d.slots.where((x) => x.pos != Pos.gk).toList();
+      if (dc.isNotEmpty) {
+        final tp = _weighted(dc, dc.map((x) => x.p.def * (x.pos == Pos.def ? 2.0 : x.pos == Pos.mid ? 1.3 : 0.5)).toList()).p;
+        d.ps(tp).tackles++;
+      }
+    }
     if (rng.nextDouble() < 0.05 * (1 + 0.2 * (d.team.defLine - 1))) a.offsides++;
     attackHome = a.isHome;
     _setBall(a, rng.nextDouble() * 0.75, 0.85);
@@ -229,7 +265,7 @@ class MatchSim {
         .toDouble();
     if (rng.nextDouble() < pShot) {
       _shot(a, d);
-    } else if (rng.nextDouble() < 0.0022) {
+    } else if (rng.nextDouble() < 0.0022 * refStrict) {
       _penalty(a, d);
     }
 
@@ -250,6 +286,14 @@ class MatchSim {
     for (final s in [home, away]) {
       final o = identical(s, home) ? away : home;
       final res = s.goals > o.goals ? 0.4 : (s.goals < o.goals ? -0.3 : 0.0);
+      for (final e in s.perf.entries) {
+        final st = e.value;
+        var v = 0.0;
+        if (st.passes >= 12) v += ((st.passOk / st.passes) - 0.78) * 1.6;
+        v += 0.22 * min(st.keyPasses, 4) + 0.1 * st.onTarget - 0.03 * (st.shots - st.onTarget);
+        v += 0.1 * min(st.tackles, 8) + 0.22 * min(st.saves, 7);
+        s.bump(e.key, v);
+      }
       for (final sl in s.slots) {
         s.bump(sl.p, res);
         final back = sl.pos == Pos.gk || sl.pos == Pos.def;
@@ -274,6 +318,11 @@ class MatchSim {
         .toList();
     final shooter = _weighted(cands, w).p;
     a.shots++;
+    a.ps(shooter).shots++;
+    final creators = cands.where((x) => x.p != shooter).toList();
+    if (creators.isNotEmpty && rng.nextDouble() < 0.65) {
+      a.ps(_weighted(creators, creators.map((x) => x.p.pas.toDouble()).toList()).p).keyPasses++;
+    }
     _setBall(a, 0.95, 0.45);
     final gkP = _gk(d);
     final gks = d.slots.where((s) => s.pos == Pos.gk).toList();
@@ -295,8 +344,20 @@ class MatchSim {
       return;
     }
     a.onTarget++;
+    a.ps(shooter).onTarget++;
     final pg = (0.275 * pow(q / max(20, gkR), 1.4)).clamp(0.06, 0.65);
     if (rng.nextDouble() < pg) {
+      // مراجعة الفيديو: أحياناً يُلغى الهدف (تسلل أو خطأ قبله)
+      if (rng.nextDouble() < 0.035) {
+        _log('info', '📺 VAR: مراجعة هدف ${shooter.name}...', a.isHome);
+        if (rng.nextDouble() < 0.6) {
+          a.onTarget--;
+          a.offsides++;
+          _log('miss', '🚫 أُلغي الهدف بعد مراجعة الفيديو (تسلل)', a.isHome);
+          return;
+        }
+        _log('info', '✅ VAR يؤكد الهدف', a.isHome, major: false);
+      }
       a.goals++;
       shooter.goals++;
       a.bump(shooter, 1.2);
@@ -318,7 +379,10 @@ class MatchSim {
           '⚽ هدف! ${shooter.name}${assister != null ? ' (تمريرة ${assister.name})' : ''}',
           a.isHome);
     } else {
-      if (gkP != null) d.bump(gkP, 0.4);
+      if (gkP != null) {
+        d.bump(gkP, 0.4);
+        d.ps(gkP).saves++;
+      }
       if (rng.nextDouble() < 0.4) _corner(a);
       if (rng.nextDouble() < 0.6) {
         _log('save', '🧤 تصدٍّ رائع لتسديدة ${shooter.name}', a.isHome,
@@ -362,8 +426,8 @@ class MatchSim {
 
   void _discipline(Side d) {
     if (d.slots.isEmpty) return;
-    if (rng.nextDouble() < 0.13 * (1 + 0.25 * (d.team.pressing - 1))) d.fouls++;
-    if (rng.nextDouble() < 0.03 * (1 + 0.4 * (d.team.pressing - 1))) {
+    if (rng.nextDouble() < 0.13 * refStrict * (1 + 0.25 * (d.team.pressing - 1))) d.fouls++;
+    if (rng.nextDouble() < 0.03 * refStrict * (1 + 0.4 * (d.team.pressing - 1))) {
       final c = d.slots.where((s) => s.pos != Pos.gk).toList();
       if (c.isEmpty) return;
       final sl = _weighted(
