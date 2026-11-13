@@ -221,6 +221,26 @@ class CountryScreen extends StatelessWidget {
                 ]),
               ),
             ),
+          if (ls.any((l) => gs.worldMoves.keys.any((k) => k.startsWith('${l.id}|')))) ...[
+            const SizedBox(height: 12),
+            const Text('الصعود والهبوط', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+            const SizedBox(height: 8),
+            Panel(
+              child: Column(children: [
+                for (final l in ls)
+                  for (final e in (gs.worldMoves.entries.where((e) => e.key.startsWith('${l.id}|')).toList()
+                        ..sort((a, b) => int.parse(b.key.split('|')[1]).compareTo(int.parse(a.key.split('|')[1])))).take(3))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('${l.name} • الموسم ${e.key.split('|')[1]}', style: const TextStyle(color: kMuted, fontSize: 12.5)),
+                        Text('🔼 ${e.value.where((x) => x.startsWith('+')).map((x) => x.substring(1)).join('، ')}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                        Text('🔽 ${e.value.where((x) => x.startsWith('-')).map((x) => x.substring(1)).join('، ')}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      ]),
+                    ),
+              ]),
+            ),
+          ],
           if (champs.isNotEmpty) ...[
             const SizedBox(height: 12),
             const Text('أبطال الدوري', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),

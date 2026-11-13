@@ -195,6 +195,44 @@ void main() {
     expect(seen.any((e) => e.startsWith('fifa')), true);
   });
 
+  test('صعود وهبوط في دوريات العالم', () {
+    final r = Random(33);
+    final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];
+    final gs = GameState.fromData(teams, 2, 'تجريبي');
+    final hi = [for (var i = 0; i < 18; i++) 'Hi $i'], lo = [for (var i = 0; i < 18; i++) 'Lo $i'];
+    gs.wLeagues.add(WorldLeague(950, 'دوري أول', 'بلدx', 1, hi, [for (var i = 0; i < 18; i++) 80.0 - i]));
+    gs.wLeagues.add(WorldLeague(951, 'الدرجة الثانية', 'بلدx', 2, lo, [for (var i = 0; i < 18; i++) 65.0 - i]));
+    var guard = 0;
+    while (!gs.seasonOver && guard++ < 800) {
+      gs.confidence = 100;
+      final c = gs.pendingCup;
+      if (c != null) {
+        gs.startCupMatch(c);
+        gs.finishCurrent();
+        continue;
+      }
+      gs.startMatch();
+      gs.finishMatchday();
+    }
+    final up = gs.wLeagues.firstWhere((l) => l.id == 950), low = gs.wLeagues.firstWhere((l) => l.id == 951);
+    final loOrd = low.order, hiOrd = up.order;
+    final goUp = [for (final i in loOrd.take(3)) low.names[i]], goDown = [for (final i in hiOrd.sublist(15)) up.names[i]];
+    gs.startNewSeason();
+    final up2 = gs.wLeagues.firstWhere((l) => l.id == 950), low2 = gs.wLeagues.firstWhere((l) => l.id == 951);
+    expect(up2.n, 18);
+    expect(low2.n, 18);
+    for (final t in goUp) {
+      expect(up2.names.contains(t), true, reason: '$t صعد');
+    }
+    for (final t in goDown) {
+      expect(low2.names.contains(t), true, reason: '$t هبط');
+      expect(up2.names.contains(t), false);
+    }
+    expect(gs.worldMoves['950|1']?.length, 6);
+    final g2 = GameState.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(gs.toJson())) as Map));
+    expect(g2.worldMoves['950|1']?.length, 6);
+  });
+
   test('دوريات العالم تُلعب آلياً وتُسجَّل الألقاب في خزائن الأندية', () {
     final r = Random(21);
     final teams = [for (var i = 0; i < 20; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];

@@ -140,6 +140,7 @@ class GameState extends ChangeNotifier {
   final List<List<dynamic>> natJobLog = []; // [موسم، خصم، لنا، علينا، 0 رسمية/1 ودية، 1 أرض/0 خارج]
   final Map<int, Map<String, Team>> wTeams = {}; // فرق الدوريات العالمية (مؤقتة، تُبنى عند الحاجة)
   final Map<String, String> worldChamps = {};
+  final Map<String, List<String>> worldMoves = {}; // 'id|موسم' -> +صعد / -هبط
   final List<String> worldFeed = [];
   void touch() {
     notifyListeners();
@@ -621,6 +622,7 @@ class GameState extends ChangeNotifier {
     }
     ((j['clh'] as Map?) ?? const {}).forEach((k, v) => clubHonours[k as String] = (v as List).cast<String>());
     ((j['wch'] as Map?) ?? const {}).forEach((k, v) => worldChamps[k as String] = v as String);
+    ((j['wmv'] as Map?) ?? const {}).forEach((k, v) => worldMoves[k as String] = (v as List).cast<String>());
     worldFeed.addAll(((j['wf'] as List?) ?? const []).cast<String>());
     for (final e in ((j['tst'] as Map?) ?? const {}).entries) {
       titleStats['${e.key}'] = {for (final x in (e.value as Map).entries) '${x.key}': (x.value as num).toInt()};
@@ -884,6 +886,7 @@ class GameState extends ChangeNotifier {
         'wl': [for (final l in wLeagues) l.toJson()],
         'clh': clubHonours,
         'wch': worldChamps,
+        'wmv': worldMoves,
         'wf': worldFeed,
         'tst': titleStats,
         'nj': natJob,

@@ -216,7 +216,53 @@ extension WorldLeagues on GameState {
     return l.names[alive.first];
   }
 
-  /// نهاية الموسم: إتمام الجولات المتبقية وتتويج الأبطال في خزائن أنديتهم، ثم تصفير الجداول
+  /// ترتيب الدرجة داخل البلد من اسم الدوري (بيانات الدرجات في المصدر غير متسقة بين البلدان)
+  static int _divOf(WorldLeague l) {
+    if (l.name.contains('الثالثة')) return 3;
+    if (l.name.contains('الثانية') || l.name.contains('تشامبيونشيب')) return 2;
+    return 1;
+  }
+
+  /// صعود وهبوط بين درجات كل بلد: يصعد الأوائل ويهبط الأواخر، وتنتقل معهم فرقهم وقوتهم
+  void _worldPromotions() {
+    final byC = <String, List<WorldLeague>>{};
+    for (final l in wLeagues) {
+      byC.putIfAbsent(l.country, () => []).add(l);
+    }
+    for (final ls in byC.values) {
+      if (ls.length < 2) continue;
+      ls.sort((a, b) => _divOf(a).compareTo(_divOf(b)));
+      // الترتيب النهائي لكل دوري قبل أي حركة (حتى لا تتأثر الدرجة الوسطى بحركة جارتها)
+      final ords = {for (final l in ls) l.id: l.order};
+      for (var d = 0; d + 1 < ls.length; d++) {
+        final up = ls[d], low = ls[d + 1];
+        if (_divOf(up) == _divOf(low)) continue;
+        final k = min(min(up.n, low.n) < 16 ? 2 : 3, min(up.n, low.n) ~/ 4);
+        if (k < 1) continue;
+        final goDown = ords[up.id]!.sublist(up.n - k); // آخر فرق الدرجة الأعلى
+        final goUp = ords[low.id]!.take(k).toList(); // أول فرق الدرجة الأدنى
+        final dn = <String>[for (final i in goDown) up.names[i]];
+        final upn = <String>[for (final i in goUp) low.names[i]];
+        for (var j = 0; j < k; j++) {
+          final a = goDown[j], b = goUp[j];
+          final (nA, sA) = (up.names[a], up.str[a]);
+          up.names[a] = low.names[b];
+          up.str[a] = low.str[b];
+          low.names[b] = nA;
+          low.str[b] = sA;
+          final tu = wTeams[up.id], tl = wTeams[low.id];
+          final mA = tu?.remove(nA), mB = tl?.remove(up.names[a]);
+          if (mA != null) tl?[nA] = mA;
+          if (mB != null) tu?[up.names[a]] = mB;
+        }
+        // مراتب الدرجة الأدنى تتبدّل فقط داخل الأسماء؛ الجدول يُصفَّر لاحقاً
+        if (_kTopLeagueIds.contains(up.id)) news.insert(0, '🔁 صعد ${upn.join('، ')} وهبط ${dn.join('، ')} في ${up.name}');
+        worldMoves['${up.id}|$season'] = [...upn.map((e) => '+$e'), ...dn.map((e) => '-$e')];
+      }
+    }
+  }
+
+  /// نهاية الموسم: إتمام الجولات المتبقية وتتويج الأبطال في خزائن أنديتهم، ثم الصعود والهبوط وتصفير الجداول
   void _worldLeaguesSeasonEnd() {
     if (wLeagues.isEmpty) return;
     for (final l in wLeagues) {
@@ -230,6 +276,9 @@ extension WorldLeagues on GameState {
         if (_kTopLeagueIds.contains(l.id)) news.insert(0, '🏆 $champ بطل ${l.name}');
       }
       worldChamps['${l.id}|$season'] = champ;
+    }
+    _worldPromotions();
+    for (final l in wLeagues) {
       // تصفير الجدول وانجراف بسيط في القوة نحو المتوسط
       l.round = 0;
       for (var i = 0; i < l.n; i++) {
