@@ -35,7 +35,6 @@ class _Comp {
 class _CompetitionsViewState extends State<CompetitionsView> {
   String? sel; // null = صفحة اختيار البطولة
   Map<String, int?> _barLogos = {};
-  String _q = '';
   int sub = 0; // 0 جدول/مجموعات، 1 شجرة
   GameState get gs => widget.gs;
 
@@ -140,7 +139,8 @@ class _CompetitionsViewState extends State<CompetitionsView> {
       for (final c in kConfeds) ...c.order,
       for (final l in gs.wLeagues) l.country,
       ...gs.nat.pts.keys,
-    ].where((c) => c.isNotEmpty && seen.add(c)).where((c) => _q.isEmpty || c.contains(_q)).toList();
+    ].where((c) => c.isNotEmpty && seen.add(c)).toList();
+    final topNations = nations.take(12).toList();
     Widget card(String t, Widget lead, {bool mark = false, bool hi = false, required VoidCallback onTap}) => GestureDetector(
           onTap: onTap,
           child: Container(
@@ -185,23 +185,9 @@ class _CompetitionsViewState extends State<CompetitionsView> {
             for (final e in club)
               card(e.$1, _logoChip(_logoOf(e.$3!), e.$2, size: 38), mark: e.$4, hi: e.$3 == 'sup' && e.$4, onTap: () => _open(e.$3!)),
           ]),
-          head('دول العالم (${nations.length})'),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: TextField(
-              onChanged: (v) => setState(() => _q = v.trim()),
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search_rounded),
-                hintText: 'ابحث عن دولة...',
-                filled: true,
-                fillColor: kCard,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-              ),
-            ),
-          ),
+          head('دول العالم'),
           grid([
-            for (final n in nations)
+            for (final n in topNations)
               card(n, SizedBox(width: 46, child: FlagBadge(n, size: 34)), mark: n == gs.country, onTap: () {
                 if (n == gs.country) {
                   _open('league');
@@ -210,6 +196,20 @@ class _CompetitionsViewState extends State<CompetitionsView> {
                 }
               }),
           ]),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => WorldExplorerScreen(gs: gs))),
+            child: Container(
+              height: 50,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: kPrimary.withOpacity(0.12), borderRadius: BorderRadius.circular(14), border: Border.all(color: kPrimary.withOpacity(0.5))),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                const Icon(Icons.travel_explore_rounded, color: kPrimary),
+                const SizedBox(width: 8),
+                Text('تصفح كل الدول (${nations.length}) • بحث وقارات', style: const TextStyle(color: kPrimary, fontWeight: FontWeight.w900)),
+              ]),
+            ),
+          ),
           const SizedBox(height: 14),
           head('بطولات المنتخبات'),
           grid([
