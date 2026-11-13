@@ -162,12 +162,10 @@ class _MoreTabState extends State<MoreTab> {
   Widget build(BuildContext context) {
     final groups = <(String, List<(IconData, String, VoidCallback)>)>[
       ('الفريق', [
-        (Icons.groups_rounded, 'مركز الفريق', () => _tab(1)),
         (Icons.account_tree_rounded, 'التكتيك', () => _push(TacticsScreen(gs: gs))),
         (Icons.groups_2_outlined, 'التشكيلة', () => _push(LineupScreen(gs: gs))),
       ]),
       ('السوق', [
-        (Icons.swap_horiz_rounded, 'الانتقالات', () => _tab(2)),
         (Icons.calendar_month_rounded, 'جدول المباريات', () => _push(FixturesScreen(gs: gs))),
         (Icons.person_add_alt_1_rounded, 'إنشاء لاعب', () => _push(CreatePlayerScreen(gs: gs))),
         (Icons.search_rounded, 'الكشافة', () => _push(ScoutingScreen(gs: gs))),
@@ -185,11 +183,8 @@ class _MoreTabState extends State<MoreTab> {
         (Icons.work_outline_rounded, 'عقدي والعروض', () => _push(JobsScreen(gs: gs))),
       ]),
       ('المنافسات', [
-        (Icons.leaderboard_rounded, 'الدوري والترتيب', () => _tab(3)),
-        (Icons.emoji_events_rounded, 'الكؤوس', () => _tab(3)),
-        (Icons.calendar_month_rounded, 'الجدول', () => _tab(3)),
-        (Icons.public_rounded, 'العالم', () => _push(RankingScreen(gs: gs))),
-        (Icons.flag_rounded, gs.natJob == null ? 'المنتخبات' : 'منتخبي: ${gs.natJob}', () => _push(gs.natJob == null ? RankingScreen(gs: gs) : NationScreen(gs: gs, nation: gs.natJob!))),
+        (Icons.public_rounded, 'العالم والمنتخبات', () => _push(RankingScreen(gs: gs))),
+        if (gs.natJob != null) (Icons.flag_rounded, 'منتخبي: ${gs.natJob}', () => _push(NationScreen(gs: gs, nation: gs.natJob!))),
         (Icons.sports_soccer_rounded, 'دوريات العالم', () => _push(WorldLeaguesScreen(gs: gs))),
       ]),
     ];
