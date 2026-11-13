@@ -1,9 +1,12 @@
+import 'dart:math';
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
 import 'game_state.dart';
-import 'match_pages.dart' show whiteBtn;
+import 'match_pages.dart' show whiteBtn, gameBar;
 import 'widgets.dart';
 import 'flags.dart';
+import 'club_ui.dart';
+import 'calendar.dart';
 
 /// عقدي: ثقة الإدارة وسمعة المدرب، عروض الأندية الأخرى، والاستقالة
 class JobsScreen extends StatefulWidget {
@@ -15,6 +18,7 @@ class JobsScreen extends StatefulWidget {
 
 class _JobsScreenState extends State<JobsScreen> {
   GameState get gs => widget.gs;
+  final Set<String> _open = {};
 
   Widget _kv(String k, String v, {Color? c}) => Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -22,6 +26,15 @@ class _JobsScreenState extends State<JobsScreen> {
         child: Row(children: [
           Expanded(child: Text(k, style: const TextStyle(color: kMuted, fontSize: 13.5))),
           Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5, color: c)),
+        ]),
+      );
+
+  Widget _goal(String t, double v, Color c) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(children: [
+          Row(children: [Expanded(child: Text(t, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5))), Text('${(v * 100).round()}%', style: const TextStyle(fontWeight: FontWeight.w900))]),
+          const SizedBox(height: 5),
+          Bar(v, c),
         ]),
       );
 
@@ -57,34 +70,50 @@ class _JobsScreenState extends State<JobsScreen> {
     setState(() {});
   }
 
-  Widget _offer(JobOffer o) => Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kPrimary.withOpacity(0.5))),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            teamBadge(gs.clubNamed(o.club), size: 44),
-            const SizedBox(width: 10),
-            Expanded(child: Text(o.club, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17))),
-          ]),
-          const SizedBox(height: 6),
-          Text(o.reason, style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
+  Widget _offer(JobOffer o) {
+    final open = _open.contains(o.club);
+    final club = gs.clubNamed(o.club);
+    final tempting = club.reputation >= gs.user.reputation;
+    return CardBox(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          teamBadge(club, size: 46),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(o.club, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+              Text('${o.years} ${o.years == 1 ? 'سنة' : 'سنوات'} • ${money(gs.offerWeekly(o.club))}/أسبوع', style: const TextStyle(color: kMuted, fontSize: 12.5)),
+            ]),
+          ),
+          if (tempting) const Pill('مغرٍ', Color(0xFF1FA58A)),
+        ]),
+        if (open) ...[
           const SizedBox(height: 8),
+          Text(o.reason, style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
+          const SizedBox(height: 4),
           _kv('الدوري', _divName(o.div)),
-          _kv('مدة العقد', '${o.years} مواسم'),
           _kv('هدف الإدارة', 'المركز ${o.objective} أو أفضل'),
           _kv('ميزانية النادي', gs.money1(o.budget)),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: GradientButton(label: 'قبول العرض', icon: Icons.check_rounded, onPressed: () => _accept(o))),
-            const SizedBox(width: 8),
-            Expanded(child: whiteBtn('رفض', () {
-              gs.rejectJob(o);
-              setState(() {});
-            })),
-          ]),
+        ],
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(child: whiteBtn('رفض', () {
+            gs.rejectJob(o);
+            setState(() {});
+          })),
+          const SizedBox(width: 8),
+          Expanded(
+            child: open
+                ? GradientButton(label: 'قبول العرض', icon: Icons.check_rounded, onPressed: () => _accept(o))
+                : GestureDetector(
+                    onTap: () => setState(() => _open.add(o.club)),
+                    child: Container(height: 50, alignment: Alignment.center, decoration: BoxDecoration(color: const Color(0xFFA9D4F8), borderRadius: BorderRadius.circular(14)), child: const Text('تفاصيل', style: TextStyle(color: Color(0xFF15233D), fontWeight: FontWeight.w900, fontSize: 15))),
+                  ),
+          ),
         ]),
-      );
+      ]),
+    );
+  }
 
   Future<void> _acceptNat(JobOffer o) async {
     final ok = await confirmDialog(context,
@@ -135,19 +164,40 @@ class _JobsScreenState extends State<JobsScreen> {
     final jobs = gs.availableJobs;
     final under = !gs.fired;
     return Scaffold(
-      appBar: AppBar(title: const Text('عقدي والعروض')),
+      appBar: gameBar(context, gs, 'عقدي والعروض'),
       body: ListView(padding: const EdgeInsets.all(14), children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+        CardBox(
           child: Column(children: [
-            _kv('النادي الحالي', gs.fired ? (gs.resigned ? 'مستقيل' : 'مُقال') : (gs.resigned ? '${gs.user.name} (مستقيل)' : gs.user.name)),
-            _kv('سمعتك كمدرب', '${gs.mgrTier} (${gs.mgrRep.round()})'),
-            if (under) _kv('ثقة الإدارة', '${gs.confidence.round()}%', c: gs.confidence >= 50 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D)),
-            if (under) _kv('المواسم المتبقية في العقد', '${gs.contractLeft}'),
+            Row(children: [
+              teamBadge(gs.user, size: 52),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(gs.fired ? (gs.resigned ? 'مستقيل' : 'مُقال') : 'عقدي مع ${gs.user.name}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                  if (under) Text('ينتهي ${GameCalendar.monthNames[5]} ${2025 + gs.season + gs.contractLeft} • ${money(gs.mgrWeekly)}/أسبوع', style: const TextStyle(color: kMuted, fontSize: 12.5)),
+                  Text('سمعتك: ${gs.mgrTier} (${gs.mgrRep.round()})', style: const TextStyle(color: kMuted, fontSize: 12.5)),
+                ]),
+              ),
+            ]),
             if (gs.pendingJob != null) _kv('وجهتك القادمة', gs.pendingJob!, c: kPrimary),
           ]),
         ),
+        if (under)
+          StatTiles([
+            ('${gs.confidence.round()}%', 'ثقة الإدارة', gs.confidence >= 50 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D)),
+            (money(gs.mgrWeekly * 52 * 0.3), 'بند الفسخ', kPrimary),
+            (money(gs.mgrWeekly * 52 * 0.055), 'مكافأة الهدف', const Color(0xFFF5A524)),
+          ]),
+        if (under)
+          CardBox(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('أهداف الإدارة لهذا الموسم', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              const SizedBox(height: 8),
+              _goal('إنهاء الدوري ضمن أول ${gs.objective}', gs.position <= gs.objective ? 1.0 : (1 - (gs.position - gs.objective) / max(1, gs.teams.length - gs.objective)).clamp(0.0, 1.0).toDouble(), const Color(0xFF1FA58A)),
+              _goal('إبقاء الأجور تحت 85% من الإيرادات', (1 - (gs.ffpRatio - 0.6).clamp(0.0, 0.4) / 0.4).toDouble(), const Color(0xFF2F7BE6)),
+              _goal('الحفاظ على ثقة الإدارة فوق 50%', (gs.confidence / 100).clamp(0.0, 1.0).toDouble(), const Color(0xFFF5A524)),
+            ]),
+          ),
         if (gs.renewal != null) ...[
           const SizedBox(height: 14),
           Container(
@@ -180,7 +230,7 @@ class _JobsScreenState extends State<JobsScreen> {
           ),
         ],
         const SizedBox(height: 16),
-        Text('عروض التدريب (${jobs.length})', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        Text('عروض من أندية أخرى (${jobs.length})', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
         const SizedBox(height: 8),
         if (jobs.isEmpty)
           const Panel(child: EmptyState(icon: Icons.work_outline_rounded, title: 'لا عروض حالياً', subtitle: 'تصلك العروض من الأندية بحسب سمعتك ونتائجك وحاجتها لمدرب.'))

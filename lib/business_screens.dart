@@ -3,9 +3,11 @@ import 'i18n.dart';
 import 'game_state.dart';
 import 'sponsors.dart';
 import 'widgets.dart';
+import 'club_ui.dart';
+import 'match_pages.dart';
 
-void _snack(BuildContext c, String? err, String ok) =>
-    ScaffoldMessenger.of(c).showSnackBar(SnackBar(content: Text(err ?? ok)));
+const _typeIcons = {'shirt': Icons.checkroom_rounded, 'kit': Icons.star_rounded, 'stadium': Icons.home_rounded};
+const _typeCols = {'shirt': Color(0xFF2F7BE6), 'kit': Color(0xFFF5A524), 'stadium': Color(0xFF6A6FC4)};
 
 class SponsorsScreen extends StatefulWidget {
   final GameState gs;
@@ -15,203 +17,145 @@ class SponsorsScreen extends StatefulWidget {
 }
 
 class _SponsorsScreenState extends State<SponsorsScreen> {
-  int tab = 0;
   GameState get gs => widget.gs;
 
-  Widget _tile(String v, String l, Color c) => Expanded(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
-          child: Column(children: [
-            Text(v, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: c)),
-            Text(l, style: const TextStyle(color: kMuted, fontSize: 12)),
-          ]),
-        ),
-      );
-
-  static const _cols = [Color(0xFFF5A524), Color(0xFF2F7BE6), Color(0xFF1FA58A), Color(0xFFE5533D), Color(0xFF6A6FC4)];
-
-  Widget _logo(String brand, int i) {
-    final c = _cols[i % _cols.length];
-    return Container(
-      width: 48,
-      height: 48,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: c.withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
-      child: Text(brand.isEmpty ? '?' : brand.characters.first.toUpperCase(), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: c)),
-    );
-  }
-
-  Widget _row(Widget logo, String title, String sub, Widget trailing) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: kLine))),
-        child: Row(children: [
-          logo,
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-              Text(sub, style: const TextStyle(color: kMuted, fontSize: 12)),
-            ]),
-          ),
-          trailing,
-        ]),
-      );
+  String _yr(int y) => y == 1 ? 'سنة' : (y == 2 ? 'سنتان' : '$y سنوات');
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('الرعاة')),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
-          child: Row(children: [
-            Expanded(
-              flex: 2,
-              child: GestureDetector(
-                onTap: () => setState(() => tab = 2),
-                child: Container(
-                  height: 50,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(color: const Color(0xFFA9D4F8), borderRadius: BorderRadius.circular(10), boxShadow: const [BoxShadow(color: Color(0x4400A0FF), offset: Offset(0, 3))]),
-                  child: const Text('السجل', style: TextStyle(color: Color(0xFF15233D), fontWeight: FontWeight.w900, fontSize: 16)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(flex: 3, child: GradientButton(label: 'استعراض العروض', icon: Icons.star_border_rounded, onPressed: () => setState(() => tab = 1))),
-          ]),
-        ),
-      ),
-      body: ListenableBuilder(
-        listenable: gs,
-        builder: (context, _) {
-          final types = sponsorTypes.keys.toList();
-          final filled = gs.deals.length;
-          final offerCount = [for (final t in types) ...(gs.sponsorOffers[t] ?? const [])].length;
-          return ListView(padding: const EdgeInsets.all(14), children: [
-            SegmentedButton<int>(
-              showSelectedIcon: false,
-              expandedInsets: EdgeInsets.zero,
-              segments: const [
-                ButtonSegment(value: 0, label: Text('الحاليون')),
-                ButtonSegment(value: 1, label: Text('العروض')),
-                ButtonSegment(value: 2, label: Text('السجل')),
-              ],
-              selected: {tab},
-              onSelectionChanged: (v) => setState(() => tab = v.first),
-            ),
-            const SizedBox(height: 12),
-            Row(children: [
-              _tile('${wageK(gs.dealsIncome)}', 'الدخل/جولة', const Color(0xFF1FA58A)),
-              _tile('$filled', 'العقود', kPrimary),
-              _tile(gs.fans >= 70 ? 'ممتاز' : (gs.fans >= 45 ? 'جيد' : 'ضعيف'), 'رضا الرعاة', const Color(0xFFF5A524)),
-            ]),
-            if (tab == 0) ...[
-              Padding(
-                padding: const EdgeInsets.only(top: 14, bottom: 8),
-                child: Row(children: [
-                  const Text('مواقع الرعاية', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-                  const Spacer(),
-                  Text('$filled من ${types.length}', style: const TextStyle(color: kMuted)),
-                ]),
-              ),
-              Container(
-                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
-                clipBehavior: Clip.antiAlias,
+      appBar: gameBar(context, gs, 'الرعاة'),
+      body: SafeArea(
+        child: ListenableBuilder(
+          listenable: gs,
+          builder: (context, _) {
+            final types = sponsorTypes.keys.toList();
+            final rounds = gs.rounds.isEmpty ? 38 : gs.rounds.length;
+            final yearly = gs.dealsIncome * rounds;
+            final offers = [for (final t in types) if (gs.deals.every((d) => d.type != t)) ...(gs.sponsorOffers[t] ?? const <SponsorOffer>[])];
+            return ListView(padding: const EdgeInsets.all(14), children: [
+              StatTiles([
+                ('${offers.length}', 'عروض جديدة', kPrimary),
+                ('${gs.deals.length}', 'عقود فعّالة', const Color(0xFF1FA58A)),
+                (money(yearly), 'إيراد الرعاة/سنة', const Color(0xFF1FA58A)),
+              ]),
+              CardBox(
+                padding: EdgeInsets.zero,
                 child: Column(children: [
-                  for (var i = 0; i < types.length; i++)
-                    Builder(builder: (_) {
-                      final cur = gs.deals.where((d) => d.type == types[i]).toList();
-                      if (cur.isNotEmpty) {
-                        final d = cur.first;
-                        return _row(
-                          _logo(d.brand, i),
-                          d.brand,
-                          '${sponsorTypes[types[i]]} • ${d.years} ${d.years == 1 ? 'سنة' : 'سنوات'}',
-                          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                            Text('+${wageK(d.weekly)}', style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1FA58A))),
-                            GestureDetector(
-                              onTap: () => _snack(context, gs.cancelSponsor(d), 'تم إنهاء العقد'),
-                              child: const Text('إنهاء', style: TextStyle(color: kMuted, fontSize: 11.5)),
-                            ),
-                          ]),
-                        );
-                      }
-                      final n = (gs.sponsorOffers[types[i]] ?? const []).length;
-                      return Container(
-                        color: kPrimary.withOpacity(0.06),
-                        child: _row(
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(border: Border.all(color: kPrimary.withOpacity(0.4)), borderRadius: BorderRadius.circular(14)),
-                            child: const Icon(Icons.star_border_rounded, color: kPrimary),
-                          ),
-                          sponsorTypes[types[i]]!,
-                          'موقع شاغر — $n عروض متاحة',
-                          FilledButton(
-                            style: FilledButton.styleFrom(minimumSize: const Size(64, 34), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                            onPressed: () => setState(() => tab = 1),
-                            child: const Text('اختر'),
-                          ),
-                        ),
-                      );
-                    }),
+                  for (final e in types.indexed) ...[
+                    if (e.$1 > 0) const Divider(height: 1, color: kLine),
+                    _slot(context, e.$2),
+                  ],
                 ]),
               ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+              if (offers.isNotEmpty) const SectionTitle('عروض جديدة'),
+              for (final t in types)
+                if (gs.deals.every((d) => d.type != t))
+                  for (final o in gs.sponsorOffers[t] ?? const <SponsorOffer>[]) _offer(context, o),
+              if (offers.isEmpty) const CardBox(child: Text('لا عروض حالياً. تتجدد العروض كل موسم، وترتفع جودتها مع الشعبية والنتائج.', style: TextStyle(color: kMuted, height: 1.5))),
+              CardBox(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
                     const Expanded(child: Text('الشعبية المطلوبة للعلامات الكبرى', style: TextStyle(fontWeight: FontWeight.w800))),
                     Text('${gs.fans.round()}%', style: const TextStyle(fontWeight: FontWeight.w900)),
                   ]),
                   const SizedBox(height: 8),
-                  ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: (gs.fans / 100).clamp(0, 1).toDouble(), minHeight: 8, color: const Color(0xFFF5A524), backgroundColor: kCard2)),
+                  Bar(gs.fans / 100, const Color(0xFFF5A524)),
                   const SizedBox(height: 6),
-                  const Text('العلامات الكبرى تتطلب شعبية أعلى. العقود الأطول تمنح مكافأة توقيع.', style: TextStyle(color: kMuted, fontSize: 12)),
+                  const Text('العلامات الكبرى تتطلب شعبية أعلى، والعقود الأطول تمنح مكافأة توقيع.', style: TextStyle(color: kMuted, fontSize: 12)),
                 ]),
               ),
-            ],
-            if (tab == 1) ...[
-              if (offerCount == 0) const Padding(padding: EdgeInsets.only(top: 20), child: EmptyState(icon: Icons.handshake_outlined, title: 'لا عروض حالياً', subtitle: 'تتجدد العروض كل موسم.')),
-              for (var i = 0; i < types.length; i++) ...[
-                if ((gs.sponsorOffers[types[i]] ?? const []).isNotEmpty && gs.deals.every((d) => d.type != types[i])) ...[
-                  Padding(padding: const EdgeInsets.only(top: 14, bottom: 8), child: Text(sponsorTypes[types[i]]!, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
-                  Container(
-                    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(children: [
-                      for (final o in gs.sponsorOffers[types[i]]!)
-                        _row(
-                          _logo(o.deal.brand, i),
-                          o.deal.brand,
-                          '${o.deal.years} ${o.deal.years == 1 ? 'سنة' : 'سنوات'}${o.bonus > 0 ? ' • مكافأة ${money(o.bonus)}' : ''}',
-                          Row(mainAxisSize: MainAxisSize.min, children: [
-                            Text('+${wageK(o.deal.weekly)}', style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1FA58A))),
-                            const SizedBox(width: 10),
-                            FilledButton(
-                              style: FilledButton.styleFrom(minimumSize: const Size(60, 34), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                              onPressed: () => _snack(context, gs.signSponsor(o), 'تم توقيع الصفقة ✅'),
-                              child: const Text('وقّع'),
-                            ),
-                          ]),
-                        ),
-                    ]),
-                  ),
-                ],
-              ],
-            ],
-            if (tab == 2) const Padding(padding: EdgeInsets.only(top: 20), child: EmptyState(icon: Icons.history_rounded, title: 'لا سجل بعد', subtitle: 'سيظهر هنا سجل عقود الرعاية السابقة.')),
-          ]);
-        },
+            ]);
+          },
+        ),
       ),
     );
   }
+
+  Widget _slot(BuildContext context, String type) {
+    final cur = gs.deals.where((d) => d.type == type).toList();
+    final col = _typeCols[type] ?? kPrimary;
+    final rounds = gs.rounds.isEmpty ? 38 : gs.rounds.length;
+    if (cur.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(children: [
+          IconBox(_typeIcons[type] ?? Icons.star_rounded, kMuted, size: 46),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(sponsorTypes[type]!, style: const TextStyle(color: kMuted, fontSize: 12)),
+              const Text('موقع شاغر', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              Text('${(gs.sponsorOffers[type] ?? const []).length} عروض متاحة', style: const TextStyle(color: kMuted, fontSize: 12)),
+            ]),
+          ),
+        ]),
+      );
+    }
+    final d = cur.first;
+    return Padding(
+      padding: const EdgeInsets.all(14),
+      child: Row(children: [
+        IconBox(_typeIcons[type] ?? Icons.star_rounded, col, size: 46),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(sponsorTypes[type]!, style: const TextStyle(color: kMuted, fontSize: 12)),
+            Text(d.brand, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+            GestureDetector(
+              onTap: () => snack(context, gs.cancelSponsor(d) ?? 'تم إنهاء العقد'),
+              child: Text('إنهاء العقد (${money(gs.cancelCost(d))})', style: const TextStyle(color: kPrimary, fontSize: 11.5)),
+            ),
+          ]),
+        ),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text(money(d.weekly * rounds), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          Text('متبقٍ ${_yr(d.years)}', style: const TextStyle(color: kMuted, fontSize: 11.5)),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _offer(BuildContext context, SponsorOffer o) {
+    final rounds = gs.rounds.isEmpty ? 38 : gs.rounds.length;
+    final col = _typeCols[o.deal.type] ?? kPrimary;
+    return CardBox(
+      child: Column(children: [
+        Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Text(sponsorTypes[o.deal.type]!, style: TextStyle(color: col, fontWeight: FontWeight.w800, fontSize: 12)),
+              ]),
+              const SizedBox(height: 2),
+              Text(o.deal.brand, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+              Text('${_yr(o.deal.years)}${o.bonus > 0 ? ' • مكافأة ${money(o.bonus)}' : ''}', style: const TextStyle(color: kMuted, fontSize: 12)),
+            ]),
+          ),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text('${money(o.deal.weekly * rounds)}/سنة', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF1FA58A))),
+          ]),
+        ]),
+        const SizedBox(height: 12),
+        Row(children: [
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(minimumSize: const Size(70, 44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            onPressed: () => snack(context, gs.declineSponsor(o) ?? 'رفضت العرض'),
+            child: const Text('رفض'),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: blueBtnS('تفاوض', () => snack(context, gs.negotiateSponsor(o) ?? 'جرى التفاوض'))),
+          const SizedBox(width: 8),
+          Expanded(child: GradientButton(label: 'قبول', onPressed: () => snack(context, gs.signSponsor(o) ?? 'تم توقيع الصفقة ✅'))),
+        ]),
+      ]),
+    );
+  }
+
+  Widget blueBtnS(String l, VoidCallback on) => GestureDetector(
+        onTap: on,
+        child: Container(height: 44, alignment: Alignment.center, decoration: BoxDecoration(color: const Color(0xFFA9D4F8), borderRadius: BorderRadius.circular(12)), child: Text(l, style: const TextStyle(color: Color(0xFF15233D), fontWeight: FontWeight.w900))),
+      );
 }
 
 class FfpScreen extends StatelessWidget {
@@ -221,44 +165,76 @@ class FfpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('⚖️ اللعب المالي النظيف')),
+      appBar: gameBar(context, gs, 'اللعب المالي النظيف'),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: gs,
           builder: (context, _) {
             final r = gs.ffpRatio;
-            final color = r > 0.85 ? const Color(0xFFFF7043) : (r > 0.7 ? const Color(0xFFFFCA28) : kAccent);
-            return ListView(padding: const EdgeInsets.all(14), children: [
-              Panel(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    const Text('نسبة الرواتب إلى الإيرادات', style: TextStyle(fontWeight: FontWeight.w800)),
-                    const Spacer(),
-                    Text('${(r * 100).round()}%', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+            final b = gs.ffpBreaches;
+            final score = (100 - (r > 0.6 ? (r - 0.6) / 0.4 * 70 : 0) - b * 8 - (gs.transferBan ? 10 : 0)).round().clamp(0, 100);
+            final ok = score >= 75;
+            final col = score >= 75 ? const Color(0xFF1FA58A) : (score >= 50 ? const Color(0xFFF5A524) : const Color(0xFFE5533D));
+            final wk = gs.week < 1 ? 1 : gs.week;
+            final total = gs.rounds.isEmpty ? 38 : gs.rounds.length;
+            final projRev = gs.ffpRevenue / wk * total;
+            final projWages = gs.ffpWages / wk * total;
+            final room = 0.85 * projRev - projWages;
+            final net = (gs.fin.season['purchases'] ?? 0) - (gs.fin.season['sales'] ?? 0);
+            Widget ind(String l, String sub, double v, double limit, Color c, String right) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Column(children: [
+                    Row(children: [
+                      Expanded(child: Text(l, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14))),
+                      Text(right, style: const TextStyle(color: kMuted, fontSize: 12)),
+                    ]),
+                    const SizedBox(height: 6),
+                    Bar(limit == 0 ? 0 : v / limit, c, h: 9),
+                    Align(alignment: AlignmentDirectional.centerStart, child: Padding(padding: const EdgeInsets.only(top: 3), child: Text(sub, style: const TextStyle(color: kMuted, fontSize: 11.5)))),
                   ]),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(value: (r / 1.0).clamp(0, 1).toDouble(), minHeight: 10, color: color, backgroundColor: kCard2),
+                );
+            return ListView(padding: const EdgeInsets.all(14), children: [
+              CardBox(
+                child: Row(children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(ok ? 'ملتزم باللعب المالي النظيف' : (score >= 50 ? 'قريب من الحد' : 'مخالفة مالية'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: col)),
+                      const SizedBox(height: 4),
+                      Text('المراجعة في نهاية الموسم • الموسم ${gs.season}', style: const TextStyle(color: kMuted, fontSize: 12)),
+                    ]),
                   ),
-                  const SizedBox(height: 8),
-                  Text('الحد المسموح 85%. إيرادات الموسم ${money(gs.ffpRevenue)} • رواتب وطاقم ${money(gs.ffpWages)}',
-                      style: const TextStyle(color: kMuted, fontSize: 12)),
+                  Ring(value: score / 100, big: '$score', small: 'الالتزام', color: col, size: 108),
                 ]),
               ),
-              Panel(
+              CardBox(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('المخالفات المتراكمة: ${gs.ffpBreaches}', style: const TextStyle(fontWeight: FontWeight.w800)),
-                  if (gs.transferBan)
-                    const Padding(padding: EdgeInsets.only(top: 6), child: Text('⛔ أنت تحت حظر انتقالات', style: TextStyle(color: Color(0xFFFF8A65)))),
-                  if (gs.pointsPenaltyNext > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text('⛔ سيُخصم ${gs.pointsPenaltyNext} نقاط في الموسم القادم', style: const TextStyle(color: Color(0xFFFF8A65))),
-                    ),
+                  const Text('المؤشرات الرئيسية', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                  ind('الأجور من الإيرادات', 'الحد 85%', r, 0.85, r > 0.85 ? const Color(0xFFE5533D) : (r > 0.72 ? const Color(0xFFF5A524) : const Color(0xFF1FA58A)), '${(r * 100).round()}%'),
+                  ind('المخالفات المتراكمة', 'الحد 3 مخالفات', b.toDouble(), 3, b >= 2 ? const Color(0xFFE5533D) : const Color(0xFF1FA58A), '$b'),
+                  ind('صافي إنفاق الانتقالات (الموسم)', 'مؤشر للمتابعة فقط', net.clamp(0, 999).toDouble(), 80, const Color(0xFF2F7BE6), money(net)),
                 ]),
               ),
-              const Panel(
+              if (r > 0.72)
+                CardBox(
+                  color: const Color(0xFFFFF4D6),
+                  border: const Color(0xFFF5A524),
+                  child: Row(children: [
+                    const Icon(Icons.warning_amber_rounded, color: Color(0xFFB07A00)),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text('الأجور ${(r * 100).round()}% من الإيرادات وتقترب من الحد (85%). أي صفقة جديدة قد ترفعها.', style: const TextStyle(color: Color(0xFF5B4300), fontWeight: FontWeight.w700, height: 1.4))),
+                  ]),
+                ),
+              CardBox(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Column(children: [
+                  KvRow('عقوبة تجاوز الحد', gs.transferBan ? 'حظر انتقالات' : (gs.pointsPenaltyNext > 0 ? 'خصم ${gs.pointsPenaltyNext} نقاط' : 'غرامة + حظر + خصم نقاط'), vc: gs.transferBan || gs.pointsPenaltyNext > 0 ? const Color(0xFFE5533D) : null),
+                  const Divider(height: 1, color: kLine),
+                  KvRow('المساحة المتاحة للأجور', room >= 0 ? '${money(room)} سنوياً' : '−${money(-room)}', vc: room >= 0 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D), sub: 'متوقعة حتى نهاية الموسم'),
+                  const Divider(height: 1, color: kLine),
+                  KvRow('إيراد الرعاية هذا الموسم', money(gs.fin.season['sponsor'] ?? 0)),
+                ]),
+              ),
+              const CardBox(
                 child: Text(
                   'كيف تعمل العقوبات؟\n'
                   '• تُراجَع الحسابات في نهاية كل موسم.\n'

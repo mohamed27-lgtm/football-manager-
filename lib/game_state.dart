@@ -23,6 +23,7 @@ import 'api_football.dart';
 part 'awards_logic.dart';
 part 'facilities_logic.dart';
 part 'tickets_logic.dart';
+part 'club_logic.dart';
 part 'jobs_logic.dart';
 part 'intl_logic.dart';
 part 'world_leagues.dart';
@@ -453,6 +454,8 @@ class GameState extends ChangeNotifier {
   bool dynPricing = true; // تسعير ديناميكي حسب الطلب
   int get stadiumCapacity => ((12000 + 8000 * user.stadium) * (stadiumBuilding ? 0.85 : 1.0)).round();
   final List<Project> projects = [];
+  final List<Campaign> campaigns = [];
+  final List<double> fanHist = []; // شعبية النادي في نهاية كل موسم
   int difficulty = 1; // 0 سهل، 1 عادي، 2 صعب
   bool introSeen = false;
   /// ختم زمني لكل خبر (تاريخ اللعبة|الساعة) ليُجمَّع في صندوق الرسائل
@@ -777,6 +780,10 @@ class GameState extends ChangeNotifier {
     }
     ffpBreaches = (j['ffpB'] as int?) ?? 0;
     transferBan = (j['ban'] as bool?) ?? false;
+    for (final x in (j['cmp'] as List?) ?? const []) {
+      campaigns.add(Campaign.fromJson(Map<String, dynamic>.from(x as Map)));
+    }
+    fanHist.addAll(((j['fh'] as List?) ?? const []).map((e) => (e as num).toDouble()));
     for (final x in (j['prj'] as List?) ?? const []) {
       projects.add(Project.fromJson(Map<String, dynamic>.from(x as Map)));
     }
@@ -866,6 +873,8 @@ class GameState extends ChangeNotifier {
         'ffpB': ffpBreaches,
         'ban': transferBan,
         'prj': [for (final p in projects) p.toJson()],
+        'cmp': [for (final c in campaigns) c.toJson()],
+        'fh': fanHist,
         'so': sellOns,
         'ppn': pointsPenaltyNext,
         'cups': {'dom': domestic!.toJson(), 'con': continental!.toJson(), 'eur': europa?.toJson(), 'uecl': conference?.toJson(), 'sup': superCup?.toJson(), 'cwc': cwc?.toJson(), 'ic': ic?.toJson()},
@@ -1356,6 +1365,7 @@ class GameState extends ChangeNotifier {
     if (confidence <= 0) fired = true;
     this._weeklyJobs();
     this._projectsTick();
+    this._campaignsTick();
     this._renewalTick(position);
     this._intlTick();
     this._awardsTick();
@@ -2100,6 +2110,8 @@ class GameState extends ChangeNotifier {
   }
 
   void startNewSeason() {
+    fanHist.add(fans);
+    if (fanHist.length > 12) fanHist.removeAt(0);
     final pos = position;
     final finalTable = table;
     final champT = finalTable.first;
