@@ -3654,6 +3654,13 @@ class GameState extends ChangeNotifier {
         out.add((c.name, c.conf, clubPts[c.name] ?? 0, null));
       }
     }
+    // أندية الدوريات العالمية المحاكاة (كل دول الدوريات المتوفرة)
+    for (final l in wLeagues) {
+      final cf = confedOf(l.country).id;
+      for (final n in l.names) {
+        if (have.add(n)) out.add((n, cf, clubPts[n] ?? 0, null));
+      }
+    }
     double seed(String n) => elo[n] ?? kWorldClubs.where((c) => c.name == n).map((c) => c.elo.toDouble()).followedBy([1500.0]).first;
     out.sort((a, b) {
       final c = b.$3.compareTo(a.$3);

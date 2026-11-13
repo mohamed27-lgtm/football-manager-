@@ -33,6 +33,34 @@ class _RankingScreenState extends State<RankingScreen> {
   }
 
   String conf = 'all'; // فلتر الاتحاد القاري
+  String _q = '';
+  int lim = 100;
+  bool _hit(String t) => _q.isEmpty || t.toLowerCase().contains(_q.toLowerCase());
+
+  Widget _search() => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: TextField(
+          onChanged: (v) => setState(() {
+            _q = v.trim();
+            lim = 100;
+          }),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search_rounded),
+            hintText: 'ابحث بالاسم...',
+            filled: true,
+            fillColor: kCard,
+            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          ),
+        ),
+      );
+
+  Widget _moreBtn(int total) => total <= lim
+      ? const SizedBox.shrink()
+      : Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Center(child: TextButton(onPressed: () => setState(() => lim += 100), child: Text('عرض المزيد (${total - lim})'))),
+        );
 
   static const _medals = [Color(0xFFE6B422), Color(0xFFB8BECB), Color(0xFFC98B5B)];
 
@@ -111,7 +139,7 @@ class _RankingScreenState extends State<RankingScreen> {
             for (final e in [('all', 'الكل'), ...kConfNames.entries.map((x) => (x.key, x.value))])
               Padding(
                 padding: const EdgeInsetsDirectional.only(end: 8),
-                child: conf == e.$1 ? Unfilter(child: _pill(e.$2, true, () => setState(() => conf = e.$1))) : _pill(e.$2, false, () => setState(() => conf = e.$1)),
+                child: conf == e.$1 ? Unfilter(child: _pill(e.$2, true, () => setState(() { conf = e.$1; lim = 100; }))) : _pill(e.$2, false, () => setState(() { conf = e.$1; lim = 100; })),
               ),
           ]),
         ),
@@ -130,15 +158,16 @@ class _RankingScreenState extends State<RankingScreen> {
     final mine = all.indexWhere((e) => e.$4 == gs.user) + 1;
     final shown = <(int, (String, String, double, Team?))>[
       for (var i = 0; i < all.length; i++)
-        if (conf == 'all' || all[i].$2 == conf) (i + 1, all[i])
+        if ((conf == 'all' || all[i].$2 == conf) && _hit(all[i].$1)) (i + 1, all[i])
     ];
     return [
       _summary(mine, teamBadge(gs.user, size: 44), gs.user.name, '${(gs.clubPts[gs.user.name] ?? 0).toStringAsFixed(1)} نقطة • من ${all.length} نادياً'),
       _confChips(),
       _card([
-        for (final e in shown.take(150))
+        for (final e in shown.take(lim))
           _row(e.$1, e.$2.$4 != null ? teamBadge(e.$2.$4!, size: 30) : _initial(e.$2.$1), e.$2.$1, kConfNames[e.$2.$2] ?? '', Text(e.$2.$3.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)), me: e.$2.$4 == gs.user, club: e.$2.$1),
       ]),
+      _moreBtn(shown.length),
     ];
   }
 
@@ -152,7 +181,7 @@ class _RankingScreenState extends State<RankingScreen> {
     final mine = rank.indexOf(gs.country) + 1;
     final shown = <(int, String)>[
       for (var i = 0; i < rank.length; i++)
-        if (conf == 'all' || gs.nat.conf[rank[i]] == conf) (i + 1, rank[i])
+        if ((conf == 'all' || gs.nat.conf[rank[i]] == conf) && _hit(rank[i])) (i + 1, rank[i])
     ];
     Widget trail(String n) {
       final p = gs.nat.pub[n] ?? gs.nat.rating(n);
@@ -170,8 +199,9 @@ class _RankingScreenState extends State<RankingScreen> {
       if (mine > 0) _summary(mine, FlagBadge(gs.country, size: 44), 'منتخب ${gs.country}', '${(gs.nat.pub[gs.country] ?? gs.nat.rating(gs.country)).toStringAsFixed(1)} نقطة • من ${rank.length} منتخباً'),
       _confChips(),
       _card([
-        for (final e in shown.take(220)) InkWell(onTap: () => _natMatches(e.$2), child: _row(e.$1, FlagBadge(e.$2, size: 30), e.$2, kConfNames[gs.nat.conf[e.$2]] ?? '', trail(e.$2), me: e.$2 == gs.country)),
+        for (final e in shown.take(lim)) InkWell(onTap: () => _natMatches(e.$2), child: _row(e.$1, FlagBadge(e.$2, size: 30), e.$2, kConfNames[gs.nat.conf[e.$2]] ?? '', trail(e.$2), me: e.$2 == gs.country)),
       ]),
+      _moreBtn(shown.length),
     ];
   }
 
@@ -261,10 +291,11 @@ class _RankingScreenState extends State<RankingScreen> {
   }
 
   List<Widget> _players() {
-    final all = _allPlayers()..sort((a, b) => b.overall.compareTo(a.overall));
+    final every = _allPlayers()..sort((a, b) => b.overall.compareTo(a.overall));
     final club = {for (final t in gs.worldRanking) for (final p in t.squad) p.id: t};
+    final all = [for (final p in every) if (_hit(p.name) || _hit(club[p.id]?.name ?? '')) p];
     return [
-      for (var i = 0; i < all.length && i < 300; i++)
+      for (var i = 0; i < all.length && i < lim; i++)
         _row(
           i + 1,
           teamBadge(club[all[i].id] ?? gs.user, size: 30),
@@ -273,14 +304,16 @@ class _RankingScreenState extends State<RankingScreen> {
           ratingRing(all[i].overall, size: 34),
           me: gs.user.squad.contains(all[i]),
         ),
+      _moreBtn(all.length),
     ];
   }
 
   List<Widget> _coaches() {
-    final all = [for (final t in gs.worldRanking) if (t == gs.user || t.coach != null || hasRealCoach(t.name)) t]..sort((a, b) => (gs.clubPts[b.name] ?? 0).compareTo(gs.clubPts[a.name] ?? 0));
+    final all = [for (final t in gs.worldRanking) if ((t == gs.user || t.hasCoachName) && (_hit(t.coachName) || _hit(t.name))) t]..sort((a, b) => (gs.clubPts[b.name] ?? 0).compareTo(gs.clubPts[a.name] ?? 0));
     return [
-      for (var i = 0; i < all.length && i < 100; i++)
+      for (var i = 0; i < all.length && i < lim; i++)
         _row(i + 1, teamBadge(all[i], size: 30), all[i] == gs.user && _me != null ? _me! : all[i].coachName, '${all[i].name} • ${all[i].won} فوز • ${all[i].drawn} تعادل • ${all[i].lost} خسارة', Text((gs.clubPts[all[i].name] ?? 0).toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)), me: all[i] == gs.user),
+      _moreBtn(all.length),
     ];
   }
 
@@ -302,9 +335,13 @@ class _RankingScreenState extends State<RankingScreen> {
               ButtonSegment(value: 3, label: Text('المدربون', style: TextStyle(fontSize: 12))),
             ],
             selected: {tab},
-            onSelectionChanged: (v) => setState(() => tab = v.first),
+            onSelectionChanged: (v) => setState(() {
+              tab = v.first;
+              lim = 100;
+            }),
           ),
           const SizedBox(height: 12),
+          _search(),
           ...body,
         ]),
       ),
