@@ -62,6 +62,7 @@ jobs:
           mkdir -p logs
           python3 tools/fetch_coaches.py 2>&1 | tee logs/coaches.txt
           [ -f assets/coaches.json ] || echo '{}' > assets/coaches.json
+          [ -f assets/coach_pool.json ] || echo '[]' > assets/coach_pool.json
 
       - name: Fetch competition logos and store them in the repo
         continue-on-error: true

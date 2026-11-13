@@ -234,7 +234,8 @@ extension SeasonCeremony on GameState {
     final gain = <Team, double>{
       for (final t in teams) t: ((byStrength.indexOf(t) + 1) - rankOf(t)).toDouble() + (rankOf(t) == 1 ? 3 : 0) + t.points / max(1, t.played) * 0.5,
     };
-    final coaches = [...teams]..sort((a, b) => gain[b]!.compareTo(gain[a]!));
+    final realCoachTeams = teams.where((t) => t.hasCoachName).toList();
+    final coaches = [...(realCoachTeams.length >= 3 ? realCoachTeams : teams)]..sort((a, b) => gain[b]!.compareTo(gain[a]!));
     final cv = _shares([for (final t in coaches.take(3)) gain[t]!]);
     awards.add({
       'id': 'coach',
@@ -309,11 +310,12 @@ extension SeasonCeremony on GameState {
             ['القوة', '${t.strength.round()}'],
           ],
         };
-    if (clubs.length >= 3) {
-      final c1 = clubs.take(3).toList();
+    final cclubs = clubs.where((t) => t.hasCoachName).toList();
+    if (cclubs.length >= 3) {
+      final c1 = cclubs.take(3).toList();
       final v1 = _shares([for (final t in c1) cands[t]!]);
       awards.add({'id': 'cruyff', 'rev': false, 'nom': [for (var i = 0; i < 3; i++) coachNom(c1[i], v1[i])]});
-      final c2 = clubs.take(4).toList()..sort((a, b) => (cands[b]! + (b.id * 37 + season) % 7).compareTo(cands[a]! + (a.id * 37 + season) % 7));
+      final c2 = cclubs.take(4).toList()..sort((a, b) => (cands[b]! + (b.id * 37 + season) % 7).compareTo(cands[a]! + (a.id * 37 + season) % 7));
       final c3 = c2.take(3).toList();
       final v2 = _shares([for (final t in c3) cands[t]!]);
       awards.add({'id': 'fifa_coach', 'rev': false, 'nom': [for (var i = 0; i < 3; i++) coachNom(c3[i], v2[i])]});

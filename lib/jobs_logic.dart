@@ -69,10 +69,12 @@ extension JobsLogic on GameState {
       final f = formOf(t, 6);
       // إقالة بعد سلسلة نتائج سيئة (تتكرر بحسب صبر الإدارة)
       if (f.length >= 5 && f.where((r) => r == 'L').length >= 4 && rng.nextDouble() < 0.18) {
+        final hired = takeCoachFromPool(rng, {for (final x in [...teams, ...upper, ...lower]) x.coachName});
+        if (hired == null) continue;
         final old = t.coachName;
-        t.coach = randomName(rng);
+        t.coach = hired;
         t.cohesion = min(100, t.cohesion + 6); // ارتداد المدرب الجديد
-        if (t.reputation >= 3) news.insert(0, '🪓 ${t.name} يقيل $old ويعيّن ${t.coach} مدرباً جديداً');
+        if (t.reputation >= 3) news.insert(0, '🪓 ${t.name} يقيل ${t.hasCoachName && old != 'غير متوفر' ? old : 'مدربه'} ويعيّن $hired مدرباً جديداً');
       }
     }
     // استحواذ: مُلّاك جدد ينقذون نادياً متعثراً أو يضخّون أموالاً في نادٍ طموح

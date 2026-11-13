@@ -251,7 +251,12 @@ class Team {
   int stadium = 1, trainingLvl = 1, academy = 1;
   String? badge, venue;
   String? coach; // اسم المدرب إن عُيّن؛ وإلا coachFor(name)
-  String get coachName => coach ?? coachFor(name);
+  String get coachName {
+    final c = coach ?? coachFor(name);
+    return c.isEmpty ? 'غير متوفر' : c;
+  }
+
+  bool get hasCoachName => coach != null || coachFor(name).isNotEmpty;
 
   Team({
     required this.id,

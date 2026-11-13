@@ -60,3 +60,8 @@ except Exception as e:
     print('no api coaches:', repr(e)[:80])
 print(f'matched {len(out)} / {total} teams')
 pathlib.Path('assets/coaches.json').write_text(json.dumps(out, ensure_ascii=False), encoding='utf-8')
+# مدربون حقيقيون متاحون للتعيين عند الإقالات: من أندية Transfermarkt غير الموجودة في اللعبة (أسماء حقيقية فقط)
+used = set(out.values())
+pool = sorted({c for _, c in idx if c not in used})
+pathlib.Path('assets/coach_pool.json').write_text(json.dumps(pool, ensure_ascii=False), encoding='utf-8')
+print('coach pool:', len(pool))

@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/services.dart' show rootBundle;
-import 'data.dart' show randomName;
 
 /// مدربون حقيقيون من assets/coaches.json (Transfermarkt Datasets) يُحمَّلون عند بدء التطبيق
 final Map<String, String> _realCoaches = {};
+final List<String> _coachPool = [];
 
 Future<void> loadCoaches() async {
   try {
@@ -13,6 +13,19 @@ Future<void> loadCoaches() async {
       ..clear()
       ..addAll({for (final e in m.entries) e.key: e.value as String});
   } catch (_) {}
+  try {
+    final l = jsonDecode(await rootBundle.loadString('assets/coach_pool.json')) as List;
+    _coachPool
+      ..clear()
+      ..addAll(l.cast<String>());
+  } catch (_) {}
+}
+
+/// مدرب حقيقي متاح للتعيين (من قائمة مدربين حقيقيين غير مرتبطين بأندية اللعبة)، أو null إن نفدت
+String? takeCoachFromPool(Random rng, Set<String> inUse) {
+  final free = _coachPool.where((c) => !inUse.contains(c)).toList();
+  if (free.isEmpty) return null;
+  return free[rng.nextInt(free.length)];
 }
 
 /// مدربون حقيقيون لأشهر الأندية (بيانات تقريبية وقد تتغير مع الواقع)، وغيرها يحصل على اسم مولَّد ثابت
@@ -46,14 +59,8 @@ bool hasRealCoach(String club) {
   return _realCoaches.containsKey(k) || _kCoaches.containsKey(k);
 }
 
-/// اسم مدرب النادي: حقيقي إن عُرف، وإلا اسم مولَّد ثابت من اسم النادي
+/// اسم مدرب النادي: حقيقي إن عُرف، وإلا فارغ (لا نختلق أسماء)
 String coachFor(String club) {
   final k = club.toLowerCase().trim();
-  final real = _realCoaches[k] ?? _kCoaches[k];
-  if (real != null) return real;
-  var h = 17;
-  for (final c in k.codeUnits) {
-    h = (h * 31 + c) & 0x7fffffff;
-  }
-  return randomName(Random(h));
+  return _realCoaches[k] ?? _kCoaches[k] ?? '';
 }

@@ -26,6 +26,7 @@ flutter:
   assets:
     - assets/leagues/
     - assets/coaches.json
+    - assets/coach_pool.json
     - assets/logos/
     - assets/competitions/
     - assets/trophies/
