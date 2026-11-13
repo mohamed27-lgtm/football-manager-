@@ -47,6 +47,8 @@ Player makePlayer(Random rng, Pos pos, int ov, int age,
     contract: 1 + rng.nextInt(4),
   );
   if (genNat != null) p.nat = genNat;
+  final hb = switch (pos) { Pos.gk => 188, Pos.def => 183, Pos.mid => 177, Pos.att => 180 };
+  p.height ??= hb + rng.nextInt(13) - 6;
   final pot = age < 24
       ? min(95, p.overall + 2 + rng.nextInt(12))
       : p.overall + rng.nextInt(3);

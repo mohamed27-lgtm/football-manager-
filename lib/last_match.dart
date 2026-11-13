@@ -43,7 +43,7 @@ class LastMatch {
     var hs = 0, as = 0;
     for (final e in s.events) {
       if (e.type == 'goal') {
-        final m = RegExp(r'^⚽ هدف(?: من ركلة جزاء)?! (.+?)(?: \(تمريرة (.+)\))?$').firstMatch(e.text);
+        final m = RegExp(r'^⚽ هدف(?: من ركلة جزاء| من ركنية| من ركلة حرة مباشرة)?! (.+?)(?: \(تمريرة (.+)\))?$').firstMatch(e.text);
         if (e.home) {
           hs++;
         } else {

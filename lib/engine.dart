@@ -378,7 +378,7 @@ class MatchSim {
     final cr = rng.nextDouble();
     final big = cr < 0.12;
     final qf = big ? 2.3 : (cr < 0.37 ? 1.25 : 0.68);
-    final xgShot = (0.255 * pow(q / max(20, gkR), 1.4) * qf).clamp(0.03, 0.85).toDouble();
+    final xgShot = (0.23 * pow(q / max(20, gkR), 1.4) * qf).clamp(0.03, 0.85).toDouble();
     final onTf = big ? (onT + 0.12).clamp(0.2, 0.8).toDouble() : onT.toDouble();
     a.xg += onTf * xgShot;
     if (big) a.bigChances++;
@@ -444,9 +444,70 @@ class MatchSim {
     }
   }
 
+  /// قوة اللاعب في الكرات الهوائية (الطول والمركز)
+  double _aerial(Player x) => max(0.3, ((x.height ?? 178) - 168) / 8.0) * (x.pos == Pos.def ? 1.0 : x.pos == Pos.att ? 1.2 : 0.55);
+
   void _corner(Side a) {
     a.corners++;
+    final d = identical(a, home) ? away : home;
     _log('info', '🚩 ركنية لصالح ${a.team.name}', a.isHome, major: false);
+    final outf = a.slots.where((s) => s.pos != Pos.gk).toList();
+    if (outf.length < 2) return;
+    // المنفّذ: الأفضل تمريراً؛ المستقبِل: الأطول والأقوى هوائياً
+    final taker = outf.reduce((x, y) => x.p.pas >= y.p.pas ? x : y).p;
+    final tg = outf.where((s) => s.p != taker).toList();
+    final head = _weighted(tg, tg.map((s) => _aerial(s.p) * (0.6 + s.p.atk / 100)).toList()).p;
+    final dd = d.slots.where((s) => s.pos != Pos.gk).toList();
+    final defAer = dd.isEmpty ? 1.0 : dd.fold<double>(0, (q, s) => q + _aerial(s.p) * (s.pos == Pos.def ? 1.0 : 0.6)) / dd.length;
+    final gkP = _gk(d);
+    final p = (0.020 * pow(taker.pas / 70, 1.5) * (_aerial(head) / 1.25) / max(0.5, defAer / 0.95) * (72 / max(40, gkP?.gk ?? 60))).clamp(0.004, 0.06).toDouble();
+    a.xg += p;
+    if (rng.nextDouble() >= p) {
+      if (rng.nextDouble() < 0.18) _log('miss', '${head.name} يرأس الكرة من الركنية ولا تجد طريقها', a.isHome, major: false);
+      return;
+    }
+    a.shots++;
+    a.onTarget++;
+    a.ps(head).shots++;
+    a.ps(head).onTarget++;
+    a.goals++;
+    head.goals++;
+    taker.assists++;
+    a.bump(head, 1.2);
+    a.bump(taker, 0.6);
+    if (gkP != null) d.bump(gkP, -0.3);
+    onGoal?.call(head, taker, a.team);
+    ballX = 0.5;
+    ballY = a.isHome ? 0.01 : 0.99;
+    _log('goal', '⚽ هدف من ركنية! ${head.name} (تمريرة ${taker.name})', a.isHome);
+  }
+
+  /// ركلة حرة خطيرة بعد خطأ قرب منطقة الجزاء
+  void _freeKick(Side a, Side d) {
+    final outf = a.slots.where((s) => s.pos != Pos.gk).toList();
+    if (outf.isEmpty) return;
+    final taker = outf.reduce((x, y) => (x.p.pas + x.p.atk) >= (y.p.pas + y.p.atk) ? x : y).p;
+    final skill = (taker.pas + taker.atk) / 2;
+    final gkP = _gk(d);
+    final p = (0.05 * pow(skill / 75, 2.2) * (70 / max(40, gkP?.gk ?? 60))).clamp(0.008, 0.14).toDouble();
+    a.xg += p;
+    _log('info', '🎯 ركلة حرة خطيرة لصالح ${a.team.name}', a.isHome, major: false);
+    if (rng.nextDouble() >= p) {
+      if (rng.nextDouble() < 0.5) _log('miss', '${taker.name} يسدد الركلة الحرة وتمر بجوار القائم', a.isHome, major: false);
+      return;
+    }
+    a.shots++;
+    a.onTarget++;
+    a.ps(taker).shots++;
+    a.ps(taker).onTarget++;
+    a.goals++;
+    taker.goals++;
+    a.bump(taker, 1.3);
+    if (gkP != null) d.bump(gkP, -0.4);
+    onGoal?.call(taker, null, a.team);
+    ballX = 0.5;
+    ballY = a.isHome ? 0.01 : 0.99;
+    _log('goal', '⚽ هدف من ركلة حرة مباشرة! ${taker.name}', a.isHome);
   }
 
   void _penalty(Side a, Side d) {
@@ -458,8 +519,9 @@ class MatchSim {
     ballX = 0.5;
     ballY = a.isHome ? 0.12 : 0.88;
     _log('penalty', '⚠️ ركلة جزاء لصالح ${a.team.name}!', a.isHome);
+    _log('info', '🎯 ${shooter.name} يتقدم لتنفيذ الركلة', a.isHome, major: false);
     final gkP = _gk(d);
-    final p = (0.72 + 0.003 * (shooter.atk - 70)).clamp(0.55, 0.9);
+    final p = (0.74 + 0.003 * (shooter.atk - 70) - 0.0012 * ((gkP?.gk ?? 65) - 65)).clamp(0.55, 0.9).toDouble();
     a.xg += p;
     if (rng.nextDouble() < p) {
       a.onTarget++;
@@ -479,7 +541,10 @@ class MatchSim {
 
   void _discipline(Side d) {
     if (d.slots.isEmpty) return;
-    if (rng.nextDouble() < 0.24 * refStrict * (1 + 0.25 * (d.team.pressing - 1))) d.fouls++;
+    if (rng.nextDouble() < 0.24 * refStrict * (1 + 0.25 * (d.team.pressing - 1))) {
+      d.fouls++;
+      if (rng.nextDouble() < 0.085) _freeKick(identical(d, home) ? away : home, d);
+    }
     if (rng.nextDouble() < 0.04 * refStrict * (1 + 0.4 * (d.team.pressing - 1))) {
       final c = d.slots.where((s) => s.pos != Pos.gk).toList();
       if (c.isEmpty) return;

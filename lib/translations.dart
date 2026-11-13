@@ -2661,4 +2661,10 @@ const Map<String, List<String>> kTr = {
   'إصابة الركبة': ['Knee injury', 'Blessure au genou', 'Lesión de rodilla'],
   'كسر': ['Fracture', 'Fracture', 'Fractura'],
   'تمزق الرباط الصليبي': ['ACL tear', 'Rupture des ligaments croisés', 'Rotura del ligamento cruzado'],
+  '⚽ هدف من ركنية! {} (تمريرة {})': ['⚽ Goal from a corner! {} (assist {})', '⚽ But sur corner ! {} (passe de {})', '⚽ ¡Gol de córner! {} (asistencia de {})'],
+  '⚽ هدف من ركلة حرة مباشرة! {}': ['⚽ Direct free-kick goal! {}', '⚽ But sur coup franc direct ! {}', '⚽ ¡Gol de falta directa! {}'],
+  '{} يرأس الكرة من الركنية ولا تجد طريقها': ['{} heads the corner but it finds no way in', '{} reprend le corner de la tête sans trouver le cadre', '{} cabecea el córner pero no encuentra portería'],
+  '🎯 ركلة حرة خطيرة لصالح {}': ['🎯 Dangerous free kick for {}', '🎯 Coup franc dangereux pour {}', '🎯 Falta peligrosa a favor del {}'],
+  '{} يسدد الركلة الحرة وتمر بجوار القائم': ['{} takes the free kick and it goes just wide', '{} frappe le coup franc, juste à côté du poteau', '{} lanza la falta y pasa rozando el poste'],
+  '🎯 {} يتقدم لتنفيذ الركلة': ['🎯 {} steps up to take the kick', '🎯 {} s\'avance pour tirer le penalty', '🎯 {} se adelanta para ejecutar el penalti'],
 };
