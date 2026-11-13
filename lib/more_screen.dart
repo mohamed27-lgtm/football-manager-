@@ -161,17 +161,6 @@ class _MoreTabState extends State<MoreTab> {
   @override
   Widget build(BuildContext context) {
     final groups = <(String, List<(IconData, String, VoidCallback)>)>[
-      ('الفريق', [
-        (Icons.account_tree_rounded, 'التكتيك', () => _push(TacticsScreen(gs: gs))),
-        (Icons.groups_2_outlined, 'التشكيلة', () => _push(LineupScreen(gs: gs))),
-      ]),
-      ('السوق', [
-        (Icons.calendar_month_rounded, 'جدول المباريات', () => _push(FixturesScreen(gs: gs))),
-        (Icons.person_add_alt_1_rounded, 'إنشاء لاعب', () => _push(CreatePlayerScreen(gs: gs))),
-        (Icons.search_rounded, 'الكشافة', () => _push(ScoutingScreen(gs: gs))),
-        (Icons.compare_arrows_rounded, 'الإعارات', () => _push(LoansScreen(gs: gs))),
-        (Icons.description_rounded, 'العقود', () => _push(Scaffold(appBar: AppBar(title: const Text('العقود')), body: ContractsView(gs: gs)))),
-      ]),
       ('النادي', [
         (Icons.account_balance_wallet_rounded, 'المالية', () => _push(FinanceScreen(gs: gs))),
         (Icons.handshake_rounded, 'الرعاة', () => _push(SponsorsScreen(gs: gs))),
@@ -182,16 +171,11 @@ class _MoreTabState extends State<MoreTab> {
         (Icons.history_edu_rounded, 'تاريخ النادي', () => _push(HistoryScreen(gs: gs))),
         (Icons.work_outline_rounded, 'عقدي والعروض', () => _push(JobsScreen(gs: gs))),
       ]),
-      ('المنافسات', [
-        (Icons.public_rounded, 'العالم والمنتخبات', () => _push(RankingScreen(gs: gs))),
-        if (gs.natJob != null) (Icons.flag_rounded, 'منتخبي: ${gs.natJob}', () => _push(NationScreen(gs: gs, nation: gs.natJob!))),
-        (Icons.sports_soccer_rounded, 'دوريات العالم', () => _push(WorldLeaguesScreen(gs: gs))),
-      ]),
     ];
     final ql = q.trim().toLowerCase();
     bool match(String t) => ql.isEmpty || t.toLowerCase().contains(ql) || tr(t).toLowerCase().contains(ql);
     return ListView(padding: const EdgeInsets.fromLTRB(14, 12, 14, 20), children: [
-      const Text('كل الصفحات', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+      const Text('النادي', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
       const SizedBox(height: 10),
       TextField(
         onChanged: (v) => setState(() => q = v),

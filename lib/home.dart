@@ -28,6 +28,8 @@ import 'lang_sheet.dart';
 import 'settings.dart';
 import 'widgets.dart';
 import 'title_screen.dart';
+import 'world_hub.dart';
+import 'fixtures_screen.dart' show FixturesScreen;
 import 'scouting_screen.dart';
 import 'loans_screen.dart';
 import 'stadium_screen.dart';
@@ -493,7 +495,15 @@ class _HomeShellState extends State<HomeShell> {
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     child: Row(children: [
                       if (tab == 0) ...[
-                        teamBadge(gs.user, size: 38),
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => WorldHubScreen(gs: gs))),
+                          child: Badge(
+                            isLabelVisible: gs.natJob != null,
+                            smallSize: 11,
+                            backgroundColor: const Color(0xFFF0583A),
+                            child: teamBadge(gs.user, size: 38),
+                          ),
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           flex: 3,
@@ -550,7 +560,7 @@ class _HomeShellState extends State<HomeShell> {
               NavigationDestination(icon: const Icon(Icons.groups_outlined), selectedIcon: const Icon(Icons.groups), label: tr('الفريق')),
               NavigationDestination(icon: const Icon(Icons.swap_horiz), selectedIcon: const Icon(Icons.swap_horiz), label: tr('الانتقالات')),
               NavigationDestination(icon: const Icon(Icons.emoji_events_outlined), selectedIcon: const Icon(Icons.emoji_events), label: tr('المسابقات')),
-              NavigationDestination(icon: const Icon(Icons.grid_view_rounded), selectedIcon: const Icon(Icons.grid_view_rounded), label: tr('المزيد')),
+              NavigationDestination(icon: const Icon(Icons.shield_outlined), selectedIcon: const Icon(Icons.shield), label: tr('النادي')),
             ],
           ),
         );
@@ -1135,6 +1145,11 @@ class DashboardTab extends StatelessWidget {
               ),
             ),
           ]),
+          Container(height: 1, color: kLine),
+          InkWell(
+            onTap: () => _push(context, FixturesScreen(gs: gs)),
+            child: const Padding(padding: EdgeInsets.symmetric(vertical: 14), child: Center(child: Text('جدول المباريات', style: TextStyle(color: Color(0xFFF0583A), fontWeight: FontWeight.w900, fontSize: 15)))),
+          ),
         ]),
       ),
     ]);
