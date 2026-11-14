@@ -1,0 +1,5 @@
+columns: ['club_id', 'club_code', 'name', 'domestic_competition_id', 'total_market_value', 'squad_size', 'average_age', 'foreigners_number', 'foreigners_percentage', 'national_team_players', 'stadium_name', 'stadium_seats', 'net_transfer_record', 'coach_name', 'last_season', 'filename', 'url'] rows: 796
+clubs with coach: 403
+added from API-Football: 136
+matched 519 / 1077 teams
+coach pool: 54

@@ -1,0 +1,55 @@
+Analyzing football-manager-...                                  
+
+   info • The declaration '_snack' isn't referenced • lib/competitions.dart:60:8 • unused_element
+   info • The declaration 'let' isn't referenced • lib/cups_screen.dart:191:5 • unused_element
+warning • Unused import: 'squad.dart' • lib/facilities_screen.dart:4:8 • unused_import
+   info • The declaration '_tile' isn't referenced • lib/finance_screen.dart:27:10 • unused_element
+   info • The declaration '_chart' isn't referenced • lib/finance_screen.dart:70:10 • unused_element
+   info • The declaration '_LinePainter' isn't referenced • lib/finance_screen.dart:409:7 • unused_element
+warning • Unused import: 'dart:io' • lib/flags.dart:1:8 • unused_import
+warning • Unused import: 'package:cached_network_image/cached_network_image.dart' • lib/home.dart:2:8 • unused_import
+warning • Unused import: 'tactics.dart' • lib/home.dart:21:8 • unused_import
+   info • The declaration '_hero' isn't referenced • lib/home.dart:579:10 • unused_element
+   info • The declaration '_resources' isn't referenced • lib/home.dart:656:10 • unused_element
+   info • The declaration '_urgent' isn't referenced • lib/home.dart:686:10 • unused_element
+   info • The declaration '_tasksPanel' isn't referenced • lib/home.dart:718:10 • unused_element
+   info • The declaration '_offersCard' isn't referenced • lib/home.dart:736:10 • unused_element
+   info • The declaration '_recent' isn't referenced • lib/home.dart:764:10 • unused_element
+   info • The declaration '_stats' isn't referenced • lib/home.dart:802:10 • unused_element
+   info • The declaration '_actions' isn't referenced • lib/home.dart:815:10 • unused_element
+   info • The declaration 'a' isn't referenced • lib/home.dart:816:12 • unused_element
+   info • The declaration '_miniTable' isn't referenced • lib/home.dart:886:10 • unused_element
+   info • The declaration '_clubHeader' isn't referenced • lib/home.dart:923:10 • unused_element
+   info • The declaration '_quickGrid' isn't referenced • lib/home.dart:1211:10 • unused_element
+   info • The declaration '_header' isn't referenced • lib/home.dart:1385:10 • unused_element
+   info • The declaration '_playerRow' isn't referenced • lib/home.dart:1420:10 • unused_element
+   info • The declaration '_actionBar' isn't referenced • lib/home.dart:1462:10 • unused_element
+   info • The declaration '_training' isn't referenced • lib/home.dart:1503:8 • unused_element
+   info • The declaration '_nextMatch' isn't referenced • lib/home.dart:1525:10 • unused_element
+   info • The declaration '_teamBox' isn't referenced • lib/home.dart:1587:10 • unused_element
+warning • Unused import: 'models.dart' • lib/last_match.dart:2:8 • unused_import
+warning • Unused import: 'tactics.dart' • lib/match_pages.dart:12:8 • unused_import
+warning • The operand can't be null, so the condition is always 'true' • lib/match_pages.dart:171:17 • unnecessary_null_comparison
+   info • The declaration '_infoSheet' isn't referenced • lib/match_screen.dart:470:8 • unused_element
+   info • The declaration '_fixtures' isn't referenced • lib/matches_screen.dart:65:10 • unused_element
+warning • Unused import: 'ranking_screen.dart' • lib/more_screen.dart:12:8 • unused_import
+warning • Unused import: 'fixtures_screen.dart' • lib/more_screen.dart:14:8 • unused_import
+warning • Unused import: 'create_player.dart' • lib/more_screen.dart:15:8 • unused_import
+warning • Unused import: 'scouting_screen.dart' • lib/more_screen.dart:16:8 • unused_import
+warning • Unused import: 'loans_screen.dart' • lib/more_screen.dart:17:8 • unused_import
+warning • Unused import: 'trophies.dart' • lib/more_screen.dart:20:8 • unused_import
+warning • Unused import: 'national_team_screen.dart' • lib/more_screen.dart:22:8 • unused_import
+warning • Unused import: 'world_screens.dart' • lib/more_screen.dart:23:8 • unused_import
+warning • Unused import: 'squad.dart' • lib/more_screen.dart:24:8 • unused_import
+warning • Unused import: 'tactics.dart' • lib/more_screen.dart:25:8 • unused_import
+   info • The declaration '_tab' isn't referenced • lib/more_screen.dart:159:8 • unused_element
+warning • Unused import: 'lineup_pages.dart' • lib/national_home.dart:5:8 • unused_import
+warning • Unused import: 'coaches.dart' • lib/ranking_screen.dart:2:8 • unused_import
+   info • The import of 'package:flutter/material.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/foundation.dart' • lib/settings.dart:2:8 • unnecessary_import
+warning • Unused import: 'transfers.dart' • lib/squad.dart:8:8 • unused_import
+   info • The declaration '_kv' isn't referenced • lib/squad.dart:739:10 • unused_element
+warning • Unused import: 'more_screen.dart' • lib/team_tab.dart:6:8 • unused_import
+warning • Unused import: 'package:football_manager/models.dart' • test/diag_test.dart:9:8 • unused_import
+warning • The value of the local variable 'penGoal' isn't used • test/diag_test.dart:201:45 • unused_local_variable
+
+51 issues found. (ran in 15.1s)
