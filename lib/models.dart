@@ -52,6 +52,8 @@ class Player {
   double morale = 70;
   int injuredWeeks = 0;
   String? injType; // نوع آخر إصابة (للعرض)
+  String? loanClub; // ناديه المُعار إليه
+  int loanRole = 1, loanApps = 0, loanMins = 0, loanGoals = 0; // 0 بديل، 1 مشارك، 2 أساسي
   int adapt = 0; // أسابيع التأقلم مع بلد/دوري جديد
   double load = 0; // إرهاق تراكمي 0..100 (دقائق اللعب المتواصلة)
   int suspendedMatches = 0;
@@ -146,6 +148,11 @@ class Player {
         'inj': injuredWeeks,
         'it': injType,
         'ad': adapt,
+        'lc': loanClub,
+        'lr': loanRole,
+        'la': loanApps,
+        'lm': loanMins,
+        'lg': loanGoals,
         'ld': double.parse(load.toStringAsFixed(1)),
         'sus': suspendedMatches,
         'goals': goals,
@@ -188,6 +195,11 @@ class Player {
         ..injuredWeeks = j['inj'] as int
         ..injType = j['it'] as String?
         ..adapt = (j['ad'] as int?) ?? 0
+        ..loanClub = j['lc'] as String?
+        ..loanRole = (j['lr'] as int?) ?? 1
+        ..loanApps = (j['la'] as int?) ?? 0
+        ..loanMins = (j['lm'] as int?) ?? 0
+        ..loanGoals = (j['lg'] as int?) ?? 0
         ..load = ((j['ld'] as num?) ?? 0).toDouble()
         ..suspendedMatches = j['sus'] as int
         ..goals = j['goals'] as int
@@ -310,7 +322,10 @@ class Team {
       .toList()
     ..sort((a, b) => b.effective.compareTo(a.effective));
 
-  Player _choose(Pos slot, Set<Player> used) {
+  /// درجة الاختيار: مع التدوير يُخصم الإرهاق التراكمي فيُريح المدرب النجم المنهك
+  double _score(Player p, bool rotate) => !rotate || p.load <= 40 ? p.effective : p.effective * (1 - (p.load - 40) / 300);
+
+  Player _choose(Pos slot, Set<Player> used, {bool rotate = false}) {
     List<Player> pool(bool strict) => squad
         .where((p) =>
             !used.contains(p) &&
@@ -319,12 +334,12 @@ class Team {
                 ? p.pos == slot
                 : (slot == Pos.gk ? true : p.pos != Pos.gk)))
         .toList()
-      ..sort((a, b) => b.effective.compareTo(a.effective));
+      ..sort((a, b) => _score(b, rotate).compareTo(_score(a, rotate)));
     var c = pool(true);
     if (c.isEmpty) c = pool(false);
     if (c.isEmpty) {
       c = squad.where((p) => !used.contains(p)).toList()
-        ..sort((a, b) => b.effective.compareTo(a.effective));
+        ..sort((a, b) => _score(b, rotate).compareTo(_score(a, rotate)));
     }
     return c.first;
   }
@@ -359,11 +374,11 @@ class Team {
     }
   }
 
-  void autoPick() {
+  void autoPick({bool rotate = false}) {
     final used = <Player>{};
     final res = <Player>[];
     for (final s in slots) {
-      final p = _choose(s, used);
+      final p = _choose(s, used, rotate: rotate);
       used.add(p);
       res.add(p);
     }

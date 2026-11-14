@@ -25,6 +25,7 @@ part 'awards_logic.dart';
 part 'facilities_logic.dart';
 part 'tickets_logic.dart';
 part 'club_logic.dart';
+part 'loans_logic.dart';
 part 'dual_logic.dart';
 part 'jobs_logic.dart';
 part 'intl_logic.dart';
@@ -1717,19 +1718,25 @@ class GameState extends ChangeNotifier {
     return null;
   }
 
-  String? loanOut(Player p) {
+  String? loanOut(Player p, {LoanOption? opt}) {
     if (!windowOpen) return _closedMsg;
     final err = _cannotLose(p);
     if (err != null) return err;
+    final o = opt ?? loanOptions(p).firstOrNull;
     final fee = loanOutFee(p);
     user.squad.remove(p);
     loanedOut.add(p);
+    p.loanClub = o?.club.name;
+    p.loanRole = o?.role ?? 1;
+    p.loanApps = 0;
+    p.loanMins = 0;
+    p.loanGoals = 0;
     p.listed = false;
     user.budget += fee;
     fin.add('loanout', fee);
     offers.removeWhere((o) => o.player == p);
     user.repairLineup();
-    news.insert(0, '📤 أعرت ${p.name} حتى نهاية الموسم مقابل ${money1(fee)}');
+    news.insert(0, o == null ? '📤 أعرت ${p.name} حتى نهاية الموسم مقابل ${money1(fee)}' : '📤 ${p.name} معار إلى ${o.club.name} حتى نهاية الموسم (${money1(fee)}) — الدور المتوقع: ${o.roleLabel}');
     unawaited(save());
     notifyListeners();
     return null;
@@ -1764,6 +1771,7 @@ class GameState extends ChangeNotifier {
 
   /// كل جولة: تنتهي العروض القديمة وقد تصل عروض جديدة، وقد تخطف الأندية لاعبين من السوق
   void _transferTick() {
+    loanTick();
     for (final o in offers) {
       o.weeksLeft--;
     }
@@ -2190,12 +2198,8 @@ class GameState extends ChangeNotifier {
     }
     if (loanedOut.isNotEmpty) {
       for (final p in loanedOut) {
-        // الشاب المعار يكتسب خبرة المباريات: ينمو أكثر إن كان لديه مجال
-        if (p.age <= 22 && p.overall < p.potential) {
-          final g = min(p.potential - p.overall, 1 + rng.nextInt(3));
-          _grow(p, g);
-          news.insert(0, '📈 تطور ${p.name} خلال إعارته (+$g)');
-        }
+        // الشاب المعار ينمو بحسب دقائقه الفعلية مع ناديه
+        settleLoan(p);
         user.squad.add(p);
         news.insert(0, '↩️ عاد ${p.name} من الإعارة');
       }
@@ -2450,7 +2454,7 @@ class GameState extends ChangeNotifier {
       }
     }
     for (final t in teams) {
-      if (t != user) t.autoPick();
+      if (t != user) t.autoPick(rotate: true);
     }
     _setObjective();
   }

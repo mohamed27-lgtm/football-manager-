@@ -89,7 +89,20 @@ class _LoansBodyState extends State<LoansBody> {
                                   child: const Text('تفعيل الخيار', style: TextStyle(color: Color(0xFF1FA58A), fontWeight: FontWeight.w800, fontSize: 12)),
                                 ),
                             ])
-                          : Text(tab == 0 ? 'حتى نهاية الموسم' : 'يعود نهاية الموسم', style: const TextStyle(color: kMuted, fontSize: 12)),
+                          : tab == 1
+                              ? Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                                  Text(p.loanClub ?? 'يعود نهاية الموسم', style: const TextStyle(color: kPrimary, fontWeight: FontWeight.w800, fontSize: 12)),
+                                  Text('${p.loanApps} مباراة • ${p.loanMins} دقيقة • ${p.loanGoals} هدف', style: const TextStyle(color: kMuted, fontSize: 11)),
+                                  if (gs.windowOpen)
+                                    GestureDetector(
+                                      onTap: () {
+                                        final err = gs.recallLoan(p);
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'تم استدعاء اللاعب ✅')));
+                                      },
+                                      child: const Text('استدعاء', style: TextStyle(color: Color(0xFFE5533D), fontWeight: FontWeight.w800, fontSize: 12)),
+                                    ),
+                                ])
+                              : const Text('حتى نهاية الموسم', style: TextStyle(color: kMuted, fontSize: 12)),
                     ),
                 ]),
               ),

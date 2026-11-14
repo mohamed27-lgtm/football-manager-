@@ -7,6 +7,7 @@ import 'models.dart';
 import 'negotiation.dart';
 import 'transfers.dart';
 import 'widgets.dart';
+import 'loan_plan.dart';
 import 'trophies.dart';
 
 String? statusOf(Player p) => p.injuredWeeks > 0
@@ -396,10 +397,9 @@ class _PlayerCardState extends State<_PlayerCard> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {
-                      final err = gs.loanOut(p);
-                      Navigator.pop(ctx);
-                      snack(err, 'تمت الإعارة ✅');
+                    onPressed: () async {
+                      final ok = await showLoanPlan(ctx, gs, p);
+                      if (ok && ctx.mounted) Navigator.pop(ctx);
                     },
                     child: Text('إعارة ${money(gs.loanOutFee(p))}'),
                   ),
@@ -581,10 +581,9 @@ class _PlayerCardState extends State<_PlayerCard> {
           snack(err, 'تم البيع ✅');
         }, icon: Icons.attach_money_rounded),
         const SizedBox(width: 10),
-        big('إعارة', purple, Colors.white, () {
-          final err = gs.loanOut(p);
-          Navigator.pop(ctx);
-          snack(err, 'تمت الإعارة ✅');
+        big('إعارة', purple, Colors.white, () async {
+          final ok = await showLoanPlan(ctx, gs, p);
+          if (ok && ctx.mounted) Navigator.pop(ctx);
         }, icon: Icons.handshake_rounded),
       ],
       if (market || !p.onLoan) const SizedBox(width: 10),
