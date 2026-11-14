@@ -52,6 +52,7 @@ class Player {
   double morale = 70;
   int injuredWeeks = 0;
   String? injType; // نوع آخر إصابة (للعرض)
+  int adapt = 0; // أسابيع التأقلم مع بلد/دوري جديد
   double load = 0; // إرهاق تراكمي 0..100 (دقائق اللعب المتواصلة)
   int suspendedMatches = 0;
   int goals = 0, assists = 0, apps = 0, yellows = 0;
@@ -87,7 +88,7 @@ class Player {
       };
 
   double get effective =>
-      overall * (0.55 + 0.45 * fitness / 100) * (0.92 + 0.16 * morale / 100);
+      overall * (0.55 + 0.45 * fitness / 100) * (0.92 + 0.16 * morale / 100) * (adapt > 0 ? 1 - 0.05 * min(adapt, 6) / 6 : 1.0);
 
   /// شخصية اللاعب (ثابتة من هويته): تؤثر في تطوره وانضباطه وطموحه
   String get trait {
@@ -144,6 +145,7 @@ class Player {
         'mor': morale,
         'inj': injuredWeeks,
         'it': injType,
+        'ad': adapt,
         'ld': double.parse(load.toStringAsFixed(1)),
         'sus': suspendedMatches,
         'goals': goals,
@@ -185,6 +187,7 @@ class Player {
         ..morale = (j['mor'] as num).toDouble()
         ..injuredWeeks = j['inj'] as int
         ..injType = j['it'] as String?
+        ..adapt = (j['ad'] as int?) ?? 0
         ..load = ((j['ld'] as num?) ?? 0).toDouble()
         ..suspendedMatches = j['sus'] as int
         ..goals = j['goals'] as int

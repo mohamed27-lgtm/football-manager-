@@ -1310,12 +1310,14 @@ class GameState extends ChangeNotifier {
           rec += 1.5 * (user.trainingLvl - 1);
           _train(p);
         }
+        if (p.adapt > 0) p.adapt--;
         p.fitness = min(100, p.fitness + rec * (1 - p.load / 320));
         // الإرهاق التراكمي يتراجع بالراحة (أسرع مع التدريب الذهني/الخفيف)
         p.load = max(0, p.load * (t == user && (training == 'mental' || trainIntensity == 0) ? 0.72 : 0.8) - 1);
         if (t == user && p.injuredWeeks == 0 && !_injBefore.contains(p)) _trainingInjury(p);
       }
     }
+    _lockerRoom();
     for (final p in user.squad) {
       if (p.injuredWeeks > 0 && !_injBefore.contains(p)) {
         news.insert(0, p.injType == null ? '🚑 أُصيب ${p.name} لمدة ${p.injuredWeeks} أسابيع' : '🚑 إصابة ${p.name} — ${p.injType}: غياب ${p.injuredWeeks} أسابيع');
@@ -1627,6 +1629,7 @@ class GameState extends ChangeNotifier {
     p.onLoan = false;
     p.morale = 75;
     p.salary = wage;
+    _startAdapt(p, user, notify: true);
     user.squad.add(p);
     _registerNew(p);
     market.remove(p);
@@ -1840,6 +1843,7 @@ class GameState extends ChangeNotifier {
   /// تنفيذ انتقال بين ناديين غير المستخدم، مع نسبة البيع اللاحق لنادي المستخدم إن وُجدت
   void _moveAi(Player p, Team from, Team to, double fee, {bool distress = false}) {
     from.squad.remove(p);
+    _startAdapt(p, to);
     to.squad.add(p..contract = 2 + rng.nextInt(3));
     from.budget += fee;
     to.budget -= fee;
@@ -2841,6 +2845,46 @@ class GameState extends ChangeNotifier {
       user.cohesion = (user.cohesion + (changes <= 2 ? 1.5 : -1.2 * (changes - 2))).clamp(30, 100).toDouble();
     }
     if (ids.length == 11) lastXI = ids;
+  }
+
+  /// التأقلم: اللاعب الأجنبي عن بلد النادي يحتاج أسابيع ليبلغ مستواه (لغة، أسلوب، دوري)
+  void _startAdapt(Player p, Team to, {bool notify = false}) {
+    final home = dominantNat(to.squad.map((q) => q.nat));
+    if (p.nat == null || home == null || p.nat == home) {
+      p.adapt = 0;
+      return;
+    }
+    var w = 6 - (p.trait == 'محترف' ? 2 : 0) - (p.nat2 == home ? 3 : 0) - (p.age <= 21 ? 1 : 0);
+    w = w.clamp(0, 6);
+    p.adapt = w;
+    if (notify && w >= 3) news.insert(0, '🧳 ${p.name} يحتاج وقتاً للتأقلم مع الدوري الجديد (نحو $w أسابيع)');
+  }
+
+  /// غرفة الملابس: شكاوى المشاركة، خلافات المتقلبين، وتأثير القادة
+  void _lockerRoom() {
+    final xi = user.lineup.toSet();
+    final vols = <Player>[];
+    for (final p in user.squad) {
+      if (p.injuredWeeks > 0 || p.onLoan) continue;
+      if (p.trait == 'قائد' && p.age >= 26 && p.morale >= 60) {
+        for (final y in user.squad) {
+          if (y.age <= 21 && y != p) y.morale = min(100, y.morale + 0.4);
+        }
+      }
+      if ((p.trait == 'طموح' || p.trait == 'متقلب') && !xi.contains(p) && p.overall >= user.strength - 4 && p.morale < 50 && rng.nextDouble() < 0.12) {
+        p.morale = max(0, p.morale - 4);
+        news.insert(0, '😤 ${p.name} يشتكي من قلة المشاركة وتتراجع معنوياته');
+      }
+      if (p.trait == 'متقلب' && p.morale < 48) vols.add(p);
+    }
+    if (vols.length >= 2 && rng.nextDouble() < 0.06) {
+      final a = vols[rng.nextInt(vols.length)];
+      final b = vols.where((x) => x != a).toList()[rng.nextInt(vols.length - 1)];
+      a.morale = max(0, a.morale - 3);
+      b.morale = max(0, b.morale - 3);
+      user.cohesion = max(30, user.cohesion - 3).toDouble();
+      news.insert(0, '⚔️ خلاف بين ${a.name} و${b.name} في غرفة الملابس يضر بانسجام الفريق');
+    }
   }
 
   /// إصابات التدريب (للاعبي فريقك): تزيد مع شدة الحصص والإرهاق التراكمي

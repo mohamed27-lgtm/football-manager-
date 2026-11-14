@@ -2670,4 +2670,8 @@ const Map<String, List<String>> kTr = {
   '🏃 خطف {} {} أثناء تفاوضك ({})': ['🏃 {} snatched {} while you were negotiating ({})', '🏃 {} a raflé {} pendant vos négociations ({})', '🏃 {} se llevó a {} mientras negociabas ({})'],
   'تدخّل {} بعرض أعلى وخطف اللاعب!': ['{} stepped in with a higher offer and took the player!', '{} est intervenu avec une offre plus haute et a pris le joueur !', '¡{} intervino con una oferta mayor y se llevó al jugador!'],
   'تلقّى النادي البائع اهتماماً من {} باللاعب فرفع سعره': ['The selling club received interest from {} in the player and raised its price', 'Le club vendeur a reçu l\'intérêt de {} pour le joueur et a relevé son prix', 'El club vendedor recibió interés de {} por el jugador y subió su precio'],
+  '🧳 {} يحتاج وقتاً للتأقلم مع الدوري الجديد (نحو {} أسابيع)': ['🧳 {} needs time to adapt to the new league (about {} weeks)', '🧳 {} a besoin de temps pour s\'adapter au nouveau championnat (environ {} semaines)', '🧳 {} necesita tiempo para adaptarse a la nueva liga (unas {} semanas)'],
+  '😤 {} يشتكي من قلة المشاركة وتتراجع معنوياته': ['😤 {} complains about lack of playing time and his morale drops', '😤 {} se plaint du manque de temps de jeu et son moral baisse', '😤 {} se queja de la falta de minutos y su moral baja'],
+  '⚔️ خلاف بين {} و{} في غرفة الملابس يضر بانسجام الفريق': ['⚔️ A row between {} and {} in the dressing room hurts team chemistry', '⚔️ Dispute entre {} et {} dans le vestiaire : la cohésion de l\'équipe en pâtit', '⚔️ Discusión entre {} y {} en el vestuario que daña la cohesión del equipo'],
+  'يتأقلم ({} أسابيع)': ['Adapting ({} weeks)', 'Adaptation ({} semaines)', 'Adaptándose ({} semanas)'],
 };

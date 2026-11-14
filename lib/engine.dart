@@ -42,6 +42,7 @@ class Side {
   int goals = 0, shots = 0, onTarget = 0, poss = 0, subsLeft = 3, fouls = 0, corners = 0;
   int passes = 0, passOk = 0, offsides = 0, bigChances = 0, bigMissed = 0;
   double xg = 0;
+  double mom = 0; // الزخم النفسي -1..1 (يتبدد بسرعة)
 
   /// مهارة التمرير: متوسط تمرير اللاعبين الميدانيين
   double get passSkill {
@@ -143,6 +144,29 @@ class MatchSim {
 
   bool get finished => minute >= 90;
 
+  int _pgh = 0, _pga = 0;
+
+  /// أجواء ملعب الفريق (0..1): مستوى الملعب وحجم الجماهير/السمعة
+  double crowdOf(Team t) => ((t.stadium - 1) / 4.0 * 0.5 + (t.reputation.clamp(1, 5) - 1) / 4.0 * 0.5).clamp(0.0, 1.0).toDouble();
+
+  void _momentum() {
+    for (final s in [home, away]) {
+      s.mom *= 0.94;
+    }
+    if (home.goals != _pgh || away.goals != _pga) {
+      void g(Side sc, Side co, int n) {
+        for (var i = 0; i < n; i++) {
+          sc.mom = (sc.mom + 0.45).clamp(-1.0, 1.0).toDouble();
+          co.mom = (co.mom - 0.3).clamp(-1.0, 1.0).toDouble();
+        }
+      }
+      g(home, away, home.goals - _pgh);
+      g(away, home, away.goals - _pga);
+      _pgh = home.goals;
+      _pga = away.goals;
+    }
+  }
+
   int get homePoss =>
       minute == 0 ? 50 : (home.poss * 100 / minute).round().clamp(0, 100).toInt();
   int get awayPoss => 100 - homePoss;
@@ -219,8 +243,9 @@ class MatchSim {
       if (minute == 56 || minute == 66 || minute == 76) _aiSub(s);
     }
 
-    final hm = home.midPower * 1.07;
-    final am = away.midPower;
+    _momentum();
+    final hm = home.midPower * (1.03 + 0.07 * crowdOf(home.team)) * (1 + 0.06 * home.mom);
+    final am = away.midPower * (1 + 0.06 * away.mom);
     final ph = pow(hm, 3) / (pow(hm, 3) + pow(am, 3));
     final homeAtt = rng.nextDouble() < ph;
     final a = homeAtt ? home : away;
@@ -534,6 +559,8 @@ class MatchSim {
       _log('goal', '⚽ هدف من ركلة جزاء! ${shooter.name}', a.isHome);
     } else {
       a.bump(shooter, -0.8);
+      a.mom = (a.mom - 0.35).clamp(-1.0, 1.0).toDouble();
+      d.mom = (d.mom + 0.2).clamp(-1.0, 1.0).toDouble();
       if (gkP != null) d.bump(gkP, 0.6);
       _log('miss', '❌ ${shooter.name} يهدر ركلة الجزاء!', a.isHome);
     }
@@ -545,7 +572,9 @@ class MatchSim {
       d.fouls++;
       if (rng.nextDouble() < 0.085) _freeKick(identical(d, home) ? away : home, d);
     }
-    if (rng.nextDouble() < 0.04 * refStrict * (1 + 0.4 * (d.team.pressing - 1))) {
+    // انحياز الحكم الخفيف لأصحاب الأرض (أجواء الملعب تضغط على الحكم)
+    final bias = d.isHome ? 1 - 0.1 * crowdOf(d.team) : 1 + 0.1 * crowdOf(identical(d, home) ? away.team : home.team);
+    if (rng.nextDouble() < 0.04 * refStrict * bias * (1 + 0.4 * (d.team.pressing - 1))) {
       final c = d.slots.where((s) => s.pos != Pos.gk).toList();
       if (c.isEmpty) return;
       final sl = _weighted(
@@ -579,6 +608,7 @@ class MatchSim {
 
   void _sendOff(Side d, Slot sl, String why, int games) {
     d.bump(sl.p, -1.5);
+    d.mom = (d.mom - 0.4).clamp(-1.0, 1.0).toDouble();
     d.slots.remove(sl);
     d.out.add(sl.p);
     sl.p.suspendedMatches = max(sl.p.suspendedMatches, games);
