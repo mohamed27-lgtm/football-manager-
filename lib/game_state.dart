@@ -1757,6 +1757,7 @@ class GameState extends ChangeNotifier {
     if (o.player.overall >= 62 && o.player.age <= 28) sellOns['${o.player.id}'] = o.player.age <= 23 ? 0.15 : 0.10;
     offers.remove(o);
     user.repairLineup();
+    placeSold(o.player, o.club);
     news.insert(0, '💰 بعت ${o.player.name} إلى ${o.club} مقابل ${money1(o.amount)}');
     logOp('بيع ${o.player.name} إلى ${o.club} (+${money1(o.amount)})');
     unawaited(save());
@@ -1784,8 +1785,11 @@ class GameState extends ChangeNotifier {
           final others = teams.where((t) => t != user).toList();
           final fit = others.where((t) => t.budget >= amount && p.overall >= t.strength - 6 && _needOf(t) == p.pos).toList();
           final cands = fit.isNotEmpty ? fit : others.where((t) => t.budget >= amount).toList();
-          if (cands.isEmpty) continue;
-          final club = cands[rng.nextInt(cands.length)];
+          final world = worldBuyers(p, amount);
+          final useWorld = world.isNotEmpty && (cands.isEmpty || p.overall >= 72 || rng.nextDouble() < 0.4);
+          final pool = useWorld ? world : cands;
+          if (pool.isEmpty) continue;
+          final club = pool[rng.nextInt(pool.length)];
           offers.add(Offer(p, club.name, max(0.1, amount), 3));
           news.insert(0, '📨 عرض من ${club.name} لشراء ${p.name}: ${money1(amount)}');
           break;
@@ -1818,7 +1822,10 @@ class GameState extends ChangeNotifier {
       for (final p in user.squad.where((p) => p.overall >= 72 && p.age <= 31 && !offers.any((o) => o.player == p))) {
         if (rng.nextDouble() > 0.03) continue;
         final clause = ((p.value * 2.2) * 10).round() / 10;
-        final rich = teams.where((t) => t != user && t.budget >= clause && p.overall >= t.strength - 4).toList();
+        final rich = [
+          ...teams.where((t) => t != user && t.budget >= clause && p.overall >= t.strength - 4),
+          ...worldBuyers(p, clause).where((t) => p.overall >= t.strength - 4),
+        ];
         if (rich.isEmpty) continue;
         final club = rich[rng.nextInt(rich.length)];
         offers.add(Offer(p, club.name, clause, 2));

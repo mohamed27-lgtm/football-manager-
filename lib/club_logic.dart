@@ -167,3 +167,36 @@ extension EuroSuper on GameState {
     news.insert(0, '🏆 $win بطل كأس السوبر الأوروبي على حساب ${win == cl ? el : cl} ($txt)');
   }
 }
+
+/// سوق عالمي: أندية دوريات العالم تشتري لاعبيك كذلك، وليس أندية دوريك المحلي فقط
+extension WorldMarket on GameState {
+  double _worldBudget(Team t) => switch (t.reputation) { >= 5 => 220.0, 4 => 110.0, 3 => 45.0, _ => 18.0 };
+
+  List<Team> worldBuyers(Player p, double amount) {
+    final mine = {for (final t in [...teams, ...upper, ...lower]) t.name};
+    return [
+      for (final ts in wTeams.values)
+        for (final t in ts.values)
+          if (!mine.contains(t.name) && _worldBudget(t) >= amount && p.overall >= t.strength - 5 && t.reputation >= 3) t
+    ];
+  }
+
+  /// اللاعب المباع ينضم فعلاً إلى ناديه الجديد إن كان من أندية العالم المحاكاة
+  void placeSold(Player p, String club) {
+    for (final ts in wTeams.values) {
+      final t = ts[club];
+      if (t == null) continue;
+      p
+        ..listed = false
+        ..contract = 3
+        ..injuredWeeks = 0;
+      t.squad.add(p);
+      if (t.squad.length > 30) {
+        final weak = t.squad.where((x) => x != p).toList()..sort((a, b) => a.overall.compareTo(b.overall));
+        t.squad.remove(weak.first);
+      }
+      t.autoPick();
+      return;
+    }
+  }
+}

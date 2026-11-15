@@ -1,5 +1,7 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'الأعلى تقييماً': ['Highest rated', 'Mieux notés', 'Mejor valorados'],
+  'الأكثر صناعة للأهداف': ['Top assisters', 'Meilleurs passeurs', 'Máximos asistentes'],
   'مركز الإدارة': ['Management center', 'Centre de gestion', 'Centro de gestión'],
   'المهام': ['Tasks', 'Tâches', 'Tareas'],
   'الأخبار': ['News', 'Actualités', 'Noticias'],

@@ -128,6 +128,34 @@ List<Widget> worldLeagueBody(BuildContext context, GameState gs, WorldLeague l) 
           if (p.goals > 0) (p, e.key)
   ]..sort((a, b) => b.$1.goals != a.$1.goals ? b.$1.goals.compareTo(a.$1.goals) : b.$1.assists.compareTo(a.$1.assists));
 
+  final assisters = <(Player, String)>[
+    if (teams != null)
+      for (final e in teams.entries)
+        for (final p in e.value.squad)
+          if (p.assists > 0) (p, e.key)
+  ]..sort((a, b) => b.$1.assists != a.$1.assists ? b.$1.assists.compareTo(a.$1.assists) : b.$1.goals.compareTo(a.$1.goals));
+  final rated = <(Player, String)>[
+    if (teams != null)
+      for (final e in teams.entries)
+        for (final p in e.value.squad)
+          if (p.rated >= 5) (p, e.key)
+  ]..sort((a, b) => b.$1.avgRating.compareTo(a.$1.avgRating));
+
+  Widget statRows(List<(Player, String)> src, String Function(Player) val) => Column(children: [
+        for (final e in src.take(8))
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(children: [
+              playerFace(e.$1, 34),
+              const SizedBox(width: 8),
+              teamBadge(gs.clubNamed(e.$2), size: 20),
+              const SizedBox(width: 8),
+              Expanded(child: Text('${e.$1.name} • ${e.$2}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+              Text(val(e.$1), style: const TextStyle(fontWeight: FontWeight.w700)),
+            ]),
+          ),
+      ]);
+
   Widget logoBox(int? id, IconData fb, Color col) => Unfilter(
         child: Container(
           width: 56,
@@ -247,6 +275,14 @@ List<Widget> worldLeagueBody(BuildContext context, GameState gs, WorldLeague l) 
                 ),
             ]),
     ),
+    if (assisters.isNotEmpty) ...[
+      sectionTitle('الأكثر صناعة للأهداف'),
+      Panel(child: statRows(assisters, (p) => '🎯 ${p.assists}')),
+    ],
+    if (rated.isNotEmpty) ...[
+      sectionTitle('الأعلى تقييماً'),
+      Panel(child: statRows(rated, (p) => '⭐ ${p.avgRating.toStringAsFixed(2)}')),
+    ],
     // الصعود والهبوط بين الدرجات
     if (moves.isNotEmpty) ...[
       sectionTitle('الصعود والهبوط'),

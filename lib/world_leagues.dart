@@ -150,6 +150,8 @@ extension WorldLeagues on GameState {
         p.apps = 0;
         p.goals = 0;
         p.assists = 0;
+        p.ratingSum = 0;
+        p.rated = 0;
         _develop(p, 0, 0);
         if (_retires(p)) {
           if (p.overall >= 55 && !p.filler) {

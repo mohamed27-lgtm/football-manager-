@@ -87,6 +87,25 @@ extension SeasonCeremony on GameState {
     }
   }
 
+  /// أندية الدرجة الأولى في دوريات العالم (المحاكاة الكاملة): تُحدَّث أهدافها المستقبلة من جداولها
+  List<Team> _worldAwardTeams() {
+    final out = <Team>[];
+    final mine = {for (final t in teams) t.name};
+    for (final l in wLeagues) {
+      if (l.tier != 1) continue;
+      final ts = wTeams[l.id];
+      if (ts == null) continue;
+      for (var i = 0; i < l.n; i++) {
+        final t = ts[l.names[i]];
+        if (t == null || mine.contains(t.name)) continue;
+        t.ga = l.st[i][5];
+        t.gf = l.st[i][4];
+        out.add(t);
+      }
+    }
+    return out;
+  }
+
   void ensureCeremony() {
     if (ceremony != null && ceremony!['s'] == season) return;
     final c = _buildCeremony();
@@ -163,8 +182,11 @@ extension SeasonCeremony on GameState {
     estimateOtherStats();
     final tb = table;
     int rankOf(Team t) => tb.indexOf(t) + 1;
+    // نجوم دوريات العالم الكبرى بإحصاءاتهم الحقيقية من المحاكاة (لا تقديرات عشوائية)
+    final worldPool = _worldAwardTeams();
+    final wNames = {for (final t in worldPool) t.name};
     final all = <(Player, Team)>[
-      for (final t in [...teams, ...foreign.values.where((x) => x.id < 3000)])
+      for (final t in [...teams, ...foreign.values.where((x) => x.id < 3000 && !wNames.contains(x.name)), ...worldPool])
         for (final p in t.squad)
           if (p.apps > 0) (p, t)
     ];
