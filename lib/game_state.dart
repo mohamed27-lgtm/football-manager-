@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'countries.dart' show kAllCountries;
+import 'flags.dart' show kDomesticCupId;
 import 'cups.dart';
 import 'data.dart';
 import 'engine.dart';
