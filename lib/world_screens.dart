@@ -121,6 +121,7 @@ List<Widget> worldLeagueBody(BuildContext context, GameState gs, WorldLeague l) 
       if (pairIds.contains(int.tryParse(e.key.split('|').first))) e
   ]..sort((a, b) => int.parse(b.key.split('|')[1]).compareTo(int.parse(a.key.split('|')[1])));
   final teams = gs.wTeams[l.id];
+  final cupRun = gs.wCups[l.id];
   final scorers = <(Player, String)>[
     if (teams != null)
       for (final e in teams.entries)
@@ -275,6 +276,37 @@ List<Widget> worldLeagueBody(BuildContext context, GameState gs, WorldLeague l) 
                 ),
             ]),
     ),
+    // الكأس المحلية: نتائج الأدوار الملعوبة والبطل
+    if (cupRun != null && cupRun.log.isNotEmpty) ...[
+      sectionTitle('الكأس المحلية'),
+      for (final round in cupRun.log.reversed.take(2))
+        Panel(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(round.first, style: const TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            for (final m in round.skip(1))
+              Builder(builder: (_) {
+                final f = m.split('|');
+                final pw = f[4].isEmpty ? '' : (f[4] == '1' ? f[0] : f[1]);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(children: [
+                    Expanded(child: Text(f[0], maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+                    SizedBox(
+                      width: 96,
+                      child: Column(children: [
+                        Text('${f[2]} - ${f[3]}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                        if (pw.isNotEmpty) Text('${tr('بركلات الترجيح')}: $pw', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 9.5, color: kMuted)),
+                      ]),
+                    ),
+                    Expanded(child: Text(f[1], textAlign: TextAlign.end, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+                  ]),
+                );
+              }),
+          ]),
+        ),
+      if (cupRun.winner != null) Panel(child: clubRow(cupRun.winner!, lead: '🏆')),
+    ],
     if (assisters.isNotEmpty) ...[
       sectionTitle('الأكثر صناعة للأهداف'),
       Panel(child: statRows(assisters, (p) => '🎯 ${p.assists}')),

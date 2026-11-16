@@ -145,6 +145,7 @@ class GameState extends ChangeNotifier {
   int natFriendlyWeek = -1;
   final List<List<dynamic>> natJobLog = []; // [موسم، خصم، لنا، علينا، 0 رسمية/1 ودية، 1 أرض/0 خارج]
   final Map<int, Map<String, Team>> wTeams = {}; // فرق الدوريات العالمية (مؤقتة، تُبنى عند الحاجة)
+  final Map<int, WorldCup> wCups = {}; // الكؤوس المحلية في دول العالم
   final Map<String, String> worldChamps = {};
   final Map<String, List<String>> worldMoves = {}; // 'id|موسم' -> +صعد / -هبط
   final List<String> worldFeed = [];
@@ -631,6 +632,10 @@ class GameState extends ChangeNotifier {
       wLeagues.add(WorldLeague.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(x)) as Map)));
     }
     ((j['clh'] as Map?) ?? const {}).forEach((k, v) => clubHonours[k as String] = (v as List).cast<String>());
+    ((j['wcp'] as List?) ?? const []).forEach((x) {
+      final c = WorldCup.fromJson(Map<String, dynamic>.from(jsonDecode(jsonEncode(x)) as Map));
+      wCups[c.lid] = c;
+    });
     ((j['wch'] as Map?) ?? const {}).forEach((k, v) => worldChamps[k as String] = v as String);
     ((j['wmv'] as Map?) ?? const {}).forEach((k, v) => worldMoves[k as String] = (v as List).cast<String>());
     worldFeed.addAll(((j['wf'] as List?) ?? const []).cast<String>());
@@ -921,6 +926,7 @@ class GameState extends ChangeNotifier {
         'pa': pendingAwards,
         'wl': [for (final l in wLeagues) l.toJson()],
         'clh': clubHonours,
+        'wcp': [for (final c in wCups.values) c.toJson()],
         'wch': worldChamps,
         'wmv': worldMoves,
         'wf': worldFeed,

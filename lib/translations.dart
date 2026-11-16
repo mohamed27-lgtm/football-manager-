@@ -1,5 +1,9 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'دور الـ64': ['Round of 64', '32es de finale', 'Treintaidosavos de final'],
+  'دور الـ32': ['Round of 32', 'Seizièmes de finale', 'Dieciseisavos de final'],
+  'دور الـ16': ['Round of 16', 'Huitièmes de finale', 'Octavos de final'],
+  'بركلات الترجيح': ['On penalties', 'Aux tirs au but', 'En los penaltis'],
   'الأعلى تقييماً': ['Highest rated', 'Mieux notés', 'Mejor valorados'],
   'الأكثر صناعة للأهداف': ['Top assisters', 'Meilleurs passeurs', 'Máximos asistentes'],
   'مركز الإدارة': ['Management center', 'Centre de gestion', 'Centro de gestión'],

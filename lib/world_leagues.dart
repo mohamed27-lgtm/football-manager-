@@ -1,6 +1,34 @@
 part of 'game_state.dart';
 
 /// دوري في العالم يُلعب آلياً كل أسبوع دون تدخل المستخدم (جدول حقيقي بأندية حقيقية)
+
+/// كأس محلي لبلد: إقصاء مباشر بالمحرك الكامل، تُلعب أدواره عبر الموسم وتُحفظ نتائجها
+class WorldCup {
+  final int lid;
+  int season, round = 0;
+  List<String> alive;
+  final List<List<String>> log = []; // لكل دور: [عنوان، 'أ|ب|له|عليه|ر' ...] (ر = 1 فوز أ بالركلات / 2 فوز ب / '' بلا ركلات)
+  String? winner;
+
+  WorldCup(this.lid, this.season, this.alive);
+
+  Map<String, dynamic> toJson() => {'l': lid, 's': season, 'r': round, 'a': alive, 'g': log, 'w': winner};
+  factory WorldCup.fromJson(Map<String, dynamic> j) => WorldCup(j['l'] as int, j['s'] as int, (j['a'] as List).cast<String>())
+    ..round = j['r'] as int
+    ..winner = j['w'] as String?
+    ..log.addAll([for (final x in (j['g'] as List)) (x as List).cast<String>()]);
+
+  /// عدد الأدوار الكلي بعدد المشاركين الأصلي
+  static int roundsFor(int n) {
+    var r = 0, k = 1;
+    while (k < n) {
+      k *= 2;
+      r++;
+    }
+    return r;
+  }
+}
+
 class WorldLeague {
   final int id, tier;
   final String name, country;
@@ -250,13 +278,90 @@ extension WorldLeagues on GameState {
         _playRound(l, feed: _kTopLeagueIds.contains(l.id) ? feed : null);
       }
     }
+    _worldCupsTick();
     if (feed.isNotEmpty) {
       worldFeed.insertAll(0, feed);
       if (worldFeed.length > 60) worldFeed.removeRange(60, worldFeed.length);
     }
   }
 
-  /// كأس محلي سريع بين فرق الدوري (إقصاء مباشر مرجّح بالقوة)
+
+  static String _cupRoundName(int left) => switch (left) {
+        2 => 'النهائي',
+        4 => 'نصف النهائي',
+        8 => 'ربع النهائي',
+        16 => 'دور الـ16',
+        32 => 'دور الـ32',
+        _ => 'دور الـ64',
+      };
+
+  /// مباراة كأس: المحرك الكامل إن توفرت الفرق وإلا نتيجة سريعة؛ التعادل يُحسم بركلات ترجيح مرجّحة بالقوة
+  (int, int, int) _cupMatch(WorldLeague l, String a, String b) {
+    final ts = wTeams[l.id];
+    final ia = l.names.indexOf(a), ib = l.names.indexOf(b);
+    final sa = ia >= 0 ? l.str[ia] : 60.0, sb = ib >= 0 ? l.str[ib] : 60.0;
+    var (gh, ga) = (-1, -1);
+    final th = ts?[a], tb = ts?[b];
+    if (th != null && tb != null) {
+      _restWorld({a: th, b: tb});
+      (gh, ga) = _engineScore(th, tb);
+    }
+    if (gh < 0) (gh, ga) = _fastScore(sa, sb);
+    var pens = 0;
+    if (gh == ga) pens = rng.nextDouble() < 0.5 + (sa - sb) / 120 ? 1 : 2;
+    return (gh, ga, pens);
+  }
+
+  /// يلعب دوراً واحداً من الكأس (أصحاب الأفضلية يعفون في الدور الأول إن لم يكن العدد قوة 2)
+  void _playCupRound(WorldLeague l, WorldCup c) {
+    if (c.winner != null) return;
+    if (c.alive.length < 2) {
+      c.winner = c.alive.firstOrNull;
+      return;
+    }
+    var pow = 1;
+    while (pow * 2 <= c.alive.length) {
+      pow *= 2;
+    }
+    final extra = c.alive.length - pow; // عدد المباريات الزائدة في الدور التمهيدي
+    final byLeague = [...c.alive]..sort((x, y) {
+        final ix = l.names.indexOf(x), iy = l.names.indexOf(y);
+        return (iy < 0 ? 0 : l.str[iy]).compareTo(ix < 0 ? 0 : l.str[ix]);
+      });
+    final playing = extra > 0 ? (byLeague.sublist(byLeague.length - extra * 2)..shuffle(rng)) : ([...c.alive]..shuffle(rng));
+    final byes = extra > 0 ? byLeague.sublist(0, byLeague.length - extra * 2) : <String>[];
+    final next = <String>[...byes];
+    final lines = <String>[_cupRoundName(extra > 0 ? pow * 2 : pow)];
+    for (var i = 0; i + 1 < playing.length; i += 2) {
+      final a = playing[i], b = playing[i + 1];
+      final (gh, ga, pn) = _cupMatch(l, a, b);
+      lines.add('$a|$b|$gh|$ga|${pn == 0 ? '' : pn}');
+      next.add(gh > ga || (gh == ga && pn == 1) ? a : b);
+    }
+    c.log.add(lines);
+    c.alive = next;
+    c.round++;
+    if (next.length == 1) c.winner = next.first;
+  }
+
+  void _worldCupsTick({bool finish = false}) {
+    final span = max(1, rounds.length);
+    for (final l in wLeagues) {
+      if (l.tier != 1 || !kDomesticCupId.containsKey(l.id)) continue;
+      var c = wCups[l.id];
+      if (c == null || c.season != season) {
+        c = wCups[l.id] = WorldCup(l.id, season, [...l.names]);
+      }
+      final total = WorldCup.roundsFor(l.n);
+      final target = finish ? total + 2 : ((week + 1) / span * (total + 1)).floor().clamp(0, total);
+      var guard = 0;
+      while (c.winner == null && c.round < target && guard++ < 8) {
+        _playCupRound(l, c);
+      }
+    }
+  }
+
+  /// (قديم) كأس محلي سريع بين فرق الدوري (إقصاء مباشر مرجّح بالقوة)
   String _quickCup(WorldLeague l) {
     var alive = List<int>.generate(l.n, (i) => i)..shuffle(rng);
     while (alive.length > 1) {
@@ -321,6 +426,7 @@ extension WorldLeagues on GameState {
   /// نهاية الموسم: إتمام الجولات المتبقية وتتويج الأبطال في خزائن أنديتهم، ثم الصعود والهبوط وتصفير الجداول
   void _worldLeaguesSeasonEnd() {
     if (wLeagues.isEmpty) return;
+    _worldCupsTick(finish: true);
     for (final l in wLeagues) {
       while (!l.done && l.round < l.totalRounds) {
         _playRound(l);
@@ -328,7 +434,11 @@ extension WorldLeagues on GameState {
       final champ = l.names[l.order.first];
       clubTitle(champ, l.name);
       if (l.tier == 1) {
-        clubTitle(_quickCup(l), 'كأس ${l.country}');
+        final wc = wCups[l.id];
+        final cupWinner = (wc != null && wc.season == season) ? wc.winner : null;
+        final cw = cupWinner ?? _quickCup(l);
+        worldChamps['c${l.id}|$season'] = cw;
+        clubTitle(cw, 'كأس ${l.country}');
         if (_kTopLeagueIds.contains(l.id)) news.insert(0, '🏆 $champ بطل ${l.name}');
       }
       worldChamps['${l.id}|$season'] = champ;
