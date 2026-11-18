@@ -53,8 +53,47 @@ Player makePlayer(Random rng, Pos pos, int ov, int age,
       ? min(95, p.overall + 2 + rng.nextInt(12))
       : p.overall + rng.nextInt(3);
   p.potential = max(pot, p.overall);
+  fillPlayerInfo(p);
   return p;
 }
+
+/// يكمّل بيانات العرض الناقصة (القدم، المركز الدقيق، الجنسية) بقيم ثابتة لكل لاعب لا تتغير بين الجلسات.
+/// الجنسية تُملأ من [country] فقط عند غيابها (تقدير: أغلب لاعبي الدوري من بلده).
+void fillPlayerInfo(Player p, {String? country, int? seed}) {
+  final r = Random(((seed ?? p.id) * 2654435761 + 97) & 0x7fffffff);
+  if ((p.nat == null || p.nat!.isEmpty) && country != null && country.isNotEmpty) p.nat = country;
+  if (p.foot == null || p.foot!.isEmpty) {
+    final x = r.nextDouble();
+    p.foot = x < 0.70 ? 'right' : (x < 0.95 ? 'left' : 'both');
+  }
+  if (p.sub == null || p.sub!.isEmpty) {
+    final x = r.nextDouble();
+    p.sub = switch (p.pos) {
+      Pos.gk => 'Goalkeeper',
+      Pos.def => x < 0.55 ? 'Centre-Back' : (x < 0.78 ? 'Right-Back' : 'Left-Back'),
+      Pos.mid => x < 0.40 ? 'Central Midfield' : (x < 0.65 ? 'Defensive Midfield' : (x < 0.90 ? 'Attacking Midfield' : (x < 0.95 ? 'Right Midfield' : 'Left Midfield'))),
+      Pos.att => x < 0.55 ? 'Centre-Forward' : (x < 0.75 ? 'Left Winger' : (x < 0.95 ? 'Right Winger' : 'Second Striker')),
+    };
+  }
+}
+
+/// المركز الدقيق بالعربية (البيانات الأصلية بالإنجليزية)
+String subAr(String? s) => switch (s) {
+      'Goalkeeper' => 'حارس مرمى',
+      'Centre-Back' => 'قلب دفاع',
+      'Right-Back' => 'ظهير أيمن',
+      'Left-Back' => 'ظهير أيسر',
+      'Defensive Midfield' => 'وسط مدافع',
+      'Central Midfield' => 'وسط ميدان',
+      'Attacking Midfield' => 'وسط مهاجم',
+      'Right Midfield' => 'وسط أيمن',
+      'Left Midfield' => 'وسط أيسر',
+      'Right Winger' => 'جناح أيمن',
+      'Left Winger' => 'جناح أيسر',
+      'Centre-Forward' => 'رأس حربة',
+      'Second Striker' => 'مهاجم ثانٍ',
+      _ => s ?? '',
+    };
 
 Team createTeam(Random rng, int id, String name, int rep) {
   final base = 55 + rep * 3;

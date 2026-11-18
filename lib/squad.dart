@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
 import 'compare.dart';
+import 'data.dart' show subAr;
 import 'flags.dart';
 import 'game_state.dart';
 import 'models.dart';
@@ -43,7 +44,7 @@ class PlayerTile extends StatelessWidget {
               const SizedBox(height: 3),
               Wrap(spacing: 6, runSpacing: 2, crossAxisAlignment: WrapCrossAlignment.center, children: [
                 PosChip(p.pos),
-                if (p.sub != null && p.sub!.isNotEmpty) Text(p.sub!, style: const TextStyle(color: kMuted, fontSize: 11.5)),
+                if (p.sub != null && p.sub!.isNotEmpty) Text(subAr(p.sub), style: const TextStyle(color: kMuted, fontSize: 11.5)),
                 Text('${p.age} سنة', style: const TextStyle(color: kMuted, fontSize: 12)),
                 if (st != null) Text(st, style: const TextStyle(color: Color(0xFFFF7043), fontSize: 12)),
                 for (final t in p.traits.take(2)) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), decoration: BoxDecoration(color: const Color(0xFF6A6FC4).withOpacity(0.15), borderRadius: BorderRadius.circular(6)), child: Text(t, style: const TextStyle(color: Color(0xFF6A6FC4), fontSize: 10.5, fontWeight: FontWeight.w700))),
@@ -605,13 +606,13 @@ class _PlayerCardState extends State<_PlayerCard> {
                 const SizedBox(height: 4),
                 Row(children: [
                   if (p.nat != null && p.nat!.isNotEmpty) ...[FlagBadge(p.nat!, size: 20), const SizedBox(width: 6)],
-                  Expanded(child: Text([if (p.nat != null && p.nat!.isNotEmpty) p.nat!, if (p.club != null) p.club!].join(' • '), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 13))),
+                  Expanded(child: Text([if (p.nat != null && p.nat!.isNotEmpty) p.nat!, if (gs.clubOfPlayer(p) != null) gs.clubOfPlayer(p)!].join(' • '), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 13))),
                 ]),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(color: const Color(0xFFBFE6DC), borderRadius: BorderRadius.circular(8)),
-                  child: Text('${p.pos.label}${p.sub != null ? '\n${p.sub}' : ''}', textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF0B6E5A), fontWeight: FontWeight.w900, fontSize: 12)),
+                  child: Text('${p.pos.label}${p.sub != null ? '\n${subAr(p.sub)}' : ''}', textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF0B6E5A), fontWeight: FontWeight.w900, fontSize: 12)),
                 ),
               ]),
             ),

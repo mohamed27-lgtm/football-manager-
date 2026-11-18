@@ -833,6 +833,39 @@ class GameState extends ChangeNotifier {
       maxId = max(maxId, p.id);
     }
     pidCounter = max(pidCounter, maxId);
+    _fillInfoAll();
+  }
+
+  /// يكمّل معلومات اللاعبين الناقصة في الحفظ القديم (القدم والمركز الدقيق وجنسية لاعبي دوريك)
+  void _fillInfoAll() {
+    for (final t in [...teams, ...upper, ...lower]) {
+      for (final p in t.squad) {
+        fillPlayerInfo(p, country: country);
+      }
+    }
+    for (final t in foreign.values) {
+      for (final p in t.squad) {
+        fillPlayerInfo(p);
+      }
+    }
+    for (final p in [...freeAgents, ...market]) {
+      fillPlayerInfo(p);
+    }
+  }
+
+  /// النادي الحالي للاعب أينما كان في العالم (للعرض في بطاقة اللاعب)
+  String? clubOfPlayer(Player p) {
+    if (user.squad.contains(p)) return user.name;
+    if (p.club != null && p.club!.isNotEmpty) return p.club;
+    for (final t in [...teams, ...upper, ...lower]) {
+      if (t.squad.contains(p)) return t.name;
+    }
+    for (final ts in wTeams.values) {
+      for (final t in ts.values) {
+        if (t.squad.contains(p)) return t.name;
+      }
+    }
+    return null;
   }
 
   Team team(int id) => id >= 1000 ? foreign[id]! : teams[id];

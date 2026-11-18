@@ -1,5 +1,18 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'مهاجم ثانٍ': ['Second striker', 'Second attaquant', 'Segundo delantero'],
+  'رأس حربة': ['Centre-forward', 'Avant-centre', 'Delantero centro'],
+  'جناح أيسر': ['Left winger', 'Ailier gauche', 'Extremo izquierdo'],
+  'جناح أيمن': ['Right winger', 'Ailier droit', 'Extremo derecho'],
+  'وسط أيسر': ['Left midfielder', 'Milieu gauche', 'Centrocampista izquierdo'],
+  'وسط أيمن': ['Right midfielder', 'Milieu droit', 'Centrocampista derecho'],
+  'وسط مهاجم': ['Attacking midfielder', 'Milieu offensif', 'Mediapunta'],
+  'وسط ميدان': ['Central midfielder', 'Milieu central', 'Centrocampista'],
+  'وسط مدافع': ['Defensive midfielder', 'Milieu défensif', 'Mediocentro defensivo'],
+  'ظهير أيسر': ['Left-back', 'Arrière gauche', 'Lateral izquierdo'],
+  'ظهير أيمن': ['Right-back', 'Arrière droit', 'Lateral derecho'],
+  'قلب دفاع': ['Centre-back', 'Défenseur central', 'Defensa central'],
+  'حارس مرمى': ['Goalkeeper', 'Gardien', 'Portero'],
   'مباراة': ['matches', 'matchs', 'partidos'],
   '{} • الدرجة {} • {} نادياً • الأقوى: {}': ['{} • Division {} • {} clubs • Strongest: {}', '{} • Division {} • {} clubs • Le plus fort : {}', '{} • División {} • {} clubes • El más fuerte: {}'],
   'المركز {}/{}': ['Position {}/{}', 'Place {}/{}', 'Puesto {}/{}'],

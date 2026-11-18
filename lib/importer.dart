@@ -14,7 +14,7 @@ Pos _pos(String s) => switch (s.toLowerCase()) {
 
 /// الـ API لا يوفر تقييمات، لذا نشتقها من قوة الفريق (ترتيبه) ومستوى الدوري
 /// مع تباين ثابت لكل لاعب (يعتمد على معرّفه) فتبقى القيم نفسها في كل مرة.
-Player playerFromApi(ApiPlayer ap, int teamBase) {
+Player playerFromApi(ApiPlayer ap, int teamBase, {String? country}) {
   final h = Random(ap.id);
   if (ap.ov != null) {
     // لاعب حقيقي من Transfermarkt: التقييم مشتق من قيمته السوقية
@@ -30,12 +30,19 @@ Player playerFromApi(ApiPlayer ap, int teamBase) {
       ..mv0 = ap.value
       ..ov0 = p.overall
       ..age0 = age;
+    fillPlayerInfo(p, country: country, seed: ap.id);
     return p;
   }
   final age = (ap.age ?? 25).clamp(16, 42).toInt();
   final adj = age <= 20 ? -4 : age <= 23 ? -1 : age <= 30 ? 1 : age <= 33 ? 0 : -3;
   final ov = (teamBase + h.nextInt(15) - 7 + adj).clamp(40, 92).toInt();
-  return makePlayer(h, _pos(ap.position), ov, age, name: ap.name, photo: ap.photo);
+  final p = makePlayer(h, _pos(ap.position), ov, age, name: ap.name, photo: ap.photo);
+  p
+    ..nat = natArabic(ap.nat)
+    ..foot = ap.foot
+    ..sub = ap.sub;
+  fillPlayerInfo(p, country: country, seed: ap.id);
+  return p;
 }
 
 List<Team> teamsFromLeague(LeagueData d, Random rng) {
@@ -53,7 +60,7 @@ List<Team> teamsFromLeague(LeagueData d, Random rng) {
     final p = n <= 1 ? 0.5 : i / (n - 1);
     final tb = base + ((0.5 - p) * 14).round();
     final rep = p < 0.15 ? 5 : p < 0.35 ? 4 : p < 0.65 ? 3 : 2;
-    final squad = [for (final ap in t.players) playerFromApi(ap, tb)]
+    final squad = [for (final ap in t.players) playerFromApi(ap, tb, country: d.country)]
       ..sort((a, b) => b.overall.compareTo(a.overall));
     if (squad.length > 28) squad.removeRange(28, squad.length);
     final team = Team(
@@ -88,7 +95,7 @@ Map<String, Team> worldTeamsOf(LeagueData d, Random rng) {
     final p = n <= 1 ? 0.5 : i / (n - 1);
     final tb = base + ((0.5 - p) * 14).round();
     final rep = p < 0.15 ? 5 : p < 0.35 ? 4 : p < 0.65 ? 3 : 2;
-    final squad = [for (final ap in t.players) playerFromApi(ap, tb)]..sort((a, b) => b.overall.compareTo(a.overall));
+    final squad = [for (final ap in t.players) playerFromApi(ap, tb, country: d.country)]..sort((a, b) => b.overall.compareTo(a.overall));
     if (squad.length > 28) squad.removeRange(28, squad.length);
     final team = Team(id: 100000 + d.id * 100 + i, name: t.name, reputation: rep, squad: squad, budget: 10.0);
     topUpSquad(team, rng);
