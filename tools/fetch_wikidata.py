@@ -10,7 +10,8 @@ WORK = pathlib.Path(os.environ.get('WD_WORK', '/tmp/wd_work'))
 UA = 'FootballManagerGame/1.0 (https://github.com/mohamed27-lgtm/football-manager-; educational game; contact via repository issues)'
 SPARQL = 'https://query.wikidata.org/sparql'
 COMMONS_API = 'https://commons.wikimedia.org/w/api.php'
-WIDTH = 160
+WIDTH = 220          # يُنزَّل بهذا العرض ثم يُصغَّر ويُضغط محلياً لتقليل الحجم
+OUT_W, OUT_H, OUT_Q = 112, 140, 68
 RECHECK_DAYS = 45
 MAX_NEW = int(os.environ.get('WD_MAX_NEW', '100000'))   # سقف الصور الجديدة في التشغيل الواحد
 BUDGET_SEC = int(os.environ.get('WD_BUDGET_SEC', str(100 * 60)))
@@ -88,6 +89,26 @@ def sparql_images(batch):
     return out
 
 
+def shrink(data):
+    """يحوّل أي صيغة صورة إلى JPEG صغير (~5KB) يكفي للصورة الدائرية داخل اللعبة"""
+    try:
+        from PIL import Image
+        im = Image.open(io.BytesIO(data))
+        if im.mode in ('RGBA', 'LA', 'P'):
+            bg = Image.new('RGB', im.size, (255, 255, 255))
+            im = im.convert('RGBA')
+            bg.paste(im, mask=im.split()[-1])
+            im = bg
+        else:
+            im = im.convert('RGB')
+        im.thumbnail((OUT_W, OUT_H))
+        out = io.BytesIO()
+        im.save(out, 'JPEG', quality=OUT_Q, optimize=True)
+        return out.getvalue()
+    except Exception:
+        return None
+
+
 def credit_for(files):
     """المصوّر والترخيص لمجموعة ملفات كومنز"""
     res = {}
@@ -146,8 +167,9 @@ def main():
             break
         url = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + urllib.parse.quote(fn) + f'?width={WIDTH}'
         data = http_get(url, binary=True)
-        if data and len(data) > 800 and data[:2] == b'\xff\xd8':
-            photos[tm] = data
+        small = shrink(data) if data and len(data) > 800 else None
+        if small:
+            photos[tm] = small
             got += 1
         else:
             checked[tm] = today
