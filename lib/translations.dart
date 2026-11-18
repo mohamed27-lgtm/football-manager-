@@ -1,5 +1,16 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'مباراة': ['matches', 'matchs', 'partidos'],
+  '{} • الدرجة {} • {} نادياً • الأقوى: {}': ['{} • Division {} • {} clubs • Strongest: {}', '{} • Division {} • {} clubs • Le plus fort : {}', '{} • División {} • {} clubes • El más fuerte: {}'],
+  'المركز {}/{}': ['Position {}/{}', 'Place {}/{}', 'Puesto {}/{}'],
+  '{} لاعباً حقيقياً من كل دوريات العالم': ['{} real players from every league in the world', '{} joueurs réels de tous les championnats du monde', '{} jugadores reales de todas las ligas del mundo'],
+  'تصنيف مرجعي': ['Reference rating', 'Classement de référence', 'Clasificación de referencia'],
+  'مهاجمون': ['Forwards', 'Attaquants', 'Delanteros'],
+  'مدافعون': ['Defenders', 'Défenseurs', 'Defensas'],
+  'حراس': ['Goalkeepers', 'Gardiens', 'Porteros'],
+  'كل المراكز': ['All positions', 'Tous les postes', 'Todas las posiciones'],
+  'صناع الأهداف': ['Top assisters', 'Meilleurs passeurs', 'Máximos asistentes'],
+  'الأداء الفعلي': ['Actual performance', 'Performance réelle', 'Rendimiento real'],
   'ستنتقل لتدريب {} في {} مع بداية الموسم القادم، ويصبح دوريه دوريك الجديد.': ['You will move to coach {} in {} at the start of next season, and its league becomes your new league.', 'Vous entraînerez {} en {} dès le début de la saison prochaine, et sa ligue devient votre nouvelle ligue.', 'Entrenarás a {} en {} desde el inicio de la próxima temporada, y su liga será tu nueva liga.'],
   'الوجهة': ['Destination', 'Destination', 'Destino'],
   '🌍 انتقلت للعمل في {}: دوريك الجديد {}': ['🌍 You moved to work in {}: your new league is {}', '🌍 Vous partez travailler en {} : votre nouvelle ligue est {}', '🌍 Te mudaste a trabajar en {}: tu nueva liga es {}'],

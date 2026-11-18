@@ -24,6 +24,7 @@ import 'bundled.dart';
 import 'api_football.dart';
 
 part 'awards_logic.dart';
+part 'world_rank.dart';
 part 'facilities_logic.dart';
 part 'tickets_logic.dart';
 part 'club_logic.dart';
@@ -147,6 +148,8 @@ class GameState extends ChangeNotifier {
   int natFriendlyWeek = -1;
   final List<List<dynamic>> natJobLog = []; // [موسم، خصم، لنا، علينا، 0 رسمية/1 ودية، 1 أرض/0 خارج]
   final Map<int, Map<String, Team>> wTeams = {}; // فرق الدوريات العالمية (مؤقتة، تُبنى عند الحاجة)
+  List<WorldPlayer>? wpCache; // ذاكرة مؤقتة لترتيب لاعبي العالم (لا تُحفظ)
+  String wpKey = '';
   final Map<int, WorldCup> wCups = {}; // الكؤوس المحلية في دول العالم
   final Map<String, String> worldChamps = {};
   final Map<String, List<String>> worldMoves = {}; // 'id|موسم' -> +صعد / -هبط

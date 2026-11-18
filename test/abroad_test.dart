@@ -105,4 +105,46 @@ void main() {
     expect(g2.country, 'إسبانيا');
     expect(g2.user.name, target);
   });
+
+  test('الترتيب العالمي يضم لاعبي وأندية ودوريات كل العالم المحاكى', () {
+    Bundled.debugCache = [
+      _league(2, 'الدوري المغربي', 'المغرب', 1, 16),
+      _league(140, 'الدوري الإسباني', 'إسبانيا', 1, 20),
+      _league(39, 'الدوري الإنجليزي', 'إنجلترا', 1, 20),
+    ];
+    addTearDown(() => Bundled.debugCache = null);
+    final r = Random(3);
+    final teams = [for (var i = 0; i < 16; i++) createTeam(r, i, 'نادي ${i + 1}', 3 + i % 3)];
+    final py = Pyramid(
+      world: _pool(r, 1000, 36, 'أوروبي'),
+      worldEl: _pool(r, 1100, 36, 'يوروبا'),
+      worldCo: _pool(r, 1200, 36, 'مؤتمر'),
+      userSlots: 2,
+      userSlotsEl: 1,
+      userSlotsCo: 1,
+      country: 'المغرب',
+      leagueId: 2,
+    );
+    final gs = GameState.fromData(teams, 2, 'الدوري المغربي', pyramid: py);
+    for (var i = 0; i < 6; i++) {
+      final c = gs.pendingCup;
+      if (c != null) {
+        gs.startCupMatch(c);
+        gs.finishCurrent();
+        continue;
+      }
+      gs.startMatch();
+      gs.finishCurrent();
+    }
+    final ps = gs.worldPlayers();
+    expect(ps.where((w) => w.country == 'إسبانيا'), isNotEmpty);
+    expect(ps.where((w) => w.country == 'إنجلترا'), isNotEmpty);
+    expect(ps.where((w) => w.team == gs.user), isNotEmpty);
+    expect(ps.where((w) => w.p.goals > 0), isNotEmpty);
+    final lg = gs.worldLeagueTable();
+    expect(lg.length, greaterThanOrEqualTo(3));
+    final info = gs.worldClubInfo();
+    expect(info[gs.user.name]!.pos, greaterThan(0));
+    expect(info.values.where((i) => i.country == 'إسبانيا'), isNotEmpty);
+  });
 }

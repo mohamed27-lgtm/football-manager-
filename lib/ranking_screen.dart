@@ -9,6 +9,8 @@ import 'calendar.dart';
 import 'world.dart';
 import 'widgets.dart';
 import 'world_screens.dart';
+import 'cups.dart' show confedOf;
+import 'squad.dart' show showPlayerSheet;
 import 'national_team_screen.dart';
 
 /// الترتيب العالمي: أندية (Elo) / دول (من جنسيات اللاعبين) / لاعبون / مدربون
@@ -22,6 +24,8 @@ class RankingScreen extends StatefulWidget {
 class _RankingScreenState extends State<RankingScreen> {
   GameState get gs => widget.gs;
   int tab = 0;
+  String sort = 'ovr'; // ترتيب اللاعبين: ovr / perf / goals / ast / val
+  String posF = 'all';
   String? _me;
 
   @override
@@ -164,6 +168,18 @@ class _RankingScreenState extends State<RankingScreen> {
 
   List<Widget> _clubs() {
     final all = gs.worldClubTable();
+    final info = gs.worldClubInfo();
+    String sub(String name, String confKey, Team? t) {
+      final i = info[name];
+      final parts = <String>[
+        if (i != null && i.country.isNotEmpty) i.country else (kConfNames[confKey] ?? ''),
+        if (i != null && i.league.isNotEmpty) i.league,
+        if (i != null && i.pos > 0) 'المركز ${i.pos}/${i.n}',
+        if (i == null && t == null) 'تصنيف مرجعي',
+      ];
+      return parts.where((x) => x.isNotEmpty).join(' • ');
+    }
+
     final mine = all.indexWhere((e) => e.$4 == gs.user) + 1;
     final shown = <(int, (String, String, double, Team?))>[
       for (var i = 0; i < all.length; i++)
@@ -174,13 +190,11 @@ class _RankingScreenState extends State<RankingScreen> {
       _confChips(),
       _card([
         for (final e in shown.take(lim))
-          _row(e.$1, e.$2.$4 != null ? teamBadge(e.$2.$4!, size: 30) : _initial(e.$2.$1), e.$2.$1, kConfNames[e.$2.$2] ?? '', _clubTrail(e.$1, e.$2.$1, e.$2.$3), me: e.$2.$4 == gs.user, club: e.$2.$1),
+          _row(e.$1, e.$2.$4 != null ? teamBadge(e.$2.$4!, size: 30) : _initial(e.$2.$1), e.$2.$1, sub(e.$2.$1, e.$2.$2, e.$2.$4), _clubTrail(e.$1, e.$2.$1, e.$2.$3), me: e.$2.$4 == gs.user, club: e.$2.$1),
       ]),
       _moreBtn(shown.length),
     ];
   }
-
-  List<Player> _allPlayers() => [for (final t in gs.worldRanking) if (gs.hasRealSquad(t)) ...t.squad];
 
   /// ترتيب المنتخبات: نقاط فيفا (P = P0 + I × (W − We)) تتغير بعد كل مباراة دولية وبطولة
   List<Widget> _countries() {
@@ -299,21 +313,105 @@ class _RankingScreenState extends State<RankingScreen> {
     );
   }
 
-  List<Widget> _players() {
-    final every = _allPlayers()..sort((a, b) => b.overall.compareTo(a.overall));
-    final club = {for (final t in gs.worldRanking) for (final p in t.squad) p.id: t};
-    final all = [for (final p in every) if (_hit(p.name) || _hit(club[p.id]?.name ?? '')) p];
-    return [
-      for (var i = 0; i < all.length && i < lim; i++)
-        _row(
-          i + 1,
-          teamBadge(club[all[i].id] ?? gs.user, size: 30),
-          all[i].name,
-          '${club[all[i].id]?.name ?? ''} • ${all[i].nat ?? ''}',
-          ratingRing(all[i].overall, size: 34),
-          me: gs.user.squad.contains(all[i]),
+  Widget _chips(List<(String, String)> opts, String cur, void Function(String) set) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: [
+            for (final e in opts)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: cur == e.$1 ? Unfilter(child: _pill(e.$2, true, () => setState(() => set(e.$1)))) : _pill(e.$2, false, () => setState(() => set(e.$1))),
+              ),
+          ]),
         ),
+      );
+
+  /// كل لاعبي العالم الحقيقيين من كل الدوريات، مرتّبين بالتقييم أو بأدائهم الفعلي في المباريات المحاكاة
+  List<Widget> _players() {
+    final every = gs.worldPlayers();
+    bool keep(WorldPlayer w) {
+      final p = w.p;
+      if (posF != 'all' && p.pos.name != posF) return false;
+      if (conf != 'all' && (w.country.isEmpty || confedOf(w.country).id != conf)) return false;
+      if (_q.isNotEmpty && !(_hit(p.name) || _hit(w.team.name))) return false;
+      return switch (sort) { 'perf' => p.rated >= 8, 'goals' => p.goals > 0, 'ast' => p.assists > 0, _ => true };
+    }
+
+    double key(WorldPlayer w) {
+      final p = w.p;
+      return switch (sort) {
+        'perf' => p.avgRating + p.rated * 0.0001,
+        'goals' => p.goals + p.assists * 0.001,
+        'ast' => p.assists + p.goals * 0.001,
+        'val' => p.value,
+        _ => p.overall + p.value * 0.0001,
+      };
+    }
+
+    final all = every.where(keep).toList()..sort((a, b) => key(b).compareTo(key(a)));
+    Widget trail(Player p) => switch (sort) {
+          'perf' => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text(p.avgRating.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.w900)),
+              Text('${p.rated} ${tr('مباراة')}', style: const TextStyle(color: kMuted, fontSize: 11)),
+            ]),
+          'goals' => Text('⚽ ${p.goals}', style: const TextStyle(fontWeight: FontWeight.w900)),
+          'ast' => Text('🎯 ${p.assists}', style: const TextStyle(fontWeight: FontWeight.w900)),
+          'val' => Text(gs.money1(p.value), style: const TextStyle(fontWeight: FontWeight.w900)),
+          _ => ratingRing(p.overall, size: 34),
+        };
+    return [
+      _chips(const [('ovr', 'التقييم العام'), ('perf', 'الأداء الفعلي'), ('goals', 'الهدافون'), ('ast', 'صناع الأهداف'), ('val', 'القيمة السوقية')], sort, (v) {
+        sort = v;
+        lim = 100;
+      }),
+      _chips(const [('all', 'كل المراكز'), ('gk', 'حراس'), ('def', 'مدافعون'), ('mid', 'وسط'), ('att', 'مهاجمون')], posF, (v) {
+        posF = v;
+        lim = 100;
+      }),
+      _confChips(),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text('${every.length} لاعباً حقيقياً من كل دوريات العالم', style: const TextStyle(color: kMuted, fontSize: 12)),
+      ),
+      _card([
+        for (var i = 0; i < all.length && i < lim; i++)
+          InkWell(
+            onTap: () => showPlayerSheet(context, gs, all[i].p),
+            child: _rowBody(
+              i + 1,
+              teamBadge(all[i].team, size: 30),
+              all[i].p.name,
+              [all[i].team.name, if (all[i].league.isNotEmpty) all[i].league, all[i].p.nat ?? ''].where((x) => x.isNotEmpty).join(' • '),
+              trail(all[i].p),
+              me: gs.user.squad.contains(all[i].p),
+            ),
+          ),
+      ]),
       _moreBtn(all.length),
+    ];
+  }
+
+  /// ترتيب الدوريات: متوسط Elo الأندية الحقيقية
+  List<Widget> _leagues() {
+    final all = gs.worldLeagueTable();
+    final shown = <(int, WorldLeagueRow)>[
+      for (var i = 0; i < all.length; i++)
+        if ((conf == 'all' || confedOf(all[i].country).id == conf) && (_hit(all[i].name) || _hit(all[i].country))) (i + 1, all[i])
+    ];
+    return [
+      _confChips(),
+      _card([
+        for (final e in shown.take(lim))
+          _rowBody(
+            e.$1,
+            FlagBadge(e.$2.country, size: 30),
+            e.$2.name,
+            '${e.$2.country} • الدرجة ${e.$2.div} • ${e.$2.clubs} نادياً • الأقوى: ${e.$2.top}',
+            Text('${e.$2.elo.round()}', style: const TextStyle(fontWeight: FontWeight.w900)),
+          ),
+      ]),
+      _moreBtn(shown.length),
     ];
   }
 
@@ -328,7 +426,7 @@ class _RankingScreenState extends State<RankingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final body = switch (tab) { 0 => _clubs(), 1 => _countries(), 2 => _players(), _ => _coaches() };
+    final body = switch (tab) { 0 => _clubs(), 1 => _countries(), 2 => _players(), 3 => _coaches(), _ => _leagues() };
     return Scaffold(
       appBar: AppBar(title: const Text('الترتيب العالمي')),
       body: ListenableBuilder(
@@ -342,6 +440,7 @@ class _RankingScreenState extends State<RankingScreen> {
               ButtonSegment(value: 1, label: Text('المنتخبات', style: TextStyle(fontSize: 12))),
               ButtonSegment(value: 2, label: Text('اللاعبون', style: TextStyle(fontSize: 12))),
               ButtonSegment(value: 3, label: Text('المدربون', style: TextStyle(fontSize: 12))),
+              ButtonSegment(value: 4, label: Text('الدوريات', style: TextStyle(fontSize: 12))),
             ],
             selected: {tab},
             onSelectionChanged: (v) => setState(() {
