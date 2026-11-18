@@ -1,0 +1,40 @@
+name: Wikidata player photos
+
+# يجلب صور لاعبي Transfermarkt الحرة من ويكيميديا كومنز (عبر ويكيداتا) ويرفعها كحزمة في الإصدار data-latest
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 4 8 * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wikidata-photos
+  cancel-in-progress: false
+
+jobs:
+  photos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch photos
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/fetch_wikidata.py
+      - name: Publish pack
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -f /tmp/wd_work/photos_wikidata.zip ]; then
+            gh release view data-latest >/dev/null 2>&1 || \
+              gh release create data-latest --title "Data packs" --notes "Auto-generated data packs for the game"
+            gh release upload data-latest /tmp/wd_work/photos_wikidata.zip --clobber
+            ls -la /tmp/wd_work/photos_wikidata.zip
+          else
+            echo "nothing to publish"
+          fi
