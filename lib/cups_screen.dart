@@ -155,11 +155,6 @@ class CupView extends StatelessWidget {
             ]),
           ),
         ],
-      if (!cup.done && cup.byes.isNotEmpty)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
-          child: Text('تأهلت مباشرة: ${cup.byes.map((b) => gs.team(b).name).join('، ')}', style: const TextStyle(color: kMuted, fontSize: 12)),
-        ),
       for (final e in logs.entries.toList().reversed) ...[
         sectionTitle(e.key),
         Panel(

@@ -584,11 +584,6 @@ class _CompetitionsViewState extends State<CompetitionsView> {
           ]),
         ),
       CupTree(gs: gs, cup: c),
-      if (!c.done && !c.inGroups && c.byes.isNotEmpty)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(6, 10, 6, 0),
-          child: Text('تأهلت مباشرة: ${c.byes.map((b) => gs.team(b).name).join('، ')}', style: const TextStyle(color: kMuted, fontSize: 12)),
-        ),
     ]);
   }
 
