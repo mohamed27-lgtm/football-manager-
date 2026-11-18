@@ -3,6 +3,13 @@ name: Wikidata player photos
 # يجلب صور لاعبي Transfermarkt الحرة من ويكيميديا كومنز (عبر ويكيداتا) ويرفعها كحزمة في الإصدار data-latest
 on:
   workflow_dispatch:
+    inputs:
+      max_new:
+        description: 'max new photos this run (small for a smoke test)'
+        default: '100000'
+      budget_min:
+        description: 'time budget in minutes'
+        default: '100'
   schedule:
     - cron: '41 4 8 * *'
 
@@ -25,7 +32,11 @@ jobs:
       - name: Fetch photos
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tools/fetch_wikidata.py
+          WD_MAX_NEW: ${{ inputs.max_new || '100000' }}
+          WD_BUDGET_SEC: ${{ (inputs.budget_min && format('{0}', inputs.budget_min)) || '100' }}
+        run: |
+          export WD_BUDGET_SEC=$(( ${WD_BUDGET_SEC:-100} * 60 ))
+          python3 tools/fetch_wikidata.py
       - name: Publish pack
         env:
           GH_TOKEN: ${{ github.token }}
