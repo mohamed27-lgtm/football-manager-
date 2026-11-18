@@ -1,7 +1,6 @@
 """يحوّل ملف لاعبي Transfermarkt (players.csv) إلى tools/tm_leagues.json.gz: دوريات/أندية/لاعبون حاليون مع تقييم مشتق من القيمة السوقية."""
 import csv, gzip, json, math, sys, datetime, collections
 
-SRC = sys.argv[1]
 REF = datetime.date(2025, 9, 1)
 
 # كود Transfermarkt: (عدد الأندية، معرّف API-Football أو None لدوري جديد، الاسم، الدولة، المستوى)
@@ -46,23 +45,33 @@ def build(r):
     if r['foot']: p['ft'] = r['foot']
     return p
 
-rows = [x for x in csv.DictReader(open(SRC, encoding='utf-8-sig'))
-        if x['last_season'] >= '2025' and x['current_club_id'] and x['current_club_domestic_competition_id'] in LEAGUES]
-by = collections.defaultdict(lambda: collections.defaultdict(list))
-for r in rows:
-    by[r['current_club_domestic_competition_id']][(r['current_club_id'], r['current_club_name'])].append(build(r))
-out = {}
-for code, cfg in LEAGUES.items():
-    clubs = by.get(code, {})
-    # أندية الدوري الحالية: الأكبر عدد لاعبين ثم الأعلى قيمة
-    ranked = sorted(clubs.items(), key=lambda kv: (-min(len(kv[1]), 26), -sum(p['v'] for p in kv[1])))[:cfg[0]]
-    teams = []
-    for (cid, cname), pl in ranked:
-        pl.sort(key=lambda p: -p['ov'])
-        top = sorted(p['ov'] for p in pl)[-14:]
-        teams.append({'tm': int(cid), 'name': cname, 'str': round(sum(top) / len(top), 1), 'players': pl[:32]})
-    teams.sort(key=lambda t: -t['str'])
-    out[code] = {'api': cfg[1], 'new': cfg[2:] if len(cfg) > 2 else None, 'teams': teams}
-with gzip.open('tools/tm_leagues.json.gz', 'wt', encoding='utf-8') as g:
-    json.dump(out, g, ensure_ascii=False, separators=(',', ':'))
-print({k: (len(v['teams']), sum(len(t['players']) for t in v['teams'])) for k, v in out.items()})
+def run(src, ref=None, min_season='2025', leagues=None, out_path='tools/tm_leagues.json.gz'):
+    global REF
+    if ref is not None:
+        REF = ref
+    L_ = leagues or LEAGUES
+    rows = [x for x in csv.DictReader(open(src, encoding='utf-8-sig'))
+            if x['last_season'] >= min_season and x['current_club_id'] and x['current_club_domestic_competition_id'] in L_]
+    by = collections.defaultdict(lambda: collections.defaultdict(list))
+    for r in rows:
+        by[r['current_club_domestic_competition_id']][(r['current_club_id'], r['current_club_name'])].append(build(r))
+    out = {}
+    for code, cfg in L_.items():
+        clubs = by.get(code, {})
+        # أندية الدوري الحالية: الأكبر عدد لاعبين ثم الأعلى قيمة
+        ranked = sorted(clubs.items(), key=lambda kv: (-min(len(kv[1]), 26), -sum(p['v'] for p in kv[1])))[:cfg[0]]
+        teams = []
+        for (cid, cname), pl in ranked:
+            pl.sort(key=lambda p: -p['ov'])
+            top = sorted(p['ov'] for p in pl)[-14:]
+            teams.append({'tm': int(cid), 'name': cname, 'str': round(sum(top) / len(top), 1), 'players': pl[:32]})
+        teams.sort(key=lambda t: -t['str'])
+        out[code] = {'api': cfg[1], 'new': cfg[2:] if len(cfg) > 2 else None, 'teams': teams}
+    with gzip.open(out_path, 'wt', encoding='utf-8') as g:
+        json.dump(out, g, ensure_ascii=False, separators=(',', ':'))
+    print({k: (len(v['teams']), sum(len(t['players']) for t in v['teams'])) for k, v in out.items()})
+    return out
+
+
+if __name__ == '__main__':
+    run(sys.argv[1])
