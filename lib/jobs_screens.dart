@@ -52,12 +52,12 @@ class _JobsScreenState extends State<JobsScreen> {
   }
 
   Future<void> _accept(JobOffer o) async {
-    final later = gs.seasonOver && !gs.fired;
+    final later = (gs.seasonOver && !gs.fired) || o.abroad;
     final under = !gs.fired && !gs.resigned && gs.contractLeft > 1 && !later;
     final ok = await confirmDialog(context,
         title: 'قبول عرض ${o.club}',
         body: later
-            ? 'ستنتقل لتدريب ${o.club} مع بداية الموسم القادم.'
+            ? (o.abroad ? 'ستنتقل لتدريب ${o.club} في ${o.lname} مع بداية الموسم القادم، ويصبح دوريه دوريك الجديد.' : 'ستنتقل لتدريب ${o.club} مع بداية الموسم القادم.')
             : under
                 ? 'عقدك مع ${gs.user.name} ما زال سارياً، والمغادرة تخفض سمعتك. هل تقبل عرض ${o.club}؟'
                 : 'ستصبح مدرباً لنادي ${o.club} فوراً.',
@@ -91,6 +91,7 @@ class _JobsScreenState extends State<JobsScreen> {
           const SizedBox(height: 8),
           Text(o.reason, style: const TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
           const SizedBox(height: 4),
+          if (o.abroad) _kv('الوجهة', o.lname),
           _kv('الدوري', _divName(o.div)),
           _kv('هدف الإدارة', 'المركز ${o.objective} أو أفضل'),
           _kv('ميزانية النادي', gs.money1(o.budget)),

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'countries.dart' show kAllCountries;
 import 'flags.dart' show kDomesticCupId;
+import 'continental.dart';
 import 'cups.dart';
 import 'data.dart';
 import 'engine.dart';
@@ -490,6 +491,7 @@ class GameState extends ChangeNotifier {
   int renewDecidedSeason = -1;
   final List<JobOffer> jobOffers = []; // عروض تدريب من أندية أخرى
   String? pendingJob; // نادٍ ينتقل إليه المدرب مع بداية الموسم
+  int? pendingAbroad; // معرّف دوري الوجهة إن كان الانتقال إلى دولة أخرى
   double mgrRep = 50; // سمعة المدرب
   int mgrEnd = 0; // آخر موسم في عقد المدرب (0 = غير محدد)
   bool resigned = false;
@@ -608,6 +610,7 @@ class GameState extends ChangeNotifier {
       jobOffers.add(JobOffer.fromJson(x as Map<String, dynamic>));
     }
     pendingJob = j['pj'] as String?;
+    pendingAbroad = j['pab'] as int?;
     for (final e in ((j['cs'] as Map?) ?? const {}).entries) {
       compStats[e.key as String] = {
         for (final x in (e.value as Map).entries) int.parse(x.key as String): [for (final n in x.value as List) n as int]
@@ -908,6 +911,7 @@ class GameState extends ChangeNotifier {
         'fired': fired,
         'jobs': [for (final o in jobOffers) o.toJson()],
         'pj': pendingJob,
+        'pab': pendingAbroad,
         'cs': {for (final e in compStats.entries) e.key: {for (final x in e.value.entries) '${x.key}': x.value}},
         'cnm': {for (final e in compNames.entries) '${e.key}': e.value},
         'mr': mgrRep,

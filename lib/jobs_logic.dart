@@ -6,10 +6,14 @@ class JobOffer {
   final int years, objective, div;
   final double budget;
   int ttl;
-  JobOffer(this.club, this.reason, this.years, this.objective, this.div, this.budget, this.ttl);
-  Map<String, dynamic> toJson() => {'c': club, 'r': reason, 'y': years, 'o': objective, 'd': div, 'b': budget, 't': ttl};
-  factory JobOffer.fromJson(Map<String, dynamic> j) =>
-      JobOffer(j['c'] as String, j['r'] as String, j['y'] as int, j['o'] as int, j['d'] as int, (j['b'] as num).toDouble(), j['t'] as int);
+  final int lid; // معرّف دوري النادي إن كان في دولة أخرى (0 = داخل هرمك الحالي)
+  final String lname;
+  JobOffer(this.club, this.reason, this.years, this.objective, this.div, this.budget, this.ttl, {this.lid = 0, this.lname = ''});
+  bool get abroad => lid != 0;
+  Map<String, dynamic> toJson() => {'c': club, 'r': reason, 'y': years, 'o': objective, 'd': div, 'b': budget, 't': ttl, if (lid != 0) 'l': lid, if (lname.isNotEmpty) 'ln': lname};
+  factory JobOffer.fromJson(Map<String, dynamic> j) => JobOffer(
+      j['c'] as String, j['r'] as String, j['y'] as int, j['o'] as int, j['d'] as int, (j['b'] as num).toDouble(), j['t'] as int,
+      lid: (j['l'] as int?) ?? 0, lname: (j['ln'] as String?) ?? '');
 }
 
 extension JobsLogic on GameState {
@@ -17,6 +21,10 @@ extension JobsLogic on GameState {
   Team clubNamed(String n) {
     for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
       if (t.name == n) return t;
+    }
+    for (final m in wTeams.values) {
+      final t = m[n];
+      if (t != null) return t;
     }
     return Team(id: -1, name: n, reputation: 3, squad: [], budget: 0);
   }
@@ -167,7 +175,10 @@ extension JobsLogic on GameState {
     mgrRep = (mgrRep + (pos <= objective ? 3 : -2) + (pos == 1 ? 3 : 0)).clamp(30.0, 100.0).toDouble();
     if (fired) return;
     final k = confidence >= 65 || pos <= 3 ? 2 : (confidence >= 40 ? 1 : 0);
-    if (k > 0) _genJobs(force: k);
+    if (k > 0) {
+      _genJobs(force: k);
+      if (rng.nextDouble() < 0.35 + max(0.0, mgrRep - 50) / 120) this._genForeignJob();
+    }
   }
 
   /// عروض للمُقال/المستقيل: أندية تحتاج مدرباً (تُولَّد مرة واحدة)
@@ -176,6 +187,7 @@ extension JobsLogic on GameState {
       jobsGen = true;
       if (!resigned) mgrRep = max(30.0, mgrRep - 8);
       jobOffers.clear();
+      this._genForeignJob();
       _genJobs(force: 3);
     }
     return jobOffers;
@@ -219,6 +231,17 @@ extension JobsLogic on GameState {
 
   /// قبول عرض: فوري داخل الدوري، أو مؤجل لبداية الموسم عند الانتقال لدرجة أخرى
   String? acceptJob(JobOffer o) {
+    if (o.abroad) {
+      if (!seasonOver) return 'الانتقال إلى دولة أخرى ممكن فقط عند نهاية الموسم';
+      if (wTeams[o.lid]?[o.club] == null) return 'لم يعد هذا النادي متاحاً';
+      pendingJob = o.club;
+      pendingAbroad = o.lid;
+      jobOffers.clear();
+      news.insert(0, '🌍 وافقت على تدريب ${o.club} في الخارج اعتباراً من الموسم القادم');
+      unawaited(save());
+      notifyListeners();
+      return null;
+    }
     final nt = [...teams, ...upper, ...lower].where((t) => t.name == o.club).firstOrNull;
     if (nt == null) return 'لم يعد هذا النادي متاحاً';
     if (seasonOver && !fired) {
@@ -271,6 +294,13 @@ extension JobsLogic on GameState {
   /// بعد الصعود/الهبوط في بداية الموسم: ينتقل المستخدم للنادي المتفق عليه ولو في درجة أخرى
   void _applyPendingJob() {
     final name = pendingJob;
+    final ab = pendingAbroad;
+    if (ab != null) {
+      pendingJob = null;
+      pendingAbroad = null;
+      if (name != null) this._applyAbroad(name, ab);
+      return;
+    }
     if (name == null) return;
     pendingJob = null;
     final all = [...teams, ...upper, ...lower];
@@ -305,5 +335,196 @@ extension JobsLogic on GameState {
       if (t != nt) t.autoPick();
     }
     this._takeClub(nt, 3, null);
+  }
+}
+
+extension AbroadJobs on GameState {
+  /// عرض من نادٍ في دولة أخرى: لا يُعرض إلا عند نهاية الموسم وينفَّذ مع بداية الموسم القادم
+  void _genForeignJob() {
+    if (!realWorld || !seasonOver || jobOffers.length >= 3 || wLeagues.isEmpty) return;
+    final target = user.reputation + (mgrRep - 50) / 25;
+    Team? best;
+    WorldLeague? bestL;
+    var bestS = -1.0;
+    for (final l in wLeagues) {
+      final dv = worldDivOf(l);
+      if (dv > 2 || l.country == country) continue;
+      final ts = wTeams[l.id];
+      if (ts == null) continue;
+      for (final t in ts.values) {
+        if (jobOffers.any((o) => o.club == t.name)) continue;
+        final rep = t.reputation - (dv - 1) * 1.5; // أندية الدرجة الثانية أقل مكانة
+        final fit = (1 - (rep - target).abs() / 3).clamp(0.0, 1.0).toDouble();
+        final s = 0.65 * fit + 0.35 * rng.nextDouble();
+        if (s > bestS) {
+          bestS = s;
+          best = t;
+          bestL = l;
+        }
+      }
+    }
+    final t = best, l = bestL;
+    if (t == null || l == null || bestS < 0.45) return;
+    final rank = 1 + wTeams[l.id]!.values.where((x) => x.strength > t.strength).length;
+    final sv = t.squad.fold<double>(0, (a, x) => a + x.value);
+    final reason = t.reputation > user.reputation ? 'أعجبهم أداؤك ويرون فيك مدرب مشروعهم القادم' : 'يريد النادي مدرباً بسمعتك لقيادة مرحلة جديدة';
+    jobOffers.add(JobOffer(t.name, reason, 2 + rng.nextInt(3), max(1, rank - 1), worldDivOf(l), (0.12 * sv).clamp(5.0, 220.0).toDouble(), 99, lid: l.id, lname: '${l.country} • ${l.name}'));
+  }
+
+  /// الانتقال الفعلي لدوري دولة أخرى: يتحول دوريك القديم إلى دوري عالمي محاكى، ودوري الوجهة يصبح دوريك الكامل.
+  /// أي فشل في منتصف العملية يُعيد الحال كما كانت (تبقى في ناديك).
+  void _applyAbroad(String clubName, int lid) {
+    final src = Bundled.cached;
+    final dest = src?.where((x) => x.id == lid).firstOrNull;
+    if (src == null || dest == null) {
+      news.insert(0, '⚠️ تعذّر الانتقال إلى الخارج فبقيت في ناديك');
+      return;
+    }
+    final sTeams = teams, sUpper = upper, sLower = lower;
+    final sUpN = upperName, sLoN = lowerName, sLeague = leagueName, sDiv = div, sCountry = country, sLid = leagueId;
+    final sSlots = [userSlots, userSlotsEl, userSlotsCo];
+    final sForeign = Map<int, Team>.of(foreign);
+    final sWl = [...wLeagues];
+    final sWt = Map<int, Map<String, Team>>.of(wTeams);
+    final sCups = Map<int, WorldCup>.of(wCups);
+    try {
+      // ── تجهيز (بلا تعديل لأي كائن مشترك) ──
+      final sameC = [for (final l in wLeagues) if (l.country == dest.country) l];
+      final mainW = sameC.where((l) => l.id == lid).firstOrNull;
+      if (mainW == null) throw StateError('league');
+      WorldLeague? near(int dv) => sameC.where((l) => src.where((x) => x.id == l.id).firstOrNull?.div == dv).firstOrNull;
+      final upW = near(dest.div - 1), loW = near(dest.div + 1);
+      List<Team> asTeams(WorldLeague l) {
+        final m = this._teamsOfWorld(l);
+        if (m == null) throw StateError('teams');
+        final ts = [for (final n in l.names) m[n]].whereType<Team>().toList();
+        if (ts.length.isOdd) {
+          ts.sort((a, b) => a.strength.compareTo(b.strength));
+          ts.removeAt(0);
+        }
+        return ts;
+      }
+
+      final nMain = asTeams(mainW);
+      final nUp = upW == null ? <Team>[] : asTeams(upW);
+      final nLo = loW == null ? <Team>[] : asTeams(loW);
+      final nt = nMain.where((t) => t.name == clubName).firstOrNull;
+      if (nt == null || nMain.length < 6) throw StateError('club');
+      final (p0, p1, p2) = buildContinentalPools(dest.country, src, rng);
+      final topId = src.where((x) => x.country == dest.country && x.div == 1).firstOrNull?.id ?? lid;
+      // دوريك القديم يصبح دوري عالم محاكى
+      final oldSame = [for (final x in src) if (x.country == sCountry && x.teams.length >= 6) x];
+      LeagueData? oldNear(int dv) => oldSame.where((x) => x.div == dv).firstOrNull;
+      final oldWorld = <(WorldLeague, List<Team>)>[];
+      void toWorld(LeagueData? d, List<Team> ts) {
+        if (d == null || ts.length < 4) return;
+        final s = [...ts]..sort((a, b) => b.strength.compareTo(a.strength));
+        oldWorld.add((WorldLeague(d.id, d.name, d.country, d.tier, [for (final t in s) t.name], [for (final t in s) t.strength]), s));
+      }
+
+      toWorld(oldNear(sDiv), sTeams);
+      toWorld(oldNear(sDiv - 1), sUpper);
+      toWorld(oldNear(sDiv + 1), sLower);
+
+      // ── التنفيذ ──
+      final goneIds = {for (final l in [mainW, upW, loW]) if (l != null) l.id};
+      wLeagues.removeWhere((l) => goneIds.contains(l.id));
+      for (final id in goneIds) {
+        wTeams.remove(id);
+        wCups.remove(id);
+      }
+      for (final (wl, ts) in oldWorld) {
+        for (var i = 0; i < ts.length; i++) {
+          ts[i].id = 100000 + wl.id * 100 + i;
+        }
+        wLeagues.removeWhere((l) => l.id == wl.id);
+        wLeagues.add(wl);
+        wTeams[wl.id] = {for (final t in ts) t.name: t};
+        wCups.remove(wl.id);
+      }
+      wLeagues.sort((a, b) => a.tier != b.tier ? a.tier.compareTo(b.tier) : a.name.compareTo(b.name));
+      void prep(List<Team> ts) {
+        for (var i = 0; i < ts.length; i++) {
+          final t = ts[i];
+          t
+            ..id = i
+            ..played = 0
+            ..won = 0
+            ..drawn = 0
+            ..lost = 0
+            ..gf = 0
+            ..ga = 0
+            ..penalty = 0
+            ..form = [];
+          t.venue ??= stadiumFor(t.name);
+          final sv = t.squad.fold<double>(0, (a, x) => a + x.value);
+          t.budget = (0.12 * sv).clamp(5.0, 220.0).toDouble();
+        }
+      }
+
+      prep(nMain);
+      prep(nUp);
+      prep(nLo);
+      teams = nMain;
+      upper = nUp;
+      lower = nLo;
+      leagueName = mainW.name;
+      upperName = upW?.name ?? '';
+      lowerName = loW?.name ?? '';
+      div = dest.div;
+      country = dest.country;
+      leagueId = topId;
+      userSlots = dest.div == 1 ? max(1, continentalSlots(dest.country)) : 3;
+      userSlotsEl = dest.div == 1 ? europaSlots(dest.country) : 0;
+      userSlotsCo = dest.div == 1 ? conferenceSlots(dest.country) : 0;
+      foreign.removeWhere((id, _) => id >= 1000 && id < 3000);
+      void reg(List<Team> l, int base) {
+        for (var i = 0; i < l.length; i++) {
+          l[i].id = base + i;
+          foreign[base + i] = l[i];
+        }
+      }
+
+      reg(p0, 1000);
+      reg(p1, 1100);
+      reg(p2, 1200);
+      for (final t in nMain) {
+        if (t != nt) t.autoPick();
+      }
+      fans = 20.0 + nt.reputation * 12;
+      this._takeClub(nt, 3, null);
+      news.insert(0, '🌍 انتقلت للعمل في ${dest.country}: دوريك الجديد $leagueName');
+    } catch (_) {
+      teams = sTeams;
+      upper = sUpper;
+      lower = sLower;
+      upperName = sUpN;
+      lowerName = sLoN;
+      leagueName = sLeague;
+      div = sDiv;
+      country = sCountry;
+      leagueId = sLid;
+      userSlots = sSlots[0];
+      userSlotsEl = sSlots[1];
+      userSlotsCo = sSlots[2];
+      foreign
+        ..clear()
+        ..addAll(sForeign);
+      wLeagues
+        ..clear()
+        ..addAll(sWl);
+      wTeams
+        ..clear()
+        ..addAll(sWt);
+      wCups
+        ..clear()
+        ..addAll(sCups);
+      for (final l in [teams, upper, lower]) {
+        for (var i = 0; i < l.length; i++) {
+          l[i].id = i;
+        }
+      }
+      news.insert(0, '⚠️ تعذّر الانتقال إلى الخارج فبقيت في ناديك');
+    }
   }
 }

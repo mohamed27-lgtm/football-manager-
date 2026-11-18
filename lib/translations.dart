@@ -1,5 +1,11 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'ستنتقل لتدريب {} في {} مع بداية الموسم القادم، ويصبح دوريه دوريك الجديد.': ['You will move to coach {} in {} at the start of next season, and its league becomes your new league.', 'Vous entraînerez {} en {} dès le début de la saison prochaine, et sa ligue devient votre nouvelle ligue.', 'Entrenarás a {} en {} desde el inicio de la próxima temporada, y su liga será tu nueva liga.'],
+  'الوجهة': ['Destination', 'Destination', 'Destino'],
+  '🌍 انتقلت للعمل في {}: دوريك الجديد {}': ['🌍 You moved to work in {}: your new league is {}', '🌍 Vous partez travailler en {} : votre nouvelle ligue est {}', '🌍 Te mudaste a trabajar en {}: tu nueva liga es {}'],
+  '⚠️ تعذّر الانتقال إلى الخارج فبقيت في ناديك': ['⚠️ The move abroad failed, so you stay at your club', '⚠️ Le départ à l\'étranger a échoué : vous restez dans votre club', '⚠️ No se pudo realizar el traspaso al extranjero, así que sigues en tu club'],
+  '🌍 وافقت على تدريب {} في الخارج اعتباراً من الموسم القادم': ['🌍 You agreed to coach {} abroad from next season', '🌍 Vous avez accepté d\'entraîner {} à l\'étranger dès la saison prochaine', '🌍 Aceptaste entrenar a {} en el extranjero desde la próxima temporada'],
+  'الانتقال إلى دولة أخرى ممكن فقط عند نهاية الموسم': ['Moving to another country is only possible at the end of the season', 'Un départ à l\'étranger n\'est possible qu\'en fin de saison', 'Irte a otro país solo es posible al final de la temporada'],
   'دور الـ64': ['Round of 64', '32es de finale', 'Treintaidosavos de final'],
   'دور الـ32': ['Round of 32', 'Seizièmes de finale', 'Dieciseisavos de final'],
   'دور الـ16': ['Round of 16', 'Huitièmes de finale', 'Octavos de final'],

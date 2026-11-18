@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'api_football.dart';
 
@@ -6,6 +7,8 @@ import 'api_football.dart';
 class Bundled {
   static List<LeagueData>? _cache;
   static List<LeagueData>? get cached => _cache;
+  @visibleForTesting
+  static set debugCache(List<LeagueData>? l) => _cache = l;
 
   static Map<String, dynamic> _stripImages(Map<String, dynamic> j) {
     j['logo'] = null;
