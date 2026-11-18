@@ -18,6 +18,11 @@ def get(url):
 
 def load_csv_text(name):
     try:
+        req = urllib.request.Request(BASE + name + '.gz', headers={'User-Agent': 'Mozilla/5.0'}, method='HEAD')
+        print('DIAG', name, 'Last-Modified:', urllib.request.urlopen(req, timeout=60).headers.get('Last-Modified'))
+    except Exception as e:
+        print('DIAG head failed', repr(e)[:80])
+    try:
         return gzip.decompress(get(BASE + name + '.gz')).decode('utf-8-sig')
     except Exception as e:
         print(name, '.gz failed:', repr(e)[:120])
@@ -86,6 +91,20 @@ def main():
         out_path = str(ROOT / 'tools' / 'tm_leagues.json.gz')
         ids_path = HERE / 'tm_new_ids.json'
         minimum = (25, 12000)
+    try:
+        rows = list(csv.DictReader(io.StringIO(players_text)))
+        seasons = {}
+        comps = {}
+        for r in rows:
+            seasons[r.get('last_season')] = seasons.get(r.get('last_season'), 0) + 1
+            c = r.get('current_club_domestic_competition_id')
+            if r.get('last_season', '') >= '2025' and c:
+                comps[c] = comps.get(c, 0) + 1
+        print('DIAG players rows:', len(rows), 'last_season counts:', dict(sorted(seasons.items())[-4:]))
+        print('DIAG competitions with recent players:', dict(sorted(comps.items(), key=lambda kv: -kv[1])))
+        print('DIAG sample contracts:', sorted({r.get('contract_expiration_date', '')[:7] for r in rows if r.get('last_season') == max(seasons)})[-6:])
+    except Exception as e:
+        print('DIAG failed', repr(e)[:100])
     today = datetime.date.today()
     season_year = today.year if today.month >= 7 else today.year - 1
     extra, ids = discover(comps_text, ids_path)
