@@ -8,6 +8,7 @@ import 'i18n.dart';
 import 'league_store.dart';
 import 'pack_service.dart';
 import 'logo_store.dart';
+import 'wiki_photos.dart';
 import 'widgets.dart';
 
 /// صفحة تنزيل الصور (شعارات الأندية وصور اللاعبين) لكل دوري — على غرار متجر الإضافات
@@ -26,6 +27,8 @@ class _ImagesScreenState extends State<ImagesScreen> {
   String? current;
   double progress = 0;
   String? error;
+  bool wikiBusy = false;
+  double wikiProg = 0;
   int filter = 0; // 0 الكل، 1 محمّل، 2 غير محمّل
   String query = '';
 
@@ -190,6 +193,68 @@ class _ImagesScreenState extends State<ImagesScreen> {
     );
   }
 
+  Future<void> _wiki() async {
+    _set(() {
+      wikiBusy = true;
+      wikiProg = 0;
+      error = null;
+    });
+    try {
+      await WikiPhotos.download((v) => _set(() => wikiProg = v));
+    } catch (_) {
+      error = 'تعذّر تنزيل صور اللاعبين، تأكد من الاتصال أو أن الحزمة منشورة';
+    }
+    _set(() => wikiBusy = false);
+  }
+
+  Future<void> _wikiRemove() async {
+    await WikiPhotos.remove();
+    _set(() {});
+  }
+
+  Widget _wikiCard() {
+    final n = WikiPhotos.count;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+      child: Column(children: [
+        Row(children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: kPrimary.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.person_pin_rounded, color: kPrimary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('صور لاعبين حرة (ويكيميديا)', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+              Text(n > 0 ? 'محمّلة ($n صورة)' : 'صور حرة الترخيص من ويكيميديا كومنز، مع اسم المصوّر في بطاقة اللاعب', style: const TextStyle(color: kMuted, fontSize: 11.5)),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          if (wikiBusy)
+            Text('${(wikiProg * 100).round()}%', style: const TextStyle(fontWeight: FontWeight.w900, color: kAccent))
+          else if (n > 0) ...[
+            const Icon(Icons.check_circle, color: kAccent),
+            IconButton(onPressed: busy ? null : _wikiRemove, icon: const Icon(Icons.delete_outline, color: Color(0xFFFF8A65))),
+          ] else
+            FilledButton.icon(
+              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+              onPressed: busy ? null : _wiki,
+              icon: const Icon(Icons.download_rounded, size: 18),
+              label: const Text('تنزيل'),
+            ),
+        ]),
+        if (wikiBusy) ...[
+          const SizedBox(height: 10),
+          ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: wikiProg, minHeight: 6)),
+        ],
+      ]),
+    );
+  }
+
   String _mb(int bytes) => '${(bytes / 1e6).toStringAsFixed(1)} MB';
 
   @override
@@ -232,6 +297,7 @@ class _ImagesScreenState extends State<ImagesScreen> {
               ),
               const SizedBox(height: 12),
               _logosCard(),
+              _wikiCard(),
               if (error != null)
                 Container(
                   margin: const EdgeInsets.only(bottom: 10),

@@ -1,5 +1,8 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'صور لاعبين حرة (ويكيميديا)': ['Free player photos (Wikimedia)', 'Photos libres de joueurs (Wikimedia)', 'Fotos libres de jugadores (Wikimedia)'],
+  'تعذّر تنزيل صور اللاعبين، تأكد من الاتصال أو أن الحزمة منشورة': ['Couldn\'t download player photos; check your connection', 'Échec du téléchargement des photos', 'No se pudieron descargar las fotos'],
+  'صور حرة الترخيص من ويكيميديا كومنز، مع اسم المصوّر في بطاقة اللاعب': ['Freely licensed photos from Wikimedia Commons, with photographer credit on the player card', 'Photos sous licence libre de Wikimedia Commons, avec crédit du photographe', 'Fotos de licencia libre de Wikimedia Commons, con crédito del fotógrafo'],
   'مهاجم ثانٍ': ['Second striker', 'Second attaquant', 'Segundo delantero'],
   'رأس حربة': ['Centre-forward', 'Avant-centre', 'Delantero centro'],
   'جناح أيسر': ['Left winger', 'Ailier gauche', 'Extremo izquierdo'],

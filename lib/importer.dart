@@ -29,7 +29,8 @@ Player playerFromApi(ApiPlayer ap, int teamBase, {String? country}) {
       ..height = ap.height
       ..mv0 = ap.value
       ..ov0 = p.overall
-      ..age0 = age;
+      ..age0 = age
+      ..tm = ap.id;
     fillPlayerInfo(p, country: country, seed: ap.id);
     return p;
   }

@@ -1,3 +1,4 @@
+import 'wiki_photos.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'api_football.dart';
@@ -67,6 +68,8 @@ class PhotoIndex {
 
   /// مسار صورة محلية للاعب بلا صورة، أو null
   static String? lookup(Player p) {
+    final w = WikiPhotos.pathFor(p);
+    if (w != null) return w;
     if (_byKey.isEmpty) return null;
     final k = _key(p.name);
     if (k == null) return null;
