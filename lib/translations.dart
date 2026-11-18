@@ -1,5 +1,6 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'تأهلت مباشرة: {}': ['Direct qualifiers: {}', 'Qualifiés directement : {}', 'Clasificados directamente: {}'],
   'مباراة': ['matches', 'matchs', 'partidos'],
   '{} • الدرجة {} • {} نادياً • الأقوى: {}': ['{} • Division {} • {} clubs • Strongest: {}', '{} • Division {} • {} clubs • Le plus fort : {}', '{} • División {} • {} clubes • El más fuerte: {}'],
   'المركز {}/{}': ['Position {}/{}', 'Place {}/{}', 'Puesto {}/{}'],

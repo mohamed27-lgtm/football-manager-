@@ -155,26 +155,11 @@ class CupView extends StatelessWidget {
             ]),
           ),
         ],
-      if (!cup.done) ...[
-        sectionTitle('قرعة ${cup.roundName}'),
-        Panel(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            for (final t in cup.ties)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Text(
-                  '${gs.team(t.home).name}  ×  ${gs.team(t.away).name}',
-                  style: TextStyle(fontWeight: (t.home == uid || t.away == uid) ? FontWeight.w800 : FontWeight.w400),
-                ),
-              ),
-            for (final b in cup.byes)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Text('${gs.team(b).name} — تأهل مباشرة', style: const TextStyle(color: kMuted)),
-              ),
-          ]),
+      if (!cup.done && cup.byes.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
+          child: Text('تأهلت مباشرة: ${cup.byes.map((b) => gs.team(b).name).join('، ')}', style: const TextStyle(color: kMuted, fontSize: 12)),
         ),
-      ],
       for (final e in logs.entries.toList().reversed) ...[
         sectionTitle(e.key),
         Panel(

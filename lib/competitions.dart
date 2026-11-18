@@ -584,28 +584,11 @@ class _CompetitionsViewState extends State<CompetitionsView> {
           ]),
         ),
       CupTree(gs: gs, cup: c),
-      if (!c.done && !c.inGroups && c.ties.isNotEmpty) ...[
-        sectionTitle('قرعة ${c.roundName}'),
-        Panel(
-          child: Column(children: [
-            for (final t in c.ties)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(children: [
-                  teamBadge(gs.team(t.home), size: 24),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(gs.team(t.home).name, style: TextStyle(fontWeight: t.home == gs.user.id ? FontWeight.w900 : FontWeight.w500))),
-                  Text(t.played ? '${t.hg} - ${t.ag}' : 'ضد', style: const TextStyle(color: kMuted)),
-                  Expanded(child: Text(gs.team(t.away).name, textAlign: TextAlign.end, style: TextStyle(fontWeight: t.away == gs.user.id ? FontWeight.w900 : FontWeight.w500))),
-                  const SizedBox(width: 8),
-                  teamBadge(gs.team(t.away), size: 24),
-                ]),
-              ),
-            for (final b in c.byes)
-              Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(children: [teamBadge(gs.team(b), size: 22), const SizedBox(width: 8), Text('${gs.team(b).name} — تأهل مباشرة', style: const TextStyle(color: kMuted, fontSize: 12.5))])),
-          ]),
+      if (!c.done && !c.inGroups && c.byes.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(6, 10, 6, 0),
+          child: Text('تأهلت مباشرة: ${c.byes.map((b) => gs.team(b).name).join('، ')}', style: const TextStyle(color: kMuted, fontSize: 12)),
         ),
-      ],
     ]);
   }
 
