@@ -34,7 +34,6 @@ class Player {
   int contract; // سنوات متبقية
   String? photo;
   String? nat, sub, foot; // الجنسية، المركز الدقيق، القدم
-  int? tm; // معرّف Transfermarkt (يربط اللاعب بصورته الحرة من ويكيميديا)
   String? nat2; // جنسية ثانية (للاعبين المُنشأين)
   String? swNat; // المنتخب الذي اختار تمثيله بعد الإقناع (بدل جنسيته الأساسية)
   int swTry = 0, swWeek = -99; // محاولات الإقناع وأسبوع آخر محاولة
@@ -166,7 +165,6 @@ class Player {
         'ap': awardBoost,
         'loan': onLoan,
         'listed': listed,
-        if (tm != null) 'tm': tm,
         'reg': registered,
         'sal': salary,
         'rs': ratingSum,
@@ -214,7 +212,6 @@ class Player {
         ..awardBoost = (j['ap'] as num?)?.toDouble() ?? 0
         ..onLoan = (j['loan'] as bool?) ?? false
         ..listed = (j['listed'] as bool?) ?? false
-        ..tm = j['tm'] as int?
         ..registered = (j['reg'] as bool?) ?? true
         ..salary = (j['sal'] as num?)?.toDouble()
         ..ratingSum = (j['rs'] as num?)?.toDouble() ?? 0

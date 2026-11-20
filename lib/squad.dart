@@ -2,7 +2,6 @@ import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
 import 'compare.dart';
 import 'data.dart' show subAr;
-import 'wiki_photos.dart';
 import 'flags.dart';
 import 'game_state.dart';
 import 'models.dart';
@@ -609,7 +608,6 @@ class _PlayerCardState extends State<_PlayerCard> {
                   if (p.nat != null && p.nat!.isNotEmpty) ...[FlagBadge(p.nat!, size: 20), const SizedBox(width: 6)],
                   Expanded(child: Text([if (p.nat != null && p.nat!.isNotEmpty) p.nat!, if (gs.clubOfPlayer(p) != null) gs.clubOfPlayer(p)!].join(' • '), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 13))),
                 ]),
-                if (WikiPhotos.credit(p) != null) Padding(padding: const EdgeInsets.only(top: 3), child: Text('📷 ${WikiPhotos.credit(p)}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: kMuted, fontSize: 9.5))),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

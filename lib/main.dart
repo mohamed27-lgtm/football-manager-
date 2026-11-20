@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'coaches.dart';
 import 'photo_index.dart';
-import 'wiki_photos.dart';
 import 'bundled.dart';
 import 'logo_store.dart';
 import 'package:flutter/services.dart';
@@ -21,7 +20,6 @@ Future<void> main() async {
   await loadCoaches();
   unawaited(Bundled.list());
   unawaited(PhotoIndex.build());
-  unawaited(WikiPhotos.load());
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const ManagerApp());
 }
