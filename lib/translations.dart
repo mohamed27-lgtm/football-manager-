@@ -1,5 +1,15 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'أدوار اللاعبين': ['Player roles', 'Rôles des joueurs', 'Roles de jugadores'],
+  'صانع ألعاب متأخر': ['Deep playmaker', 'Meneur reculé', 'Mediocentro creador'],
+  'وسط شامل': ['Box-to-box midfielder', 'Milieu box-to-box', 'Centrocampista total'],
+  'قاطع كرات': ['Ball winner', 'Récupérateur', 'Recuperador'],
+  'ظهير/مدافع مهاجم': ['Attacking full-back', 'Défenseur offensif', 'Defensa ofensivo'],
+  'مدافع مقاتل': ['Stopper', 'Défenseur combatif', 'Defensa luchador'],
+  'مهاجم وهمي': ['False nine', 'Faux numéro 9', 'Falso nueve'],
+  'هدّاف منطقة': ['Poacher', 'Renard des surfaces', 'Cazagoles'],
+  'رأس حربة ثابت': ['Target man', 'Avant-centre pivot', 'Delantero referencia'],
+  'كل دور يعزّز جانباً ويُضعف آخر بنسبة صغيرة: صانع الألعاب يقوّي الوسط ويُضعف الدفاع، والظهير المهاجم يقوّي الهجوم ويترك مساحة خلفه.': ['Each role boosts one side and weakens another slightly: a playmaker strengthens midfield but weakens defence; an attacking full-back adds attack but leaves space behind.', 'Chaque rôle renforce un aspect et en affaiblit un autre légèrement : le meneur renforce le milieu mais affaiblit la défense ; le latéral offensif ajoute de l\'attaque mais laisse de l\'espace derrière.', 'Cada rol refuerza un aspecto y debilita otro levemente: el creador refuerza el medio pero debilita la defensa; el lateral ofensivo suma ataque pero deja espacio atrás.'],
   'منفّذو الكرات الثابتة': ['Set-piece takers', 'Tireurs des coups de pied arrêtés', 'Ejecutores de balón parado'],
   'ركلات الجزاء': ['Penalties', 'Penaltys', 'Penaltis'],
   'الركلات الحرة': ['Free kicks', 'Coups francs', 'Tiros libres'],

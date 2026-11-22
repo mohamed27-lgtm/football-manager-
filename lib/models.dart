@@ -258,6 +258,18 @@ const formations = <Formation>[
   Formation('4-2-3-1', 4, 5, 1),
 ];
 
+/// أدوار اللاعبين: (الاسم، المركز، تأثير الهجوم، الوسط، الدفاع) — نسب صغيرة تُجمع على مستوى الفريق
+const kRoles = <String, (String, Pos, double, double, double)>{
+  'playmaker': ('صانع ألعاب متأخر', Pos.mid, 0.006, 0.02, -0.006),
+  'box2box': ('وسط شامل', Pos.mid, 0.004, 0.01, 0.004),
+  'ballwinner': ('قاطع كرات', Pos.mid, -0.008, 0.0, 0.016),
+  'attfb': ('ظهير/مدافع مهاجم', Pos.def, 0.012, 0.004, -0.014),
+  'stopper': ('مدافع مقاتل', Pos.def, -0.006, 0.0, 0.01),
+  'falsenine': ('مهاجم وهمي', Pos.att, -0.004, 0.018, -0.002),
+  'poacher': ('هدّاف منطقة', Pos.att, 0.014, -0.012, 0.0),
+  'targetman': ('رأس حربة ثابت', Pos.att, 0.008, 0.004, -0.002),
+};
+
 class Team {
   int id;
   final String name;
@@ -270,6 +282,21 @@ class Team {
   int width = 1; // 0 ضيق، 1 متوازن، 2 عريض
   int defLine = 1; // 0 منخفض، 1 متوسط، 2 مرتفع
   int passing = 1; // 0 قصير، 1 مختلط، 2 مباشر
+  final Map<int, String> roles = {}; // معرّف اللاعب → دور (فارغ = الدور العادي)
+
+  /// مجموع تأثير أدوار اللاعبين الموجودين فعلاً على الملعب: (هجوم، وسط، دفاع)
+  (double, double, double) roleEffect(Iterable<Player> onPitch) {
+    var a = 0.0, m = 0.0, d = 0.0;
+    for (final p in onPitch) {
+      final r = kRoles[roles[p.id]];
+      if (r == null || r.$2 != p.pos) continue;
+      a += r.$3;
+      m += r.$4;
+      d += r.$5;
+    }
+    return (a, m, d);
+  }
+
   int penTaker = 0, fkTaker = 0, cornerTaker = 0; // معرّف المنفّذ المحدّد (0 = تلقائي)
 
   /// المنفّذ المحدّد إن كان على أرض الملعب وإلا null
@@ -437,6 +464,7 @@ class Team {
         'dl': defLine,
         'pass': passing,
         'tk': [penTaker, fkTaker, cornerTaker],
+        if (roles.isNotEmpty) 'roles': {for (final e in roles.entries) '${e.key}': e.value},
         'coh': cohesion,
         'lineup': [for (final p in lineup) p.id],
         'budget': budget,
@@ -478,6 +506,13 @@ class Team {
     t.width = (j['wid'] as int?) ?? 1;
     t.defLine = (j['dl'] as int?) ?? 1;
     t.passing = (j['pass'] as int?) ?? 1;
+    final rl = j['roles'] as Map<String, dynamic>?;
+    if (rl != null) {
+      for (final e in rl.entries) {
+        final id = int.tryParse(e.key);
+        if (id != null && kRoles.containsKey(e.value)) t.roles[id] = e.value as String;
+      }
+    }
     final tk = (j['tk'] as List?)?.cast<int>();
     if (tk != null && tk.length == 3) {
       t.penTaker = tk[0];

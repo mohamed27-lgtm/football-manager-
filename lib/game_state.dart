@@ -1205,6 +1205,15 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setRole(Player p, String? role) {
+    if (role == null || !kRoles.containsKey(role) || kRoles[role]!.$2 != p.pos) {
+      user.roles.remove(p.id);
+    } else {
+      user.roles[p.id] = role;
+    }
+    notifyListeners();
+  }
+
   void setTaker(int kind, int id) {
     switch (kind) {
       case 0:

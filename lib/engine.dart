@@ -90,7 +90,10 @@ class Side {
   /// الانسجام وتحليل الطاقم
   double get _form => (0.97 + 0.06 * team.cohesion / 100) * (1 + 0.008 * team.analystLvl) * (slots.any((s) => s.p.trait == 'قائد') ? 1.01 : 1.0);
 
+  (double, double, double) get _roleFx => team.roleEffect(slots.map((s) => s.p));
+
   double get attackPower =>
+      (1 + _roleFx.$1) *
       (0.55 * lineAvg(Pos.att) + 0.45 * lineAvg(Pos.mid)) *
       (1 + 0.03 * (mentality - 2)) *
       pow(max(1, count(Pos.att)) / 2, 0.25) *
@@ -98,6 +101,7 @@ class Side {
       _man;
 
   double get defensePower =>
+      (1 + _roleFx.$3) *
       (0.6 * lineAvg(Pos.def) + 0.25 * lineAvg(Pos.mid) + 0.15 * lineAvg(Pos.gk)) *
       (1 - 0.025 * (mentality - 2)) *
       pow(max(1, count(Pos.def)) / 4, 0.3) *
@@ -105,6 +109,7 @@ class Side {
       _man;
 
   double get midPower =>
+      (1 + _roleFx.$2) *
       lineAvg(Pos.mid) *
       (1 + 0.04 * (team.pressing - 1)) *
       (1 - 0.03 * (team.passing - 1)) *

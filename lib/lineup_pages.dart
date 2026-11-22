@@ -323,6 +323,30 @@ class TacticsScreen extends StatelessWidget {
         ]),
       );
 
+  Widget _roles(Team t) {
+    final ps = [...t.lineup.where((p) => p.pos != Pos.gk)];
+    return Column(children: [
+      for (final p in ps)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(children: [
+            Expanded(child: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5))),
+            DropdownButton<String>(
+              value: kRoles[t.roles[p.id]]?.$2 == p.pos ? t.roles[p.id] : '',
+              underline: const SizedBox(),
+              items: [
+                const DropdownMenuItem(value: '', child: Text('عادي')),
+                for (final e in kRoles.entries)
+                  if (e.value.$2 == p.pos) DropdownMenuItem(value: e.key, child: Text(e.value.$1)),
+              ],
+              onChanged: (v) => gs.setRole(p, v == null || v.isEmpty ? null : v),
+            ),
+          ]),
+        ),
+      const Text('كل دور يعزّز جانباً ويُضعف آخر بنسبة صغيرة: صانع الألعاب يقوّي الوسط ويُضعف الدفاع، والظهير المهاجم يقوّي الهجوم ويترك مساحة خلفه.', style: TextStyle(color: kMuted, fontSize: 11.5, height: 1.5)),
+    ]);
+  }
+
   Widget _takers(Team t) {
     final ps = [...t.lineup.where((p) => p.pos != Pos.gk)];
     Widget row(String label, int kind, int cur) => Padding(
@@ -385,6 +409,7 @@ class TacticsScreen extends StatelessWidget {
               _sec('العرض', _seg(const ['ضيّق', 'عادي', 'عريض'], t.width, gs.setWidth)),
               _sec('خط الدفاع', _seg(const ['عميق', 'عادي', 'مرتفع'], t.defLine, gs.setDefLine)),
               _sec('أسلوب التمرير', _seg(const ['قصير', 'مختلط', 'مباشر'], t.passing, gs.setPassing)),
+              _sec('أدوار اللاعبين', _roles(t)),
               _sec('منفّذو الكرات الثابتة', _takers(t)),
               const Padding(
                 padding: EdgeInsets.only(top: 14),
