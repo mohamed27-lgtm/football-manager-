@@ -384,6 +384,22 @@ class _PlayerCardState extends State<_PlayerCard> {
                 ),
               ),
               const SizedBox(height: 8),
+              if (!p.onLoan) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: p.promise != 0
+                        ? null
+                        : () {
+                            final err = gs.promisePlaying(p);
+                            Navigator.pop(ctx);
+                            snack(err, 'وعدتَ ${p.name} بالمشاركة بانتظام 🤝');
+                          },
+                    child: Text(p.promise != 0 ? 'وعد المشاركة: ${gs.promiseProgress(p).$1} أساسياً من ${gs.promiseProgress(p).$2} (المطلوب نحو 55%)' : 'وعد بالمشاركة بانتظام'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               Row(children: [
                 Expanded(
                   child: OutlinedButton(

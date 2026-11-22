@@ -45,6 +45,7 @@ class Player {
   double? mv0; // القيمة السوقية الحقيقية عند الاستيراد (M€)
   int? ov0, age0; // التقييم والعمر عند الاستيراد
   bool free = false, onLoan = false, listed = false, registered = true;
+  int promise = 0, promBase = 0, promStarts = 0; // وعد المشاركة: 0 لا وعد، ثم أساس عدد مباريات الفريق وعدد مرات الأساسية منذ الوعد
   double awardBoost = 0; // هالة الجوائز: نسبة (0.16 = +16%) تتلاشى مع الوقت
   bool filler = false; // لاعب حشو مولَّد لملء التشكيلة (لا يظهر في السوق)
   double? salary;
@@ -165,6 +166,7 @@ class Player {
         'ap': awardBoost,
         'loan': onLoan,
         'listed': listed,
+        if (promise != 0) 'pm': [promise, promBase, promStarts],
         'reg': registered,
         'sal': salary,
         'rs': ratingSum,
@@ -212,6 +214,9 @@ class Player {
         ..awardBoost = (j['ap'] as num?)?.toDouble() ?? 0
         ..onLoan = (j['loan'] as bool?) ?? false
         ..listed = (j['listed'] as bool?) ?? false
+        ..promise = ((j['pm'] as List?)?[0] as int?) ?? 0
+        ..promBase = ((j['pm'] as List?)?[1] as int?) ?? 0
+        ..promStarts = ((j['pm'] as List?)?[2] as int?) ?? 0
         ..registered = (j['reg'] as bool?) ?? true
         ..salary = (j['sal'] as num?)?.toDouble()
         ..ratingSum = (j['rs'] as num?)?.toDouble() ?? 0

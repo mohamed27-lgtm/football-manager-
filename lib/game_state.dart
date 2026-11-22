@@ -1387,6 +1387,7 @@ class GameState extends ChangeNotifier {
       }
     }
     _lockerRoom();
+    _promisesTick();
     for (final p in user.squad) {
       if (p.injuredWeeks > 0 && !_injBefore.contains(p)) {
         news.insert(0, p.injType == null ? '🚑 أُصيب ${p.name} لمدة ${p.injuredWeeks} أسابيع' : '🚑 إصابة ${p.name} — ${p.injType}: غياب ${p.injuredWeeks} أسابيع');
@@ -2937,6 +2938,49 @@ class GameState extends ChangeNotifier {
     w = w.clamp(0, 6);
     p.adapt = w;
     if (notify && w >= 3) news.insert(0, '🧳 ${p.name} يحتاج وقتاً للتأقلم مع الدوري الجديد (نحو $w أسابيع)');
+  }
+
+  /// وعود المشاركة: عدد الوعود النشطة وحدّها
+  static const maxPromises = 3;
+  static const promiseGames = 8;
+  int get activePromises => user.squad.where((p) => p.promise != 0).length;
+
+  /// وعد لاعب بالمشاركة بانتظام: يرفع معنوياته الآن ويُحاسَب عليه بعد [promiseGames] مباريات
+  String? promisePlaying(Player p) {
+    if (p.promise != 0) return 'وعدتَ هذا اللاعب بالفعل';
+    if (activePromises >= maxPromises) return 'لا يمكن أكثر من $maxPromises وعود في الوقت نفسه';
+    p
+      ..promise = 1
+      ..promBase = user.played
+      ..promStarts = 0
+      ..morale = min(100, p.morale + 6);
+    notifyListeners();
+    return null;
+  }
+
+  /// تقدّم الوعد: (مرات الأساسية، المباريات المنقضية)
+  (int, int) promiseProgress(Player p) => (p.promStarts, max(0, user.played - p.promBase));
+
+  void _promisesTick() {
+    for (final p in user.squad) {
+      if (p.promise == 0) continue;
+      final (st, gm) = promiseProgress(p);
+      if (gm < promiseGames) continue;
+      final ok = st >= gm * 0.55;
+      p.promise = 0;
+      if (ok) {
+        p.morale = min(100, p.morale + 10);
+        news.insert(0, '🤝 وفيتَ بوعدك لـ${p.name} (لعب أساسياً $st من $gm) وارتفعت ثقته بك');
+      } else {
+        p.morale = max(0, p.morale - 18);
+        user.cohesion = max(30, user.cohesion - 2).toDouble();
+        news.insert(0, '😠 أخلفتَ وعدك لـ${p.name}: لعب أساسياً $st من $gm فقط وتراجعت معنوياته');
+        if ((p.trait == 'طموح' || st * 4 < gm) && !p.listed && !p.onLoan) {
+          p.listed = true;
+          news.insert(0, '📣 ${p.name} يطلب الرحيل بعد أن أخلفتَ وعدك');
+        }
+      }
+    }
   }
 
   /// غرفة الملابس: شكاوى المشاركة، خلافات المتقلبين، وتأثير القادة

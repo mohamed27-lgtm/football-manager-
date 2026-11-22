@@ -62,6 +62,7 @@ class Side {
     slots = [for (var i = 0; i < 11; i++) Slot(s[i], team.lineup[i])];
     for (final sl in slots) {
       sl.p.apps++;
+      if (isUser && sl.p.promise == 1) sl.p.promStarts++;
       ratings[sl.p] = 6.0;
     }
   }

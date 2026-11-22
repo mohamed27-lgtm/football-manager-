@@ -1,5 +1,8 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'وعد بالمشاركة بانتظام': ['Promise regular playing time', 'Promettre du temps de jeu régulier', 'Prometer minutos regulares'],
+  'وعدتَ هذا اللاعب بالفعل': ['You\'ve already made this player a promise', 'Vous avez déjà fait une promesse à ce joueur', 'Ya le hiciste una promesa a este jugador'],
+  'لا يمكن أكثر من 3 وعود في الوقت نفسه': ['No more than 3 promises at a time', 'Pas plus de 3 promesses à la fois', 'No más de 3 promesas a la vez'],
   'أدوار اللاعبين': ['Player roles', 'Rôles des joueurs', 'Roles de jugadores'],
   'صانع ألعاب متأخر': ['Deep playmaker', 'Meneur reculé', 'Mediocentro creador'],
   'وسط شامل': ['Box-to-box midfielder', 'Milieu box-to-box', 'Centrocampista total'],
