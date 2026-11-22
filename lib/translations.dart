@@ -1,5 +1,8 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'يظهر منحنى نمو اللاعب بعد موسمين مسجّلين على الأقل.': ['The growth curve appears after at least two recorded seasons.', 'La courbe de progression apparaît après au moins deux saisons enregistrées.', 'La curva de crecimiento aparece tras al menos dos temporadas registradas.'],
+  'منحنى النمو': ['Growth curve', 'Courbe de progression', 'Curva de crecimiento'],
+  'الإمكانية {}': ['Potential {}', 'Potentiel {}', 'Potencial {}'],
   '📰 آخر العناوين': ['📰 Latest headlines', '📰 Dernières actualités', '📰 Últimos titulares'],
   'اليوم آخر يوم في الميركاتو: الأندية تتسابق على الصفقات': ['Deadline day: clubs race to complete deals', 'Dernier jour du mercato : les clubs se ruent sur les transferts', 'Último día del mercado: los clubes corren por los fichajes'],
   '{} يتصدر الدوري': ['{} lead the league', '{} est leader du championnat', '{} lidera la liga'],

@@ -2430,10 +2430,12 @@ class GameState extends ChangeNotifier {
         p.awardBoost *= 0.6;
         final played = p.apps >= 15;
         final form = p.rated == 0 ? 0 : (p.avgRating >= 7.3 ? 1 : (p.avgRating <= 6.2 && played ? -1 : 0));
+        final o0 = p.overall;
         _develop(p, form, t == user && user.trainingLvl >= 3 ? 1 : 0);
         if (p.apps > 0) {
           p.career.add({
             's': season,
+            'o': o0,
             't': t.name,
             'a': p.apps,
             'g': p.goals,

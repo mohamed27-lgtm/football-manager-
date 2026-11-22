@@ -65,6 +65,17 @@ class Player {
   int injuryCount = 0;
   List<String> injLog = []; // سجل الإصابات: 'الموسم|النوع|الأسابيع' (آخر 8)
 
+  /// نقاط منحنى النمو: (تسمية الموسم، التقييم) من سجل المسيرة، ثم التقييم الحالي
+  List<(String, int)> get growthPoints {
+    final out = <(String, int)>[];
+    for (final c in career) {
+      final o = c['o'];
+      if (o is num) out.add(('م${c['s']}', o.toInt()));
+    }
+    out.add(('الآن', overall));
+    return out.length > 9 ? out.sublist(out.length - 9) : out;
+  }
+
   /// قابلية الإصابة (ثابتة من هوية اللاعب): -1 هشّ بدنياً، 0 عادي، 1 متين
   int get fragility {
     final h = ((id * 40503) >> 4) % 100;

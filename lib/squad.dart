@@ -539,6 +539,25 @@ class _PlayerCardState extends State<_PlayerCard> {
           ])),
       ],
       if (tab == 3) ...[
+        Builder(builder: (_) {
+          final gp = p.growthPoints;
+          if (gp.length < 3) {
+            return _card(const Text('يظهر منحنى نمو اللاعب بعد موسمين مسجّلين على الأقل.', style: TextStyle(color: kMuted, fontSize: 12.5)), pad: const EdgeInsets.all(14));
+          }
+          return _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Expanded(child: Text('منحنى النمو', style: TextStyle(fontWeight: FontWeight.w900))),
+              Text('الإمكانية ${p.potential}', style: const TextStyle(color: kMuted, fontSize: 12)),
+            ]),
+            const SizedBox(height: 10),
+            SizedBox(height: 120, width: double.infinity, child: CustomPaint(painter: GrowthPainter([for (final e in gp) e.$2], p.potential))),
+            const SizedBox(height: 4),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text(gp.first.$1, style: const TextStyle(color: kMuted, fontSize: 11)),
+              Text(gp.last.$1, style: const TextStyle(color: kMuted, fontSize: 11)),
+            ]),
+          ]), pad: const EdgeInsets.all(14));
+        }),
         if (p.career.isEmpty) const Text('لا توجد مسيرة مسجّلة بعد', style: TextStyle(color: kMuted)),
         if (p.career.isNotEmpty)
           _card(Column(children: [
@@ -675,6 +694,48 @@ class _PlayerCardState extends State<_PlayerCard> {
       ]),
     );
   }
+}
+
+/// منحنى تطور تقييم اللاعب عبر المواسم مع خط متقطع للإمكانية القصوى
+class GrowthPainter extends CustomPainter {
+  final List<int> v;
+  final int potential;
+  GrowthPainter(this.v, this.potential);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (v.length < 2) return;
+    final lo = (v.reduce((a, b) => a < b ? a : b) - 3).clamp(0, 100).toDouble();
+    final hi = ((v.reduce((a, b) => a > b ? a : b) > potential ? v.reduce((a, b) => a > b ? a : b) : potential) + 3).clamp(0, 100).toDouble();
+    final span = (hi - lo) <= 0 ? 1.0 : hi - lo;
+    double y(num x) => size.height - ((x - lo) / span) * (size.height - 8) - 4;
+    double x(int i) => 6 + i * ((size.width - 12) / (v.length - 1));
+    final grid = Paint()..color = const Color(0x22808080)..strokeWidth = 1;
+    for (var k = 0; k < 4; k++) {
+      final gy = 4 + k * (size.height - 8) / 3;
+      canvas.drawLine(Offset(0, gy), Offset(size.width, gy), grid);
+    }
+    final pot = Paint()..color = const Color(0xFFF5A524)..strokeWidth = 1.5;
+    final py = y(potential);
+    for (double dx = 0; dx < size.width; dx += 10) {
+      canvas.drawLine(Offset(dx, py), Offset(dx + 5, py), pot);
+    }
+    final path = Path()..moveTo(x(0), y(v[0]));
+    for (var i = 1; i < v.length; i++) {
+      path.lineTo(x(i), y(v[i]));
+    }
+    canvas.drawPath(path, Paint()..style = PaintingStyle.stroke..strokeWidth = 3..strokeJoin = StrokeJoin.round..color = const Color(0xFF1FA58A));
+    for (var i = 0; i < v.length; i++) {
+      canvas.drawCircle(Offset(x(i), y(v[i])), i == v.length - 1 ? 5 : 3.5, Paint()..color = const Color(0xFF1FA58A));
+      if (i == 0 || i == v.length - 1) {
+        final tp = TextPainter(text: TextSpan(text: '${v[i]}', style: const TextStyle(color: Color(0xFF1FA58A), fontSize: 12, fontWeight: FontWeight.w900)), textDirection: TextDirection.ltr)..layout();
+        tp.paint(canvas, Offset(x(i) - tp.width / 2, y(v[i]) - 18 < 0 ? y(v[i]) + 6 : y(v[i]) - 18));
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant GrowthPainter o) => o.v != v || o.potential != potential;
 }
 
 class _GaugePainter extends CustomPainter {
