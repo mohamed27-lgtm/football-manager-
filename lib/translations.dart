@@ -1,5 +1,15 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'تدريب فردي ({}/{})': ['Individual training ({}/{})', 'Entraînement individuel ({}/{})', 'Entrenamiento individual ({}/{})'],
+  'يرفع فرصة تطور المهارة المختارة نحو 35% لكنه يرهق اللاعب أكثر كل أسبوع.': ['Raises the chance of improving the chosen skill by about 35% but tires the player more each week.', 'Augmente d\'environ 35 % les chances de progresser dans la compétence choisie mais fatigue davantage le joueur chaque semaine.', 'Aumenta en torno a un 35% la probabilidad de mejorar la habilidad elegida pero cansa más al jugador cada semana.'],
+  'بدون تدريب فردي': ['No individual training', 'Aucun entraînement individuel', 'Sin entrenamiento individual'],
+  'الهجوم والتسديد': ['Attacking & shooting', 'Attaque et tir', 'Ataque y disparo'],
+  'أُلغي التدريب الفردي': ['Individual training cancelled', 'Entraînement individuel annulé', 'Entrenamiento individual cancelado'],
+  'يتدرب {} على {} 💪': ['{} is training {} 💪', '{} travaille {} 💪', '{} entrena {} 💪'],
+  'تدريب فردي': ['Individual training', 'Entraînement individuel', 'Entrenamiento individual'],
+  'تدريب فردي: {}': ['Individual training: {}', 'Entraînement individuel : {}', 'Entrenamiento individual: {}'],
+  'هذه المهارة لا تناسب مركز اللاعب': ['This skill doesn\'t suit the player\'s position', 'Cette compétence ne convient pas au poste du joueur', 'Esta habilidad no encaja con la posición del jugador'],
+  'الحد الأقصى {} لاعبين في التدريب الفردي (يزيد بتطوير المدرب المساعد)': ['Maximum {} players in individual training (grows with assistant coach upgrades)', 'Maximum {} joueurs en entraînement individuel (augmente avec l\'adjoint)', 'Máximo {} jugadores en entrenamiento individual (aumenta con el entrenador asistente)'],
   '{} يرشد {}': ['{} is mentoring {}', '{} guide {}', '{} es mentor de {}'],
   'أُنهي الإرشاد': ['Mentoring ended', 'Mentorat terminé', 'Mentoría finalizada'],
   'لا يوجد مرشد مناسب: يلزم لاعب 29+ عاماً في المركز نفسه وتقييم 62+': ['No suitable mentor: need a 29+ player in the same position rated 62+', 'Aucun mentor adapté : joueur de 29 ans et + au même poste, note 62+', 'Sin mentor adecuado: se necesita un jugador de 29+ en la misma posición con 62+'],

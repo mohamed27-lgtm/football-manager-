@@ -1599,14 +1599,51 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ───────── التدريب الفردي: تركيز مهارة لكل لاعب مقابل إجهاد إضافي ─────────
+  static const focusNames = {'atk': 'الهجوم والتسديد', 'pas': 'التمرير', 'def': 'الدفاع', 'gk': 'حراسة المرمى'};
+
+  int get maxFocus => 3 + (staff['coach'] ?? 0);
+  int get focusCount => user.squad.where((p) => p.focus != null).length;
+
+  /// الخيارات الصالحة لمركز اللاعب
+  List<String> focusOptions(Player p) => p.pos == Pos.gk ? ['gk'] : (p.pos == Pos.att ? ['atk', 'pas'] : (p.pos == Pos.mid ? ['atk', 'pas', 'def'] : ['def', 'pas']));
+
+  String? setFocus(Player p, String? f) {
+    if (f == null) {
+      p.focus = null;
+    } else {
+      if (!focusOptions(p).contains(f)) return 'هذه المهارة لا تناسب مركز اللاعب';
+      if (p.focus == null && focusCount >= maxFocus) return 'الحد الأقصى $maxFocus لاعبين في التدريب الفردي (يزيد بتطوير المدرب المساعد)';
+      p.focus = f;
+    }
+    notifyListeners();
+    return null;
+  }
+
   void _train(Player p) {
-    if (training == 'mental' || training == 'physical') return;
+    final f = p.focus;
+    if (f != null && training != 'mental') {
+      p.load = min(100, p.load + 2.5); // إجهاد التدريب الإضافي
+    } else if (training == 'mental' || training == 'physical') {
+      return;
+    }
     if (p.overall >= p.potential) return;
     final base = p.age <= 24 ? 0.14 : (p.age <= 29 ? 0.06 : 0.02);
-    final chance = base * (1 + 0.25 * (user.trainingLvl - 1)) * (1 + 0.1 * (staff['coach'] ?? 0)) * intensityGain[trainIntensity] * (indTrain && p.age <= 22 ? 1.25 : 1.0);
+    final chance = base * (1 + 0.25 * (user.trainingLvl - 1)) * (1 + 0.1 * (staff['coach'] ?? 0)) * intensityGain[trainIntensity] * (indTrain && p.age <= 22 ? 1.25 : 1.0) * (f != null ? 1.35 : 1.0);
     if (rng.nextDouble() > chance) return;
     if (p.pos == Pos.gk) {
       p.gk = min(95, p.gk + 1);
+      return;
+    }
+    if (f != null) {
+      switch (f) {
+        case 'atk':
+          p.atk = min(95, p.atk + 1);
+        case 'pas':
+          p.pas = min(95, p.pas + 1);
+        case 'def':
+          p.def = min(95, p.def + 1);
+      }
       return;
     }
     switch (training) {
@@ -2307,7 +2344,7 @@ class GameState extends ChangeNotifier {
         continue;
       }
       if (mentee.trait == 'متقلب' && (mentor.trait == 'قائد' || mentor.trait == 'محترف') && rng.nextDouble() < 0.35) {
-        mentee.trait = 'محترف';
+        mentee.traitOverride = 'محترف';
         news.insert(0, '🎓 تأثر ${mentee.name} بمرشده ${mentor.name} وصار لاعباً محترفاً');
       }
       if (mentee.age >= 22) {

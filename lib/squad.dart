@@ -385,6 +385,33 @@ class _PlayerCardState extends State<_PlayerCard> {
                 ),
               ),
               const SizedBox(height: 8),
+              if (!p.onLoan) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      final opts = gs.focusOptions(p);
+                      final pick = await showModalBottomSheet<String>(
+                        context: ctx,
+                        builder: (_) => SafeArea(
+                          child: ListView(shrinkWrap: true, padding: const EdgeInsets.all(14), children: [
+                            Text('تدريب فردي (${gs.focusCount}/${gs.maxFocus})', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                            const Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Text('يرفع فرصة تطور المهارة المختارة نحو 35% لكنه يرهق اللاعب أكثر كل أسبوع.', style: TextStyle(color: kMuted, fontSize: 12))),
+                            ListTile(title: const Text('بدون تدريب فردي'), onTap: () => Navigator.pop(ctx, '')),
+                            for (final o in opts) ListTile(title: Text(GameState.focusNames[o]!), onTap: () => Navigator.pop(ctx, o)),
+                          ]),
+                        ),
+                      );
+                      if (pick == null) return;
+                      final err = gs.setFocus(p, pick.isEmpty ? null : pick);
+                      Navigator.pop(ctx);
+                      snack(err, pick.isEmpty ? 'أُلغي التدريب الفردي' : 'يتدرب ${p.name} على ${GameState.focusNames[pick]} 💪');
+                    },
+                    child: Text(p.focus == null ? 'تدريب فردي' : 'تدريب فردي: ${GameState.focusNames[p.focus]}'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               if (!p.onLoan && (p.age <= 21 || gs.menteeOf(p) != null)) ...[
                 SizedBox(
                   width: double.infinity,

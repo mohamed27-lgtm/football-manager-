@@ -36,14 +36,16 @@ void main() {
     final kid = mid[0]..age = 19;
     final old = mid[1]
       ..age = 32
-      ..overall = 70
-      ..trait = 'قائد';
+      ..pas = 70
+      ..atk = 70
+      ..def = 70
+      ..traitOverride = 'قائد';
     expect(gs.canMentor(old, kid), isTrue);
     expect(gs.assignMentor(kid, old), isNull);
     expect(gs.mentorOf(kid), same(old));
     expect(gs.menteeOf(old), same(kid));
     expect(gs.mentorFactor(kid), 1.2);
-    old.trait = 'عادي';
+    old.traitOverride = 'عادي';
     expect(gs.mentorFactor(kid), 1.12);
     expect(gs.canMentor(old, mid[2]..age = 18), isFalse, reason: 'المرشد مشغول');
     final grown = mid[3]..age = 25;
@@ -56,7 +58,9 @@ void main() {
     expect(gs.mentorFactor(kid), 1.0);
     final weak = sq.firstWhere((p) => p.pos == Pos.def)
       ..age = 33
-      ..overall = 50;
+      ..def = 50
+      ..pas = 50
+      ..atk = 50;
     final kid2 = sq.firstWhere((p) => p.pos == Pos.def && p != weak)..age = 18;
     expect(gs.canMentor(weak, kid2), isFalse, reason: 'تقييم ضعيف');
   });

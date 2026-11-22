@@ -45,6 +45,7 @@ class Player {
   double? mv0; // القيمة السوقية الحقيقية عند الاستيراد (M€)
   int? ov0, age0; // التقييم والعمر عند الاستيراد
   bool free = false, onLoan = false, listed = false, registered = true;
+  String? focus; // تدريب فردي: 'atk' | 'pas' | 'def' | 'gk'
   int promise = 0, promBase = 0, promStarts = 0; // وعد المشاركة: 0 لا وعد، ثم أساس عدد مباريات الفريق وعدد مرات الأساسية منذ الوعد
   double awardBoost = 0; // هالة الجوائز: نسبة (0.16 = +16%) تتلاشى مع الوقت
   bool filler = false; // لاعب حشو مولَّد لملء التشكيلة (لا يظهر في السوق)
@@ -140,7 +141,9 @@ class Player {
       overall * (0.55 + 0.45 * fitness / 100) * (0.92 + 0.16 * morale / 100) * (adapt > 0 ? 1 - 0.05 * min(adapt, 6) / 6 : 1.0);
 
   /// شخصية اللاعب (ثابتة من هويته): تؤثر في تطوره وانضباطه وطموحه
+  String? traitOverride; // يُضبط عند تغيّر طبع اللاعب (كتأثر بمرشد)
   String get trait {
+    if (traitOverride != null) return traitOverride!;
     final h = ((id * 2654435761) >> 9) % 100;
     if (h < 26) return 'محترف';
     if (h < 44) return 'متقلب';
@@ -213,6 +216,8 @@ class Player {
         'loan': onLoan,
         'listed': listed,
         if (promise != 0) 'pm': [promise, promBase, promStarts],
+        if (focus != null) 'fc': focus,
+        if (traitOverride != null) 'tro': traitOverride,
         'reg': registered,
         'sal': salary,
         'rs': ratingSum,
@@ -262,6 +267,8 @@ class Player {
         ..awardBoost = (j['ap'] as num?)?.toDouble() ?? 0
         ..onLoan = (j['loan'] as bool?) ?? false
         ..listed = (j['listed'] as bool?) ?? false
+        ..traitOverride = ['محترف', 'متقلب', 'قائد', 'طموح', 'عادي'].contains(j['tro']) ? j['tro'] as String : null
+        ..focus = ['atk', 'pas', 'def', 'gk'].contains(j['fc']) ? j['fc'] as String : null
         ..promise = ((j['pm'] as List?)?[0] as int?) ?? 0
         ..promBase = ((j['pm'] as List?)?[1] as int?) ?? 0
         ..promStarts = ((j['pm'] as List?)?[2] as int?) ?? 0
