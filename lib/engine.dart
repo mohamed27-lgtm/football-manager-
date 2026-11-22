@@ -380,6 +380,7 @@ class MatchSim {
       s.ratings.forEach((p, r) {
         p.ratingSum += r;
         p.rated++;
+        p.addRating(r);
       });
     }
   }

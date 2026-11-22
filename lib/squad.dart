@@ -46,6 +46,7 @@ class PlayerTile extends StatelessWidget {
                 PosChip(p.pos),
                 if (p.sub != null && p.sub!.isNotEmpty) Text(subAr(p.sub), style: const TextStyle(color: kMuted, fontSize: 11.5)),
                 Text('${p.age} سنة', style: const TextStyle(color: kMuted, fontSize: 12)),
+                if (p.formTrend != 0) Text(p.formTrend > 0 ? '▲ فورمة' : '▼ فورمة', style: TextStyle(color: p.formTrend > 0 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D), fontSize: 11.5, fontWeight: FontWeight.w800)),
                 if (st != null) Text(st, style: const TextStyle(color: Color(0xFFFF7043), fontSize: 12)),
                 for (final t in p.traits.take(2)) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), decoration: BoxDecoration(color: const Color(0xFF6A6FC4).withOpacity(0.15), borderRadius: BorderRadius.circular(6)), child: Text(t, style: const TextStyle(color: Color(0xFF6A6FC4), fontSize: 10.5, fontWeight: FontWeight.w700))),
               ]),
@@ -464,6 +465,10 @@ class _PlayerCardState extends State<_PlayerCard> {
         _bars([('اللياقة', p.fitness)]),
         _section('ذهنية'),
         _bars([('المعنويات', p.morale)]),
+        if (p.recent.length >= 3) _card(Row(children: [
+          const Expanded(child: Text('الفورمة (آخر المباريات)', style: TextStyle(fontWeight: FontWeight.w800))),
+          Text('${p.formTrend > 0 ? '▲ ' : p.formTrend < 0 ? '▼ ' : '• '}${p.formAvg.toStringAsFixed(1)}', style: TextStyle(fontWeight: FontWeight.w900, color: p.formTrend > 0 ? const Color(0xFF1FA58A) : p.formTrend < 0 ? const Color(0xFFE5533D) : kMuted)),
+        ]), pad: const EdgeInsets.all(14)),
         _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             const Expanded(child: Text('الإمكانية المتوقعة', style: TextStyle(fontWeight: FontWeight.w800))),

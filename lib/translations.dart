@@ -1,5 +1,8 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  '▲ فورمة': ['▲ In form', '▲ En forme', '▲ En forma'],
+  '▼ فورمة': ['▼ Out of form', '▼ Hors de forme', '▼ Fuera de forma'],
+  'الفورمة (آخر المباريات)': ['Form (recent matches)', 'Forme (derniers matchs)', 'Forma (últimos partidos)'],
   'الكلاسيكو': ['El Clásico', 'El Clásico', 'El Clásico'],
   'ديربي مدريد': ['Madrid derby', 'Derby de Madrid', 'Derbi madrileño'],
   'ديربي كتالونيا': ['Catalan derby', 'Derby catalan', 'Derbi catalán'],

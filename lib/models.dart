@@ -60,6 +60,7 @@ class Player {
   int suspendedMatches = 0;
   int goals = 0, assists = 0, apps = 0, yellows = 0;
   double ratingSum = 0;
+  List<double> recent = []; // تقييمات آخر 5 مباريات (الفورمة)
   int rated = 0;
   int injuryCount = 0;
   double? optionFee; // إعارة بخيار/إلزامية شراء
@@ -90,7 +91,22 @@ class Player {
         Pos.att => (atk * 0.7 + pas * 0.2 + def * 0.1).round(),
       };
 
+  /// الفورمة: متوسط آخر التقييمات (يلزم 3 على الأقل)، 0 إن لم تكفِ
+  double get formAvg => recent.length < 3 ? 0 : recent.fold(0.0, (a, b) => a + b) / recent.length;
+
+  /// اتجاه الفورمة: 1 جيدة، -1 سيئة، 0 عادية
+  int get formTrend => recent.length < 3 ? 0 : (formAvg >= 7.2 ? 1 : (formAvg <= 6.3 ? -1 : 0));
+
+  /// معامل الفورمة على الأداء: من نحو 0.977 إلى 1.03
+  double get formFactor => recent.length < 3 ? 1.0 : 1 + (formAvg - 6.7).clamp(-1.0, 1.2).toDouble() * 0.025;
+
+  void addRating(double r) {
+    recent.add(r);
+    if (recent.length > 5) recent.removeAt(0);
+  }
+
   double get effective =>
+      formFactor *
       overall * (0.55 + 0.45 * fitness / 100) * (0.92 + 0.16 * morale / 100) * (adapt > 0 ? 1 - 0.05 * min(adapt, 6) / 6 : 1.0);
 
   /// شخصية اللاعب (ثابتة من هويته): تؤثر في تطوره وانضباطه وطموحه
@@ -170,6 +186,7 @@ class Player {
         'reg': registered,
         'sal': salary,
         'rs': ratingSum,
+        if (recent.isNotEmpty) 'fm': recent,
         'rn': rated,
         'ic': injuryCount,
         'opt': optionFee,
@@ -220,6 +237,7 @@ class Player {
         ..registered = (j['reg'] as bool?) ?? true
         ..salary = (j['sal'] as num?)?.toDouble()
         ..ratingSum = (j['rs'] as num?)?.toDouble() ?? 0
+        ..recent = [for (final v in (j['fm'] as List?) ?? const []) (v as num).toDouble()]
         ..rated = (j['rn'] as int?) ?? 0
         ..injuryCount = (j['ic'] as int?) ?? 0
         ..optionFee = (j['opt'] as num?)?.toDouble()
