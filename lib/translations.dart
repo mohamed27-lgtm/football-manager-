@@ -1,5 +1,10 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  '⏳ الجولة القادمة هي الأخيرة قبل إغلاق الميركاتو، أنجز صفقاتك الآن': ['⏳ Next round is the last before the window closes — finish your deals now', '⏳ Le prochain tour est le dernier avant la clôture du mercato : concluez maintenant', '⏳ La próxima jornada es la última antes del cierre: cierra tus fichajes ya'],
+  '⏰ يوم إغلاق الميركاتو! آخر فرصة للبيع والشراء، والعروض تنتهي بالإغلاق': ['⏰ Transfer deadline day! Last chance to buy and sell; offers expire at the close', '⏰ Dernier jour du mercato ! Dernière chance d\'acheter et de vendre ; les offres expirent à la clôture', '⏰ ¡Último día del mercado! Última oportunidad de comprar y vender; las ofertas caducan al cierre'],
+  '⚡ عرض اللحظة الأخيرة من {} لشراء {}: {} (ينتهي بإغلاق السوق)': ['⚡ Last-minute bid from {} for {}: {} (expires at the close)', '⚡ Offre de dernière minute de {} pour {} : {} (expire à la clôture)', '⚡ Oferta de última hora de {} por {}: {} (caduca al cierre)'],
+  '📰 صفقات اللحظة الأخيرة تتوالى بين الأندية': ['📰 Last-minute deals pile up between clubs', '📰 Les transferts de dernière minute s\'enchaînent entre clubs', '📰 Los fichajes de última hora se suceden entre clubes'],
+  'آخر يوم في الميركاتو! تُغلق النافذة بعد هذه الجولة': ['Deadline day! The window closes after this round', 'Dernier jour du mercato ! La fenêtre ferme après ce tour', '¡Último día del mercado! La ventana cierra tras esta jornada'],
   '▲ فورمة': ['▲ In form', '▲ En forme', '▲ En forma'],
   '▼ فورمة': ['▼ Out of form', '▼ Hors de forme', '▼ Fuera de forma'],
   'الفورمة (آخر المباريات)': ['Form (recent matches)', 'Forme (derniers matchs)', 'Forma (últimos partidos)'],

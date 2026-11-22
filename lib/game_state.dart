@@ -1920,6 +1920,60 @@ class GameState extends ChangeNotifier {
       _distressSales();
       _aiTransfers();
     }
+    if (deadlineEve && _eveKey != season * 1000 + week) {
+      _eveKey = season * 1000 + week;
+      news.insert(0, '⏳ الجولة القادمة هي الأخيرة قبل إغلاق الميركاتو، أنجز صفقاتك الآن');
+    }
+    if (deadlineDay) _deadlineBlitz();
+  }
+
+  int _eveKey = -1;
+
+  /// آخر جولة تكون فيها النافذة مفتوحة (صيفاً أو شتاءً)
+  bool get deadlineDay {
+    if (!windowOpen) return false;
+    final h = rounds.length ~/ 2;
+    return week == 3 || week == h + 2;
+  }
+
+  /// الجولة التي تسبق يوم الإغلاق
+  bool get deadlineEve {
+    if (!windowOpen || deadlineDay) return false;
+    final h = rounds.length ~/ 2;
+    return week == 2 || week == h + 1;
+  }
+
+  int _ddKey = -1; // يمنع تكرار حدث يوم الإغلاق في الجولة نفسها
+
+  /// يوم إغلاق الميركاتو: عروض اللحظة الأخيرة (تنتهي بالإغلاق) وصفقات أكثر بين الأندية وعناوين خاصة
+  void _deadlineBlitz() {
+    final key = season * 1000 + week;
+    if (_ddKey == key) return;
+    _ddKey = key;
+    news.insert(0, '⏰ يوم إغلاق الميركاتو! آخر فرصة للبيع والشراء، والعروض تنتهي بالإغلاق');
+    var made = 0;
+    final others = teams.where((t) => t != user).toList();
+    if (others.isNotEmpty && user.squad.length > 16) {
+      final pool = [...user.squad.where((p) => !p.onLoan && p.overall >= 62 && !offers.any((o) => o.player == p))]..shuffle(rng);
+      for (final p in pool) {
+        if (made >= 2 || offers.length >= 4) break;
+        if (rng.nextDouble() > (p.listed ? 0.5 : 0.07)) continue;
+        final amount = ((p.value * (1.0 + rng.nextDouble() * 0.35)) * 10).round() / 10;
+        final buyers = [
+          ...others.where((t) => t.budget >= amount && p.overall >= t.strength - 6),
+          ...worldBuyers(p, amount),
+        ];
+        if (buyers.isEmpty) continue;
+        final club = buyers[rng.nextInt(buyers.length)];
+        offers.add(Offer(p, club.name, max(0.1, amount), 1));
+        news.insert(0, '⚡ عرض اللحظة الأخيرة من ${club.name} لشراء ${p.name}: ${money1(amount)} (ينتهي بإغلاق السوق)');
+        made++;
+      }
+    }
+    // الأندية الأخرى تكثّف صفقاتها
+    _aiTransfers();
+    _aiTransfers();
+    news.insert(0, '📰 صفقات اللحظة الأخيرة تتوالى بين الأندية');
   }
 
   /// أندية مفلسة تبيع نجومها لتغطية العجز (تصل لأغنى الأندية)
@@ -3352,6 +3406,7 @@ class GameState extends ChangeNotifier {
 
   String get windowLabel {
     final h = rounds.length ~/ 2;
+    if (deadlineDay) return 'آخر يوم في الميركاتو! تُغلق النافذة بعد هذه الجولة';
     if (week < 4) return 'نافذة الصيف مفتوحة — تُغلق بعد ${4 - week} جولات';
     if (week >= h - 1 && week < h + 3) return 'نافذة الشتاء مفتوحة — تُغلق بعد ${h + 3 - week} جولات';
     if (week < h - 1) return 'النافذة مغلقة — تفتح الشتوية بعد ${h - 1 - week} جولات';
