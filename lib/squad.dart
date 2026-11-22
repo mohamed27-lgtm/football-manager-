@@ -510,6 +510,16 @@ class _PlayerCardState extends State<_PlayerCard> {
           const Divider(height: 1),
           _row('القيمة السوقية', money(p.value)),
           _row('الشخصية', p.trait),
+          _row('البنية البدنية', p.fragilityLabel, vc: p.fragility < 0 ? const Color(0xFFE5533D) : (p.fragility > 0 ? const Color(0xFF1FA58A) : null)),
+          if (p.injLog.isNotEmpty) ...[
+            const Divider(height: 1),
+            const Padding(padding: EdgeInsets.fromLTRB(0, 8, 0, 4), child: Text('سجل الإصابات', style: TextStyle(fontWeight: FontWeight.w800))),
+            for (final l in p.injLog.reversed.take(5))
+              Builder(builder: (_) {
+                final x = l.split('|');
+                return _row('الموسم ${x[0]}', '${x.length > 1 ? x[1] : ''} — غياب ${x.length > 2 ? x[2] : ''} أسابيع');
+              }),
+          ],
           const Divider(height: 1),
           if (!market) _row('ينتهي العقد', 'بعد ${p.contract} ${p.contract <= 1 ? 'سنة' : 'سنوات'}', vc: p.contract <= 1 ? const Color(0xFFE5533D) : null),
           if (market)

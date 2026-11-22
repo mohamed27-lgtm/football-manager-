@@ -1404,6 +1404,7 @@ class GameState extends ChangeNotifier {
     _promisesTick();
     for (final p in user.squad) {
       if (p.injuredWeeks > 0 && !_injBefore.contains(p)) {
+        p.logInjury(season);
         news.insert(0, p.injType == null ? '🚑 أُصيب ${p.name} لمدة ${p.injuredWeeks} أسابيع' : '🚑 إصابة ${p.name} — ${p.injType}: غياب ${p.injuredWeeks} أسابيع');
       }
     }
@@ -3081,11 +3082,12 @@ class GameState extends ChangeNotifier {
   /// إصابات التدريب (للاعبي فريقك): تزيد مع شدة الحصص والإرهاق التراكمي
   void _trainingInjury(Player p) {
     final base = const [0.0008, 0.0025, 0.0065][trainIntensity];
-    final ch = base * (1 + p.load / 45) * (p.age >= 31 ? 1.4 : p.age >= 28 ? 1.15 : 1.0) * (1 - 0.06 * (user.medical - 1) - 0.04 * (staff['doctor'] ?? 0));
+    final ch = base * (1 + p.load / 45) * (p.age >= 31 ? 1.4 : p.age >= 28 ? 1.15 : 1.0) * (1 - 0.06 * (user.medical - 1) - 0.04 * (staff['doctor'] ?? 0)) * p.fragilityFactor;
     if (rng.nextDouble() >= ch) return;
     p.injType = rng.nextDouble() < 0.7 ? 'شد عضلي' : 'التواء الكاحل';
     p.injuredWeeks = 1 + rng.nextInt(3);
     p.injuryCount++;
+    p.logInjury(season);
     news.insert(0, '🚑 ${p.name} أُصيب في التدريب (${p.injType}) لمدة ${p.injuredWeeks} أسابيع');
   }
 
@@ -3133,6 +3135,7 @@ class GameState extends ChangeNotifier {
       if (_injBefore.contains(p) && p.injuredWeeks > 0) p.injuredWeeks--;
       p.fitness = min(100, p.fitness + 8);
       if (p.injuredWeeks > 0 && !_injBefore.contains(p)) {
+        p.logInjury(season);
         news.insert(0, p.injType == null ? '🚑 أُصيب ${p.name} لمدة ${p.injuredWeeks} أسابيع' : '🚑 إصابة ${p.name} — ${p.injType}: غياب ${p.injuredWeeks} أسابيع');
       }
     }

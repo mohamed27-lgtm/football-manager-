@@ -631,7 +631,7 @@ class MatchSim {
   void _injury(Side s) {
     if (s.slots.isEmpty) return;
     // الأكثر إرهاقاً والأكبر سناً ومن تكررت إصاباته أكثر عرضة
-    double risk(Player x) => (110 - x.fitness) * (x.age >= 31 ? 1.5 : x.age >= 28 ? 1.2 : 1.0) * (1 + 0.12 * min(x.injuryCount, 5)) * (1 + x.load / 70);
+    double risk(Player x) => (110 - x.fitness) * (x.age >= 31 ? 1.5 : x.age >= 28 ? 1.2 : 1.0) * (1 + 0.12 * min(x.injuryCount, 5)) * (1 + x.load / 70) * x.fragilityFactor;
     final sl = _weighted(s.slots, s.slots.map((x) => risk(x.p)).toList());
     final p = sl.p;
     final old = p.age >= 31 ? 2 : p.age >= 28 ? 1 : 0;

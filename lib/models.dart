@@ -63,6 +63,25 @@ class Player {
   List<double> recent = []; // تقييمات آخر 5 مباريات (الفورمة)
   int rated = 0;
   int injuryCount = 0;
+  List<String> injLog = []; // سجل الإصابات: 'الموسم|النوع|الأسابيع' (آخر 8)
+
+  /// قابلية الإصابة (ثابتة من هوية اللاعب): -1 هشّ بدنياً، 0 عادي، 1 متين
+  int get fragility {
+    final h = ((id * 40503) >> 4) % 100;
+    return h < 14 ? -1 : (h >= 86 ? 1 : 0);
+  }
+
+  String get fragilityLabel => fragility < 0 ? 'هشّ بدنياً' : (fragility > 0 ? 'متين بدنياً' : 'عادي');
+
+  /// معامل خطر الإصابة الناتج عن البنية
+  double get fragilityFactor => fragility < 0 ? 1.5 : (fragility > 0 ? 0.7 : 1.0);
+
+  void logInjury(int season) {
+    final e = '$season|${injType ?? 'إصابة'}|$injuredWeeks';
+    if (injLog.isNotEmpty && injLog.last == e) return;
+    injLog.add(e);
+    if (injLog.length > 8) injLog.removeAt(0);
+  }
   double? optionFee; // إعارة بخيار/إلزامية شراء
   bool obligation = false;
   List<Map<String, dynamic>> career = [];
@@ -189,6 +208,7 @@ class Player {
         if (recent.isNotEmpty) 'fm': recent,
         'rn': rated,
         'ic': injuryCount,
+        if (injLog.isNotEmpty) 'il': injLog,
         'opt': optionFee,
         'obl': obligation,
         'career': career,
@@ -240,6 +260,7 @@ class Player {
         ..recent = [for (final v in (j['fm'] as List?) ?? const []) (v as num).toDouble()]
         ..rated = (j['rn'] as int?) ?? 0
         ..injuryCount = (j['ic'] as int?) ?? 0
+        ..injLog = [for (final v in (j['il'] as List?) ?? const []) '$v']
         ..optionFee = (j['opt'] as num?)?.toDouble()
         ..obligation = (j['obl'] as bool?) ?? false
         ..club = j['club'] as String?
