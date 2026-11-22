@@ -102,4 +102,19 @@ void main() {
     }
     expect(gems, greaterThan(0));
   });
+
+  test('عدم التكرار: لاعب فريقي لا يظهر في السوق ولا في نادٍ آخر', () {
+    final gs = _newGame(99);
+    final mine = gs.user.squad.firstWhere((p) => !p.filler);
+    final other = gs.teams.firstWhere((t) => t != gs.user);
+    other.squad.add(Player.fromJson(mine.toJson())..club = other.name);
+    gs.freeAgents.add(Player.fromJson(mine.toJson())..free = true);
+    gs.dedupePlayers();
+    expect(other.squad.where((p) => p.id == mine.id), isEmpty);
+    expect(gs.freeAgents.where((p) => p.id == mine.id), isEmpty);
+    gs.market = [Player.fromJson(mine.toJson())];
+    gs.purgeElsewhere(mine);
+    expect(gs.market, isEmpty);
+    expect(gs.user.squad.where((p) => p.id == mine.id).length, 1);
+  });
 }

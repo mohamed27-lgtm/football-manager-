@@ -925,6 +925,8 @@ class GameState extends ChangeNotifier {
     for (final p in [...freeAgents, ...market]) {
       fillPlayerInfo(p);
     }
+    dedupePlayers();
+    market.removeWhere((m) => user.squad.any((p) => p.id == m.id));
   }
 
   /// النادي الحالي للاعب أينما كان في العالم (للعرض في بطاقة اللاعب)
@@ -3718,7 +3720,9 @@ class GameState extends ChangeNotifier {
 
   /// سوق حقيقي: لاعبون من أندية الدوريات الأخرى (بالنادي والقيمة الحقيقية) + أحرار
   List<Player> _scoutedMarket() {
-    final m = <Player>[for (final p in freeAgents) Player.fromJson(p.toJson())..free = true..club = null];
+    dedupePlayers();
+    final mine = {for (final p in user.squad) p.id};
+    final m = <Player>[for (final p in freeAgents) if (!mine.contains(p.id)) Player.fromJson(p.toJson())..free = true..club = null];
     final pool = <Player>[];
     for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
       if (t == user) continue;
@@ -3869,7 +3873,32 @@ class GameState extends ChangeNotifier {
   static const regLimit = 25;
   int get registeredCount => user.squad.where((p) => p.registered && p.age > 21).length;
 
+  /// بيانات الدوريات قد تضم اللاعب نفسه (نفس الرقم) في أكثر من نادٍ: نُبقي نسخة فريقك فقط
+  void purgeElsewhere(Player p) {
+    if (p.filler) return;
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+      if (t == user) continue;
+      t.squad.removeWhere((x) => x.id == p.id && !identical(x, p));
+    }
+    freeAgents.removeWhere((x) => x.id == p.id && !identical(x, p));
+    market.removeWhere((x) => x.id == p.id && !identical(x, p));
+  }
+
+  /// تنظيف شامل: لاعبو فريقك لا يظهرون في أي مكان آخر، ولا تكرار بين الأندية الأخرى
+  void dedupePlayers() {
+    for (final p in user.squad) {
+      purgeElsewhere(p);
+    }
+    final seen = <int>{for (final p in user.squad) if (!p.filler) p.id};
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+      if (t == user) continue;
+      t.squad.removeWhere((x) => !x.filler && !seen.add(x.id));
+    }
+    freeAgents.removeWhere((x) => !x.filler && !seen.add(x.id));
+  }
+
   void _registerNew(Player p) {
+    purgeElsewhere(p);
     p.registered = true;
     if (p.age > 21 && registeredCount > regLimit) {
       p.registered = false;
