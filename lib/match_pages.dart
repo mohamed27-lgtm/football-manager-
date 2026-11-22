@@ -185,7 +185,28 @@ class _MatchSummaryScreenState extends State<MatchSummaryScreen> {
         }
       }
     }
+    final an = m.analysis();
     return Column(children: [
+      if (an.isNotEmpty) ...[
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('تحليل المباراة', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+            const SizedBox(height: 8),
+            for (final s in an)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 5),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('• ', style: TextStyle(color: _teal, fontWeight: FontWeight.w900)),
+                  Expanded(child: Text(s, style: const TextStyle(fontSize: 13.5, height: 1.5))),
+                ]),
+              ),
+          ]),
+        ),
+        const SizedBox(height: 14),
+      ],
       Container(
         decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
         clipBehavior: Clip.antiAlias,

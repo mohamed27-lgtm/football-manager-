@@ -32,6 +32,55 @@ class LastMatch {
     this.mom,
   });
 
+  num _st(String k, bool user) {
+    final v = stats[k];
+    if (v == null || v.length < 2) return 0;
+    return userHome == user ? v[0] : v[1];
+  }
+
+  /// تحليل المباراة من وجهة نظر مدرب المستخدم: جمل قصيرة مبنية على الأرقام الفعلية
+  List<String> analysis() {
+    final out = <String>[];
+    final g = userGoals, og = oppGoals;
+    final xu = _st('xg', true), xo = _st('xg', false);
+    final poss = _st('poss', true).round();
+    final su = _st('shots', true).round(), so = _st('shots', false).round();
+    final tu = _st('target', true).round();
+    if (g > og && xu + 0.8 <= xo) {
+      out.add('فوز محظوظ: الفرص الأخطر كانت لخصمك (xG ${xu.toStringAsFixed(1)} مقابل ${xo.toStringAsFixed(1)})');
+    } else if (g < og && xu >= xo + 0.8) {
+      out.add('خسارة قاسية: كنت الأخطر (xG ${xu.toStringAsFixed(1)} مقابل ${xo.toStringAsFixed(1)}) لكن الكرة لم تدخل');
+    } else if (g > og) {
+      out.add('فوز مستحق: صنعت فرصاً أكثر وسجّلت منها');
+    } else if (g < og) {
+      out.add('خسارة منطقية: خصمك صنع فرصاً أخطر (xG ${xo.toStringAsFixed(1)} مقابل ${xu.toStringAsFixed(1)})');
+    } else {
+      out.add('تعادل عادل: الفرص متقاربة بين الفريقين');
+    }
+    if (poss >= 58 && su <= so) {
+      out.add('سيطرة بلا أنياب: استحواذ $poss% لكن تسديداتك $su مقابل $so');
+    } else if (poss <= 42 && g > og) {
+      out.add('فوز بالمرتدات: استحواذ $poss% فقط لكنك كنت أخطر في الفرص');
+    } else if (poss >= 58) {
+      out.add('فرضت سيطرتك على الكرة باستحواذ $poss%');
+    }
+    if (su >= 8 && tu * 3 < su) {
+      out.add('التسديد غير دقيق: $tu على المرمى من أصل $su');
+    }
+    final reds = events.where((e) => e['t'] == 'red').toList();
+    final myRed = reds.where((e) => (e['h'] as bool) == userHome).length;
+    final oppRed = reds.length - myRed;
+    if (myRed > 0) out.add('اللعب بنقص عددي أثّر في المباراة بعد الطرد');
+    if (oppRed > 0) out.add('تفوّق عددي بعد طرد لاعب من الخصم');
+    final mine = ratings.where((r) => (r['h'] as bool) == userHome).toList();
+    if (mine.isNotEmpty) {
+      final best = mine.first, worst = mine.last;
+      out.add('أفضل لاعبيك: ${best['n']} (${best['r']})');
+      if ((worst['r'] as num) <= 5.8 && worst != best) out.add('الأضعف أداءً: ${worst['n']} (${worst['r']})');
+    }
+    return out.take(5).toList();
+  }
+
   int get userGoals => userHome ? hg : ag;
   int get oppGoals => userHome ? ag : hg;
   String get result => userGoals > oppGoals ? 'W' : (userGoals < oppGoals ? 'L' : 'D');
