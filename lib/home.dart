@@ -1308,6 +1308,32 @@ class DashboardTab extends StatelessWidget {
     if (gs.natJob != null) return NationalDashboard(gs: gs);
     return ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 20), children: [
       if (!gs.fired) HeadlineTicker(gs: gs),
+      if (gs.friendlyOpen)
+        Panel(
+          child: Row(children: [
+            const Text('🤝', style: TextStyle(fontSize: 22)),
+            const SizedBox(width: 10),
+            Expanded(child: Text('مباريات الإعداد الودية: ${gs.friendliesLeft} متبقية — ترفع التأقلم والانسجام')),
+            FilledButton(
+              onPressed: () async {
+                final opp = await showModalBottomSheet<Team>(
+                  context: context,
+                  builder: (c) => SafeArea(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      for (final t in gs.friendlyOpponents()) ListTile(title: Text(t.name), subtitle: Text('القوة ${t.strength.round()}'), onTap: () => Navigator.pop(c, t)),
+                    ]),
+                  ),
+                );
+                if (opp == null) return;
+                final r = gs.playFriendly(opp);
+                if (r != null && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${gs.user.name} ${r.gf}-${r.ga} ${opp.name}')));
+                }
+              },
+              child: Text('لعب ودية'),
+            ),
+          ]),
+        ),
       if (gs.fired)
         Panel(
           color: const Color(0xFF2A1414),

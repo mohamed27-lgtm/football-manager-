@@ -1,5 +1,9 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'مباريات الإعداد الودية: {} متبقية — ترفع التأقلم والانسجام': ['Pre-season friendlies: {} left — they boost familiarity and cohesion', 'Matchs amicaux de préparation : {} restants — ils améliorent automatismes et cohésion', 'Amistosos de pretemporada: {} restantes — mejoran la familiaridad y la cohesión'],
+  'القوة {}': ['Strength {}', 'Force {}', 'Fuerza {}'],
+  'لعب ودية': ['Play friendly', 'Jouer un amical', 'Jugar amistoso'],
+  '🤝 ودية الإعداد: {} {}-{} {}': ['🤝 Pre-season friendly: {} {}-{} {}', '🤝 Amical de préparation : {} {}-{} {}', '🤝 Amistoso de pretemporada: {} {}-{} {}'],
   'لا توجد شائعة حول هذا اللاعب': ['No rumour about this player', 'Aucune rumeur sur ce joueur', 'No hay rumores sobre este jugador'],
   '📰 نفى ناديك الشائعات حول {} وأكد أنه خارج دائرة البيع': ['📰 Your club denied the rumours about {} and confirmed he\'s not for sale', '📰 Votre club a démenti les rumeurs sur {} et confirmé qu\'il n\'est pas à vendre', '📰 Tu club desmintió los rumores sobre {} y confirmó que no está en venta'],
   '📰 تلاشت شائعة اهتمام {} بـ{}': ['📰 Rumours of {}\'s interest in {} have faded', '📰 Les rumeurs d\'intérêt de {} pour {} se sont dissipées', '📰 Se desvanecieron los rumores del interés de {} por {}'],

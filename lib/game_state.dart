@@ -167,6 +167,8 @@ class GameState extends ChangeNotifier {
     fin.clockDay = () => dayCursor;
   }
   final List<Offer> offers = [];
+  /// مباريات ودية متبقية في الإعداد (تُجدَّد كل موسم)
+  int friendliesLeft = 3;
   /// شائعات الانتقالات: لاعبك ← النادي المهتم والأسابيع المتبقية
   final List<({int pid, String club, int weeks})> rumors = [];
   final Set<int> watch = {};
@@ -726,6 +728,7 @@ class GameState extends ChangeNotifier {
               ..ag = f[3] as int?
         ]
     ];
+    friendliesLeft = (j['fl'] as int?) ?? 3;
     for (final r in (j['rmr'] as List?) ?? const []) {
       rumors.add((pid: r[0] as int, club: r[1] as String, weeks: r[2] as int));
     }
@@ -941,6 +944,7 @@ class GameState extends ChangeNotifier {
         'league': leagueName,
         'fin': fin.toJson(),
         'offers': [for (final o in offers) o.toJson()],
+        if (friendliesLeft != 3) 'fl': friendliesLeft,
         if (rumors.isNotEmpty) 'rmr': [for (final r in rumors) [r.pid, r.club, r.weeks]],
         'foreign': [for (final t in foreign.values) t.toJson()],
         'rw': realWorld,
@@ -1947,6 +1951,33 @@ class GameState extends ChangeNotifier {
   }
 
   /// كل جولة: تنتهي العروض القديمة وقد تصل عروض جديدة، وقد تخطف الأندية لاعبين من السوق
+  /// الودية متاحة قبل أول مباراة رسمية فقط
+  bool get friendlyOpen => friendliesLeft > 0 && user.played == 0 && !fired;
+
+  /// ثلاثة منافسين للودية: أقرب الفرق قوة لفريقك
+  List<Team> friendlyOpponents() {
+    final l = teams.where((t) => t != user).toList()
+      ..sort((a, b) => (a.strength - user.strength).abs().compareTo((b.strength - user.strength).abs()));
+    return l.take(3).toList();
+  }
+
+  /// ودية تُحاكى فوراً: لا تُسجَّل في الترتيب ولا إحصاءات الموسم، لكنها ترفع التأقلم
+  /// والانسجام وتمنح لاعبي الاحتياط إيقاعاً، مع بقاء خطر الإصابة وإجهاد المباراة
+  ({int gf, int ga})? playFriendly(Team opp) {
+    if (!friendlyOpen || opp == user) return null;
+    final m = MatchSim(user, opp, userHome: true, random: rng)..simulateAll();
+    friendliesLeft--;
+    final gf = m.home.goals, ga = m.away.goals;
+    user.familiarity = min(100, user.familiarity + 5);
+    user.cohesion = min(100, user.cohesion + 2.5);
+    for (final p in user.lineup) {
+      p.morale = min(100, p.morale + (gf > ga ? 2 : 0));
+    }
+    news.insert(0, '🤝 ودية الإعداد: ${user.name} $gf-$ga ${opp.name}');
+    notifyListeners();
+    return (gf: gf, ga: ga);
+  }
+
   /// شائعة نشطة حول لاعب
   ({int pid, String club, int weeks})? rumorOf(Player p) {
     for (final r in rumors) {
@@ -2621,6 +2652,7 @@ class GameState extends ChangeNotifier {
   }
 
   void startNewSeason() {
+    friendliesLeft = 3;
     clubRkBase.clear();
     fanHist.add(fans);
     if (fanHist.length > 12) fanHist.removeAt(0);
