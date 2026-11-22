@@ -144,6 +144,9 @@ class MatchSim {
     final r = rng.nextDouble();
     return r < 0.62 ? 'clear' : r < 0.78 ? 'rain' : r < 0.9 ? 'hot' : 'wind';
   }();
+  /// خسارة جودة الأرضية عن الحدّ المقبول (85): تؤثر على الفريقين لأن الملعب واحد
+  double get pitchLoss => (85 - home.team.pitch).clamp(0.0, 65.0).toDouble();
+
   String get weatherText => switch (weather) { 'rain' => '🌧 أجواء ممطرة', 'hot' => '☀️ حرارة مرتفعة', 'wind' => '💨 رياح قوية', _ => '⛅ طقس معتدل' };
   String get refText => refStrict > 1.12 ? 'حكم صارم' : refStrict < 0.9 ? 'حكم متساهل' : 'حكم متوازن';
 
@@ -234,7 +237,7 @@ class MatchSim {
     if (minute == 1 && derby.$1 > 0) _log('info', '🔥 ${derby.$2}: لقاء مشحون بين ${home.team.name} و${away.team.name}', true, major: false);
     if (minute == 1) {
       _log('info', '🟢 صافرة البداية', true, major: false);
-      _log('info', '$weatherText • $refText', true, major: false);
+      _log('info', '$weatherText • $refText${pitchLoss >= 12 ? ' • 🌱 أرضية سيئة' : ''}', true, major: false);
     }
 
     for (final s in [home, away]) {
@@ -269,7 +272,7 @@ class MatchSim {
     a.poss++;
     // تمريرات الاستحواذ: العدد يتبع أسلوب التمرير، والدقة تتبع مهارة اللاعبين
     final k = 5 + rng.nextInt(6) + (a.team.passing - 1);
-    final okRate = (0.58 + 0.0042 * a.passSkill - 0.02 * (a.team.passing - 1) - 0.012 * (d.team.pressing - 1) - (weather == 'rain' ? 0.03 : weather == 'wind' ? 0.015 : 0)).clamp(0.55, 0.93);
+    final okRate = (0.58 + 0.0042 * a.passSkill - 0.02 * (a.team.passing - 1) - 0.012 * (d.team.pressing - 1) - (weather == 'rain' ? 0.03 : weather == 'wind' ? 0.015 : 0) - 0.0005 * pitchLoss).clamp(0.55, 0.93);
     var ok = 0;
     for (var i = 0; i < k; i++) {
       if (rng.nextDouble() < okRate) ok++;
@@ -318,7 +321,7 @@ class MatchSim {
     double tire(Side x) => x.slots.isEmpty ? 0.0 : 1 - x.slots.fold<double>(0, (a, e) => a + e.p.fitness) / (100.0 * x.slots.length);
     double ld(Side x) => x.slots.isEmpty ? 0.0 : x.slots.fold<double>(0, (a, e) => a + e.p.load) / (100.0 * x.slots.length);
     final hs = 1 + 1.6 * tire(home) + 1.2 * ld(home), as = 1 + 1.6 * tire(away) + 1.2 * ld(away);
-    if (rng.nextDouble() < 0.0012 * (hs + as) / 2) _injury(rng.nextDouble() * (hs + as) < hs ? home : away);
+    if (rng.nextDouble() < 0.0012 * (hs + as) / 2 * (1 + 0.008 * pitchLoss)) _injury(rng.nextDouble() * (hs + as) < hs ? home : away);
 
     if (minute == 60) _insights();
     if (minute == 45) _log('info', '⏸ نهاية الشوط الأول', true);

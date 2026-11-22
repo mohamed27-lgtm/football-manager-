@@ -1,5 +1,17 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'حالة العشب': ['Pitch condition', 'État de la pelouse', 'Estado del césped'],
+  'ممتازة': ['Excellent', 'Excellente', 'Excelente'],
+  'متهالكة': ['Worn', 'Usée', 'Desgastada'],
+  'سيئة جداً': ['Very poor', 'Très mauvaise', 'Muy mala'],
+  'تتدهور الأرضية بكل مباراة على أرضك (أكثر مع المطر) وتتحسن أسبوعياً مع تطوير المنشآت. الأرضية السيئة تخفض دقة التمرير وترفع خطر الإصابات للفريقين.': ['The pitch wears with every home match (more in the rain) and recovers weekly as facilities improve. A poor pitch lowers passing accuracy and raises injury risk for both teams.', 'La pelouse se dégrade à chaque match à domicile (davantage sous la pluie) et récupère chaque semaine avec les installations. Une pelouse en mauvais état réduit la précision des passes et augmente le risque de blessure pour les deux équipes.', 'El césped se desgasta con cada partido en casa (más con lluvia) y se recupera cada semana con las instalaciones. Un césped malo reduce la precisión de pase y aumenta el riesgo de lesión para ambos equipos.'],
+  'صيانة العشب (بعد {} أسابيع)': ['Pitch maintenance (in {} weeks)', 'Entretien de la pelouse (dans {} semaines)', 'Mantenimiento del césped (en {} semanas)'],
+  'صيانة العشب ({}M)': ['Pitch maintenance ({}M)', 'Entretien de la pelouse ({}M)', 'Mantenimiento del césped ({}M)'],
+  'الصيانة متاحة بعد {} أسابيع': ['Maintenance available in {} weeks', 'Entretien disponible dans {} semaines', 'Mantenimiento disponible en {} semanas'],
+  'الأرضية في حالة ممتازة أصلاً': ['The pitch is already in excellent condition', 'La pelouse est déjà en excellent état', 'El césped ya está en excelente estado'],
+  'الميزانية لا تكفي للصيانة': ['Not enough budget for maintenance', 'Budget insuffisant pour l\'entretien', 'Presupuesto insuficiente para el mantenimiento'],
+  '🌱 أجرى فريق الصيانة ترميماً لعشب الملعب (-{}M)': ['🌱 The groundsmen restored the pitch (-{}M)', '🌱 Les jardiniers ont restauré la pelouse (-{}M)', '🌱 El personal de mantenimiento restauró el césped (-{}M)'],
+  ' • 🌱 أرضية سيئة': [' • 🌱 Poor pitch', ' • 🌱 Pelouse en mauvais état', ' • 🌱 Césped en mal estado'],
   'رخصة المدرب': ['Coaching licence', 'Licence d\'entraîneur', 'Licencia de entrenador'],
   'مدرب مبتدئ': ['Rookie coach', 'Entraîneur débutant', 'Entrenador novato'],
   'مدرب ناشئ': ['Junior coach', 'Jeune entraîneur', 'Entrenador joven'],

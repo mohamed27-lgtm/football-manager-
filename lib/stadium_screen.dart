@@ -37,6 +37,32 @@ class StadiumScreen extends StatelessWidget {
             ];
             return ListView(padding: const EdgeInsets.all(14), children: [
               CardBox(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    const Icon(Icons.grass_rounded, color: Color(0xFF1FA58A)),
+                    const SizedBox(width: 8),
+                    const Expanded(child: Text('حالة العشب', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16))),
+                    Text('${tr(gs.pitchLabel)} • ${gs.user.pitch.round()}%', style: TextStyle(fontWeight: FontWeight.w900, color: gs.user.pitch >= 70 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D))),
+                  ]),
+                  const SizedBox(height: 8),
+                  ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: gs.user.pitch / 100, minHeight: 8, color: gs.user.pitch >= 70 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D), backgroundColor: kLine)),
+                  const SizedBox(height: 8),
+                  const Text('تتدهور الأرضية بكل مباراة على أرضك (أكثر مع المطر) وتتحسن أسبوعياً مع تطوير المنشآت. الأرضية السيئة تخفض دقة التمرير وترفع خطر الإصابات للفريقين.', style: TextStyle(color: kMuted, fontSize: 12, height: 1.5)),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: gs.pitchCooldown > 0 || gs.user.pitch >= 95
+                        ? null
+                        : () {
+                            final err = gs.maintainPitch();
+                            if (err != null) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                          },
+                    icon: const Icon(Icons.build_rounded, size: 18),
+                    label: Text(gs.pitchCooldown > 0 ? 'صيانة العشب (بعد ${gs.pitchCooldown} أسابيع)' : 'صيانة العشب (${GameState.pitchMaintCost.toStringAsFixed(1)}M)'),
+                  ),
+                ]),
+              ),
+              const SizedBox(height: 10),
+              CardBox(
                 child: Column(children: [
                   Row(children: [
                     Expanded(

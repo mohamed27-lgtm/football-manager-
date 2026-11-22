@@ -297,6 +297,7 @@ class GameState extends ChangeNotifier {
     final mine = s.home.team == user ? s.home.goals : s.away.goals;
     final theirs = s.home.team == user ? s.away.goals : s.home.goals;
     _gainXp(mine > theirs ? 10 : (mine == theirs ? 4 : 1));
+    if (s.home.team == user) user.pitch = max(20, user.pitch - (3 + (s.weather == 'rain' ? 3 : 0))).toDouble();
     if (dv.$1 > 0) {
       if (mine > theirs) {
         _morale(user, 2.0 * dv.$1);
@@ -1447,6 +1448,7 @@ class GameState extends ChangeNotifier {
       }
     }
     _lockerRoom();
+    _pitchTick();
     _promisesTick();
     _updateLegends();
     for (final p in user.squad) {
@@ -2277,6 +2279,32 @@ class GameState extends ChangeNotifier {
 
   // ───────── نهاية الموسم ─────────
   /// تطور اللاعب الموسمي: منحنى عمري حسب المركز + عامل نمو فردي خفي + الأداء والتدريب
+  // ───────── أرضية الملعب ─────────
+  int _pitchCd = 0; // أسابيع حتى تتاح الصيانة مجدداً
+  static const pitchMaintCost = 0.2;
+
+  String get pitchLabel => user.pitch >= 85 ? 'ممتازة' : (user.pitch >= 70 ? 'جيدة' : (user.pitch >= 50 ? 'متهالكة' : 'سيئة جداً'));
+  int get pitchCooldown => _pitchCd;
+
+  /// ترميم أسبوعي: يتحسن العشب مع مستوى المنشآت (الملعب) ويتراجع بالمباريات (في _record)
+  void _pitchTick() {
+    user.pitch = min(100, user.pitch + 2.0 + 1.2 * max(0, user.stadium - 1)).toDouble();
+    if (_pitchCd > 0) _pitchCd--;
+  }
+
+  /// صيانة العشب: ترفع الجودة 25 نقطة بتكلفة، مرة كل 4 أسابيع
+  String? maintainPitch() {
+    if (_pitchCd > 0) return 'الصيانة متاحة بعد $_pitchCd أسابيع';
+    if (user.pitch >= 95) return 'الأرضية في حالة ممتازة أصلاً';
+    if (user.budget < pitchMaintCost) return 'الميزانية لا تكفي للصيانة';
+    user.budget -= pitchMaintCost;
+    user.pitch = min(100, user.pitch + 25).toDouble();
+    _pitchCd = 4;
+    news.insert(0, '🌱 أجرى فريق الصيانة ترميماً لعشب الملعب (-${pitchMaintCost.toStringAsFixed(1)}M)');
+    notifyListeners();
+    return null;
+  }
+
   // ───────── رخصة المدرب: خبرة ونقاط تُصرف على مزايا ─────────
   int mgrXp = 0;
   static const xpLevels = [0, 100, 280, 560, 950, 1500, 2200, 3100, 4300, 5800];

@@ -360,6 +360,7 @@ class Team {
   }
 
   /// الألفة التكتيكية (0-100): تتراكم باستقرار الخطة والتشكيلة وتنخفض عند التغيير. الافتراضي 70 = محايدة
+  double pitch = 90; // حالة عشب الملعب (للمستخدم): 100 ممتاز، تتدهور بالمباريات والمطر
   final Map<String, int> perks = {}; // مزايا رخصة المدرب (للمستخدم): المعرّف → الرتبة 1-3
   int perk(String k) => perks[k] ?? 0;
   final Map<int, int> mentors = {}; // معرّف الشاب → معرّف مرشده
@@ -551,6 +552,7 @@ class Team {
         'tk': [penTaker, fkTaker, cornerTaker],
         if (familiarity != 70) 'fam': familiarity,
         if (perks.isNotEmpty) 'pk': perks,
+        if (pitch != 90) 'pit': pitch,
         if (mentors.isNotEmpty) 'mn': {for (final e in mentors.entries) '${e.key}': e.value},
         if (lastXI.isNotEmpty) 'lxi': lastXI.toList(),
         if (roles.isNotEmpty) 'roles': {for (final e in roles.entries) '${e.key}': e.value},
@@ -603,6 +605,7 @@ class Team {
       }
     }
     t.familiarity = (j['fam'] as num?)?.toDouble() ?? 70;
+    t.pitch = ((j['pit'] as num?)?.toDouble() ?? 90).clamp(20.0, 100.0).toDouble();
     for (final e in ((j['pk'] as Map?) ?? const {}).entries) {
       if (e.value is int) t.perks['${e.key}'] = (e.value as int).clamp(0, 3);
     }
