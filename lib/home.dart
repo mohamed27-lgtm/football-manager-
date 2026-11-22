@@ -1308,6 +1308,20 @@ class DashboardTab extends StatelessWidget {
     if (gs.natJob != null) return NationalDashboard(gs: gs);
     return ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 20), children: [
       if (!gs.fired) HeadlineTicker(gs: gs),
+      if (gs.takeoverPending != null)
+        Panel(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('💼 ${gs.takeoverPending} يعرض الاستحواذ على النادي', style: TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            Text('القبول: ضخ أموال فوري + هدف إدارة أصعب (مركزان أعلى). الرفض يزعج الإدارة.'),
+            const SizedBox(height: 8),
+            Row(children: [
+              Expanded(child: FilledButton(onPressed: () => gs.decideTakeover(true), child: Text('قبول'))),
+              const SizedBox(width: 8),
+              Expanded(child: OutlinedButton(onPressed: () => gs.decideTakeover(false), child: Text('رفض'))),
+            ]),
+          ]),
+        ),
       if (gs.friendlyOpen)
         Panel(
           child: Row(children: [

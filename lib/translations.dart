@@ -1,5 +1,11 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  '💼 {} يقدّم عرض استحواذ على {} — القرار لك': ['💼 {} makes a takeover bid for {} — your call', '💼 {} fait une offre de rachat pour {} — à vous de décider', '💼 {} presenta una oferta de compra por {} — tú decides'],
+  '🤝 {} يستحوذ على {} ويضخ {} — الهدف الجديد: المركز {}': ['🤝 {} takes over {} and injects {} — new target: position {}', '🤝 {} rachète {} et injecte {} — nouvel objectif : place {}', '🤝 {} adquiere {} e inyecta {} — nuevo objetivo: puesto {}'],
+  '🚫 رفضتَ عرض {} — الإدارة غير راضية': ['🚫 You rejected {}\'s offer — the board is unhappy', '🚫 Vous avez refusé l\'offre de {} — la direction est mécontente', '🚫 Rechazaste la oferta de {} — la directiva está molesta'],
+  'لا يوجد عرض استحواذ': ['No takeover offer', 'Aucune offre de rachat', 'No hay oferta de compra'],
+  '💼 {} يعرض الاستحواذ على النادي': ['💼 {} offers to take over the club', '💼 {} propose de racheter le club', '💼 {} ofrece comprar el club'],
+  'القبول: ضخ أموال فوري + هدف إدارة أصعب (مركزان أعلى). الرفض يزعج الإدارة.': ['Accept: instant cash injection + a tougher board target (2 places higher). Rejecting upsets the board.', 'Accepter : apport d\'argent immédiat + objectif plus exigeant (2 places de mieux). Refuser contrarie la direction.', 'Aceptar: inyección inmediata de dinero + objetivo más exigente (2 puestos más alto). Rechazar molesta a la directiva.'],
   '🌍 التوقف الدولي: استُدعي {} لمنتخباتهم': ['🌍 International break: {} called up by their national teams', '🌍 Trêve internationale : {} appelés en sélection', '🌍 Parón internacional: {} convocados con sus selecciones'],
   '🚑 عاد {} من التوقف الدولي مصاباً: غياب {} أسابيع': ['🚑 {} returned from the international break injured: out {} weeks', '🚑 {} revient blessé de la trêve internationale : absent {} semaines', '🚑 {} volvió lesionado del parón internacional: baja {} semanas'],
   '😮‍💨 عاد {} من السفر مرهقاً': ['😮‍💨 {} came back from travel exhausted', '😮‍💨 {} revient fatigué de ses déplacements', '😮‍💨 {} volvió agotado del viaje'],

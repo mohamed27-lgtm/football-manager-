@@ -171,6 +171,10 @@ class GameState extends ChangeNotifier {
   int friendliesLeft = 3;
   /// آخر عدد مباريات رسمية جرى عنده توقف دولي (يمنع التكرار)
   int intlDone = 0;
+  /// عرض استحواذ معلّق من مستثمر (اسمه) وموسم آخر استحواذ
+  String? takeoverPending;
+  int takeoverSeason = 0;
+  String? investor;
   /// شائعات الانتقالات: لاعبك ← النادي المهتم والأسابيع المتبقية
   final List<({int pid, String club, int weeks})> rumors = [];
   final Set<int> watch = {};
@@ -732,6 +736,9 @@ class GameState extends ChangeNotifier {
     ];
     friendliesLeft = (j['fl'] as int?) ?? 3;
     intlDone = (j['ib'] as int?) ?? 0;
+    takeoverPending = j['tkp'] as String?;
+    takeoverSeason = (j['tks'] as int?) ?? 0;
+    investor = j['inv'] as String?;
     for (final r in (j['rmr'] as List?) ?? const []) {
       rumors.add((pid: r[0] as int, club: r[1] as String, weeks: r[2] as int));
     }
@@ -949,6 +956,9 @@ class GameState extends ChangeNotifier {
         'offers': [for (final o in offers) o.toJson()],
         if (friendliesLeft != 3) 'fl': friendliesLeft,
         if (intlDone != 0) 'ib': intlDone,
+        if (takeoverPending != null) 'tkp': takeoverPending,
+        if (takeoverSeason != 0) 'tks': takeoverSeason,
+        if (investor != null) 'inv': investor,
         if (rumors.isNotEmpty) 'rmr': [for (final r in rumors) [r.pid, r.club, r.weeks]],
         'foreign': [for (final t in foreign.values) t.toJson()],
         'rw': realWorld,
@@ -1984,6 +1994,42 @@ class GameState extends ChangeNotifier {
     }
   }
 
+  static const _investors = ['مجموعة الصقر', 'صندوق الأفق', 'مجموعة النخيل', 'شركة الواحة', 'تحالف الشمال'];
+
+  /// موسمياً: فرصة أن يتقدم مستثمر بعرض استحواذ (لا أكثر من مرة كل 3 مواسم)
+  void _takeoverTick() {
+    if (takeoverPending != null) {
+      // تجاهل العرض موسماً كاملاً = رفض ضمني
+      takeoverPending = null;
+      confidence = max(0, confidence - 4);
+      return;
+    }
+    if (season - takeoverSeason < 3 || rng.nextDouble() > 0.15) return;
+    takeoverPending = _investors[rng.nextInt(_investors.length)];
+    news.insert(0, '💼 $takeoverPending يقدّم عرض استحواذ على ${user.name} — القرار لك');
+  }
+
+  /// قبول الاستحواذ: ضخ أموال فوري مقابل هدف إدارة أصعب؛ الرفض يغضب الإدارة قليلاً
+  String? decideTakeover(bool accept) {
+    final inv = takeoverPending;
+    if (inv == null) return 'لا يوجد عرض استحواذ';
+    takeoverPending = null;
+    takeoverSeason = season;
+    if (accept) {
+      final inject = max(10.0, user.budget.abs() * 0.5 + 10);
+      user.budget += inject;
+      investor = inv;
+      objective = max(1, objective - 2);
+      confidence = min(100, confidence + 5);
+      news.insert(0, '🤝 $inv يستحوذ على ${user.name} ويضخ ${money1(inject)} — الهدف الجديد: المركز $objective');
+    } else {
+      confidence = max(0, confidence - 6);
+      news.insert(0, '🚫 رفضتَ عرض $inv — الإدارة غير راضية');
+    }
+    notifyListeners();
+    return null;
+  }
+
   /// الودية متاحة قبل أول مباراة رسمية فقط
   bool get friendlyOpen => friendliesLeft > 0 && user.played == 0 && !fired;
 
@@ -2875,6 +2921,7 @@ class GameState extends ChangeNotifier {
     market = _scoutedMarket();
     ceremony = null;
     _setObjective();
+    _takeoverTick();
     if (confidence <= 0) fired = true;
     _advanceCups();
     news.insert(0, '📋 هدف الإدارة للموسم $season: المركز $objective أو أفضل');

@@ -67,4 +67,23 @@ void main() {
     final g2 = GameState.fromJson(jsonDecode(jsonEncode(gs.toJson())) as Map<String, dynamic>);
     expect(g2.intlDone, 8);
   });
+
+  test('الاستحواذ: القبول يضخ مالاً ويرفع صعوبة الهدف، والرفض يخفض الثقة', () {
+    final gs = _newGame(97);
+    expect(gs.decideTakeover(true), isNotNull);
+    gs.takeoverPending = 'مجموعة الصقر';
+    gs.objective = 8;
+    final b = gs.user.budget;
+    expect(gs.decideTakeover(true), isNull);
+    expect(gs.user.budget, greaterThan(b));
+    expect(gs.objective, 6);
+    expect(gs.investor, 'مجموعة الصقر');
+    final g2 = GameState.fromJson(jsonDecode(jsonEncode(gs.toJson())) as Map<String, dynamic>);
+    expect(g2.investor, 'مجموعة الصقر');
+    gs.takeoverPending = 'صندوق الأفق';
+    final c = gs.confidence;
+    gs.decideTakeover(false);
+    expect(gs.confidence, lessThan(c));
+    expect(gs.takeoverPending, isNull);
+  });
 }
