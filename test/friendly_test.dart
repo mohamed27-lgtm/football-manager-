@@ -47,4 +47,24 @@ void main() {
     expect(gs.friendlyOpen, isFalse);
     expect(gs.playFriendly(opp), isNull);
   });
+
+  test('التوقف الدولي: كل 8 مباريات مرة واحدة، يمس النجوم فقط', () {
+    final gs = _newGame(96);
+    for (final p in gs.user.squad.take(3)) {
+      p..atk = 99..pas = 99..def = 99..gk = 99;
+    }
+    gs.user.played = 5;
+    gs.intlBreakTick();
+    expect(gs.intlDone, 0);
+    gs.user.played = 8;
+    final n0 = gs.news.length;
+    gs.intlBreakTick();
+    expect(gs.intlDone, 8);
+    expect(gs.news.length, greaterThan(n0));
+    final n1 = gs.news.length;
+    gs.intlBreakTick();
+    expect(gs.news.length, n1);
+    final g2 = GameState.fromJson(jsonDecode(jsonEncode(gs.toJson())) as Map<String, dynamic>);
+    expect(g2.intlDone, 8);
+  });
 }

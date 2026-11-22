@@ -1,5 +1,9 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  '🌍 التوقف الدولي: استُدعي {} لمنتخباتهم': ['🌍 International break: {} called up by their national teams', '🌍 Trêve internationale : {} appelés en sélection', '🌍 Parón internacional: {} convocados con sus selecciones'],
+  '🚑 عاد {} من التوقف الدولي مصاباً: غياب {} أسابيع': ['🚑 {} returned from the international break injured: out {} weeks', '🚑 {} revient blessé de la trêve internationale : absent {} semaines', '🚑 {} volvió lesionado del parón internacional: baja {} semanas'],
+  '😮‍💨 عاد {} من السفر مرهقاً': ['😮‍💨 {} came back from travel exhausted', '😮‍💨 {} revient fatigué de ses déplacements', '😮‍💨 {} volvió agotado del viaje'],
+  '🌟 عاد {} من المنتخب بمعنويات عالية': ['🌟 {} returned from international duty full of confidence', '🌟 {} revient de sélection avec un moral au beau fixe', '🌟 {} volvió de la selección con la moral alta'],
   'مباريات الإعداد الودية: {} متبقية — ترفع التأقلم والانسجام': ['Pre-season friendlies: {} left — they boost familiarity and cohesion', 'Matchs amicaux de préparation : {} restants — ils améliorent automatismes et cohésion', 'Amistosos de pretemporada: {} restantes — mejoran la familiaridad y la cohesión'],
   'القوة {}': ['Strength {}', 'Force {}', 'Fuerza {}'],
   'لعب ودية': ['Play friendly', 'Jouer un amical', 'Jugar amistoso'],

@@ -169,6 +169,8 @@ class GameState extends ChangeNotifier {
   final List<Offer> offers = [];
   /// مباريات ودية متبقية في الإعداد (تُجدَّد كل موسم)
   int friendliesLeft = 3;
+  /// آخر عدد مباريات رسمية جرى عنده توقف دولي (يمنع التكرار)
+  int intlDone = 0;
   /// شائعات الانتقالات: لاعبك ← النادي المهتم والأسابيع المتبقية
   final List<({int pid, String club, int weeks})> rumors = [];
   final Set<int> watch = {};
@@ -729,6 +731,7 @@ class GameState extends ChangeNotifier {
         ]
     ];
     friendliesLeft = (j['fl'] as int?) ?? 3;
+    intlDone = (j['ib'] as int?) ?? 0;
     for (final r in (j['rmr'] as List?) ?? const []) {
       rumors.add((pid: r[0] as int, club: r[1] as String, weeks: r[2] as int));
     }
@@ -945,6 +948,7 @@ class GameState extends ChangeNotifier {
         'fin': fin.toJson(),
         'offers': [for (final o in offers) o.toJson()],
         if (friendliesLeft != 3) 'fl': friendliesLeft,
+        if (intlDone != 0) 'ib': intlDone,
         if (rumors.isNotEmpty) 'rmr': [for (final r in rumors) [r.pid, r.club, r.weeks]],
         'foreign': [for (final t in foreign.values) t.toJson()],
         'rw': realWorld,
@@ -1460,6 +1464,7 @@ class GameState extends ChangeNotifier {
     _lockerRoom();
     _pitchTick();
     _promisesTick();
+    intlBreakTick();
     _updateLegends();
     for (final p in user.squad) {
       if (p.injuredWeeks > 0 && !_injBefore.contains(p)) {
@@ -1951,6 +1956,34 @@ class GameState extends ChangeNotifier {
   }
 
   /// كل جولة: تنتهي العروض القديمة وقد تصل عروض جديدة، وقد تخطف الأندية لاعبين من السوق
+  /// توقف دولي كل 8 مباريات: نجومك يُستدعون لمنتخباتهم ويعودون متحمسين أو مرهقين أو مصابين
+  void intlBreakTick() {
+    final n = user.played;
+    if (n == 0 || n % 8 != 0 || intlDone == n) return;
+    intlDone = n;
+    final cands = user.squad.where((p) => !p.onLoan && p.injuredWeeks == 0 && p.overall >= 72).toList()
+      ..sort((a, b) => b.overall.compareTo(a.overall));
+    final called = cands.take(3).toList();
+    if (called.isEmpty) return;
+    final names = [for (final p in called) p.name].join('، ');
+    news.insert(0, '🌍 التوقف الدولي: استُدعي $names لمنتخباتهم');
+    for (final p in called) {
+      final r = rng.nextDouble();
+      if (r < 0.15) {
+        p.injuredWeeks = 1 + rng.nextInt(3);
+        p.injType = 'إصابة دولية';
+        news.insert(0, '🚑 عاد ${p.name} من التوقف الدولي مصاباً: غياب ${p.injuredWeeks} أسابيع');
+      } else if (r < 0.45) {
+        p.fitness = max(40, p.fitness - 15);
+        p.load = min(100, p.load + 12);
+        news.insert(0, '😮‍💨 عاد ${p.name} من السفر مرهقاً');
+      } else {
+        p.morale = min(100, p.morale + 5);
+        news.insert(0, '🌟 عاد ${p.name} من المنتخب بمعنويات عالية');
+      }
+    }
+  }
+
   /// الودية متاحة قبل أول مباراة رسمية فقط
   bool get friendlyOpen => friendliesLeft > 0 && user.played == 0 && !fired;
 
@@ -2653,6 +2686,7 @@ class GameState extends ChangeNotifier {
 
   void startNewSeason() {
     friendliesLeft = 3;
+    intlDone = 0;
     clubRkBase.clear();
     fanHist.add(fans);
     if (fanHist.length > 12) fanHist.removeAt(0);
