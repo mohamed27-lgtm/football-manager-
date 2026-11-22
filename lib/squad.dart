@@ -385,6 +385,20 @@ class _PlayerCardState extends State<_PlayerCard> {
                 ),
               ),
               const SizedBox(height: 8),
+              if (gs.rumorOf(p) != null) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      final err = gs.denyRumor(p);
+                      Navigator.pop(ctx);
+                      snack(err, 'نفيتَ الشائعات حول ${p.name}');
+                    },
+                    child: Text('📰 شائعة: اهتمام ${gs.rumorOf(p)!.club} (نفي علني)'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               if (!p.onLoan) ...[
                 SizedBox(
                   width: double.infinity,

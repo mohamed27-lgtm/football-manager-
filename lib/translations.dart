@@ -1,5 +1,13 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'لا توجد شائعة حول هذا اللاعب': ['No rumour about this player', 'Aucune rumeur sur ce joueur', 'No hay rumores sobre este jugador'],
+  '📰 نفى ناديك الشائعات حول {} وأكد أنه خارج دائرة البيع': ['📰 Your club denied the rumours about {} and confirmed he\'s not for sale', '📰 Votre club a démenti les rumeurs sur {} et confirmé qu\'il n\'est pas à vendre', '📰 Tu club desmintió los rumores sobre {} y confirmó que no está en venta'],
+  '📰 تلاشت شائعة اهتمام {} بـ{}': ['📰 Rumours of {}\'s interest in {} have faded', '📰 Les rumeurs d\'intérêt de {} pour {} se sont dissipées', '📰 Se desvanecieron los rumores del interés de {} por {}'],
+  '📰 تقارير: {} يراقب {} ويدرس التحرك لضمّه': ['📰 Reports: {} are watching {} and weighing a move', '📰 Selon la presse : {} suit {} et étudie une offre', '📰 Informes: {} sigue a {} y estudia un movimiento'],
+  '📰 تقارير: {} يراقب {} ويدرس التحرك لضمّه والاعب يبدو متحمساً للفكرة': ['📰 Reports: {} are watching {} and weighing a move; the player seems keen', '📰 Selon la presse : {} suit {} et étudie une offre ; le joueur semble tenté', '📰 Informes: {} sigue a {} y estudia un movimiento; el jugador parece entusiasmado'],
+  '📨 تحوّلت الشائعة: عرض رسمي من {} لشراء {}: {}': ['📨 Rumour becomes real: official bid from {} for {}: {}', '📨 La rumeur se confirme : offre officielle de {} pour {} : {}', '📨 El rumor se hace real: oferta oficial de {} por {}: {}'],
+  'نفيتَ الشائعات حول {}': ['You denied the rumours about {}', 'Vous avez démenti les rumeurs sur {}', 'Desmentiste los rumores sobre {}'],
+  '📰 شائعة: اهتمام {} (نفي علني)': ['📰 Rumour: interest from {} (deny publicly)', '📰 Rumeur : intérêt de {} (démentir publiquement)', '📰 Rumor: interés de {} (desmentir públicamente)'],
   'حالة العشب': ['Pitch condition', 'État de la pelouse', 'Estado del césped'],
   'ممتازة': ['Excellent', 'Excellente', 'Excelente'],
   'متهالكة': ['Worn', 'Usée', 'Desgastada'],

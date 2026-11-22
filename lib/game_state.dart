@@ -167,6 +167,8 @@ class GameState extends ChangeNotifier {
     fin.clockDay = () => dayCursor;
   }
   final List<Offer> offers = [];
+  /// شائعات الانتقالات: لاعبك ← النادي المهتم والأسابيع المتبقية
+  final List<({int pid, String club, int weeks})> rumors = [];
   final Set<int> watch = {};
   LastMatch? lastMatch;
   final Map<int, List<String>> h2h = {}; // خصم → آخر نتائجك أمامه (W/D/L)
@@ -724,6 +726,9 @@ class GameState extends ChangeNotifier {
               ..ag = f[3] as int?
         ]
     ];
+    for (final r in (j['rmr'] as List?) ?? const []) {
+      rumors.add((pid: r[0] as int, club: r[1] as String, weeks: r[2] as int));
+    }
     for (final o in (j['offers'] as List?) ?? const []) {
       final hit = user.squad.where((p) => p.id == o['pid']);
       if (hit.isNotEmpty) {
@@ -936,6 +941,7 @@ class GameState extends ChangeNotifier {
         'league': leagueName,
         'fin': fin.toJson(),
         'offers': [for (final o in offers) o.toJson()],
+        if (rumors.isNotEmpty) 'rmr': [for (final r in rumors) [r.pid, r.club, r.weeks]],
         'foreign': [for (final t in foreign.values) t.toJson()],
         'rw': realWorld,
         'elo': elo,
@@ -1941,12 +1947,74 @@ class GameState extends ChangeNotifier {
   }
 
   /// كل جولة: تنتهي العروض القديمة وقد تصل عروض جديدة، وقد تخطف الأندية لاعبين من السوق
+  /// شائعة نشطة حول لاعب
+  ({int pid, String club, int weeks})? rumorOf(Player p) {
+    for (final r in rumors) {
+      if (r.pid == p.id) return r;
+    }
+    return null;
+  }
+
+  /// تجاهل/نفي الشائعة علناً: تنتهي وتشعر الجماهير واللاعب بتقديرك له
+  String? denyRumor(Player p) {
+    final r = rumorOf(p);
+    if (r == null) return 'لا توجد شائعة حول هذا اللاعب';
+    rumors.remove(r);
+    p.morale = min(100, p.morale + 3);
+    news.insert(0, '📰 نفى ناديك الشائعات حول ${p.name} وأكد أنه خارج دائرة البيع');
+    notifyListeners();
+    return null;
+  }
+
+  /// يولّد شائعات اهتمام بلاعبيك، وتتحول أحياناً إلى عروض فعلية، وتتلاشى بعد أسابيع
+  void _rumorTick() {
+    // عمر الشائعات
+    final aged = [for (final r in rumors) (pid: r.pid, club: r.club, weeks: r.weeks - 1)];
+    rumors
+      ..clear()
+      ..addAll(aged.where((r) => r.weeks > 0 && user.squad.any((p) => p.id == r.pid)));
+    for (final r in aged.where((r) => r.weeks <= 0)) {
+      final p = user.squad.where((x) => x.id == r.pid).firstOrNull;
+      if (p != null) news.insert(0, '📰 تلاشت شائعة اهتمام ${r.club} بـ${p.name}');
+    }
+    if (rumors.length >= 3 || user.squad.length < 17) return;
+    final stars = user.squad.where((p) => !p.onLoan && p.overall >= 66 && rumorOf(p) == null).toList()..shuffle(rng);
+    for (final p in stars.take(4)) {
+      final chance = (windowOpen ? 0.05 : 0.02) * (p.listed ? 2.0 : 1.0) * (p.contract <= 1 ? 1.8 : 1.0);
+      if (rng.nextDouble() > chance) continue;
+      final amount = p.value * 0.9;
+      final pool = [
+        ...teams.where((t) => t != user && t.budget >= amount * 0.7 && p.overall >= t.strength - 6),
+        ...worldBuyers(p, amount),
+      ];
+      if (pool.isEmpty) continue;
+      final club = pool[rng.nextInt(pool.length)];
+      rumors.add((pid: p.id, club: club.name, weeks: 3 + rng.nextInt(3)));
+      final restless = (p.trait == 'طموح' || p.trait == 'متقلب') && club.strength > user.strength;
+      if (restless) p.morale = max(0, p.morale - 4);
+      news.insert(0, '📰 تقارير: ${club.name} يراقب ${p.name} ويدرس التحرك لضمّه${restless ? ' والاعب يبدو متحمساً للفكرة' : ''}');
+      break;
+    }
+  }
+
   void _transferTick() {
     loanTick();
+    _rumorTick();
     for (final o in offers) {
       o.weeksLeft--;
     }
     offers.removeWhere((o) => o.weeksLeft <= 0 || !user.squad.contains(o.player));
+    if (windowOpen && user.squad.length > 16 && offers.length < 3) {
+      for (final r in [...rumors]) {
+        final p = user.squad.where((x) => x.id == r.pid).firstOrNull;
+        if (p == null || offers.any((o) => o.player == p) || rng.nextDouble() > 0.3) continue;
+        final amount = ((p.value * (0.95 + rng.nextDouble() * 0.4)) * 10).round() / 10;
+        rumors.remove(r);
+        offers.add(Offer(p, r.club, max(0.1, amount), 3));
+        news.insert(0, '📨 تحوّلت الشائعة: عرض رسمي من ${r.club} لشراء ${p.name}: ${money1(amount)}');
+        break;
+      }
+    }
     if (windowOpen && user.squad.length > 16 && offers.length < 3) {
       for (final p in user.squad.where((p) => p.overall >= 58 && !offers.any((o) => o.player == p))) {
         final chance = p.listed ? 0.22 : 0.025;
