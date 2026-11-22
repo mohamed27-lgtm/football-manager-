@@ -19,8 +19,8 @@ const _info = {
 String _n(int v) => v.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
 
 /// وصف الأثر عند مستوى معيّن
-String facEffect(String kind, int l) => switch (kind) {
-      'stadium' => 'سعة ${_n(12000 + 8000 * l)} متفرج',
+String facEffect(String kind, int l, {int Function(int)? cap}) => switch (kind) {
+      'stadium' => 'سعة ${_n(cap != null ? cap(l) : 12000 + 8000 * l)} متفرج',
       'training' => 'نمو اللاعبين +${(2 + 3 * (l - 1)).round()}% • تعافٍ +${(1.5 * (l - 1)).toStringAsFixed(1)} لياقة',
       'academy' => 'فئة ${GameState.academyTier(l)} • نحو ${(0.5 + 0.1 * l).toStringAsFixed(1)}+ خريج/موسم • إمكانات +${4 * l} • جوهرة نادرة ${(GameState.wonderChance(l) * 100).round()}%',
       'medical' => 'تعافٍ +${(0.8 * (l - 1)).toStringAsFixed(1)} • ${7 * (l - 1)}% احتمال تقليص أسبوع إصابة',
@@ -136,7 +136,7 @@ class FacilitiesScreen extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(i.$3, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
               const SizedBox(height: 2),
-              Text(facEffect(kind, lvl), style: const TextStyle(color: kMuted, fontSize: 12)),
+              Text(facEffect(kind, lvl, cap: gs.capacityAt), style: const TextStyle(color: kMuted, fontSize: 12)),
               const SizedBox(height: 8),
               LevelDots(level: lvl, color: i.$2, building: pr != null),
             ]),
@@ -214,7 +214,7 @@ class FacilityScreen extends StatelessWidget {
                           child: Text('$l', style: TextStyle(fontWeight: FontWeight.w900, color: l <= lvl + 1 ? Colors.white : kMuted)),
                         ),
                         const SizedBox(width: 12),
-                        Expanded(child: Text(facEffect(kind, l), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: l > lvl + 1 ? kMuted : null))),
+                        Expanded(child: Text(facEffect(kind, l, cap: gs.capacityAt), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: l > lvl + 1 ? kMuted : null))),
                         if (l <= lvl) const Icon(Icons.check_rounded, color: Color(0xFF1FA58A)),
                       ]),
                     ),

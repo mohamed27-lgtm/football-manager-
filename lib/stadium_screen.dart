@@ -98,7 +98,7 @@ class StadiumScreen extends StatelessWidget {
                         Expanded(
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             const Text('توسعة الملعب', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                            Text('إلى المستوى ${pr.toLevel} • السعة ${_n(12000 + 8000 * pr.toLevel)}', style: const TextStyle(color: kMuted, fontSize: 12)),
+                            Text('إلى المستوى ${pr.toLevel} • السعة ${_n(gs.capacityAt(pr.toLevel))}', style: const TextStyle(color: kMuted, fontSize: 12)),
                           ]),
                         ),
                         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [

@@ -4,8 +4,10 @@ import 'models.dart';
 class Offer {
   final Player player;
   final String club;
-  final double amount;
+  double amount;
   int weeksLeft;
+  /// جولات التفاوض المستخدمة (لا تُحفظ)
+  int rounds = 0;
   Offer(this.player, this.club, this.amount, this.weeksLeft);
 
   Map<String, dynamic> toJson() =>

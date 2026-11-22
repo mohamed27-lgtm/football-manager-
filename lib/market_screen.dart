@@ -664,6 +664,30 @@ class _TransfersTabState extends State<TransfersTab> {
                 ),
               ),
               const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () async {
+                    final ctl = TextEditingController(text: (o.amount * 1.15).toStringAsFixed(1));
+                    final v = await showDialog<double>(
+                      context: context,
+                      builder: (c) => AlertDialog(
+                        title: Text('تفاوض مع ${o.club}'),
+                        content: Column(mainAxisSize: MainAxisSize.min, children: [
+                          Text('عرضهم ${money(o.amount)} • قيمته ${money(o.player.value)}'),
+                          const SizedBox(height: 8),
+                          TextField(controller: ctl, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'سعرك المطلوب (مليون)')),
+                        ]),
+                        actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('إلغاء')), FilledButton(onPressed: () => Navigator.pop(c, double.tryParse(ctl.text)), child: const Text('اقترح'))],
+                      ),
+                    );
+                    if (v == null || !context.mounted) return;
+                    final r = gs.counterIncoming(o, v);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(r.msg)));
+                  },
+                  child: const Text('تفاوض'),
+                ),
+              ),
+              const SizedBox(width: 8),
               Expanded(child: OutlinedButton(onPressed: () => gs.rejectOffer(o), child: const Text('رفض'))),
             ]),
           ]),

@@ -489,7 +489,9 @@ class GameState extends ChangeNotifier {
   final List<double> standMult = [1.0, 1.0, 1.0, 1.0]; // مضاعف سعر كل مدرج نسبةً للسعر المرجعي
   double seasonMult = 1.0; // مضاعف سعر بطاقات الموسم
   bool dynPricing = true; // تسعير ديناميكي حسب الطلب
-  int get stadiumCapacity => ((12000 + 8000 * user.stadium) * (stadiumBuilding ? 0.85 : 1.0)).round();
+  /// السعة الحقيقية للنادي عند المستوى 1، وكل مستوى توسعة يضيف 14%
+  int capacityAt(int level) => (stadiumBaseCapacity(user.name, user.reputation) * (1 + 0.14 * (level - 1)) / 100).round() * 100;
+  int get stadiumCapacity => (capacityAt(user.stadium) * (stadiumBuilding ? 0.85 : 1.0)).round();
   final List<Project> projects = [];
   final List<Campaign> campaigns = [];
   final List<double> fanHist = []; // شعبية النادي في نهاية كل موسم
@@ -1942,6 +1944,54 @@ class GameState extends ChangeNotifier {
   void toggleListed(Player p) {
     p.listed = !p.listed;
     notifyListeners();
+  }
+
+  Team? _clubNamed(String n) {
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+      if (t.name == n) return t;
+    }
+    return null;
+  }
+
+  /// أقصى سعر يقبله النادي المشتري: يتأثر بقيمة اللاعب، رغبة النادي (مستواه مقابل اللاعب)،
+  /// وجود شائعة، حاجته للمركز، وميزانيته الفعلية
+  double offerCeiling(Offer o) {
+    final p = o.player;
+    final club = _clubNamed(o.club);
+    final strength = club?.strength ?? p.overall.toDouble();
+    var desire = 1.12 + ((p.overall - strength + 4) / 40).clamp(0.0, 0.35);
+    if (rumors.any((r) => r.pid == p.id)) desire += 0.08;
+    if (club != null && _needOf(club) == p.pos) desire += 0.06;
+    if (p.age >= 31) desire -= 0.15;
+    if (p.contract <= 1) desire -= 0.12;
+    final cap = club == null ? double.infinity : club.budget * 0.85;
+    return max(o.amount, min(p.value * desire, cap));
+  }
+
+  /// مساومة على عرض وارد: يقبل، أو يقدّم سعراً وسطاً، أو ينسحب إن بالغت أو تكررت المحاولات
+  NegoResult counterIncoming(Offer o, double ask) {
+    if (!windowOpen) return NegoResult('reject', null, _closedMsg);
+    final ceil = offerCeiling(o);
+    o.rounds++;
+    if (ask <= o.amount + 0.05) {
+      return NegoResult('accept', o.amount, 'قبل ${o.club} سعره الحالي');
+    }
+    if (ask <= ceil * 0.98) {
+      o.amount = ask;
+      o.weeksLeft = max(o.weeksLeft, 2);
+      notifyListeners();
+      return NegoResult('accept', ask, 'وافق ${o.club} على ${money1(ask)}');
+    }
+    if (ask > ceil * 1.25 || o.rounds >= 3) {
+      offers.remove(o);
+      news.insert(0, '🚪 انسحب ${o.club} من مفاوضات ${o.player.name} بعد تمسكك بسعر مرتفع');
+      notifyListeners();
+      return NegoResult('reject', null, '${o.club} انسحب من التفاوض');
+    }
+    final mid = ((o.amount + (min(ask, ceil) - o.amount) * 0.7) * 10).round() / 10;
+    o.amount = max(o.amount, mid);
+    notifyListeners();
+    return NegoResult('counter', o.amount, '${o.club} يرفع عرضه إلى ${money1(o.amount)} (أقصى ما يستطيعه قريب منه)');
   }
 
   String? acceptOffer(Offer o) {

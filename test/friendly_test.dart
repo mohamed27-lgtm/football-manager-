@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:football_manager/data.dart';
 import 'package:football_manager/game_state.dart';
 import 'package:football_manager/models.dart';
+import 'package:football_manager/transfers.dart';
+import 'package:football_manager/stadiums.dart';
 
 List<Team> _pool(Random r, int base, int n, String tag) => [for (var i = 0; i < n; i++) createTeam(r, base + i, '$tag ${i + 1}', 3 + i % 5)];
 
@@ -116,5 +118,36 @@ void main() {
     gs.purgeElsewhere(mine);
     expect(gs.market, isEmpty);
     expect(gs.user.squad.where((p) => p.id == mine.id).length, 1);
+  });
+
+  test('التفاوض على العروض الواردة: سعر معقول يُقبل، مبالغ فيه ينسحب النادي', () {
+    final gs = _newGame(100);
+    final p = gs.user.squad.firstWhere((x) => !x.filler);
+    final club = gs.teams.firstWhere((t) => t != gs.user);
+    club.budget = 500;
+    final o = Offer(p, club.name, p.value, 3);
+    gs.offers.add(o);
+    expect(gs.windowOpen, isTrue);
+    final ceil = gs.offerCeiling(o);
+    expect(ceil, greaterThanOrEqualTo(o.amount));
+    final r1 = gs.counterIncoming(o, o.amount);
+    expect(r1.status, 'accept');
+    final r2 = gs.counterIncoming(o, ceil * 0.9 + 0.2);
+    expect(['accept', 'counter'], contains(r2.status));
+    final o2 = Offer(p, club.name, p.value, 3);
+    gs.offers.add(o2);
+    final r3 = gs.counterIncoming(o2, ceil * 3 + 10);
+    expect(r3.status, 'reject');
+    expect(gs.offers.contains(o2), isFalse);
+  });
+
+  test('سعة الملاعب: حقيقية للأندية المعروفة وتزداد 14% لكل مستوى', () {
+    expect(stadiumBaseCapacity('Barcelona', 5), 99354);
+    expect(stadiumBaseCapacity('Real Madrid', 5), 83186);
+    expect(stadiumBaseCapacity('نادي مجهول', 3), 6000 + 5500 * 3);
+    final gs = _newGame(101);
+    final c1 = gs.capacityAt(1);
+    expect(gs.capacityAt(3), greaterThan(c1));
+    expect(gs.capacityAt(3), closeTo(c1 * 1.28, 300));
   });
 }

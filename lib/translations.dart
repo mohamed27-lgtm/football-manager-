@@ -1,5 +1,14 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'قبل {} سعره الحالي': ['{} accepted its current price', '{} a accepté son prix actuel', '{} aceptó su precio actual'],
+  'وافق {} على {}': ['{} agreed to {}', '{} a accepté {}', '{} aceptó {}'],
+  '🚪 انسحب {} من مفاوضات {} بعد تمسكك بسعر مرتفع': ['🚪 {} walked away from talks for {} after your high demand', '🚪 {} s\'est retiré des négociations pour {} face à votre prix trop élevé', '🚪 {} se retiró de las negociaciones por {} tras tu precio alto'],
+  '{} انسحب من التفاوض': ['{} walked away from the talks', '{} s\'est retiré des négociations', '{} se retiró de la negociación'],
+  '{} يرفع عرضه إلى {} (أقصى ما يستطيعه قريب منه)': ['{} raise their bid to {} (close to their limit)', '{} relève son offre à {} (proche de sa limite)', '{} sube su oferta a {} (cerca de su límite)'],
+  'تفاوض مع {}': ['Negotiate with {}', 'Négocier avec {}', 'Negociar con {}'],
+  'عرضهم {} • قيمته {}': ['Their bid {} • his value {}', 'Leur offre {} • sa valeur {}', 'Su oferta {} • su valor {}'],
+  'سعرك المطلوب (مليون)': ['Your asking price (M)', 'Votre prix demandé (M)', 'Tu precio pedido (M)'],
+  'اقترح': ['Propose', 'Proposer', 'Proponer'],
   '💎 جوهرة نادرة من أكاديمية {}: {} ({} سنة) — إمكانات {}!': ['💎 Rare gem from the {} academy: {} (age {}) — potential {}!', '💎 Pépite rare de l\'académie {} : {} ({} ans) — potentiel {} !', '💎 Joya rara de la academia {}: {} ({} años) — potencial {}!'],
   'برونزية': ['Bronze', 'Bronze', 'Bronce'],
   'بلاتينية': ['Platinum', 'Platine', 'Platino'],
