@@ -294,9 +294,10 @@ class GameState extends ChangeNotifier {
     l.add(lm.result);
     if (l.length > 10) l.removeAt(0);
     final dv = s.derby;
+    final mine = s.home.team == user ? s.home.goals : s.away.goals;
+    final theirs = s.home.team == user ? s.away.goals : s.home.goals;
+    _gainXp(mine > theirs ? 10 : (mine == theirs ? 4 : 1));
     if (dv.$1 > 0) {
-      final mine = s.home.team == user ? s.home.goals : s.away.goals;
-      final theirs = s.home.team == user ? s.away.goals : s.home.goals;
       if (mine > theirs) {
         _morale(user, 2.0 * dv.$1);
         confidence = min(100, confidence + dv.$1);
@@ -780,6 +781,7 @@ class GameState extends ChangeNotifier {
     for (final h in (j['history'] as List?) ?? const []) {
       history.add(Map<String, dynamic>.from(h as Map));
     }
+    mgrXp = (j['mxp'] as int?) ?? 0;
     for (final e in ((j['lg'] as Map?) ?? const {}).entries) {
       final id = int.tryParse('${e.key}');
       if (id != null) legends[id] = Map<String, dynamic>.from(e.value as Map);
@@ -968,6 +970,7 @@ class GameState extends ChangeNotifier {
         'diff': difficulty,
         'intro': introSeen,
         'history': history,
+        if (mgrXp > 0) 'mxp': mgrXp,
         if (legends.isNotEmpty) 'lg': {for (final e in legends.entries) '${e.key}': e.value},
         'bigWin': bigWin,
         'bigLoss': bigLoss,
@@ -1432,7 +1435,8 @@ class GameState extends ChangeNotifier {
           if (training == 'physical') rec += 4;
           if (training != 'mental') rec += intensityRec[trainIntensity];
           if (training == 'mental') p.morale = min(100, p.morale + 1.2);
-          rec += 1.5 * (user.trainingLvl - 1);
+          rec += 1.5 * (user.trainingLvl - 1) + 1.5 * user.perk('fit');
+          if (user.perk('motiv') > 0) p.morale = min(100, p.morale + 0.25 * user.perk('motiv'));
           _train(p);
         }
         if (p.adapt > 0) p.adapt--;
@@ -1665,7 +1669,7 @@ class GameState extends ChangeNotifier {
 
   // ───────── الانتقالات والعقود ─────────
   double signingBonus(Player p) => max(0.1, (p.wage * 15 * 10).round() / 10);
-  double buyPrice(Player p) => p.free ? signingBonus(p) : (p.value * 1.15 * 10).round() / 10;
+  double buyPrice(Player p) => p.free ? signingBonus(p) : (p.value * 1.15 * (1 - 0.025 * user.perk('negot')) * 10).round() / 10;
   double sellPrice(Player p) => (p.value * 0.85 * 10).round() / 10;
   double renewCost(Player p) => max(0.1, (p.value * 0.08 * 10).round() / 10);
   double agentFee(double price) =>
@@ -2273,6 +2277,58 @@ class GameState extends ChangeNotifier {
 
   // ───────── نهاية الموسم ─────────
   /// تطور اللاعب الموسمي: منحنى عمري حسب المركز + عامل نمو فردي خفي + الأداء والتدريب
+  // ───────── رخصة المدرب: خبرة ونقاط تُصرف على مزايا ─────────
+  int mgrXp = 0;
+  static const xpLevels = [0, 100, 280, 560, 950, 1500, 2200, 3100, 4300, 5800];
+  static const maxPerkRank = 3;
+  static const perkDefs = <String, (String, String)>{
+    'sp': ('خبير الكرات الثابتة', 'يرفع فرصة تسجيل ركلات الجزاء والحرة'),
+    'youth': ('مطوّر المواهب', 'يسرّع نمو اللاعبين حتى 23 سنة'),
+    'negot': ('مفاوض بارع', 'يخفض سعر شراء اللاعبين'),
+    'motiv': ('محفّز اللاعبين', 'يرفع معنويات الفريق أسبوعياً'),
+    'fit': ('خبير اللياقة', 'يسرّع تعافي اللاعبين'),
+    'tact': ('عقل تكتيكي', 'يرفع الألفة التكتيكية أسرع مع الاستقرار'),
+  };
+
+  int get mgrLevel {
+    var l = 1;
+    for (var i = 1; i < xpLevels.length; i++) {
+      if (mgrXp >= xpLevels[i]) l = i + 1;
+    }
+    return l;
+  }
+
+  /// (خبرة المستوى الحالي، المطلوب للتالي) أو null في المستوى الأقصى
+  (int, int)? get mgrNext {
+    final l = mgrLevel;
+    if (l >= xpLevels.length) return null;
+    return (mgrXp - xpLevels[l - 1], xpLevels[l] - xpLevels[l - 1]);
+  }
+
+  int get perkPointsSpent => user.perks.values.fold(0, (a, b) => a + b);
+  int get perkPoints => max(0, mgrLevel - 1 - perkPointsSpent);
+
+  String? spendPerk(String k) {
+    if (!perkDefs.containsKey(k)) return 'ميزة غير معروفة';
+    if (user.perk(k) >= maxPerkRank) return 'وصلت الميزة إلى أقصى رتبة';
+    if (perkPoints <= 0) return 'لا توجد نقاط متاحة: ارفع مستواك بالفوز والإنجازات';
+    user.perks[k] = user.perk(k) + 1;
+    notifyListeners();
+    return null;
+  }
+
+  void _gainXp(int x) {
+    final before = mgrLevel;
+    mgrXp += x;
+    if (mgrLevel > before) news.insert(0, '🎖️ ارتقيت إلى مستوى المدرب $mgrLevel! لديك نقطة جديدة لتطوير مزاياك');
+  }
+
+  /// خبرة نهاية الموسم بحسب الترتيب
+  void _managerSeasonXp(int pos, int n) {
+    final x = pos == 1 ? 160 : (pos <= 3 ? 80 : (pos <= n / 2 ? 35 : 10));
+    _gainXp(x);
+  }
+
   // ───────── الإرشاد: لاعب قديم يوجّه موهبة شابة ─────────
   static const maxMentorships = 3;
 
@@ -2324,9 +2380,10 @@ class GameState extends ChangeNotifier {
 
   /// معامل نمو الشاب بوجود مرشد: 1.12 عادي، 1.2 إن كان المرشد قائداً أو محترفاً
   double mentorFactor(Player p) {
+    final yf = p.age <= 23 ? 1 + 0.06 * user.perk('youth') : 1.0;
     final m = mentorOf(p);
-    if (m == null) return 1.0;
-    return m.trait == 'قائد' || m.trait == 'محترف' ? 1.2 : 1.12;
+    if (m == null) return yf;
+    return yf * (m.trait == 'قائد' || m.trait == 'محترف' ? 1.2 : 1.12);
   }
 
   /// نهاية الموسم: ينتهي الإرشاد إن كبر الشاب أو رحل المرشد، وقد يتأثر طبع المتقلب بمرشد قدوة
@@ -2473,6 +2530,7 @@ class GameState extends ChangeNotifier {
     if (fanHist.length > 12) fanHist.removeAt(0);
     final pos = position;
     final finalTable = table;
+    _managerSeasonXp(pos, finalTable.length);
     final champT = finalTable.first;
     final runnerT = finalTable.length > 1 ? finalTable[1] : finalTable.first;
     final cupWinner = domestic?.champion;

@@ -531,7 +531,7 @@ class MatchSim {
     final taker = a.team.takerAmong(a.team.fkTaker, outf.map((s) => s.p)) ?? outf.reduce((x, y) => (x.p.pas + x.p.atk) >= (y.p.pas + y.p.atk) ? x : y).p;
     final skill = (taker.pas + taker.atk) / 2;
     final gkP = _gk(d);
-    final p = (0.05 * pow(skill / 75, 2.2) * (70 / max(40, gkP?.gk ?? 60))).clamp(0.008, 0.14).toDouble();
+    final p = (0.05 * pow(skill / 75, 2.2) * (70 / max(40, gkP?.gk ?? 60)) * (1 + 0.08 * a.team.perk('sp'))).clamp(0.008, 0.15).toDouble();
     a.xg += p;
     _log('info', '🎯 ركلة حرة خطيرة لصالح ${a.team.name}', a.isHome, major: false);
     if (rng.nextDouble() >= p) {
@@ -563,7 +563,7 @@ class MatchSim {
     _log('penalty', '⚠️ ركلة جزاء لصالح ${a.team.name}!', a.isHome);
     _log('info', '🎯 ${shooter.name} يتقدم لتنفيذ الركلة', a.isHome, major: false);
     final gkP = _gk(d);
-    final p = (0.74 + 0.003 * (shooter.atk - 70) - 0.0012 * ((gkP?.gk ?? 65) - 65)).clamp(0.55, 0.9).toDouble();
+    final p = (0.74 + 0.003 * (shooter.atk - 70) - 0.0012 * ((gkP?.gk ?? 65) - 65) + 0.012 * a.team.perk('sp')).clamp(0.55, 0.92).toDouble();
     a.xg += p;
     if (rng.nextDouble() < p) {
       a.onTarget++;

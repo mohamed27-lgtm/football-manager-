@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide Text;
+import 'manager_screen.dart';
 import 'i18n.dart';
 import 'lineup_pages.dart';
 import 'match_pages.dart';
@@ -170,6 +171,7 @@ class _MoreTabState extends State<MoreTab> {
         (Icons.gavel_rounded, 'اللعب المالي النظيف', () => _push(FfpScreen(gs: gs))),
         (Icons.history_edu_rounded, 'تاريخ النادي', () => _push(HistoryScreen(gs: gs))),
         (Icons.work_outline_rounded, 'عقدي والعروض', () => _push(JobsScreen(gs: gs))),
+        (Icons.school_rounded, 'رخصة المدرب', () => _push(ManagerScreen(gs: gs))),
       ]),
     ];
     final ql = q.trim().toLowerCase();
