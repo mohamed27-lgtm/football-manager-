@@ -353,6 +353,7 @@ class Team {
   }
 
   /// الألفة التكتيكية (0-100): تتراكم باستقرار الخطة والتشكيلة وتنخفض عند التغيير. الافتراضي 70 = محايدة
+  final Map<int, int> mentors = {}; // معرّف الشاب → معرّف مرشده
   double familiarity = 70;
   Set<int> lastXI = {}; // تشكيلة آخر مباراة للمقارنة
 
@@ -540,6 +541,7 @@ class Team {
         'pass': passing,
         'tk': [penTaker, fkTaker, cornerTaker],
         if (familiarity != 70) 'fam': familiarity,
+        if (mentors.isNotEmpty) 'mn': {for (final e in mentors.entries) '${e.key}': e.value},
         if (lastXI.isNotEmpty) 'lxi': lastXI.toList(),
         if (roles.isNotEmpty) 'roles': {for (final e in roles.entries) '${e.key}': e.value},
         'coh': cohesion,
@@ -591,6 +593,10 @@ class Team {
       }
     }
     t.familiarity = (j['fam'] as num?)?.toDouble() ?? 70;
+    for (final e in ((j['mn'] as Map?) ?? const {}).entries) {
+      final k = int.tryParse('${e.key}');
+      if (k != null) t.mentors[k] = e.value as int;
+    }
     t.lastXI = {for (final v in (j['lxi'] as List?) ?? const []) v as int};
     final tk = (j['tk'] as List?)?.cast<int>();
     if (tk != null && tk.length == 3) {

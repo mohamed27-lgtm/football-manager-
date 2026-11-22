@@ -2236,7 +2236,88 @@ class GameState extends ChangeNotifier {
 
   // ───────── نهاية الموسم ─────────
   /// تطور اللاعب الموسمي: منحنى عمري حسب المركز + عامل نمو فردي خفي + الأداء والتدريب
-  void _develop(Player p, int form, int train) {
+  // ───────── الإرشاد: لاعب قديم يوجّه موهبة شابة ─────────
+  static const maxMentorships = 3;
+
+  /// مرشد اللاعب إن وُجد وكان ما زال في الفريق
+  Player? mentorOf(Player p) {
+    final id = user.mentors[p.id];
+    if (id == null) return null;
+    for (final x in user.squad) {
+      if (x.id == id) return x;
+    }
+    return null;
+  }
+
+  /// الشاب الذي يرشده هذا اللاعب
+  Player? menteeOf(Player p) {
+    for (final e in user.mentors.entries) {
+      if (e.value == p.id) {
+        for (final x in user.squad) {
+          if (x.id == e.key) return x;
+        }
+      }
+    }
+    return null;
+  }
+
+  /// يصلح المرشد لشابّ: عمره 29+ وتقييمه 62+ وليس مرشداً لغيره ولا مُرشَداً
+  bool canMentor(Player mentor, Player mentee) =>
+      mentor.id != mentee.id &&
+      mentor.age >= 29 &&
+      mentor.overall >= 62 &&
+      !mentor.onLoan &&
+      menteeOf(mentor) == null &&
+      !user.mentors.containsKey(mentor.id) &&
+      mentor.pos == mentee.pos;
+
+  String? assignMentor(Player mentee, Player mentor) {
+    if (mentee.age > 21) return 'الإرشاد للاعبين حتى عمر 21';
+    if (user.mentors.length >= maxMentorships && !user.mentors.containsKey(mentee.id)) return 'الحد الأقصى $maxMentorships علاقات إرشاد';
+    if (!canMentor(mentor, mentee)) return 'هذا اللاعب لا يصلح مرشداً (29+ عاماً وفي المركز نفسه وتقييم 62+)';
+    user.mentors[mentee.id] = mentor.id;
+    notifyListeners();
+    return null;
+  }
+
+  void removeMentor(Player mentee) {
+    user.mentors.remove(mentee.id);
+    notifyListeners();
+  }
+
+  /// معامل نمو الشاب بوجود مرشد: 1.12 عادي، 1.2 إن كان المرشد قائداً أو محترفاً
+  double mentorFactor(Player p) {
+    final m = mentorOf(p);
+    if (m == null) return 1.0;
+    return m.trait == 'قائد' || m.trait == 'محترف' ? 1.2 : 1.12;
+  }
+
+  /// نهاية الموسم: ينتهي الإرشاد إن كبر الشاب أو رحل المرشد، وقد يتأثر طبع المتقلب بمرشد قدوة
+  void _mentorSeasonEnd() {
+    for (final id in [...user.mentors.keys]) {
+      final mentee = user.squad.where((x) => x.id == id).firstOrNull;
+      final mentor = mentee == null ? null : mentorOf(mentee);
+      if (mentee == null) {
+        user.mentors.remove(id);
+        continue;
+      }
+      if (mentor == null) {
+        user.mentors.remove(id);
+        news.insert(0, '🎓 انتهى إرشاد ${mentee.name} لرحيل مرشده');
+        continue;
+      }
+      if (mentee.trait == 'متقلب' && (mentor.trait == 'قائد' || mentor.trait == 'محترف') && rng.nextDouble() < 0.35) {
+        mentee.trait = 'محترف';
+        news.insert(0, '🎓 تأثر ${mentee.name} بمرشده ${mentor.name} وصار لاعباً محترفاً');
+      }
+      if (mentee.age >= 22) {
+        user.mentors.remove(id);
+        news.insert(0, '🎓 أنهى ${mentee.name} فترة الإرشاد مع ${mentor.name} وقد نضج');
+      }
+    }
+  }
+
+  void _develop(Player p, int form, int train, [double mentor = 1.0]) {
     final gf = 0.7 + ((p.id * 2654435761) & 0xFF) / 255 * 0.8; // 0.7 – 1.5
     final peak = switch (p.pos) { Pos.gk => 30, Pos.def => 28, Pos.mid => 27, Pos.att => 26 };
     final playing = p.apps >= 18 ? 1 : (p.apps < 5 ? -1 : 0);
@@ -2245,7 +2326,7 @@ class GameState extends ChangeNotifier {
       if (gap > 0) {
         final rate = p.age <= 21 ? 0.32 : (p.age <= 24 ? 0.24 : 0.14);
         final tf = p.trait == 'محترف' ? 1.15 : p.trait == 'متقلب' ? 0.92 : 1.0;
-        final g = (gap * rate * gf * tf + playing * 0.8 + form * 0.7 + train * 0.6 + rng.nextDouble() * 1.6 - 0.4).round();
+        final g = (gap * rate * gf * tf * mentor + playing * 0.8 + form * 0.7 + train * 0.6 + rng.nextDouble() * 1.6 - 0.4).round();
         _grow(p, max(0, min(g, gap)));
       }
       if (p.age <= 23) {
@@ -2433,7 +2514,7 @@ class GameState extends ChangeNotifier {
         final played = p.apps >= 15;
         final form = p.rated == 0 ? 0 : (p.avgRating >= 7.3 ? 1 : (p.avgRating <= 6.2 && played ? -1 : 0));
         final o0 = p.overall;
-        _develop(p, form, t == user && user.trainingLvl >= 3 ? 1 : 0);
+        _develop(p, form, t == user && user.trainingLvl >= 3 ? 1 : 0, t == user ? mentorFactor(p) : 1.0);
         if (p.apps > 0) {
           p.career.add({
             's': season,
@@ -2520,6 +2601,7 @@ class GameState extends ChangeNotifier {
       pointsPenaltyNext = 0;
     }
     _genSponsorOffers();
+    _mentorSeasonEnd();
     _enforceRegistration();
     seasonOver = false;
     roundResults.clear();

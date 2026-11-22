@@ -385,6 +385,54 @@ class _PlayerCardState extends State<_PlayerCard> {
                 ),
               ),
               const SizedBox(height: 8),
+              if (!p.onLoan && (p.age <= 21 || gs.menteeOf(p) != null)) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      if (gs.menteeOf(p) != null) {
+                        snack(null, '${p.name} يرشد ${gs.menteeOf(p)!.name}');
+                        return;
+                      }
+                      if (gs.mentorOf(p) != null) {
+                        gs.removeMentor(p);
+                        Navigator.pop(ctx);
+                        snack(null, 'أُنهي الإرشاد');
+                        return;
+                      }
+                      final cands = [...gs.user.squad.where((x) => gs.canMentor(x, p))]..sort((a, b) => b.overall.compareTo(a.overall));
+                      if (cands.isEmpty) {
+                        snack('لا يوجد مرشد مناسب: يلزم لاعب 29+ عاماً في المركز نفسه وتقييم 62+', '');
+                        return;
+                      }
+                      final pick = await showModalBottomSheet<Player>(
+                        context: ctx,
+                        builder: (_) => SafeArea(
+                          child: ListView(shrinkWrap: true, padding: const EdgeInsets.all(14), children: [
+                            const Text('اختر مرشداً', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                            for (final c in cands)
+                              ListTile(
+                                title: Text(c.name),
+                                subtitle: Text('${c.age} سنة • ${c.overall} • ${c.trait}'),
+                                onTap: () => Navigator.pop(ctx, c),
+                              ),
+                          ]),
+                        ),
+                      );
+                      if (pick == null) return;
+                      final err = gs.assignMentor(p, pick);
+                      Navigator.pop(ctx);
+                      snack(err, 'عُيّن ${pick.name} مرشداً لـ${p.name} 🎓');
+                    },
+                    child: Text(gs.menteeOf(p) != null
+                        ? 'مرشد لـ${gs.menteeOf(p)!.name} 🎓'
+                        : gs.mentorOf(p) != null
+                            ? 'مرشده: ${gs.mentorOf(p)!.name} (إنهاء)'
+                            : 'تعيين مرشد'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               if (!p.onLoan) ...[
                 SizedBox(
                   width: double.infinity,
