@@ -479,7 +479,7 @@ class MatchSim {
     final outf = a.slots.where((s) => s.pos != Pos.gk).toList();
     if (outf.length < 2) return;
     // المنفّذ: الأفضل تمريراً؛ المستقبِل: الأطول والأقوى هوائياً
-    final taker = outf.reduce((x, y) => x.p.pas >= y.p.pas ? x : y).p;
+    final taker = a.team.takerAmong(a.team.cornerTaker, outf.map((s) => s.p)) ?? outf.reduce((x, y) => x.p.pas >= y.p.pas ? x : y).p;
     final tg = outf.where((s) => s.p != taker).toList();
     final head = _weighted(tg, tg.map((s) => _aerial(s.p) * (0.6 + s.p.atk / 100)).toList()).p;
     final dd = d.slots.where((s) => s.pos != Pos.gk).toList();
@@ -511,7 +511,7 @@ class MatchSim {
   void _freeKick(Side a, Side d) {
     final outf = a.slots.where((s) => s.pos != Pos.gk).toList();
     if (outf.isEmpty) return;
-    final taker = outf.reduce((x, y) => (x.p.pas + x.p.atk) >= (y.p.pas + y.p.atk) ? x : y).p;
+    final taker = a.team.takerAmong(a.team.fkTaker, outf.map((s) => s.p)) ?? outf.reduce((x, y) => (x.p.pas + x.p.atk) >= (y.p.pas + y.p.atk) ? x : y).p;
     final skill = (taker.pas + taker.atk) / 2;
     final gkP = _gk(d);
     final p = (0.05 * pow(skill / 75, 2.2) * (70 / max(40, gkP?.gk ?? 60))).clamp(0.008, 0.14).toDouble();
@@ -539,7 +539,7 @@ class MatchSim {
     final att = a.slots.where((s) => s.pos != Pos.gk).toList();
     if (att.isEmpty) return;
     att.sort((x, y) => y.p.atk.compareTo(x.p.atk));
-    final shooter = att.first.p;
+    final shooter = a.team.takerAmong(a.team.penTaker, att.map((s) => s.p)) ?? att.first.p;
     a.shots++;
     ballX = 0.5;
     ballY = a.isHome ? 0.12 : 0.88;

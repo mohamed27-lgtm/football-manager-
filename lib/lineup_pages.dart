@@ -323,6 +323,31 @@ class TacticsScreen extends StatelessWidget {
         ]),
       );
 
+  Widget _takers(Team t) {
+    final ps = [...t.lineup.where((p) => p.pos != Pos.gk)];
+    Widget row(String label, int kind, int cur) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Row(children: [
+            Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5))),
+            DropdownButton<int>(
+              value: ps.any((p) => p.id == cur) ? cur : 0,
+              underline: const SizedBox(),
+              items: [
+                const DropdownMenuItem(value: 0, child: Text('تلقائي (الأفضل)')),
+                for (final p in ps) DropdownMenuItem(value: p.id, child: Text(p.name)),
+              ],
+              onChanged: (v) => gs.setTaker(kind, v ?? 0),
+            ),
+          ]),
+        );
+    return Column(children: [
+      row('ركلات الجزاء', 0, t.penTaker),
+      row('الركلات الحرة', 1, t.fkTaker),
+      row('الركنيات', 2, t.cornerTaker),
+      const Text('إن غاب المنفّذ المحدد عن الملعب يُختار الأفضل تلقائياً. اختيار لاعب ضعيف يخفض احتمال التسجيل.', style: TextStyle(color: kMuted, fontSize: 11.5, height: 1.5)),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: gameBar(context, gs, 'التكتيك'),
@@ -360,6 +385,7 @@ class TacticsScreen extends StatelessWidget {
               _sec('العرض', _seg(const ['ضيّق', 'عادي', 'عريض'], t.width, gs.setWidth)),
               _sec('خط الدفاع', _seg(const ['عميق', 'عادي', 'مرتفع'], t.defLine, gs.setDefLine)),
               _sec('أسلوب التمرير', _seg(const ['قصير', 'مختلط', 'مباشر'], t.passing, gs.setPassing)),
+              _sec('منفّذو الكرات الثابتة', _takers(t)),
               const Padding(
                 padding: EdgeInsets.only(top: 14),
                 child: Text('الضغط العالي والإيقاع السريع يرفعان الفرص لكنهما يستنزفان اللياقة. الدفاع المرتفع يمنح سيطرة أكبر لكنه يترك مساحات خلفك.', style: TextStyle(color: kMuted, fontSize: 12, height: 1.5)),

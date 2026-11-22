@@ -270,6 +270,16 @@ class Team {
   int width = 1; // 0 ضيق، 1 متوازن، 2 عريض
   int defLine = 1; // 0 منخفض، 1 متوسط، 2 مرتفع
   int passing = 1; // 0 قصير، 1 مختلط، 2 مباشر
+  int penTaker = 0, fkTaker = 0, cornerTaker = 0; // معرّف المنفّذ المحدّد (0 = تلقائي)
+
+  /// المنفّذ المحدّد إن كان على أرض الملعب وإلا null
+  Player? takerAmong(int id, Iterable<Player> onPitch) {
+    if (id == 0) return null;
+    for (final p in onPitch) {
+      if (p.id == id) return p;
+    }
+    return null;
+  }
   int analystLvl = 0; // يُضبط قبل كل مباراة من الطاقم
   double cohesion = 65; // الانسجام 30-100
   List<Player> lineup = [];
@@ -426,6 +436,7 @@ class Team {
         'wid': width,
         'dl': defLine,
         'pass': passing,
+        'tk': [penTaker, fkTaker, cornerTaker],
         'coh': cohesion,
         'lineup': [for (final p in lineup) p.id],
         'budget': budget,
@@ -467,6 +478,12 @@ class Team {
     t.width = (j['wid'] as int?) ?? 1;
     t.defLine = (j['dl'] as int?) ?? 1;
     t.passing = (j['pass'] as int?) ?? 1;
+    final tk = (j['tk'] as List?)?.cast<int>();
+    if (tk != null && tk.length == 3) {
+      t.penTaker = tk[0];
+      t.fkTaker = tk[1];
+      t.cornerTaker = tk[2];
+    }
     t.cohesion = (j['coh'] as num?)?.toDouble() ?? 65;
     t.lineup = [
       for (final id in j['lineup'] as List)

@@ -1,5 +1,10 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'منفّذو الكرات الثابتة': ['Set-piece takers', 'Tireurs des coups de pied arrêtés', 'Ejecutores de balón parado'],
+  'ركلات الجزاء': ['Penalties', 'Penaltys', 'Penaltis'],
+  'الركلات الحرة': ['Free kicks', 'Coups francs', 'Tiros libres'],
+  'تلقائي (الأفضل)': ['Auto (best)', 'Auto (meilleur)', 'Auto (el mejor)'],
+  'إن غاب المنفّذ المحدد عن الملعب يُختار الأفضل تلقائياً. اختيار لاعب ضعيف يخفض احتمال التسجيل.': ['If the chosen taker is off the pitch, the best one is picked automatically. A weak taker lowers the chance of scoring.', 'Si le tireur choisi est absent, le meilleur est choisi automatiquement. Un tireur faible réduit les chances de marquer.', 'Si el ejecutor elegido no está en el campo, se elige automáticamente al mejor. Un ejecutor débil reduce la probabilidad de gol.'],
   'مهاجم ثانٍ': ['Second striker', 'Second attaquant', 'Segundo delantero'],
   'رأس حربة': ['Centre-forward', 'Avant-centre', 'Delantero centro'],
   'جناح أيسر': ['Left winger', 'Ailier gauche', 'Extremo izquierdo'],

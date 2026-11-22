@@ -1205,6 +1205,18 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setTaker(int kind, int id) {
+    switch (kind) {
+      case 0:
+        user.penTaker = id;
+      case 1:
+        user.fkTaker = id;
+      default:
+        user.cornerTaker = id;
+    }
+    notifyListeners();
+  }
+
   void setPassing(int v) {
     user.passing = v;
     notifyListeners();
