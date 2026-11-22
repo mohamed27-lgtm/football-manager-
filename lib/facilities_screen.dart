@@ -22,7 +22,7 @@ String _n(int v) => v.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'
 String facEffect(String kind, int l) => switch (kind) {
       'stadium' => 'سعة ${_n(12000 + 8000 * l)} متفرج',
       'training' => 'نمو اللاعبين +${(2 + 3 * (l - 1)).round()}% • تعافٍ +${(1.5 * (l - 1)).toStringAsFixed(1)} لياقة',
-      'academy' => 'نحو ${(0.5 + 0.1 * l).toStringAsFixed(1)}+ خريج/موسم • إمكانات +${4 * l}',
+      'academy' => 'فئة ${GameState.academyTier(l)} • نحو ${(0.5 + 0.1 * l).toStringAsFixed(1)}+ خريج/موسم • إمكانات +${4 * l} • جوهرة نادرة ${(GameState.wonderChance(l) * 100).round()}%',
       'medical' => 'تعافٍ +${(0.8 * (l - 1)).toStringAsFixed(1)} • ${7 * (l - 1)}% احتمال تقليص أسبوع إصابة',
       _ => 'دخل التذاكر +${4 * (l - 1)}% • الرعاية +${3 * (l - 1)}%',
     };

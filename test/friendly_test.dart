@@ -86,4 +86,20 @@ void main() {
     expect(gs.confidence, lessThan(c));
     expect(gs.takeoverPending, isNull);
   });
+
+  test('الأكاديمية: فئات حسب المستوى وفرصة الجوهرة تزداد', () {
+    expect(GameState.academyTier(1), 'برونزية');
+    expect(GameState.academyTier(5), 'نخبة');
+    expect(GameState.wonderChance(5), greaterThan(GameState.wonderChance(1)));
+    final gs = _newGame(98);
+    gs.user.academy = 5;
+    var gems = 0;
+    for (var i = 0; i < 60; i++) {
+      gs.news.clear();
+      gs.user.squad.removeWhere((p) => p.age <= 18);
+      gs.academyIntakeForTest();
+      gems += gs.news.where((n) => n.startsWith('💎')).length;
+    }
+    expect(gems, greaterThan(0));
+  });
 }

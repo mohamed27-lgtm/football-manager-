@@ -1,5 +1,10 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  '💎 جوهرة نادرة من أكاديمية {}: {} ({} سنة) — إمكانات {}!': ['💎 Rare gem from the {} academy: {} (age {}) — potential {}!', '💎 Pépite rare de l\'académie {} : {} ({} ans) — potentiel {} !', '💎 Joya rara de la academia {}: {} ({} años) — potencial {}!'],
+  'برونزية': ['Bronze', 'Bronze', 'Bronce'],
+  'بلاتينية': ['Platinum', 'Platine', 'Platino'],
+  'نخبة': ['Elite', 'Élite', 'Élite'],
+  'فئة {} • نحو {}+ خريج/موسم • إمكانات +{} • جوهرة نادرة {}%': ['{} tier • about {}+ graduates/season • potential +{} • rare gem {}%', 'Catégorie {} • env. {}+ diplômés/saison • potentiel +{} • pépite rare {}%', 'Categoría {} • unos {}+ graduados/temporada • potencial +{} • joya rara {}%'],
   '💼 {} يقدّم عرض استحواذ على {} — القرار لك': ['💼 {} makes a takeover bid for {} — your call', '💼 {} fait une offre de rachat pour {} — à vous de décider', '💼 {} presenta una oferta de compra por {} — tú decides'],
   '🤝 {} يستحوذ على {} ويضخ {} — الهدف الجديد: المركز {}': ['🤝 {} takes over {} and injects {} — new target: position {}', '🤝 {} rachète {} et injecte {} — nouvel objectif : place {}', '🤝 {} adquiere {} e inyecta {} — nuevo objetivo: puesto {}'],
   '🚫 رفضتَ عرض {} — الإدارة غير راضية': ['🚫 You rejected {}\'s offer — the board is unhappy', '🚫 Vous avez refusé l\'offre de {} — la direction est mécontente', '🚫 Rechazaste la oferta de {} — la directiva está molesta'],

@@ -2713,20 +2713,31 @@ class GameState extends ChangeNotifier {
   void _topUp(Team t) => topUpSquad(t, rng);
 
   /// أكاديمية النادي: تُخرّج مواهب شابة كل موسم بحسب مستواها
+  /// فئة الأكاديمية حسب المستوى
+  static String academyTier(int lvl) => const ['', 'برونزية', 'فضية', 'ذهبية', 'بلاتينية', 'نخبة'][lvl.clamp(1, 5)];
+
+  /// احتمال ظهور موهبة نادرة (جوهرة) في كل دفعة
+  static double wonderChance(int lvl) => 0.02 + 0.03 * lvl;
+
+  void academyIntakeForTest() => _academyIntake();
+
   void _academyIntake() {
     final lvl = user.academy.clamp(1, 5);
     final n = (rng.nextDouble() < 0.5 + 0.1 * lvl ? 1 : 0) + (lvl >= 3 && rng.nextDouble() < 0.5 ? 1 : 0) + (lvl >= 5 ? 1 : 0);
     for (var i = 0; i < n && user.squad.length < 30; i++) {
       final pos = Pos.values[rng.nextInt(Pos.values.length)];
       final age = 16 + rng.nextInt(3);
-      final ov = 40 + lvl * 2 + rng.nextInt(7);
+      final wonder = rng.nextDouble() < wonderChance(lvl);
+      final ov = 40 + lvl * 2 + rng.nextInt(7) + (wonder ? 8 : 0);
       final p = makePlayer(rng, pos, ov, age, preferNat: dominantNat(user.squad.map((q) => q.nat)));
       p
-        ..potential = min(92, ov + 14 + lvl * 4 + rng.nextInt(12))
+        ..potential = wonder ? 90 + rng.nextInt(7) : min(92, ov + 14 + lvl * 4 + rng.nextInt(12))
         ..contract = 3
         ..club = user.name;
       user.squad.add(p);
-      news.insert(0, '🎓 تخرّج من أكاديميتك ${p.name} (${p.age} سنة) — موهبة بإمكانات ${p.potential}');
+      news.insert(0, wonder
+          ? '💎 جوهرة نادرة من أكاديمية ${academyTier(lvl)}: ${p.name} (${p.age} سنة) — إمكانات ${p.potential}!'
+          : '🎓 تخرّج من أكاديميتك ${p.name} (${p.age} سنة) — موهبة بإمكانات ${p.potential}');
     }
   }
 
