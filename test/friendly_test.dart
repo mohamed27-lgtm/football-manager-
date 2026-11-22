@@ -150,4 +150,16 @@ void main() {
     expect(gs.capacityAt(3), greaterThan(c1));
     expect(gs.capacityAt(3), closeTo(c1 * 1.28, 300));
   });
+
+  test('واقعية السعر: العقد القصير يخفض والأساسي يرفع', () {
+    final gs = _newGame(102);
+    final owner = gs.teams.firstWhere((t) => t != gs.user);
+    final star = ([...owner.squad]..sort((a, b) => b.overall.compareTo(a.overall))).first;
+    star..contract = 3..listed = false..injuredWeeks = 0..age = 27;
+    final base = gs.buyPrice(star);
+    expect(gs.priceFactors(star).any((e) => e.$2 > 1), isTrue);
+    star.contract = 1;
+    expect(gs.buyPrice(star), lessThan(base));
+    expect(gs.priceFactors(star).any((e) => e.$1.contains('ينتهي')), isTrue);
+  });
 }

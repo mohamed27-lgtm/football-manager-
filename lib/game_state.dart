@@ -1700,7 +1700,28 @@ class GameState extends ChangeNotifier {
 
   // ───────── الانتقالات والعقود ─────────
   double signingBonus(Player p) => max(0.1, (p.wage * 15 * 10).round() / 10);
-  double buyPrice(Player p) => p.free ? signingBonus(p) : (p.value * 1.15 * (1 - 0.025 * user.perk('negot')) * 10).round() / 10;
+  /// عوامل واقعية تغيّر سعر البائع: العقد، العمر، المصاب، أهمية اللاعب لناديه، وضائقة النادي المالية
+  List<(String, double)> priceFactors(Player p) {
+    if (p.free) return const [];
+    final f = <(String, double)>[];
+    if (p.contract <= 1) f.add(('عقده ينتهي قريباً', 0.78));
+    if (p.contract >= 4) f.add(('عقد طويل يحصّن سعره', 1.06));
+    if (p.age >= 32) f.add(('تقدّم العمر يخفض سعره', 0.85));
+    if (p.age <= 21 && p.potential >= 80) f.add(('موهبة شابة عليها طلب', 1.15));
+    if (p.injuredWeeks >= 6) f.add(('مصاب لفترة طويلة', 0.85));
+    if (p.listed) f.add(('النادي يعرضه للبيع', 0.92));
+    final owner = _ownerOf(p);
+    if (owner != null) {
+      final top = ([...owner.squad]..sort((a, b) => b.overall.compareTo(a.overall))).take(3).toList();
+      if (top.any((x) => x.id == p.id) && !p.listed) f.add(('أساسي لا غنى عنه في ناديه', 1.12));
+      if (owner.budget < 4) f.add(('النادي في ضائقة مالية', 0.92));
+    }
+    return f;
+  }
+
+  double _priceFactor(Player p) => priceFactors(p).fold(1.0, (a, e) => a * e.$2).clamp(0.65, 1.35).toDouble();
+
+  double buyPrice(Player p) => p.free ? signingBonus(p) : (p.value * 1.15 * _priceFactor(p) * (1 - 0.025 * user.perk('negot')) * 10).round() / 10;
   double sellPrice(Player p) => (p.value * 0.85 * 10).round() / 10;
   double renewCost(Player p) => max(0.1, (p.value * 0.08 * 10).round() / 10);
   double agentFee(double price) =>

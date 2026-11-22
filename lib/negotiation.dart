@@ -118,7 +118,8 @@ void showNegotiation(BuildContext context, GameState gs, Player p) {
   var wage = (dem0 * 1000).round() / 1000;
   var years = 4;
   var tries = 0;
-  var msg = 'السعر المطلوب ${money(ask)}${p.club != null ? ' من ${p.club}' : ''}. قدّم عرضك؛ البائع قد يقبل أو يطلب أكثر.';
+  final why = gs.priceFactors(p);
+  var msg = 'السعر المطلوب ${money(ask)}${p.club != null ? ' من ${p.club}' : ''}. قدّم عرضك؛ البائع قد يقبل أو يطلب أكثر.${why.isEmpty ? '' : '\nعوامل السعر: ${why.map((e) => '${e.$1} (${e.$2 > 1 ? '↑' : '↓'})').join(' • ')}'}';
 
   showModalBottomSheet<void>(
     context: context,

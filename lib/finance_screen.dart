@@ -224,6 +224,61 @@ class _FinanceScreenState extends State<FinanceScreen> {
     );
   }
 
+  /// الصحة المالية: نسبة الأجور للإيرادات مقابل حد اللعب المالي النظيف، ومدة كفاية السيولة
+  Widget _health(List<Tx> all) {
+    final cur = all.where((t) => t.season == gs.season).toList();
+    final weeks = {for (final t in cur) t.week}.length;
+    final ratio = gs.ffpRatio;
+    final net = weeks == 0 ? 0.0 : cur.fold(0.0, (a, t) => a + t.amt) / weeks;
+    final runway = net < 0 && gs.user.budget > 0 ? gs.user.budget / -net : null;
+    final col = ratio > 1.0 ? const Color(0xFFE5533D) : (ratio > 0.8 ? const Color(0xFFF5A524) : const Color(0xFF1FA58A));
+    final label = gs.ffpRevenue <= 0 ? 'لا بيانات بعد' : (ratio > 1.0 ? 'خطر: فوق حد اللعب المالي' : (ratio > 0.8 ? 'اقتراب من الحد' : 'وضع صحي'));
+    return _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        const Text('الصحة المالية', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+        const Spacer(),
+        Text(label, style: TextStyle(color: col, fontWeight: FontWeight.w900, fontSize: 12.5)),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        const Text('الأجور / الإيرادات', style: TextStyle(fontSize: 12.5)),
+        const Spacer(),
+        Text(gs.ffpRevenue <= 0 ? '—' : '${(ratio * 100).round()}% (الحد 100%)', style: TextStyle(fontWeight: FontWeight.w900, color: col, fontSize: 12.5)),
+      ]),
+      const SizedBox(height: 5),
+      ClipRRect(borderRadius: BorderRadius.circular(5), child: LinearProgressIndicator(value: ratio.clamp(0.0, 1.0).toDouble(), minHeight: 8, color: col, backgroundColor: kCard2)),
+      const SizedBox(height: 10),
+      Row(children: [
+        _tile(amtText(gs.weeklyWages + gs.staffWages, sign: false), 'فاتورة الأجور أسبوعياً', const Color(0xFF2F7BE6)),
+        _tile(runway == null ? (net >= 0 ? 'آمنة' : 'نفدت') : '${runway.round()} أسبوع', 'كفاية السيولة', runway != null && runway < 12 ? const Color(0xFFE5533D) : const Color(0xFF1FA58A)),
+        _tile(amtText(net, sign: true), 'صافي أسبوعي', net >= 0 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D)),
+      ]),
+    ]));
+  }
+
+  /// أعلى الرواتب في الفريق وما يقابلها من مستوى (لاكتشاف العقود غير المجدية)
+  Widget _topEarners() {
+    final l = [...gs.user.squad]..sort((a, b) => b.wage.compareTo(a.wage));
+    final top = l.take(5).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+    final total = gs.weeklyWages == 0 ? 1.0 : gs.weeklyWages;
+    return _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text('أعلى الرواتب', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+      const SizedBox(height: 8),
+      for (final p in top)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(children: [
+            Expanded(child: Text('${p.name} • ${p.overall}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13))),
+            Text('${(p.wage / total * 100).round()}% من الأجور', style: const TextStyle(color: kMuted, fontSize: 11.5)),
+            const SizedBox(width: 8),
+            Text('${money(p.wage)}/أسبوع', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5)),
+            if (p.apps < 4 && p.overall < 70) const Padding(padding: EdgeInsets.only(right: 6), child: Text('⚠️', style: TextStyle(fontSize: 13))),
+          ]),
+        ),
+    ]));
+  }
+
   Widget _hero(GameState gs) {
     final u = gs.user;
     final h = gs.fin.history;
@@ -304,6 +359,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
             const SizedBox(height: 12),
             _donut(cur),
             _forecast(all),
+            _health(all),
+            _topEarners(),
             _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('الإيرادات (${money(f.totalIncome)})', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
               const SizedBox(height: 4),
