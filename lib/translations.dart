@@ -1,5 +1,17 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  '📰 آخر العناوين': ['📰 Latest headlines', '📰 Dernières actualités', '📰 Últimos titulares'],
+  'اليوم آخر يوم في الميركاتو: الأندية تتسابق على الصفقات': ['Deadline day: clubs race to complete deals', 'Dernier jour du mercato : les clubs se ruent sur les transferts', 'Último día del mercado: los clubes corren por los fichajes'],
+  '{} يتصدر الدوري': ['{} lead the league', '{} est leader du championnat', '{} lidera la liga'],
+  '{} يتصدر الدوري بفارق {} نقاط عن {}': ['{} lead the league by {} points over {}', '{} est leader avec {} points d\'avance sur {}', '{} lidera la liga con {} puntos sobre {}'],
+  'سلسلة {} انتصارات متتالية لـ{}': ['{} straight wins for {}', '{} victoires de suite pour {}', '{} victorias seguidas para {}'],
+  '{} لم يخسر في آخر {} مباريات': ['{} unbeaten in their last {} matches', '{} invaincu lors de ses {} derniers matchs', '{} sin perder en sus últimos {} partidos'],
+  'أزمة: {} هزائم متتالية و{} تحت الضغط': ['Crisis: {} straight defeats and {} under pressure', 'Crise : {} défaites de suite et {} sous pression', 'Crisis: {} derrotas seguidas y {} bajo presión'],
+  '{} في دائرة الهبوط': ['{} in the relegation zone', '{} dans la zone de relégation', '{} en zona de descenso'],
+  '{} يتألق: {} أهداف هذا الموسم': ['{} shines: {} goals this season', '{} brille : {} buts cette saison', '{} brilla: {} goles esta temporada'],
+  'قائمة المصابين تطول: {} لاعبين خارج الخدمة': ['Injury list grows: {} players out', 'La liste des blessés s\'allonge : {} joueurs absents', 'La lista de lesionados crece: {} jugadores fuera'],
+  'الإدارة تفقد صبرها مع المدرب': ['The board is losing patience with the manager', 'La direction perd patience avec l\'entraîneur', 'La directiva pierde la paciencia con el técnico'],
+  'ثقة كبيرة من الإدارة بالمدرب بعد النتائج الأخيرة': ['Great board confidence in the manager after recent results', 'Grande confiance de la direction après les derniers résultats', 'Gran confianza de la directiva tras los últimos resultados'],
   '🏛️ قاعة الشهرة': ['🏛️ Hall of Fame', '🏛️ Panthéon du club', '🏛️ Salón de la Fama'],
   'يدخل القاعة من يلعب 40 مباراة مع ناديك أو يصنع تاريخاً بأهدافه وتمريراته.': ['Players enter the hall after 40 matches for your club, or by making history with goals and assists.', 'On entre au panthéon après 40 matchs avec votre club ou en marquant l\'histoire par ses buts et passes.', 'Se entra tras 40 partidos con tu club o haciendo historia con goles y asistencias.'],
   'الهداف التاريخي: {} ({} هدفاً)': ['All-time top scorer: {} ({} goals)', 'Meilleur buteur de l\'histoire : {} ({} buts)', 'Máximo goleador histórico: {} ({} goles)'],

@@ -1,4 +1,5 @@
 import 'jobs_screens.dart';
+import 'headlines.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide Text;
 import 'package:flutter/services.dart';
@@ -1306,6 +1307,7 @@ class DashboardTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (gs.natJob != null) return NationalDashboard(gs: gs);
     return ListView(padding: const EdgeInsets.fromLTRB(16, 14, 16, 20), children: [
+      if (!gs.fired) HeadlineTicker(gs: gs),
       if (gs.fired)
         Panel(
           color: const Color(0xFF2A1414),
