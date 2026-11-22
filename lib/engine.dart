@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'models.dart';
+import 'rivalries.dart';
 
 class MatchEvent {
   final int minute;
@@ -148,6 +149,10 @@ class MatchSim {
         away = Side(a, false, userAway),
         rng = random ?? Random();
 
+  /// الديربي: مستواه واسمه (0 = لقاء عادي)
+  late final (int, String) derby = derbyOf(home.team.name, away.team.name);
+  double get _heat => 1 + 0.12 * derby.$1;
+
   bool get finished => minute >= 90;
 
   int _pgh = 0, _pga = 0;
@@ -222,6 +227,7 @@ class MatchSim {
   void step() {
     if (finished) return;
     minute++;
+    if (minute == 1 && derby.$1 > 0) _log('info', '🔥 ${derby.$2}: لقاء مشحون بين ${home.team.name} و${away.team.name}', true, major: false);
     if (minute == 1) {
       _log('info', '🟢 صافرة البداية', true, major: false);
       _log('info', '$weatherText • $refText', true, major: false);
@@ -574,13 +580,13 @@ class MatchSim {
 
   void _discipline(Side d) {
     if (d.slots.isEmpty) return;
-    if (rng.nextDouble() < 0.24 * refStrict * (1 + 0.25 * (d.team.pressing - 1))) {
+    if (rng.nextDouble() < 0.24 * refStrict * _heat * (1 + 0.25 * (d.team.pressing - 1))) {
       d.fouls++;
       if (rng.nextDouble() < 0.085) _freeKick(identical(d, home) ? away : home, d);
     }
     // انحياز الحكم الخفيف لأصحاب الأرض (أجواء الملعب تضغط على الحكم)
     final bias = d.isHome ? 1 - 0.1 * crowdOf(d.team) : 1 + 0.1 * crowdOf(identical(d, home) ? away.team : home.team);
-    if (rng.nextDouble() < 0.04 * refStrict * bias * (1 + 0.4 * (d.team.pressing - 1))) {
+    if (rng.nextDouble() < 0.04 * refStrict * _heat * bias * (1 + 0.4 * (d.team.pressing - 1))) {
       final c = d.slots.where((s) => s.pos != Pos.gk).toList();
       if (c.isEmpty) return;
       final sl = _weighted(

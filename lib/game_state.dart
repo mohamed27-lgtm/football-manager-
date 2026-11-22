@@ -293,6 +293,20 @@ class GameState extends ChangeNotifier {
     final l = h2h.putIfAbsent(oppId, () => []);
     l.add(lm.result);
     if (l.length > 10) l.removeAt(0);
+    final dv = s.derby;
+    if (dv.$1 > 0) {
+      final mine = s.home.team == user ? s.home.goals : s.away.goals;
+      final theirs = s.home.team == user ? s.away.goals : s.home.goals;
+      if (mine > theirs) {
+        _morale(user, 2.0 * dv.$1);
+        confidence = min(100, confidence + dv.$1);
+        news.insert(0, '🔥 فوز في ${dv.$2}! الجماهير تحتفل ومعنويات اللاعبين في السماء');
+      } else if (mine < theirs) {
+        _morale(user, -2.0 * dv.$1);
+        confidence = max(0, confidence - dv.$1);
+        news.insert(0, '🔥 خسارة في ${dv.$2}: غضب الجماهير يضغط على الإدارة والمدرب');
+      }
+    }
   }
   int coins = 300; // كوينز: تُكسب من المتجر ومشاهدة الإعلانات (لاحقاً)
   static const createPlayerCost = 100;
