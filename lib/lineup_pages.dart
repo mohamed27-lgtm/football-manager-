@@ -323,6 +323,22 @@ class TacticsScreen extends StatelessWidget {
         ]),
       );
 
+  Widget _fam(Team t) {
+    final f = t.familiarity;
+    final label = f >= 85 ? 'انسجام تكتيكي ممتاز' : (f >= 65 ? 'جيدة' : (f >= 45 ? 'متوسطة: الفريق ما زال يتعلّم' : 'ضعيفة: تغييرات كثيرة أربكت الفريق'));
+    final c = f >= 65 ? const Color(0xFF1FA58A) : (f >= 45 ? const Color(0xFFF5A524) : const Color(0xFFE5533D));
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Expanded(child: Text(label, style: TextStyle(fontWeight: FontWeight.w800, color: c))),
+        Text('${f.round()}%', style: TextStyle(fontWeight: FontWeight.w900, color: c)),
+      ]),
+      const SizedBox(height: 6),
+      ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: f / 100, minHeight: 8, color: c, backgroundColor: kLine)),
+      const SizedBox(height: 6),
+      const Text('تتراكم الألفة بإبقاء الخطة والتشكيلة، وتنخفض عند تغيير الخطة (بقوة) أو تبديل اللاعبين الأساسيين. تؤثر بين -3.5% و+2% في قوة الفريق.', style: TextStyle(color: kMuted, fontSize: 11.5, height: 1.5)),
+    ]);
+  }
+
   Widget _roles(Team t) {
     final ps = [...t.lineup.where((p) => p.pos != Pos.gk)];
     return Column(children: [
@@ -409,6 +425,7 @@ class TacticsScreen extends StatelessWidget {
               _sec('العرض', _seg(const ['ضيّق', 'عادي', 'عريض'], t.width, gs.setWidth)),
               _sec('خط الدفاع', _seg(const ['عميق', 'عادي', 'مرتفع'], t.defLine, gs.setDefLine)),
               _sec('أسلوب التمرير', _seg(const ['قصير', 'مختلط', 'مباشر'], t.passing, gs.setPassing)),
+              _sec('الألفة التكتيكية', _fam(t)),
               _sec('أدوار اللاعبين', _roles(t)),
               _sec('منفّذو الكرات الثابتة', _takers(t)),
               const Padding(

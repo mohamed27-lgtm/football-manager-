@@ -61,6 +61,7 @@ class Side {
     }
     final s = team.slots;
     slots = [for (var i = 0; i < 11; i++) Slot(s[i], team.lineup[i])];
+    if (isUser) team.onMatchStart(team.lineup.take(11));
     for (final sl in slots) {
       sl.p.apps++;
       if (isUser && sl.p.promise == 1) sl.p.promStarts++;
@@ -95,6 +96,7 @@ class Side {
   (double, double, double) get _roleFx => team.roleEffect(slots.map((s) => s.p));
 
   double get attackPower =>
+      team.familiarityFactor *
       (1 + _roleFx.$1) *
       (0.55 * lineAvg(Pos.att) + 0.45 * lineAvg(Pos.mid)) *
       (1 + 0.03 * (mentality - 2)) *
@@ -103,6 +105,7 @@ class Side {
       _man;
 
   double get defensePower =>
+      team.familiarityFactor *
       (1 + _roleFx.$3) *
       (0.6 * lineAvg(Pos.def) + 0.25 * lineAvg(Pos.mid) + 0.15 * lineAvg(Pos.gk)) *
       (1 - 0.025 * (mentality - 2)) *
@@ -111,6 +114,7 @@ class Side {
       _man;
 
   double get midPower =>
+      team.familiarityFactor *
       (1 + _roleFx.$2) *
       lineAvg(Pos.mid) *
       (1 + 0.04 * (team.pressing - 1)) *

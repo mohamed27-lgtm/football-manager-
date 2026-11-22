@@ -352,6 +352,26 @@ class Team {
     return (a, m, d);
   }
 
+  /// الألفة التكتيكية (0-100): تتراكم باستقرار الخطة والتشكيلة وتنخفض عند التغيير. الافتراضي 70 = محايدة
+  double familiarity = 70;
+  Set<int> lastXI = {}; // تشكيلة آخر مباراة للمقارنة
+
+  /// أثر الألفة على قوى الفريق: من نحو 0.965 (ألفة 20) إلى 1.021 (ألفة 100)
+  double get familiarityFactor => 1 + (familiarity - 70) * 0.0007;
+
+  /// يُستدعى عند بدء كل مباراة للفريق: يقارن التشكيلة بالسابقة ثم يرفع الألفة
+  void onMatchStart(Iterable<Player> xi) {
+    final ids = {for (final p in xi) p.id};
+    if (lastXI.isNotEmpty) {
+      final changed = ids.difference(lastXI).length;
+      familiarity = (familiarity - 2.0 * changed + (changed == 0 ? 3 : 1)).clamp(20.0, 100.0).toDouble();
+    }
+    lastXI = ids;
+  }
+
+  /// تغيير التشكيل الأساسي يضرب الألفة بقوة
+  void shakeFamiliarity(double d) => familiarity = (familiarity - d).clamp(20.0, 100.0).toDouble();
+
   int penTaker = 0, fkTaker = 0, cornerTaker = 0; // معرّف المنفّذ المحدّد (0 = تلقائي)
 
   /// المنفّذ المحدّد إن كان على أرض الملعب وإلا null
@@ -519,6 +539,8 @@ class Team {
         'dl': defLine,
         'pass': passing,
         'tk': [penTaker, fkTaker, cornerTaker],
+        if (familiarity != 70) 'fam': familiarity,
+        if (lastXI.isNotEmpty) 'lxi': lastXI.toList(),
         if (roles.isNotEmpty) 'roles': {for (final e in roles.entries) '${e.key}': e.value},
         'coh': cohesion,
         'lineup': [for (final p in lineup) p.id],
@@ -568,6 +590,8 @@ class Team {
         if (id != null && kRoles.containsKey(e.value)) t.roles[id] = e.value as String;
       }
     }
+    t.familiarity = (j['fam'] as num?)?.toDouble() ?? 70;
+    t.lastXI = {for (final v in (j['lxi'] as List?) ?? const []) v as int};
     final tk = (j['tk'] as List?)?.cast<int>();
     if (tk != null && tk.length == 3) {
       t.penTaker = tk[0];

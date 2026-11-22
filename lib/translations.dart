@@ -1,5 +1,11 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'الألفة التكتيكية': ['Tactical familiarity', 'Familiarité tactique', 'Familiaridad táctica'],
+  'انسجام تكتيكي ممتاز': ['Excellent tactical understanding', 'Excellente entente tactique', 'Excelente compenetración táctica'],
+  'جيدة': ['Good', 'Bonne', 'Buena'],
+  'متوسطة: الفريق ما زال يتعلّم': ['Average: the team is still learning', 'Moyenne : l\'équipe apprend encore', 'Media: el equipo aún está aprendiendo'],
+  'ضعيفة: تغييرات كثيرة أربكت الفريق': ['Low: too many changes have unsettled the team', 'Faible : trop de changements ont perturbé l\'équipe', 'Baja: demasiados cambios desorientaron al equipo'],
+  'تتراكم الألفة بإبقاء الخطة والتشكيلة، وتنخفض عند تغيير الخطة (بقوة) أو تبديل اللاعبين الأساسيين. تؤثر بين -3.5% و+2% في قوة الفريق.': ['Familiarity builds by keeping the formation and lineup, and drops sharply when you change formation or swap starters. It affects team strength by -3.5% to +2%.', 'La familiarité grandit en gardant le système et la composition, et chute si vous changez de système ou de titulaires. Elle influe de -3,5 % à +2 % sur la force de l\'équipe.', 'La familiaridad crece manteniendo el sistema y el once, y cae si cambias de sistema o de titulares. Afecta a la fuerza del equipo entre -3,5% y +2%.'],
   'يظهر منحنى نمو اللاعب بعد موسمين مسجّلين على الأقل.': ['The growth curve appears after at least two recorded seasons.', 'La courbe de progression apparaît après au moins deux saisons enregistrées.', 'La curva de crecimiento aparece tras al menos dos temporadas registradas.'],
   'منحنى النمو': ['Growth curve', 'Courbe de progression', 'Curva de crecimiento'],
   'الإمكانية {}': ['Potential {}', 'Potentiel {}', 'Potencial {}'],

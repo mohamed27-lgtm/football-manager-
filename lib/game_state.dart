@@ -1230,11 +1230,13 @@ class GameState extends ChangeNotifier {
 
   // ───────── التكتيك ─────────
   void setFormation(Formation f) {
+    if (user.formation != f) user.shakeFamiliarity(14);
     user.setFormation(f);
     notifyListeners();
   }
 
   void setMentality(int v) {
+    if ((user.mentality - v).abs() >= 2) user.shakeFamiliarity(5);
     user.mentality = v;
     notifyListeners();
   }
