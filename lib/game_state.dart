@@ -546,6 +546,41 @@ class GameState extends ChangeNotifier {
   bool indTrain = false; // تدريب فردي للمواهب الشابة
   void setIndTrain(bool v) { indTrain = v; notifyListeners(); unawaited(save()); }
   final List<Map<String, dynamic>> history = [];
+  /// قاعة الشهرة: كل لاعب لعب لناديك → {n: الاسم، p: المركز، a: المباريات، g: الأهداف، s: التمريرات الحاسمة، f: أول موسم، l: آخر موسم}
+  final Map<int, Map<String, dynamic>> legends = {};
+
+  /// نقاط الأسطورة: الحضور والأهداف والصناعة بأوزان (الحارس والمدافع أقل تهديفاً فتُعوَّض بالحضور)
+  static num legendScore(Map<String, dynamic> e) => (e['a'] as int) + 4 * (e['g'] as int) + 2 * (e['s'] as int);
+
+  /// أساطير النادي مرتبة: يلزم 40 مباراة على الأقل أو 100 نقطة
+  List<Map<String, dynamic>> get hallOfFame {
+    final l = [
+      for (final e in legends.entries)
+        if ((e.value['a'] as int) >= 40 || legendScore(e.value) >= 100) {...e.value, 'id': e.key, 'sc': legendScore(e.value)}
+    ]..sort((a, b) => (b['sc'] as num).compareTo(a['sc'] as num));
+    return l.take(12).toList();
+  }
+
+  /// يحدّث أرقام لاعبي ناديك من سجلهم (المواسم السابقة) + الموسم الجاري
+  void _updateLegends() {
+    for (final p in user.squad) {
+      var a = p.apps, gl = p.goals, s = p.assists;
+      var first = season, last = season;
+      var any = p.apps > 0;
+      for (final c in p.career) {
+        if (c['t'] != user.name) continue;
+        a += (c['a'] as num).toInt();
+        gl += (c['g'] as num).toInt();
+        s += (c['as'] as num).toInt();
+        final cs = (c['s'] as num).toInt();
+        if (cs < first) first = cs;
+        if (cs > last) last = cs;
+        any = true;
+      }
+      if (!any) continue;
+      legends[p.id] = {'n': p.name, 'p': p.pos.index, 'a': a, 'g': gl, 's': s, 'f': first, 'l': last};
+    }
+  }
   String bigWin = '', bigLoss = '';
   int bigWinD = 0, bigLossD = 0;
   int pressWeek = -1;
@@ -745,6 +780,10 @@ class GameState extends ChangeNotifier {
     for (final h in (j['history'] as List?) ?? const []) {
       history.add(Map<String, dynamic>.from(h as Map));
     }
+    for (final e in ((j['lg'] as Map?) ?? const {}).entries) {
+      final id = int.tryParse('${e.key}');
+      if (id != null) legends[id] = Map<String, dynamic>.from(e.value as Map);
+    }
     bigWin = (j['bigWin'] as String?) ?? '';
     bigLoss = (j['bigLoss'] as String?) ?? '';
     bigWinD = (j['bigWinD'] as int?) ?? 0;
@@ -929,6 +968,7 @@ class GameState extends ChangeNotifier {
         'diff': difficulty,
         'intro': introSeen,
         'history': history,
+        if (legends.isNotEmpty) 'lg': {for (final e in legends.entries) '${e.key}': e.value},
         'bigWin': bigWin,
         'bigLoss': bigLoss,
         'bigWinD': bigWinD,
@@ -1402,6 +1442,7 @@ class GameState extends ChangeNotifier {
     }
     _lockerRoom();
     _promisesTick();
+    _updateLegends();
     for (final p in user.squad) {
       if (p.injuredWeeks > 0 && !_injBefore.contains(p)) {
         p.logInjury(season);

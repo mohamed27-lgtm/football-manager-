@@ -1,5 +1,11 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  '🏛️ قاعة الشهرة': ['🏛️ Hall of Fame', '🏛️ Panthéon du club', '🏛️ Salón de la Fama'],
+  'يدخل القاعة من يلعب 40 مباراة مع ناديك أو يصنع تاريخاً بأهدافه وتمريراته.': ['Players enter the hall after 40 matches for your club, or by making history with goals and assists.', 'On entre au panthéon après 40 matchs avec votre club ou en marquant l\'histoire par ses buts et passes.', 'Se entra tras 40 partidos con tu club o haciendo historia con goles y asistencias.'],
+  'الهداف التاريخي: {} ({} هدفاً)': ['All-time top scorer: {} ({} goals)', 'Meilleur buteur de l\'histoire : {} ({} buts)', 'Máximo goleador histórico: {} ({} goles)'],
+  'الأكثر مشاركة: {} ({} مباراة)': ['Most appearances: {} ({} matches)', 'Le plus de matchs : {} ({} matchs)', 'Más partidos: {} ({} partidos)'],
+  '{}  ⭐ أسطورة': ['{}  ⭐ Legend', '{}  ⭐ Légende', '{}  ⭐ Leyenda'],
+  '{}–{} • {} مباراة • {} هدف • {} تمريرة': ['{}–{} • {} matches • {} goals • {} assists', '{}–{} • {} matchs • {} buts • {} passes', '{}–{} • {} partidos • {} goles • {} asistencias'],
   'تحليل المباراة': ['Match analysis', 'Analyse du match', 'Análisis del partido'],
   'فوز محظوظ: الفرص الأخطر كانت لخصمك (xG {} مقابل {})': ['Lucky win: the better chances were your opponent\'s (xG {} vs {})', 'Victoire chanceuse : les meilleures occasions étaient pour l\'adversaire (xG {} contre {})', 'Victoria con suerte: las mejores ocasiones fueron del rival (xG {} contra {})'],
   'خسارة قاسية: كنت الأخطر (xG {} مقابل {}) لكن الكرة لم تدخل': ['Harsh defeat: you were more dangerous (xG {} vs {}) but the ball wouldn\'t go in', 'Défaite cruelle : vous étiez plus dangereux (xG {} contre {}) mais le ballon n\'est pas rentré', 'Derrota cruel: fuiste más peligroso (xG {} contra {}) pero el balón no entró'],

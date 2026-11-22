@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
 import 'game_state.dart';
+import 'models.dart' show Pos;
 import 'widgets.dart';
 import 'trophies.dart';
 
@@ -193,6 +194,36 @@ class HistoryScreen extends StatelessWidget {
                 Text(gs.bigLoss.isEmpty ? 'أكبر خسارة: —' : 'أكبر خسارة (-${gs.bigLossD}): ${gs.bigLoss}'),
               ]),
             ),
+            sectionTitle('🏛️ قاعة الشهرة'),
+            Builder(builder: (_) {
+              final hf = gs.hallOfFame;
+              if (hf.isEmpty) return const Panel(child: Text('يدخل القاعة من يلعب 40 مباراة مع ناديك أو يصنع تاريخاً بأهدافه وتمريراته.', style: TextStyle(color: kMuted)));
+              final top = ([...gs.legends.values]..sort((a, b) => (b['g'] as int).compareTo(a['g'] as int))).first;
+              final most = ([...gs.legends.values]..sort((a, b) => (b['a'] as int).compareTo(a['a'] as int))).first;
+              return Panel(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('الهداف التاريخي: ${top['n']} (${top['g']} هدفاً)', style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 4),
+                  Text('الأكثر مشاركة: ${most['n']} (${most['a']} مباراة)', style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const Divider(height: 18),
+                  for (var i = 0; i < hf.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(children: [
+                        SizedBox(width: 24, child: Text('${i + 1}', style: const TextStyle(color: kMuted, fontWeight: FontWeight.w900))),
+                        PosChip(Pos.values[(hf[i]['p'] as int).clamp(0, Pos.values.length - 1)]),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text('${hf[i]['n']}${(hf[i]['sc'] as num) >= 250 ? '  ⭐ أسطورة' : ''}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
+                            Text('${hf[i]['f']}–${hf[i]['l']} • ${hf[i]['a']} مباراة • ${hf[i]['g']} هدف • ${hf[i]['s']} تمريرة', style: const TextStyle(color: kMuted, fontSize: 11.5)),
+                          ]),
+                        ),
+                      ]),
+                    ),
+                ]),
+              );
+            }),
             sectionTitle('المواسم'),
             if (gs.history.isEmpty)
               const Panel(child: Text('يُسجَّل كل موسم بعد انتهائه.', style: TextStyle(color: kMuted))),
