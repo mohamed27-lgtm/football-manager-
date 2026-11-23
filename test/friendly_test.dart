@@ -162,4 +162,18 @@ void main() {
     expect(gs.buyPrice(star), lessThan(base));
     expect(gs.priceFactors(star).any((e) => e.$1.contains('ينتهي')), isTrue);
   });
+
+  test('هوية اللاعب: «I. Saibari» و«Ismael Saibari» لاعب واحد، تبقى النسخة الكاملة', () {
+    final gs = _newGame(103);
+    final others = gs.teams.where((t) => t != gs.user).toList();
+    final base = others[0].squad.firstWhere((p) => !p.filler).toJson();
+    Player mk(int id, String name) => Player.fromJson({...base, 'id': id, 'name': name, 'nat': 'Morocco', 'age': 24});
+    final a = mk(990001, 'I. Saibari'), b = mk(990002, 'Ismael Saibari');
+    others[0].squad.add(a);
+    others[1].squad.add(b);
+    gs.dedupeByIdentity();
+    final all = [for (final t in gs.teams) ...t.squad].where((p) => p.name.contains('Saibari')).toList();
+    expect(all.length, 1);
+    expect(all.single.name, 'Ismael Saibari');
+  });
 }

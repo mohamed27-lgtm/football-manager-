@@ -928,6 +928,7 @@ class GameState extends ChangeNotifier {
       fillPlayerInfo(p);
     }
     dedupePlayers();
+    dedupeByIdentity();
     market.removeWhere((m) => user.squad.any((p) => p.id == m.id));
   }
 
@@ -4154,7 +4155,68 @@ class GameState extends ChangeNotifier {
     nat.init([for (final c in kAllCountries) (c.name, c.region)], rng);
   }
 
+  bool _identityDeduped = false;
+
+  static String _foldName(String s) {
+    const from = 'áàäâãåéèëêíìïîóòöôõúùüûçñšžćčłøÁÀÄÂÃÅÉÈËÊÍÌÏÎÓÒÖÔÕÚÙÜÛÇÑŠŽĆČŁØ';
+    const to = 'aaaaaaeeeeiiiiooooouuuucnszcclo' 'aaaaaaeeeeiiiiooooouuuucnszcclo';
+    final b = StringBuffer();
+    for (final r in s.toLowerCase().runes) {
+      final c = String.fromCharCode(r);
+      final i = from.indexOf(c);
+      b.write(i >= 0 ? to[i] : c);
+    }
+    return b.toString().replaceAll(RegExp(r'[^a-z ]'), '').trim();
+  }
+
+  /// اللاعب نفسه قد يأتي من مصدرين (اسم مختصر «I. Saibari» واسم كامل «Ismael Saibari»):
+  /// نجمعهم بالهوية (اللقب + أول حرف + الجنسية + العمر ±1 + المركز) ونُبقي النسخة ذات الاسم الكامل (الأحدث)
+  void dedupeByIdentity() {
+    final all = <(Player, Team?)>[];
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+      if (t == user) continue;
+      for (final p in t.squad) {
+        all.add((p, t));
+      }
+    }
+    for (final p in freeAgents) {
+      all.add((p, null));
+    }
+    final by = <String, List<(Player, Team?)>>{};
+    for (final e in all) {
+      final p = e.$1;
+      if (p.filler) continue;
+      final parts = _foldName(p.name).split(RegExp(r'\s+')).where((x) => x.isNotEmpty).toList();
+      if (parts.length < 2) continue;
+      by.putIfAbsent('${parts.last}|${parts.first[0]}|${p.natRep ?? p.nat ?? ''}|${p.pos.index}', () => []).add(e);
+    }
+    for (final l in by.values) {
+      if (l.length < 2) continue;
+      final keep = <(Player, Team?)>[];
+      for (final e in l) {
+        final twin = keep.where((k) => (k.$1.age - e.$1.age).abs() <= 1).firstOrNull;
+        if (twin == null) {
+          keep.add(e);
+          continue;
+        }
+        bool full(Player p) => _foldName(p.name).split(' ').first.length > 2;
+        final loser = (full(e.$1) && !full(twin.$1)) ? twin : e;
+        if (identical(loser, twin)) keep[keep.indexOf(twin)] = e;
+        final lp = loser.$1;
+        if (loser.$2 == null) {
+          freeAgents.remove(lp);
+        } else {
+          loser.$2!.squad.remove(lp);
+        }
+      }
+    }
+  }
+
   void _buildNatIdx() {
+    if (!_identityDeduped) {
+      _identityDeduped = true;
+      dedupeByIdentity();
+    }
     final m = <String, List<(Player, Team)>>{};
     for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
       for (final p in t.squad) {
