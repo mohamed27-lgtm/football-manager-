@@ -1,8 +1,7 @@
 import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
-import 'countries.dart' show countryByName;
+import 'countries.dart' show countryByName, flagAsset;
 import 'widgets.dart';
 import 'logo_store.dart';
 
@@ -16,15 +15,6 @@ const kCountryIso = <String, String>{
   'اليابان': 'jp', 'كوريا الجنوبية': 'kr', 'الصين': 'cn', 'أيرلندا': 'ie',
 };
 
-String? _emoji(String? iso) {
-  if (iso == null) return null;
-  if (iso == 'gb-eng') return '🏴󠁧󠁢󠁥󠁮󠁧󠁿';
-  if (iso == 'gb-sct') return '🏴󠁧󠁢󠁳󠁣󠁴󠁿';
-  if (iso == 'gb-wls') return '🏴󠁧󠁢󠁷󠁬󠁳󠁿';
-  if (iso.length != 2) return null;
-  return String.fromCharCodes(iso.toUpperCase().codeUnits.map((c) => 0x1F1E6 + c - 65));
-}
-
 /// علم مستطيل طبيعي (نسبة 4:3) كما هو في كل صفحات اللعبة: صورة من الإنترنت مع بديل إيموجي يعمل بدون اتصال
 class FlagBadge extends StatelessWidget {
   final String country;
@@ -34,9 +24,6 @@ class FlagBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iso = kCountryIso[country] ?? countryByName(country)?.iso;
-    final fallback = Center(
-      child: Text(_emoji(iso) ?? '🌍', style: TextStyle(fontSize: size * 0.5)),
-    );
     final h = size * 0.74;
     return Container(
       width: size * 1.1,
@@ -47,16 +34,7 @@ class FlagBadge extends StatelessWidget {
         border: Border.all(color: Colors.black26, width: 0.8),
       ),
       clipBehavior: Clip.antiAlias,
-      child: iso == null
-          ? fallback
-          : Unfilter(
-              child: CachedNetworkImage(
-                imageUrl: 'https://flagcdn.com/w160/$iso.png',
-                fit: BoxFit.cover,
-                placeholder: (_, __) => fallback,
-                errorWidget: (_, __, ___) => fallback,
-              ),
-            ),
+      child: iso == null ? Icon(Icons.flag_outlined, size: size * 0.5, color: kMuted) : flagAsset(iso, w: size * 1.1, h: h),
     );
   }
 }

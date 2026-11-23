@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +8,8 @@ import 'package:football_manager/game_state.dart';
 import 'package:football_manager/models.dart';
 import 'package:football_manager/transfers.dart';
 import 'package:football_manager/stadiums.dart';
+import 'package:football_manager/countries.dart';
+import 'package:football_manager/flags.dart';
 
 List<Team> _pool(Random r, int base, int n, String tag) => [for (var i = 0; i < n; i++) createTeam(r, base + i, '$tag ${i + 1}', 3 + i % 5)];
 
@@ -255,5 +258,16 @@ void main() {
     gs.dedupePlayers();
     expect(others[0].squad.where((p) => p.id == p0.id), isEmpty);
     expect(others[1].squad.where((p) => p.id == p0.id).length, 1);
+  });
+
+  test('الأعلام: كل دولة في القائمة لها ملف علم مضمّن', () {
+    final missing = <String>[];
+    for (final c in kAllCountries) {
+      if (!File('assets/flags/${c.iso.toLowerCase()}.png').existsSync()) missing.add('${c.name}:${c.iso}');
+    }
+    expect(missing, isEmpty);
+    for (final iso in kCountryIso.values) {
+      expect(File('assets/flags/$iso.png').existsSync(), isTrue, reason: iso);
+    }
   });
 }

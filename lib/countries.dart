@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide Text;
 import 'i18n.dart';
 import 'widgets.dart';
@@ -43,7 +42,26 @@ String flagEmoji(String iso) {
   return String.fromCharCodes(iso.toUpperCase().codeUnits.map((c) => 0x1F1E6 + c - 65));
 }
 
-/// علم مستطيل صغير (صورة flagcdn مع بديل إيموجي)
+/// علم من حزمة الأعلام المضمّنة في التطبيق (271 علماً، تعمل بلا إنترنت)؛ البديل أيقونة علم محايدة وليس إيموجي
+Widget flagAsset(String iso, {double? w, double? h, BoxFit fit = BoxFit.cover}) {
+  Widget ph() => Container(
+        width: w,
+        height: h,
+        color: kCard2,
+        alignment: Alignment.center,
+        child: Icon(Icons.flag_outlined, size: ((h ?? 24) * 0.55).clamp(10.0, 40.0).toDouble(), color: kMuted),
+      );
+  return Image.asset(
+    'assets/flags/${iso.toLowerCase()}.png',
+    width: w,
+    height: h,
+    fit: fit,
+    filterQuality: FilterQuality.medium,
+    errorBuilder: (_, __, ___) => ph(),
+  );
+}
+
+/// علم مستطيل صغير (من الحزمة المضمّنة)
 class FlagRect extends StatelessWidget {
   final String iso;
   final double w;
@@ -51,22 +69,12 @@ class FlagRect extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final h = w * 0.68;
-    final fb = Center(child: Text(flagEmoji(iso), style: TextStyle(fontSize: h * 0.7)));
     return Container(
       width: w,
       height: h,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), border: Border.all(color: kLine)),
       clipBehavior: Clip.antiAlias,
-      child: iso == 'xk'
-          ? fb
-          : Unfilter(
-              child: CachedNetworkImage(
-                imageUrl: 'https://flagcdn.com/w80/$iso.png',
-                fit: BoxFit.cover,
-                placeholder: (_, __) => fb,
-                errorWidget: (_, __, ___) => fb,
-              ),
-            ),
+      child: flagAsset(iso, w: w, h: h),
     );
   }
 }

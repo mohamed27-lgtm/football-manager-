@@ -1,5 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide Text;
+import 'countries.dart' show flagAsset;
 import 'i18n.dart';
 import 'settings.dart';
 import 'widgets.dart';
@@ -11,23 +11,7 @@ const kLangs = <(String, String, String)>[
   ('es', 'Español', 'es'),
 ];
 
-Widget _flag(String iso, double w) {
-  final emoji = String.fromCharCodes(iso.toUpperCase().codeUnits.map((c) => 0x1F1E6 + c - 65));
-  final fb = Text(emoji, style: TextStyle(fontSize: w * 0.7));
-  return ClipRRect(
-    borderRadius: BorderRadius.circular(5),
-    child: Unfilter(
-      child: CachedNetworkImage(
-        imageUrl: 'https://flagcdn.com/w80/$iso.png',
-        width: w,
-        height: w * 0.68,
-        fit: BoxFit.cover,
-        placeholder: (_, __) => fb,
-        errorWidget: (_, __, ___) => fb,
-      ),
-    ),
-  );
-}
+Widget _flag(String iso, double w) => ClipRRect(borderRadius: BorderRadius.circular(5), child: flagAsset(iso, w: w, h: w * 0.68));
 
 /// نافذة اختيار اللغة بعجلة وأعلام (مثل Super Kickoff)
 Future<void> showLanguageSheet(BuildContext context) async {
