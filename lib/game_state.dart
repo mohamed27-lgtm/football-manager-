@@ -931,6 +931,7 @@ class GameState extends ChangeNotifier {
       fillPlayerInfo(p);
     }
     dedupePlayers();
+    _identityDeduped = true;
     dedupeByIdentity();
     market.removeWhere((m) => user.squad.any((p) => p.id == m.id));
   }
@@ -3801,6 +3802,10 @@ class GameState extends ChangeNotifier {
   /// سوق حقيقي: لاعبون من أندية الدوريات الأخرى (بالنادي والقيمة الحقيقية) + أحرار
   List<Player> _scoutedMarket() {
     dedupePlayers();
+    if (!_identityDeduped) {
+      _identityDeduped = true;
+      dedupeByIdentity();
+    }
     final mine = {for (final p in user.squad) p.id};
     final m = <Player>[for (final p in freeAgents) if (!mine.contains(p.id)) Player.fromJson(p.toJson())..free = true..club = null];
     final pool = <Player>[];
@@ -3980,12 +3985,27 @@ class GameState extends ChangeNotifier {
     for (final p in user.squad) {
       purgeElsewhere(p);
     }
-    final seen = <int>{for (final p in user.squad) if (!p.filler) p.id};
+    // الرقم نفسه في ناديين: نُبقي نسخة الدوري الأحدث جلباً (النادي الحالي الحقيقي) ونحذف القديمة
+    final best = <int, (Player, Team?)>{};
+    for (final p in user.squad) {
+      if (!p.filler) best[p.id] = (p, user);
+    }
     for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
       if (t == user) continue;
-      t.squad.removeWhere((x) => !x.filler && !seen.add(x.id));
+      for (final p in [...t.squad]) {
+        if (p.filler) continue;
+        final cur = best[p.id];
+        if (cur == null) {
+          best[p.id] = (p, t);
+        } else if (cur.$2 != user && t.dataAt > (cur.$2?.dataAt ?? 0)) {
+          cur.$2?.squad.remove(cur.$1);
+          best[p.id] = (p, t);
+        } else {
+          t.squad.remove(p);
+        }
+      }
     }
-    freeAgents.removeWhere((x) => !x.filler && !seen.add(x.id));
+    freeAgents.removeWhere((x) => !x.filler && best.containsKey(x.id));
   }
 
   void _registerNew(Player p) {
@@ -4191,12 +4211,25 @@ class GameState extends ChangeNotifier {
     return b.toString().replaceAll(RegExp(r'[^a-z ]'), '').trim();
   }
 
-  /// اللاعب نفسه قد يأتي من مصدرين (اسم مختصر «I. Saibari» واسم كامل «Ismael Saibari»):
-  /// نجمعهم بالهوية (اللقب + أول حرف + الجنسية + العمر ±1 + المركز) ونُبقي النسخة ذات الاسم الكامل (الأحدث)
+  /// الاسم الأول مختصر («I.») أو كامل؟
+  static bool _fullFirst(String folded) => folded.split(' ').first.length > 2;
+
+  /// هل الاسمان لشخص واحد؟ اللقب نفسه، والاسم الأول متطابق أو أحدهما اختصار الآخر (بشرط أن يكون أحدهما كاملاً)
+  static bool _sameName(String a, String b) {
+    final pa = a.split(RegExp(r'\s+')), pb = b.split(RegExp(r'\s+'));
+    if (pa.length < 2 || pb.length < 2 || pa.last != pb.last) return false;
+    if (pa.first == pb.first) return pa.first.length > 2;
+    final fa = pa.first.length > 2, fb = pb.first.length > 2;
+    if (fa == fb) return false;
+    return pa.first[0] == pb.first[0];
+  }
+
+  /// اللاعب نفسه قد يصل من مصدرين (قديم: «I. Saibari» في ناديه القديم / حديث: «Ismael Saibari» في ناديه الجديد):
+  /// نجمعهم بالهوية (اللقب + الاسم الأول + الجنسية + العمر ±1، دون المركز لأنه يختلف بين المصادر)
+  /// وتبقى النسخة الأحدث جلباً؛ ولاعب فريقك يفوز دائماً
   void dedupeByIdentity() {
     final all = <(Player, Team?)>[];
     for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
-      if (t == user) continue;
       for (final p in t.squad) {
         all.add((p, t));
       }
@@ -4207,30 +4240,31 @@ class GameState extends ChangeNotifier {
     final by = <String, List<(Player, Team?)>>{};
     for (final e in all) {
       final p = e.$1;
-      if (p.filler) continue;
-      final parts = _foldName(p.name).split(RegExp(r'\s+')).where((x) => x.isNotEmpty).toList();
+      final nat = p.natRep ?? p.nat ?? '';
+      if (p.filler || nat.isEmpty) continue;
+      final f = _foldName(p.name);
+      final parts = f.split(RegExp(r'\s+')).where((x) => x.isNotEmpty).toList();
       if (parts.length < 2) continue;
-      by.putIfAbsent('${parts.last}|${parts.first[0]}|${p.natRep ?? p.nat ?? ''}|${p.pos.index}', () => []).add(e);
+      by.putIfAbsent('${parts.last}|${parts.first[0]}|$nat', () => []).add(e);
     }
+    int rank((Player, Team?) e) => e.$2 == user ? 1 << 60 : (e.$2?.dataAt ?? 0);
     for (final l in by.values) {
       if (l.length < 2) continue;
       final keep = <(Player, Team?)>[];
       for (final e in l) {
-        final twin = keep.where((k) => (k.$1.age - e.$1.age).abs() <= 1).firstOrNull;
+        final twin = keep.where((k) => (k.$1.age - e.$1.age).abs() <= 1 && _sameName(_foldName(k.$1.name), _foldName(e.$1.name))).firstOrNull;
         if (twin == null) {
           keep.add(e);
           continue;
         }
-        bool full(Player p) => _foldName(p.name).split(' ').first.length > 2;
-        // الأحدث جلباً يفوز؛ وإن تساوى الوقت فصاحب الاسم الكامل
-        final ea = e.$2?.dataAt ?? 0, ta = twin.$2?.dataAt ?? 0;
-        final eNewer = ea != ta ? ea > ta : (full(e.$1) && !full(twin.$1));
-        final loser = eNewer ? twin : e;
-        if (identical(loser, twin)) keep[keep.indexOf(twin)] = e;
+        final re = rank(e), rt = rank(twin);
+        final eWins = re != rt ? re > rt : (_fullFirst(_foldName(e.$1.name)) && !_fullFirst(_foldName(twin.$1.name)));
+        final loser = eWins ? twin : e;
+        if (eWins) keep[keep.indexOf(twin)] = e;
         final lp = loser.$1;
         if (loser.$2 == null) {
           freeAgents.remove(lp);
-        } else {
+        } else if (loser.$2 != user) {
           loser.$2!.squad.remove(lp);
         }
       }

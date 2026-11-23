@@ -225,4 +225,35 @@ void main() {
     gs.snapProgress(force: true);
     expect(p.ovDelta, 0);
   });
+
+  test('هوية اللاعب: يُدمج رغم اختلاف المركز، ولا يُدمج المختصران المختلفان', () {
+    final gs = _newGame(107);
+    final others = gs.teams.where((t) => t != gs.user).toList();
+    final base = others[0].squad.firstWhere((p) => !p.filler).toJson();
+    Player mk(int id, String name, int pos) => Player.fromJson({...base, 'id': id, 'name': name, 'nat': 'Morocco', 'age': 24, 'pos': pos});
+    others[0].dataAt = 1000;
+    others[1].dataAt = 9000;
+    others[0].squad.add(mk(990021, 'I. Saibari', 1));
+    others[1].squad.add(mk(990022, 'Ismael Saibari', 2));
+    others[2].squad.add(mk(990023, 'M. Hansen', 3));
+    others[3].squad.add(mk(990024, 'M. Hansen', 3));
+    gs.dedupeByIdentity();
+    final all = [for (final t in gs.teams) ...t.squad];
+    expect(all.where((p) => p.name.contains('Saibari')).length, 1);
+    expect(all.where((p) => p.name.contains('Saibari')).single.name, 'Ismael Saibari');
+    expect(all.where((p) => p.name == 'M. Hansen').length, 2);
+  });
+
+  test('الرقم نفسه في ناديين: تبقى نسخة الدوري الأحدث', () {
+    final gs = _newGame(108);
+    final others = gs.teams.where((t) => t != gs.user).toList();
+    final p0 = others[0].squad.firstWhere((p) => !p.filler);
+    final copy = Player.fromJson(p0.toJson());
+    others[0].dataAt = 100;
+    others[1].dataAt = 900;
+    others[1].squad.add(copy);
+    gs.dedupePlayers();
+    expect(others[0].squad.where((p) => p.id == p0.id), isEmpty);
+    expect(others[1].squad.where((p) => p.id == p0.id).length, 1);
+  });
 }
