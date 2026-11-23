@@ -1,5 +1,11 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'تطور اللاعب': ['Player progress', 'Progression du joueur', 'Progreso del jugador'],
+  'القوة': ['Rating', 'Niveau', 'Nivel'],
+  'منذ بداية الموسم': ['Since season start', 'Depuis le début de saison', 'Desde el inicio de temporada'],
+  'القوة منذ بداية المسيرة': ['Rating since career start', 'Niveau depuis le début', 'Nivel desde el inicio'],
+  'القيمة منذ بداية المسيرة': ['Value since career start', 'Valeur depuis le début', 'Valor desde el inicio'],
+  'عند الاستيراد {}': ['At import {}', 'À l\'import {}', 'Al importar {}'],
   'عقده ينتهي قريباً': ['Contract expiring soon', 'Contrat bientôt terminé', 'Contrato a punto de vencer'],
   'عقد طويل يحصّن سعره': ['Long contract protects his price', 'Long contrat qui protège son prix', 'Contrato largo que protege su precio'],
   'تقدّم العمر يخفض سعره': ['Age lowers his price', 'L\'âge fait baisser son prix', 'La edad reduce su precio'],

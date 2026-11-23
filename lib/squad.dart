@@ -46,6 +46,7 @@ class PlayerTile extends StatelessWidget {
                 PosChip(p.pos),
                 if (p.sub != null && p.sub!.isNotEmpty) Text(subAr(p.sub), style: const TextStyle(color: kMuted, fontSize: 11.5)),
                 Text('${p.age} سنة', style: const TextStyle(color: kMuted, fontSize: 12)),
+                if (p.ovDelta != 0) Text(p.ovDelta > 0 ? '▲ +${p.ovDelta}' : '▼ ${p.ovDelta}', style: TextStyle(color: p.ovDelta > 0 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D), fontSize: 11.5, fontWeight: FontWeight.w900)),
                 if (p.formTrend != 0) Text(p.formTrend > 0 ? '▲ فورمة' : '▼ فورمة', style: TextStyle(color: p.formTrend > 0 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D), fontSize: 11.5, fontWeight: FontWeight.w800)),
                 if (st != null) Text(st, style: const TextStyle(color: Color(0xFFFF7043), fontSize: 12)),
                 for (final t in p.traits.take(2)) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), decoration: BoxDecoration(color: const Color(0xFF6A6FC4).withOpacity(0.15), borderRadius: BorderRadius.circular(6)), child: Text(t, style: const TextStyle(color: Color(0xFF6A6FC4), fontSize: 10.5, fontWeight: FontWeight.w700))),
@@ -164,6 +165,31 @@ class _PlayerCardState extends State<_PlayerCard> {
         padding: const EdgeInsets.only(top: 12, bottom: 6, right: 4, left: 4),
         child: Text(t, style: const TextStyle(color: kMuted, fontWeight: FontWeight.w800, fontSize: 13)),
       );
+
+  static String _dm(double d) => '${d > 0.05 ? '+' : (d < -0.05 ? '-' : '')}${money(d.abs())}';
+
+  Widget _progressRow(String label, String now, double delta, String note, {required String Function(double) fmt}) {
+    final up = delta > 0.05, down = delta < -0.05;
+    final col = up ? const Color(0xFF1FA58A) : (down ? const Color(0xFFE5533D) : kMuted);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+            Text(note, style: const TextStyle(color: kMuted, fontSize: 11)),
+          ]),
+        ),
+        Text(now, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+        const SizedBox(width: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(color: col.withOpacity(0.14), borderRadius: BorderRadius.circular(8)),
+          child: Text('${up ? '▲ ' : (down ? '▼ ' : '')}${up || down ? fmt(delta) : '—'}', style: TextStyle(color: col, fontWeight: FontWeight.w900, fontSize: 12)),
+        ),
+      ]),
+    );
+  }
 
   Widget _card(Widget child, {EdgeInsets pad = const EdgeInsets.symmetric(horizontal: 14, vertical: 6)}) => Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -628,6 +654,14 @@ class _PlayerCardState extends State<_PlayerCard> {
           ])),
       ],
       if (tab == 3) ...[
+        _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('تطور اللاعب', style: TextStyle(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 10),
+          _progressRow('القوة', '${p.overall}', p.ovDelta.toDouble(), 'منذ بداية الموسم', fmt: (d) => '${d > 0 ? '+' : ''}${d.round()}'),
+          _progressRow('القيمة السوقية', money(p.value), p.valDelta, 'منذ بداية الموسم', fmt: _dm),
+          if (p.ov0 != null) _progressRow('القوة منذ بداية المسيرة', '${p.overall}', p.ovSinceStart.toDouble(), 'عند الاستيراد ${p.ov0}', fmt: (d) => '${d > 0 ? '+' : ''}${d.round()}'),
+          if (p.mv0 != null) _progressRow('القيمة منذ بداية المسيرة', money(p.value), p.valSinceStart, 'عند الاستيراد ${money(p.mv0!)}', fmt: _dm),
+        ]), pad: const EdgeInsets.all(14)),
         Builder(builder: (_) {
           final gp = p.growthPoints;
           if (gp.length < 3) {

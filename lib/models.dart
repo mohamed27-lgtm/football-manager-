@@ -44,6 +44,13 @@ class Player {
   int? height;
   double? mv0; // القيمة السوقية الحقيقية عند الاستيراد (M€)
   int? ov0, age0; // التقييم والعمر عند الاستيراد
+  /// لقطة بداية الموسم/وقت الانضمام لعرض التطور (قوة وقيمة)
+  int? sOv;
+  double? sVal;
+  int get ovDelta => overall - (sOv ?? overall);
+  double get valDelta => value - (sVal ?? value);
+  int get ovSinceStart => ov0 == null ? 0 : overall - ov0!;
+  double get valSinceStart => mv0 == null ? 0 : value - mv0!;
   bool free = false, onLoan = false, listed = false, registered = true;
   String? focus; // تدريب فردي: 'atk' | 'pas' | 'def' | 'gk'
   int promise = 0, promBase = 0, promStarts = 0; // وعد المشاركة: 0 لا وعد، ثم أساس عدد مباريات الفريق وعدد مرات الأساسية منذ الوعد
@@ -250,7 +257,7 @@ class Player {
         'career': career,
         'aw': awards,
         'nat2': nat2, 'sw': swNat, 'swt': swTry, 'sww': swWeek, 'sk': sk, 'tr': traits,
-        'club': club, 'nat': nat, 'sub': sub, 'ft': foot, 'ht': height, 'mv0': mv0, 'ov0': ov0, 'age0': age0,
+        'club': club, 'nat': nat, 'sub': sub, 'ft': foot, 'ht': height, 'mv0': mv0, 'ov0': ov0, 'age0': age0, if (sOv != null) 'sov': sOv, if (sVal != null) 'sval': sVal,
       };
 
   factory Player.fromJson(Map<String, dynamic> j) => Player(
@@ -315,6 +322,8 @@ class Player {
         ..mv0 = (j['mv0'] as num?)?.toDouble()
         ..ov0 = (j['ov0'] as num?)?.toInt()
         ..age0 = (j['age0'] as num?)?.toInt()
+        ..sOv = (j['sov'] as num?)?.toInt()
+        ..sVal = (j['sval'] as num?)?.toDouble()
         ..career = [
           for (final c in (j['career'] as List?) ?? const [])
             Map<String, dynamic>.from(c as Map)

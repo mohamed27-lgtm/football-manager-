@@ -2899,6 +2899,11 @@ class GameState extends ChangeNotifier {
     _ageFreeAgents();
     for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
       for (final p in [...t.squad]) {
+        if (t == user) {
+          p
+            ..sOv = p.overall
+            ..sVal = p.value;
+        }
         p.age++;
         p.contract--;
         p.awardBoost *= 0.6;
@@ -3960,7 +3965,18 @@ class GameState extends ChangeNotifier {
   }
 
   /// تنظيف شامل: لاعبو فريقك لا يظهرون في أي مكان آخر، ولا تكرار بين الأندية الأخرى
+  /// لقطة أساس التطور للاعبي فريقك (تُعاد كل موسم)
+  void snapProgress({bool force = false}) {
+    for (final p in user.squad) {
+      if (force || p.sOv == null) {
+        p.sOv = p.overall;
+        p.sVal = p.value;
+      }
+    }
+  }
+
   void dedupePlayers() {
+    snapProgress();
     for (final p in user.squad) {
       purgeElsewhere(p);
     }
@@ -3974,6 +3990,9 @@ class GameState extends ChangeNotifier {
 
   void _registerNew(Player p) {
     purgeElsewhere(p);
+    p
+      ..sOv = p.overall
+      ..sVal = p.value;
     p.registered = true;
     if (p.age > 21 && registeredCount > regLimit) {
       p.registered = false;

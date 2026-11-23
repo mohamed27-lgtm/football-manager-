@@ -211,4 +211,18 @@ void main() {
     final big = gs.clubStature;
     expect(big, inInclusiveRange(0.85, 2.0));
   });
+
+  test('تطور اللاعب: اللقطة تُحفظ والفروق تُحسب', () {
+    final gs = _newGame(106);
+    final p = gs.user.squad.firstWhere((x) => !x.filler);
+    p.sOv = p.overall - 3;
+    p.sVal = p.value - 2;
+    expect(p.ovDelta, 3);
+    expect(p.valDelta, closeTo(2, 0.01));
+    final g2 = GameState.fromJson(jsonDecode(jsonEncode(gs.toJson())) as Map<String, dynamic>);
+    final q = g2.user.squad.firstWhere((x) => x.id == p.id);
+    expect(q.ovDelta, 3);
+    gs.snapProgress(force: true);
+    expect(p.ovDelta, 0);
+  });
 }
