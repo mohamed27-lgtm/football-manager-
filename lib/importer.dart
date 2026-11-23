@@ -71,6 +71,7 @@ List<Team> teamsFromLeague(LeagueData d, Random rng) {
       budget: 12.0 + rep * 8,
     )
       ..badge = t.logo
+      ..dataAt = d.fetchedAt.millisecondsSinceEpoch
       ..venue = (t.venue != null && t.venue!.isNotEmpty) ? t.venue : stadiumFor(t.name);
     topUpSquad(team, rng);
     // ميزانية واقعية من القيمة السوقية الحقيقية للتشكيلة (نحو 12٪ منها)
@@ -98,6 +99,7 @@ Map<String, Team> worldTeamsOf(LeagueData d, Random rng) {
     final squad = [for (final ap in t.players) playerFromApi(ap, tb, country: d.country)]..sort((a, b) => b.overall.compareTo(a.overall));
     if (squad.length > 28) squad.removeRange(28, squad.length);
     final team = Team(id: 100000 + d.id * 100 + i, name: t.name, reputation: rep, squad: squad, budget: 10.0);
+    team.dataAt = d.fetchedAt.millisecondsSinceEpoch;
     topUpSquad(team, rng);
     team.autoPick();
     out[t.name] = team;

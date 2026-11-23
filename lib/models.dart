@@ -400,6 +400,8 @@ class Team {
   int played = 0, won = 0, drawn = 0, lost = 0, gf = 0, ga = 0;
   int stadium = 1, trainingLvl = 1, academy = 1, medical = 1, fanZone = 1;
   String? badge, venue;
+  /// وقت جلب بيانات الدوري الذي جاء منه الفريق (لتفضيل الأحدث عند تكرار اللاعب)
+  int dataAt = 0;
   String? coach; // اسم المدرب إن عُيّن؛ وإلا coachFor(name)
   String get coachName {
     final c = coach ?? coachFor(name);
@@ -571,6 +573,7 @@ class Team {
         'med': medical,
         'fz': fanZone,
         'badge': badge,
+        if (dataAt != 0) 'dat': dataAt,
         'venue': venue,
         'coach': coach,
         'pen': penalty,
@@ -637,6 +640,7 @@ class Team {
     t.medical = (j['med'] as int?) ?? 1;
     t.fanZone = (j['fz'] as int?) ?? 1;
     t.badge = j['badge'] as String?;
+    t.dataAt = (j['dat'] as int?) ?? 0;
     t.venue = j['venue'] as String?;
     t.coach = j['coach'] as String?;
     t.penalty = (j['pen'] as int?) ?? 0;

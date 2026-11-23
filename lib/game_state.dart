@@ -4200,7 +4200,10 @@ class GameState extends ChangeNotifier {
           continue;
         }
         bool full(Player p) => _foldName(p.name).split(' ').first.length > 2;
-        final loser = (full(e.$1) && !full(twin.$1)) ? twin : e;
+        // الأحدث جلباً يفوز؛ وإن تساوى الوقت فصاحب الاسم الكامل
+        final ea = e.$2?.dataAt ?? 0, ta = twin.$2?.dataAt ?? 0;
+        final eNewer = ea != ta ? ea > ta : (full(e.$1) && !full(twin.$1));
+        final loser = eNewer ? twin : e;
         if (identical(loser, twin)) keep[keep.indexOf(twin)] = e;
         final lp = loser.$1;
         if (loser.$2 == null) {

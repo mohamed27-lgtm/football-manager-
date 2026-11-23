@@ -176,4 +176,19 @@ void main() {
     expect(all.length, 1);
     expect(all.single.name, 'Ismael Saibari');
   });
+
+  test('الأحدث جلباً يفوز حتى لو الاسم مختصر', () {
+    final gs = _newGame(104);
+    final others = gs.teams.where((t) => t != gs.user).toList();
+    final base = others[0].squad.firstWhere((p) => !p.filler).toJson();
+    Player mk(int id, String name) => Player.fromJson({...base, 'id': id, 'name': name, 'nat': 'Morocco', 'age': 24});
+    others[0].dataAt = 1000;
+    others[1].dataAt = 5000;
+    others[0].squad.add(mk(990011, 'Ismael Saibari'));
+    others[1].squad.add(mk(990012, 'I. Saibari'));
+    gs.dedupeByIdentity();
+    final all = [for (final t in gs.teams) ...t.squad].where((p) => p.name.contains('Saibari')).toList();
+    expect(all.length, 1);
+    expect(all.single.name, 'I. Saibari');
+  });
 }
