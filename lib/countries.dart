@@ -51,13 +51,17 @@ Widget flagAsset(String iso, {double? w, double? h, BoxFit fit = BoxFit.cover}) 
         alignment: Alignment.center,
         child: Icon(Icons.flag_outlined, size: ((h ?? 24) * 0.55).clamp(10.0, 40.0).toDouble(), color: kMuted),
       );
-  return Image.asset(
-    'assets/flags/${iso.toLowerCase()}.png',
-    width: w,
-    height: h,
-    fit: fit,
-    filterQuality: FilterQuality.medium,
-    errorBuilder: (_, __, ___) => ph(),
+  // Unfilter: في الوضع الفاتح تُعكس ألوان التطبيق كله، فتحتاج الصور إلى عكس مقابل لتظهر بألوانها الحقيقية
+  return Unfilter(
+    child: Image.asset(
+      'assets/flags/${iso.toLowerCase()}.png',
+      width: w,
+      height: h,
+      fit: fit,
+      filterQuality: FilterQuality.high,
+      isAntiAlias: true,
+      errorBuilder: (_, __, ___) => ph(),
+    ),
   );
 }
 
