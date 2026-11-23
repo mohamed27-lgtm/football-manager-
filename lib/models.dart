@@ -154,19 +154,39 @@ class Player {
 
   bool get available => injuredWeeks == 0 && suspendedMatches == 0 && registered;
 
-  static double _ageF(int a) => a <= 21 ? 1.25 : a <= 24 ? 1.1 : a <= 28 ? 1.0 : a <= 31 ? 0.8 : a <= 34 ? 0.5 : 0.3;
+  /// منحنى العمر: الشباب أغلى (إعادة بيع)، ثم تهبط القيمة تدريجياً بعد الذروة
+  static double _ageF(int a) {
+    const t = {19: 1.35, 20: 1.3, 21: 1.25, 22: 1.18, 23: 1.12, 24: 1.08, 25: 1.02, 26: 1.0, 27: 1.0, 28: 0.93, 29: 0.85, 30: 0.76, 31: 0.66, 32: 0.55, 33: 0.45, 34: 0.36};
+    return a <= 19 ? 1.35 : (a >= 35 ? 0.26 : t[a]!);
+  }
 
-  /// القيمة السوقية: تعتمد على قيمة Transfermarkt الحقيقية وتتحرك مع تطور تقييم اللاعب وعمره
+  /// سقف القيمة السوقية حسب المركز (M): الهجوم الأعلى سوقياً، والحراس والمدافعون أقل
+  double get valueCap => switch (pos) { Pos.att => 250.0, Pos.mid => 200.0, Pos.def => 150.0, Pos.gk => 90.0 };
+
+  /// حساسية القيمة لتقييم اللاعب: تقييم المهاجم يرفع قيمته أسرع من المدافع/الحارس
+  double get _ovSlope => switch (pos) { Pos.att => 8.6, Pos.mid => 9.3, Pos.def => 10.2, Pos.gk => 11.5 };
+
+  /// عوامل حالية: الأداء الأخير والإصابة الطويلة
+  double get _situationF {
+    var f = 1.0;
+    if (recent.length >= 3) f *= (1 + ((formAvg - 6.5) * 0.04)).clamp(0.94, 1.07).toDouble();
+    if (injuredWeeks >= 8) f *= 0.9;
+    return f;
+  }
+
+  /// القيمة السوقية: تعتمد على قيمة Transfermarkt الحقيقية وتتحرك مع تطور تقييم اللاعب وعمره وأدائه وعقده، بسقف حسب المركز
   double get value {
+    double v;
     if (mv0 != null && ov0 != null) {
-      final v = mv0! * pow(10, (overall - ov0!) / 9.3) * _ageF(age) / _ageF(age0 ?? age);
-      return max(0.1, ((v * _contractF * (1 + awardBoost)) * 10).round() / 10);
+      v = mv0! * pow(10, (overall - ov0!) / _ovSlope) * _ageF(age) / _ageF(age0 ?? age);
+    } else {
+      var m = 1.0;
+      if (age <= 23) m += max(0, potential - overall) / 25;
+      if (age >= 31) m *= 0.6;
+      v = pow(overall / 50, 6).toDouble() * m;
     }
-    var m = 1.0;
-    if (age <= 23) m += max(0, potential - overall) / 25;
-    if (age >= 31) m *= 0.6;
-    final v = pow(overall / 50, 6).toDouble() * m;
-    return max(0.1, ((v * _contractF * (1 + awardBoost)) * 10).round() / 10);
+    v = v * _contractF * (1 + awardBoost) * _situationF;
+    return max(0.1, (min(v, valueCap) * 10).round() / 10);
   }
 
   /// عقد قصير يخفّض القيمة (قرب الرحيل المجاني)، وعقد طويل يرفعها قليلاً

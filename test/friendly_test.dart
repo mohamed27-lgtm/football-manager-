@@ -191,4 +191,24 @@ void main() {
     expect(all.length, 1);
     expect(all.single.name, 'I. Saibari');
   });
+
+  test('القيمة السوقية: سقف حسب المركز، والإصابة الطويلة تخفض، والعمر يتدرج', () {
+    final gs = _newGame(105);
+    final p = gs.user.squad.firstWhere((x) => !x.filler);
+    p.mv0 = 900;
+    p.ov0 = p.overall;
+    p.age0 = p.age;
+    expect(p.value, lessThanOrEqualTo(p.valueCap));
+    final base = (p..mv0 = 60..ov0 = p.overall).value;
+    p.injuredWeeks = 10;
+    expect(p.value, lessThan(base));
+    p.injuredWeeks = 0;
+    p.age0 = 22;
+    p.age = 22;
+    final young = p.value;
+    p.age = 31;
+    expect(p.value, lessThan(young));
+    final big = gs.clubStature;
+    expect(big, inInclusiveRange(0.85, 2.0));
+  });
 }

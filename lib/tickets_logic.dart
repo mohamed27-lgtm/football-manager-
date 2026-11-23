@@ -9,7 +9,7 @@ const kStandOff = [0.12, 0.05, 0.0, -0.22];
 /// بطاقات الموسم: (الاسم، المدرج المقابل، خصم نسبي، فارق الطلب)
 const kSeasonTiers = <(String, int, double, double)>[('ذهبية', 3, 0.68, 0.32), ('فضية', 2, 0.58, 0.43), ('عادية', 0, 0.54, 0.0)];
 const kHomeMatches = 19;
-const kGateScale = 0.6;
+const kGateScale = 0.85;
 
 class StandRow {
   final int cap, subs, att;

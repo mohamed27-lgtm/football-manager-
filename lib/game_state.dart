@@ -491,6 +491,9 @@ class GameState extends ChangeNotifier {
   bool dynPricing = true; // تسعير ديناميكي حسب الطلب
   /// السعة الحقيقية للنادي عند المستوى 1، وكل مستوى توسعة يضيف 14%
   int capacityAt(int level) => (stadiumBaseCapacity(user.name, user.reputation) * (1 + 0.14 * (level - 1)) / 100).round() * 100;
+  /// حجم النادي التجاري: الأندية الكبرى بملاعب كبيرة تجني بثاً ورعاية أكثر (0.85 - 2.0)
+  double get clubStature => sqrt(stadiumBaseCapacity(user.name, user.reputation) / 30000).clamp(0.85, 2.0).toDouble();
+
   int get stadiumCapacity => (capacityAt(user.stadium) * (stadiumBuilding ? 0.85 : 1.0)).round();
   final List<Project> projects = [];
   final List<Campaign> campaigns = [];
@@ -1510,8 +1513,8 @@ class GameState extends ChangeNotifier {
       if (attHist.length > 12) attHist.removeAt(0);
     }
     if (home) fans = (fans + ((1 - priceIndex) * 1.6).clamp(-0.6, 0.5) + 0.05 * (user.fanZone - 1)).clamp(0, 100).toDouble();
-    final broadcast = (0.35 + 0.1 * user.reputation) * divFactor * (0.85 + 0.3 * (teams.length - position) / max(1, teams.length - 1)) * (0.92 + 0.16 * fans / 100);
-    final sponsor = (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +
+    final broadcast = clubStature * (0.35 + 0.1 * user.reputation) * divFactor * (0.85 + 0.3 * (teams.length - position) / max(1, teams.length - 1)) * (0.92 + 0.16 * fans / 100);
+    final sponsor = clubStature * (0.25 + 0.1 * user.reputation + (position <= 3 ? 0.2 : 0.0)) * 0.5 * (0.8 + 0.4 * fans / 100) +
         dealsIncome * (0.9 + 0.2 * fans / 100);
     // تسويق نجومك: قمصان وحقوق صورة تتناسب مع هالة الجوائز وشعبية النادي
     final merch = user.squad.fold<double>(0, (a, p) => a + p.awardBoost) * 0.5 * (0.5 + fans / 100);
@@ -3642,7 +3645,7 @@ class GameState extends ChangeNotifier {
     final lost = grp ? mine < 0 : t.winner != user.id;
     news.insert(0, '🏆 ${c.name} (${c.roundName}): ${t.text((i) => team(i).name)}');
     if (t.home == user.id) {
-      final gate = (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (c.continental ? 1.5 : 1.0);
+      final gate = clubStature * (0.3 + 0.12 * user.reputation) * (0.7 + 0.15 * user.stadium) * (c.continental ? 1.5 : 1.0);
       user.budget += gate;
       fin.add('tickets', gate);
     }
