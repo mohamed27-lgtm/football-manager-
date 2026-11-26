@@ -1,5 +1,18 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  "متجر الكوينز": ["Coin store", "Boutique de pièces", "Tienda de monedas"],
+  "كشّاف مميز": ["Premium scout", "Recruteur premium", "Ojeador premium"],
+  "تمديد نافذة الانتقالات": ["Extend transfer window", "Prolonger le mercato", "Ampliar ventana de fichajes"],
+  "أولوية في المفاوضات": ["Negotiation priority", "Priorité de négociation", "Prioridad en negociaciones"],
+  "إعادة التفاوض": ["Renegotiate", "Renégocier", "Renegociar"],
+  "علاج متقدم": ["Advanced treatment", "Traitement avancé", "Tratamiento avanzado"],
+  "لاعب أسطوري": ["Legendary player", "Joueur légendaire", "Jugador legendario"],
+  "تسريع البناء فوراً": ["Instant construction", "Construction instantanée", "Construcción instantánea"],
+  "اختر أسطورة": ["Choose a legend", "Choisissez une légende", "Elige una leyenda"],
+  "اختر المصاب": ["Choose the injured player", "Choisissez le joueur blessé", "Elige al lesionado"],
+  "متجر الكوينز — مزايا لا تُشترى بمال النادي": ["Coin store — perks money can't buy", "Boutique — des avantages que l'argent du club ne peut acheter", "Tienda — ventajas que el dinero del club no compra"],
+  "5 مواهب شابة عالية الإمكانية من أنحاء العالم تدخل سوقك فوراً.": ["5 high-potential young talents from around the world join your market instantly.", "5 jeunes talents à fort potentiel du monde entier rejoignent votre marché.", "5 jóvenes talentos de alto potencial de todo el mundo entran en tu mercado."],
+  "لا توجد مشاريع بناء جارية": ["No construction projects in progress", "Aucun chantier en cours", "No hay obras en curso"],
   "شاهد فيديو": ["Watch a video", "Regarder une vidéo", "Ver un vídeo"],
   "شاهد إعلاناً قصيراً واحصل على مكافأة كوينز": ["Watch a short ad to earn coins", "Regardez une courte pub pour gagner des pièces", "Mira un anuncio corto y gana monedas"],
   "لا يوجد إعلان متاح الآن، حاول لاحقاً": ["No ad available right now, try later", "Aucune pub disponible, réessayez plus tard", "No hay anuncios disponibles, inténtalo luego"],

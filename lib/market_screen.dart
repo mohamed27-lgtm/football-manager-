@@ -7,6 +7,7 @@ import 'i18n.dart';
 import 'loans_screen.dart';
 import 'scouting_screen.dart';
 import 'create_player.dart';
+import 'coin_store.dart';
 import 'models.dart';
 import 'negotiation.dart';
 import 'squad.dart';
@@ -116,6 +117,11 @@ class _TransfersTabState extends State<TransfersTab> {
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => CreatePlayerScreen(gs: gs))),
                 icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
                 label: const Text('إنشاء لاعب'),
+              ),
+              TextButton.icon(
+                onPressed: () => showCoinStore(context, gs),
+                icon: const Icon(Icons.monetization_on, size: 18, color: kGold),
+                label: const Text('متجر الكوينز'),
               ),
             ]),
           ),

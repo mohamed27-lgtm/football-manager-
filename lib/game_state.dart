@@ -27,6 +27,7 @@ import 'api_football.dart';
 part 'awards_logic.dart';
 part 'world_rank.dart';
 part 'facilities_logic.dart';
+part 'coin_perks.dart';
 part 'tickets_logic.dart';
 part 'club_logic.dart';
 part 'loans_logic.dart';
@@ -382,6 +383,9 @@ class GameState extends ChangeNotifier {
       }
     }
   }
+  /// حالة مزايا الكوينز (انظر coin_perks.dart)
+  int windowExtUntil = -1, windowExtSeason = -1, priorityUntil = -1, prioritySeason = -1, healSeason = -1, legendSeason = -1;
+
   /// كوينز اللعبة: رصيد مشترك بين الألعاب (انظر Wallet)
   int get coins => Wallet.i.coins;
   set coins(int v) => Wallet.i.add(v - Wallet.i.coins);
@@ -730,6 +734,12 @@ class GameState extends ChangeNotifier {
     season = j['season'] as int;
     week = j['week'] as int;
     objective = j['objective'] as int;
+    windowExtUntil = (j['wxu'] as int?) ?? -1;
+    windowExtSeason = (j['wxs'] as int?) ?? -1;
+    priorityUntil = (j['pru'] as int?) ?? -1;
+    prioritySeason = (j['prs'] as int?) ?? -1;
+    healSeason = (j['hls'] as int?) ?? -1;
+    legendSeason = (j['lgs'] as int?) ?? -1;
     youthApps0.clear();
     ((j['ya0'] as Map<String, dynamic>?) ?? {}).forEach((k, v) => youthApps0[int.parse(k)] = v as int);
     leagueName = (j['league'] as String?) ?? leagueName;
@@ -1030,6 +1040,12 @@ class GameState extends ChangeNotifier {
         'season': season,
         'week': week,
         'objective': objective,
+        'wxu': windowExtUntil,
+        'wxs': windowExtSeason,
+        'pru': priorityUntil,
+        'prs': prioritySeason,
+        'hls': healSeason,
+        'lgs': legendSeason,
         'ya0': {for (final e in youthApps0.entries) '${e.key}': e.value},
         'league': leagueName,
         'fin': fin.toJson(),
@@ -1816,7 +1832,7 @@ class GameState extends ChangeNotifier {
     if (offer >= reserve) return const NegoResult('accept', null, 'وافق النادي على عرضك.');
     final rivals = p.free ? <Team>[] : (teams.where((t) => t != user && t.name != p.club && t.budget >= ask && t.squad.length < 30).toList()..sort((a, b) => b.budget.compareTo(a.budget)));
     final hot = p.overall >= 72 || (p.age <= 21 && p.potential >= 80);
-    if (round >= 2 && rivals.isNotEmpty && rng.nextDouble() < 0.1 + (p.overall >= 75 ? 0.08 : 0.0)) {
+    if (!priorityActive && round >= 2 && rivals.isNotEmpty && rng.nextDouble() < 0.1 + (p.overall >= 75 ? 0.08 : 0.0)) {
       final rival = rivals[rng.nextInt(min(4, rivals.length))];
       _reserve.remove(p.id);
       final from = teams.where((t) => t.name == p.club).firstOrNull;
@@ -1832,7 +1848,7 @@ class GameState extends ChangeNotifier {
       return NegoResult('reject', null, 'تدخّل ${rival.name} بعرض أعلى وخطف اللاعب!');
     }
     // دخول منافس يرفع السعر مرة واحدة في كل تفاوض
-    if (round == 1 && hot && rivals.isNotEmpty && !_rivalHeat.contains(p.id) && rng.nextDouble() < 0.3) {
+    if (!priorityActive && round == 1 && hot && rivals.isNotEmpty && !_rivalHeat.contains(p.id) && rng.nextDouble() < 0.3) {
       _rivalHeat.add(p.id);
       final rival = rivals[rng.nextInt(min(4, rivals.length))];
       _reserve[p.id] = reserve * 1.1;
@@ -2349,6 +2365,7 @@ class GameState extends ChangeNotifier {
   /// آخر جولة تكون فيها النافذة مفتوحة (صيفاً أو شتاءً)
   bool get deadlineDay {
     if (!windowOpen) return false;
+    if (windowExtended) return week == windowExtUntil - 1;
     final h = rounds.length ~/ 2;
     return week == 3 || week == h + 2;
   }
@@ -2356,6 +2373,7 @@ class GameState extends ChangeNotifier {
   /// الجولة التي تسبق يوم الإغلاق
   bool get deadlineEve {
     if (!windowOpen || deadlineDay) return false;
+    if (windowExtended) return week == windowExtUntil - 2;
     final h = rounds.length ~/ 2;
     return week == 2 || week == h + 1;
   }
@@ -4025,12 +4043,13 @@ class GameState extends ChangeNotifier {
   // ───────── نوافذ الانتقالات والتسجيل ─────────
   bool get windowOpen {
     final h = rounds.length ~/ 2;
-    return week < 4 || (week >= h - 1 && week < h + 3);
+    return week < 4 || (week >= h - 1 && week < h + 3) || windowExtended;
   }
 
   String get windowLabel {
     final h = rounds.length ~/ 2;
     if (deadlineDay) return 'آخر يوم في الميركاتو! تُغلق النافذة بعد هذه الجولة';
+    if (windowExtended) return 'النافذة ممدَّدة — تُغلق بعد ${windowExtUntil - week} جولات';
     if (week < 4) return 'نافذة الصيف مفتوحة — تُغلق بعد ${4 - week} جولات';
     if (week >= h - 1 && week < h + 3) return 'نافذة الشتاء مفتوحة — تُغلق بعد ${h + 3 - week} جولات';
     if (week < h - 1) return 'النافذة مغلقة — تفتح الشتوية بعد ${h - 1 - week} جولات';

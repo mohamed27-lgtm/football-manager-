@@ -375,4 +375,50 @@ void main() {
     gs.coins = gs.coins - 10;
     expect(w.coins, gs.coins);
   });
+
+  test('مزايا الكوينز: الدفع، التمديد، العلاج، الأسطورة، التسريع، والأولوية', () {
+    final gs = _newGame(160);
+    Wallet.i.coins = 2000;
+    // الكشّاف: إما يضيف مواهب أو يعتذر دون خصم
+    final c0 = Wallet.i.coins;
+    final m0 = gs.market.length;
+    final r = gs.premiumScout();
+    if (r == null) {
+      expect(gs.market.length, greaterThan(m0));
+      expect(Wallet.i.coins, c0 - CoinPerks.costScout);
+    } else {
+      expect(Wallet.i.coins, c0);
+    }
+    // تمديد النافذة: مرة واحدة في الموسم
+    expect(gs.windowOpen, isTrue);
+    expect(gs.extendWindow(), isNull);
+    expect(gs.windowExtended, isTrue);
+    expect(gs.extendWindow(), isNotNull);
+    gs.week = 5; // كانت ستُغلق (الأسبوع 4) لكنها ممددة
+    expect(gs.windowOpen, isTrue);
+    gs.week = 7;
+    expect(gs.windowOpen, isFalse);
+    gs.week = 0;
+    // العلاج
+    final p = gs.user.squad.first..injuredWeeks = 8;
+    expect(gs.healInjury(p), isNull);
+    expect(p.injuredWeeks, 4);
+    expect(gs.healInjury(p), isNotNull);
+    // الأولوية
+    expect(gs.buyPriority(), isNull);
+    expect(gs.priorityActive, isTrue);
+    // الأسطورة: واحد في الموسم
+    final n0 = gs.user.squad.length;
+    expect(gs.signLegend(0), isNull);
+    expect(gs.user.squad.length, n0 + 1);
+    expect(gs.signLegend(1), isNotNull);
+    // رصيد غير كافٍ
+    Wallet.i.coins = 5;
+    expect(gs.buyPriority(), isNotNull);
+    expect(gs.retryNegotiation(gs.user.squad.first), isNotNull);
+    // سلامة الحفظ
+    final back = GameState.fromJson(gs.toJson());
+    expect(back.legendSeason, gs.season);
+    expect(back.windowExtSeason, gs.season);
+  });
 }

@@ -169,6 +169,29 @@ void showNegotiation(BuildContext context, GameState gs, Player p) {
             Panel(color: kCard2, child: Text(msg, style: const TextStyle(height: 1.5))),
             stageBody,
             const SizedBox(height: 12),
+            if (done && !msg.contains('✅'))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    final err = gs.retryNegotiation(p);
+                    if (err != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                      return;
+                    }
+                    set(() {
+                      done = false;
+                      stage = 1;
+                      round = 1;
+                      tries = 0;
+                      offer = max(lo, (ask * 0.85 * 10).round() / 10).toDouble();
+                      msg = 'أُعيد فتح التفاوض. قدّم عرضك من جديد.';
+                    });
+                  },
+                  icon: const Icon(Icons.monetization_on, color: kGold, size: 18),
+                  label: Text('إعادة التفاوض (${CoinPerks.costRetry} كوينز)'),
+                ),
+              ),
             done ? _negoButtons(ctx, 'إغلاق', () => Navigator.pop(ctx), secondary: 'رجوع') : _negoButtons(ctx, stage == 1 ? 'تقديم العرض (الجولة $round/3)' : 'عرض الشروط', () {
                         if (stage == 1) {
                           final r = gs.evaluateOffer(p, offer, round);
