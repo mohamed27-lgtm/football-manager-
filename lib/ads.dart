@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'wallet.dart';
@@ -58,31 +59,10 @@ class Ads {
 
 class _Done {
   bool earned = false;
-  bool _fin = false;
-  final _c = <void Function(String?)>[];
-  String? _res;
-
+  final _c = Completer<String?>();
   void finish(String? r) {
-    if (_fin) return;
-    _fin = true;
-    _res = r;
-    for (final f in _c) {
-      f(r);
-    }
+    if (!_c.isCompleted) _c.complete(r);
   }
 
-  Future<String?> get future => _fin ? Future.value(_res) : Future<String?>(() => null).then((_) => _wait());
-
-  Future<String?> _wait() {
-    if (_fin) return Future.value(_res);
-    final c = _Completer();
-    _c.add(c.complete);
-    return c.future;
-  }
-}
-
-class _Completer {
-  final _inner = _Holder();
-  Future<String?> get future => _inner.future;
-  void complete(String? v) => _inner.complete(v);
+  Future<String?> get future => _c.future;
 }

@@ -1,5 +1,11 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  "شاهد فيديو": ["Watch a video", "Regarder une vidéo", "Ver un vídeo"],
+  "شاهد إعلاناً قصيراً واحصل على مكافأة كوينز": ["Watch a short ad to earn coins", "Regardez une courte pub pour gagner des pièces", "Mira un anuncio corto y gana monedas"],
+  "لا يوجد إعلان متاح الآن، حاول لاحقاً": ["No ad available right now, try later", "Aucune pub disponible, réessayez plus tard", "No hay anuncios disponibles, inténtalo luego"],
+  "تعذّر عرض الإعلان": ["Could not show the ad", "Impossible d'afficher la pub", "No se pudo mostrar el anuncio"],
+  "أغلقت الإعلان قبل نهايته فلم تُضَف الكوينز": ["You closed the ad early, so no coins were added", "Pub fermée trop tôt : aucune pièce ajoutée", "Cerraste el anuncio antes de terminar: no se añadieron monedas"],
+  "خدمة الإعلانات غير متاحة الآن": ["Ad service unavailable", "Service de pubs indisponible", "Servicio de anuncios no disponible"],
   'كوينز اللعبة': ["Game coins", "Pièces du jeu", "Monedas del juego"],
   'عملة نادرة مشتركة بين كل ألعابك. تُصرف على مزايا لا تُشترى بالمال داخل اللعبة.': ["A rare currency shared across all your saves. Spent on perks that cannot be bought with in-game money.", "Une monnaie rare partagée entre toutes vos parties, pour des avantages impossibles à acheter avec l'argent du jeu.", "Una moneda rara compartida entre todas tus partidas, para ventajas que no se compran con dinero del juego."],
   'المكافأة اليومية: عد لاحقاً': ["Daily reward: come back later", "Récompense quotidienne : revenez plus tard", "Recompensa diaria: vuelve más tarde"],

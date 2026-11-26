@@ -28,6 +28,7 @@ import 'sections_page.dart';
 import 'lang_sheet.dart';
 import 'settings.dart';
 import 'wallet.dart';
+import 'ads.dart';
 import 'scout_report.dart';
 import 'widgets.dart';
 import 'title_screen.dart';
@@ -69,6 +70,12 @@ class _StartScreenState extends State<StartScreen> {
   int tab = 0; // 0 الرئيسية، 1 التنزيلات، 2 الأقسام
 
   String _mb(int chars) => '${(chars / 1e6).toStringAsFixed(1)} MB';
+
+  Future<void> _watchAd() async {
+    final err = await Ads.watch();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? 'حصلت على ${Ads.reward} كوينز')));
+  }
 
   void _store() {
     showModalBottomSheet(
@@ -248,10 +255,10 @@ class _StartScreenState extends State<StartScreen> {
                 ),
               ]),
               const SizedBox(height: 16),
-              ListenableBuilder(
-                listenable: Wallet.i,
-                builder: (_, __) => InkWell(
-                  onTap: _store,
+              ValueListenableBuilder<bool>(
+                valueListenable: Ads.busy,
+                builder: (_, loading, __) => InkWell(
+                  onTap: loading ? null : _watchAd,
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: const EdgeInsets.all(14),
@@ -261,20 +268,28 @@ class _StartScreenState extends State<StartScreen> {
                       border: Border.all(color: const Color(0x66FFC857)),
                     ),
                     child: Row(children: [
-                      Expanded(
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          const Text('كوينز اللعبة', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                          const SizedBox(height: 2),
-                          Text('رصيدك ${Wallet.i.coins} • ${Wallet.i.canClaimDaily() ? 'مكافأتك اليومية جاهزة' : 'عملة نادرة تُصرف على مزايا خاصة'}', style: const TextStyle(color: kMuted, fontSize: 11.5, height: 1.4)),
-                        ]),
-                      ),
-                      const SizedBox(width: 10),
                       Container(
                         width: 46,
                         height: 46,
-                        decoration: const BoxDecoration(color: kGold, shape: BoxShape.circle),
-                        child: const Icon(Icons.monetization_on, color: Colors.black),
+                        decoration: const BoxDecoration(color: kAccent, shape: BoxShape.circle),
+                        child: loading
+                            ? const Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 3, color: Colors.black))
+                            : const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 30),
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          const Text('شاهد فيديو', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                          const SizedBox(height: 2),
+                          const Text('شاهد إعلاناً قصيراً واحصل على مكافأة كوينز', style: TextStyle(color: kMuted, fontSize: 11.5, height: 1.4)),
+                        ]),
+                      ),
+                      const SizedBox(width: 8),
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        Text('+${Ads.reward}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: kGold)),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.monetization_on, color: kGold, size: 28),
+                      ]),
                     ]),
                   ),
                 ),

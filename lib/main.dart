@@ -12,12 +12,14 @@ import 'home.dart';
 import 'models.dart';
 import 'settings.dart';
 import 'wallet.dart';
+import 'ads.dart';
 import 'widgets.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppSettings.i.load();
   await Wallet.i.load();
+  unawaited(Ads.init());
   await LogoStore.init();
   await loadCoaches();
   unawaited(Bundled.list());
