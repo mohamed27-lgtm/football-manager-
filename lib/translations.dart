@@ -1,5 +1,13 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'التشكيلات': ["Lineups", "Compositions", "Alineaciones"],
+  'التبديلات التي تمت': ["Substitutions made", "Remplacements effectués", "Cambios realizados"],
+  'البدلاء': ["Substitutes", "Remplaçants", "Suplentes"],
+  'متابعة اللعب': ["Resume play", "Reprendre le jeu", "Continuar"],
+  'انتهت المباراة': ["Match over", "Match terminé", "Partido terminado"],
+  'استنفدت التبديلات الخمسة': ["All 5 substitutions used", "Les 5 remplacements sont utilisés", "Se usaron los 5 cambios"],
+  'اللاعب ليس في الملعب': ["Player is not on the pitch", "Le joueur n'est pas sur le terrain", "El jugador no está en el campo"],
+  'اللاعب غير متاح على مقاعد البدلاء': ["Player not available on the bench", "Joueur indisponible sur le banc", "Jugador no disponible en el banquillo"],
   '👋 ودّعت {} من مرحلة الدوري (المركز {}) — جائزة المشاركة {}': ['👋 {} league phase exit (position {}) — participation prize {}', '👋 {} éliminé en phase de ligue (place {}) — prime de participation {}', '👋 Eliminado de la fase de liga de {} (puesto {}) — premio de participación {}'],
   '📈 تحديث القيم السوقية ({}) — راجع قيم لاعبيك': ['📈 Market values updated ({}) — check your players\' values', '📈 Valeurs marchandes mises à jour ({}) — vérifiez vos joueurs', '📈 Valores de mercado actualizados ({}) — revisa a tus jugadores'],
   'آخر تحديث للقيمة: {} • التالي: بداية الموسم القادم': ['Last value update: {} • Next: start of next season', 'Dernière mise à jour : {} • Prochaine : début de saison', 'Última actualización: {} • Próxima: inicio de la próxima temporada'],

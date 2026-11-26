@@ -40,10 +40,14 @@ class Side {
   final Map<Player, double> ratings = {};
   final Map<Player, PerfStat> perf = {};
   PerfStat ps(Player p) => perf.putIfAbsent(p, PerfStat.new);
-  int goals = 0, shots = 0, onTarget = 0, poss = 0, subsLeft = 3, fouls = 0, corners = 0;
+  int goals = 0, shots = 0, onTarget = 0, poss = 0, subsLeft = 5, fouls = 0, corners = 0;
   int passes = 0, passOk = 0, offsides = 0, bigChances = 0, bigMissed = 0;
   double xg = 0;
   double mom = 0; // الزخم النفسي -1..1 (يتبدد بسرعة)
+  /// قانون التبديل الحديث: 5 تبديلات في 3 فرص كحد أقصى (الاستراحة لا تُحتسب فرصة)
+  int subWindows = 0;
+  int? lastSubKey;
+  final List<({int minute, Player out, Player inn})> subLog = [];
 
   /// مهارة التمرير: متوسط تمرير اللاعبين الميدانيين
   double get passSkill {
@@ -690,9 +694,15 @@ class MatchSim {
     }
   }
 
-  void _doSub(Side s, Slot sl, Player inP) {
+  void _doSub(Side s, Slot sl, Player inP, {bool half = false}) {
     s.subsLeft--;
+    final key = half ? -1 : minute;
+    if (s.lastSubKey != key) {
+      if (!half) s.subWindows++;
+      s.lastSubKey = key;
+    }
     s.out.add(sl.p);
+    s.subLog.add((minute: minute, out: sl.p, inn: inP));
     _log('sub', '🔄 يدخل ${inP.name} بدلاً من ${sl.p.name}', s.isHome);
     sl.p = inP;
     inP.apps++;
@@ -701,6 +711,7 @@ class MatchSim {
 
   void _aiSub(Side s) {
     if (s.subsLeft <= 0) return;
+    if (s.subWindows >= 3 && s.lastSubKey != minute) return;
     final tired = s.slots.where((x) => x.pos != Pos.gk).toList()
       ..sort((a, b) => a.p.fitness.compareTo(b.p.fitness));
     if (tired.isEmpty || tired.first.p.fitness > 78) return;
@@ -710,12 +721,26 @@ class MatchSim {
     _doSub(s, sl, bs.first);
   }
 
-  bool substitute(Side s, Player outP, Player inP) {
-    if (s.subsLeft <= 0 || finished) return false;
+  /// سبب منع التبديل (null = مسموح): التبديلات الخمسة والفرص الثلاث، والاستراحة لا تُحتسب فرصة
+  String? subBlock(Side s, {bool half = false}) {
+    if (finished) return 'انتهت المباراة';
+    if (s.subsLeft <= 0) return 'استنفدت التبديلات الخمسة';
+    final key = half ? -1 : minute;
+    if (!half && s.lastSubKey != key && s.subWindows >= 3) {
+      return 'استنفدت فرص التبديل الثلاث (الاستراحة بين الشوطين لا تُحتسب)';
+    }
+    return null;
+  }
+
+  /// تبديل بقرار المدرب: يعيد null عند النجاح أو سبب الرفض. اللاعب الذي خرج لا يعود
+  String? substitute(Side s, Player outP, Player inP, {bool half = false}) {
+    final why = subBlock(s, half: half);
+    if (why != null) return why;
     final l = s.slots.where((x) => x.p == outP).toList();
-    if (l.isEmpty || !s.bench.contains(inP)) return false;
-    _doSub(s, l.first, inP);
-    return true;
+    if (l.isEmpty) return 'اللاعب ليس في الملعب';
+    if (!s.bench.contains(inP)) return 'اللاعب غير متاح على مقاعد البدلاء';
+    _doSub(s, l.first, inP, half: half);
+    return null;
   }
 
   /// حديث الاستراحة: 0 تشجيع، 1 تحدٍّ (مخاطرة)، 2 تهدئة

@@ -42,6 +42,14 @@ class _FieldPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
+/// خلفية الملعب فقط (للعرض الثابت للتشكيلات)
+class PitchBackdrop extends StatelessWidget {
+  final Widget? child;
+  const PitchBackdrop({super.key, this.child});
+  @override
+  Widget build(BuildContext context) => CustomPaint(painter: _FieldPainter(), child: child);
+}
+
 typedef _Placed = ({Slot slot, double x, double y});
 
 class LivePitch extends StatelessWidget {

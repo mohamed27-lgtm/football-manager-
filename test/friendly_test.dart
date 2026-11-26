@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:football_manager/data.dart';
 import 'package:football_manager/game_state.dart';
+import 'package:football_manager/engine.dart';
 import 'package:football_manager/models.dart';
 import 'package:football_manager/transfers.dart';
 import 'package:football_manager/stadiums.dart';
@@ -299,5 +300,31 @@ void main() {
     final cup = gs.continental!;
     expect(gs.koPrize(cup, 4), greaterThan(gs.koPrize(cup, 16)));
     expect(gs.koPrize(cup, 2), lessThan(gs.koPrize(cup, 4)));
+  });
+
+  test('قواعد التبديل: 5 كحد أقصى و3 فرص والاستراحة مجانية ومن خرج لا يعود', () {
+    final gs = _newGame(120);
+    final a = gs.teams[0], b = gs.teams[1];
+    final sim = MatchSim(a, b, userHome: true, random: Random(1));
+    final s = sim.home;
+    Player outOf(int i) => s.slots.where((x) => x.pos != Pos.gk).toList()[i].p;
+    for (var k = 0; k < 3; k++) {
+      sim.minute = 10 + k * 5;
+      final bn = s.bench.where((x) => x.pos != Pos.gk).first;
+      expect(sim.substitute(s, outOf(k), bn), isNull);
+    }
+    expect(s.subWindows, 3);
+    sim.minute = 40;
+    var bn = s.bench.where((x) => x.pos != Pos.gk).first;
+    expect(sim.substitute(s, outOf(5), bn), isNotNull); // الفرصة الرابعة مرفوضة
+    expect(sim.substitute(s, outOf(5), bn, half: true), isNull); // الاستراحة مجانية
+    expect(s.subsLeft, 1);
+    final gone = s.subLog.first.out;
+    expect(s.bench.contains(gone), isFalse);
+    sim.minute = 10; // نفس الدقيقة التي حدث فيها تبديل سابق
+    bn = s.bench.where((x) => x.pos != Pos.gk).first;
+    expect(sim.substitute(s, outOf(6), bn, half: true), isNull);
+    bn = s.bench.isEmpty ? bn : s.bench.first;
+    expect(sim.substitute(s, outOf(7), bn, half: true), isNotNull); // استُنفدت الخمسة
   });
 }

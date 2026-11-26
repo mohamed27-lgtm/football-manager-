@@ -7,6 +7,7 @@ import 'engine.dart';
 import 'game_state.dart';
 import 'models.dart';
 import 'settings.dart';
+import 'match_lineups.dart';
 import 'pitch_view.dart';
 import 'tactics.dart';
 import 'widgets.dart';
@@ -131,6 +132,11 @@ class _MatchScreenState extends State<MatchScreen> {
   }
 
   void _subs() {
+    _pause();
+    setState(() => view = 3);
+  }
+
+  void _subsOldSheet() {
     final wasRunning = running;
     _pause();
     setState(() {});
@@ -173,11 +179,10 @@ class _MatchScreenState extends State<MatchScreen> {
                               title: Text(b.name),
                               subtitle: Text('${b.pos.label} • لياقة ${b.fitness.round()}%'),
                               onTap: () {
-                                final ok = sim.substitute(side, sel!, b);
+                                final err = sim.substitute(side, sel!, b, half: halftime);
                                 Navigator.pop(ctx);
-                                if (!ok) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(content: Text('لا يمكن إجراء التبديل')));
+                                if (err != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
                                 }
                               },
                             ),
@@ -326,6 +331,7 @@ class _MatchScreenState extends State<MatchScreen> {
             ButtonSegment(value: 0, label: Text('الملعب', style: TextStyle(fontSize: 12)), icon: Icon(Icons.sports_soccer, size: 16)),
             ButtonSegment(value: 1, label: Text('التعليق', style: TextStyle(fontSize: 12)), icon: Icon(Icons.chat_bubble_outline, size: 16)),
             ButtonSegment(value: 2, label: Text('الأرقام', style: TextStyle(fontSize: 12)), icon: Icon(Icons.bar_chart, size: 16)),
+            ButtonSegment(value: 3, label: Text('التشكيلات', style: TextStyle(fontSize: 12)), icon: Icon(Icons.swap_vert, size: 16)),
           ],
           selected: {view},
           onSelectionChanged: (v) => setState(() => view = v.first),
@@ -335,6 +341,19 @@ class _MatchScreenState extends State<MatchScreen> {
         Expanded(child: _commentary())
       else if (view == 2)
         Expanded(child: _liveStats())
+      else if (view == 3)
+        Expanded(
+          child: LineupsPanel(
+            sim: sim,
+            mine: mySide,
+            halftime: halftime,
+            onChanged: () => setState(() {}),
+            onResume: () {
+              setState(() => view = 0);
+              if (!sim.finished) _start();
+            },
+          ),
+        )
       else ...[
       Expanded(
         child: ListView(padding: const EdgeInsets.fromLTRB(10, 10, 10, 6), children: [
