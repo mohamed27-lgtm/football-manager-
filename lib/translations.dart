@@ -1,5 +1,8 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'بداية الضغط': ["Press starts", "Début du pressing", "Inicio de la presión"],
+  'اضغط على أي لاعب لتغييره • اسحب المقبضين الجانبيين لتحريك خط الدفاع وحدّ الضغط': ["Tap a player to change • drag the side handles to move the defensive line and pressing line", "Touchez un joueur pour le changer • glissez les poignées pour déplacer la ligne défensive et le pressing", "Toca un jugador para cambiarlo • arrastra los tiradores para mover la línea defensiva y la presión"],
+  'أبيض: تمريرات قصيرة • أصفر متقطع: تمريرات مباشرة • أحمر: منطقة الضغط • أزرق: ممرات العرض': ["White: short passes • dashed yellow: direct passes • red: pressing zone • blue: width lanes", "Blanc : passes courtes • jaune pointillé : passes directes • rouge : zone de pressing • bleu : couloirs", "Blanco: pases cortos • amarillo discontinuo: pases directos • rojo: zona de presión • azul: carriles"],
   'هدف مالي': ["Financial goal", "Objectif financier", "Objetivo financiero"],
   'هدف الشباب': ["Youth goal", "Objectif jeunes", "Objetivo de jóvenes"],
   'يتقدم للأمام': ["Push forward", "Se projette vers l'avant", "Sube al ataque"],
