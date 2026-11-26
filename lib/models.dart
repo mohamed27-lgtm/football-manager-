@@ -365,6 +365,14 @@ const formations = <Formation>[
 ];
 
 /// أدوار اللاعبين: (الاسم، المركز، تأثير الهجوم، الوسط، الدفاع) — نسب صغيرة تُجمع على مستوى الفريق
+/// تعليمات اللاعب الفردية (تؤثر في توزيع التسديد وفي مراقبة نجم الخصم)
+const kInstr = <String, (String, String)>{
+  'push': ('يتقدم للأمام', 'يشارك أكثر في إنهاء الهجمات'),
+  'stay': ('يبقى في الخلف', 'يشارك أقل في التسديد ويحمي الدفاع'),
+  'long': ('تسديد من بعيد', 'يكثر من التسديد، لكن أغلبها أقل دقة'),
+  'mark': ('رقابة لصيقة', 'يلاحق نجم الخصم الهجومي ويقلل خطورته'),
+};
+
 const kRoles = <String, (String, Pos, double, double, double)>{
   'playmaker': ('صانع ألعاب متأخر', Pos.mid, 0.006, 0.02, -0.006),
   'box2box': ('وسط شامل', Pos.mid, 0.004, 0.01, 0.004),
@@ -389,6 +397,8 @@ class Team {
   int defLine = 1; // 0 منخفض، 1 متوسط، 2 مرتفع
   int passing = 1; // 0 قصير، 1 مختلط، 2 مباشر
   final Map<int, String> roles = {}; // معرّف اللاعب → دور (فارغ = الدور العادي)
+  /// تعليمات فردية داخل المباراة: معرّف اللاعب → رمز (انظر kInstr)
+  final Map<int, String> instr = {};
 
   /// مجموع تأثير أدوار اللاعبين الموجودين فعلاً على الملعب: (هجوم، وسط، دفاع)
   (double, double, double) roleEffect(Iterable<Player> onPitch) {
@@ -601,6 +611,7 @@ class Team {
         if (pitch != 90) 'pit': pitch,
         if (mentors.isNotEmpty) 'mn': {for (final e in mentors.entries) '${e.key}': e.value},
         if (lastXI.isNotEmpty) 'lxi': lastXI.toList(),
+        if (instr.isNotEmpty) 'ins': {for (final e in instr.entries) '${e.key}': e.value},
         if (roles.isNotEmpty) 'roles': {for (final e in roles.entries) '${e.key}': e.value},
         'coh': cohesion,
         'lineup': [for (final p in lineup) p.id],
@@ -644,6 +655,13 @@ class Team {
     t.width = (j['wid'] as int?) ?? 1;
     t.defLine = (j['dl'] as int?) ?? 1;
     t.passing = (j['pass'] as int?) ?? 1;
+    final il = j['ins'] as Map<String, dynamic>?;
+    if (il != null) {
+      for (final e in il.entries) {
+        final id = int.tryParse(e.key);
+        if (id != null && kInstr.containsKey(e.value)) t.instr[id] = e.value as String;
+      }
+    }
     final rl = j['roles'] as Map<String, dynamic>?;
     if (rl != null) {
       for (final e in rl.entries) {

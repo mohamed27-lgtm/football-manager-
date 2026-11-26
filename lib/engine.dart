@@ -399,10 +399,19 @@ class MatchSim {
   void _shot(Side a, Side d) {
     final cands = a.slots.where((s) => s.pos != Pos.gk).toList();
     if (cands.isEmpty) return;
+    // رقابة لصيقة: وجود مراقِب عند الخصم يخفف خطورة أفضل مهاجميه
+    final hasMarker = d.slots.any((s) => d.team.instr[s.p.id] == 'mark');
+    final star = cands.reduce((x, y) => x.p.atk >= y.p.atk ? x : y).p;
+    double ins(Player p) {
+      var f = switch (a.team.instr[p.id]) { 'push' => 1.5, 'stay' => 0.4, 'long' => 1.35, _ => 1.0 };
+      if (hasMarker && identical(p, star)) f *= 0.75;
+      return f;
+    }
     final w = cands
         .map((s) =>
             (s.pos == Pos.att ? 5.0 : s.pos == Pos.mid ? 2.0 : 0.6) *
             s.p.atk *
+            ins(s.p) *
             (0.5 + 0.5 * s.p.fitness / 100))
         .toList();
     final shooter = _weighted(cands, w).p;
@@ -417,9 +426,11 @@ class MatchSim {
     final gks = d.slots.where((s) => s.pos == Pos.gk).toList();
     final gkR = gks.isEmpty ? 30.0 : gks.first.rate;
     final q = shooter.atk * (0.7 + 0.3 * shooter.fitness / 100);
+    final longI = a.team.instr[shooter.id] == 'long';
 
     final onT = (0.36 +
             0.004 * (q - 65) -
+            (longI ? 0.05 : 0) -
             0.025 * (a.team.width - 1) -
             0.02 * (a.team.passing - 1))
         .clamp(0.2, 0.6);

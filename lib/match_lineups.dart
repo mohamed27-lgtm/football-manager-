@@ -58,6 +58,41 @@ class _LineupsPanelState extends State<LineupsPanel> {
     }
   }
 
+  void _instrSheet(Player p) {
+    final t = widget.mine.team;
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(padding: const EdgeInsets.all(8), child: Text('تعليمات ${p.name}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))),
+          ListTile(
+            title: const Text('بلا تعليمات'),
+            trailing: t.instr[p.id] == null ? const Icon(Icons.check) : null,
+            onTap: () {
+              t.instr.remove(p.id);
+              Navigator.pop(ctx);
+              setState(() {});
+              widget.onChanged();
+            },
+          ),
+          for (final e in kInstr.entries)
+            ListTile(
+              title: Text(e.value.$1),
+              subtitle: Text(e.value.$2),
+              trailing: t.instr[p.id] == e.key ? const Icon(Icons.check) : null,
+              onTap: () {
+                t.instr[p.id] = e.key;
+                Navigator.pop(ctx);
+                setState(() {});
+                widget.onChanged();
+              },
+            ),
+        ]),
+      ),
+    );
+  }
+
   Widget _chip(Player p, {required bool onPitch, bool interactive = true, bool gone = false}) {
     final sel = identical(picked, p);
     final fit = p.fitness.round();
@@ -86,7 +121,7 @@ class _LineupsPanelState extends State<LineupsPanel> {
             ),
           ]),
           const SizedBox(height: 3),
-          Text(p.name.split(' ').last, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: onPitch ? Colors.white : null, shadows: onPitch ? const [Shadow(color: Colors.black, blurRadius: 3)] : null)),
+          Text(p.name.split(' ').last + (showMine && widget.mine.team.instr[p.id] != null ? ' ★' : ''), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: onPitch ? Colors.white : null, shadows: onPitch ? const [Shadow(color: Colors.black, blurRadius: 3)] : null)),
           const SizedBox(height: 2),
           SizedBox(
             width: 38,
@@ -111,6 +146,7 @@ class _LineupsPanelState extends State<LineupsPanel> {
         childWhenDragging: Opacity(opacity: 0.35, child: face),
         child: GestureDetector(
           onTap: () => onPitch ? _tapPitch(p) : _tapBench(p),
+          onLongPress: onPitch && showMine ? () => _instrSheet(p) : null,
           child: Container(decoration: cand.isNotEmpty ? BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF1FA58A), width: 2)) : null, child: face),
         ),
       ),
@@ -172,7 +208,7 @@ class _LineupsPanelState extends State<LineupsPanel> {
       _pitch(s),
       if (showMine) ...[
         const SizedBox(height: 10),
-        Text(widget.halftime ? 'اسحب لاعباً من البدلاء إلى لاعب في الملعب (أو اضغط الاثنين). الاستراحة لا تُحتسب فرصة.' : 'اسحب لاعباً من البدلاء إلى لاعب في الملعب (أو اضغط الاثنين) لتبديله.', style: const TextStyle(color: kMuted, fontSize: 12)),
+        Text(widget.halftime ? 'اسحب لاعباً من البدلاء إلى لاعب في الملعب (أو اضغط الاثنين). الاستراحة لا تُحتسب فرصة.' : 'اسحب لاعباً من البدلاء إلى لاعب في الملعب (أو اضغط الاثنين) لتبديله. اضغط مطولاً على لاعب لإعطائه تعليمات (★).', style: const TextStyle(color: kMuted, fontSize: 12)),
         if (block != null)
           Padding(padding: const EdgeInsets.only(top: 4), child: Text(block, style: const TextStyle(color: Color(0xFFE5533D), fontSize: 12, fontWeight: FontWeight.w800))),
         const SizedBox(height: 8),

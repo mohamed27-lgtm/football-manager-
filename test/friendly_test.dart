@@ -327,4 +327,20 @@ void main() {
     bn = s.bench.isEmpty ? bn : s.bench.first;
     expect(sim.substitute(s, outOf(7), bn, half: true), isNotNull); // استُنفدت الخمسة
   });
+
+  test('تعليمات اللاعبين: تُحفظ، وتبقى المحاكاة سليمة', () {
+    final gs = _newGame(130);
+    final t = gs.teams[0];
+    final fw = t.squad.firstWhere((p) => p.pos == Pos.att);
+    t.instr[fw.id] = 'long';
+    final back = Team.fromJson(t.toJson());
+    expect(back.instr[fw.id], 'long');
+    var g1 = 0, g2 = 0;
+    for (var i = 0; i < 40; i++) {
+      final s = MatchSim(gs.teams[0], gs.teams[1], userHome: true, random: Random(i))..simulateAll();
+      g1 += s.home.goals;
+      g2 += s.away.goals;
+    }
+    expect(g1 + g2, greaterThan(0));
+  });
 }

@@ -1,5 +1,14 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'يتقدم للأمام': ["Push forward", "Se projette vers l'avant", "Sube al ataque"],
+  'يشارك أكثر في إنهاء الهجمات': ["Takes part more in finishing attacks", "Participe davantage aux finitions", "Participa más en la definición"],
+  'يبقى في الخلف': ["Stay back", "Reste en retrait", "Se queda atrás"],
+  'يشارك أقل في التسديد ويحمي الدفاع': ["Shoots less and protects the defence", "Tire moins et protège la défense", "Dispara menos y protege la defensa"],
+  'تسديد من بعيد': ["Shoot from distance", "Tirs de loin", "Disparos de lejos"],
+  'يكثر من التسديد، لكن أغلبها أقل دقة': ["Shoots often, but less accurately", "Tire souvent, mais moins précis", "Dispara mucho, pero con menos precisión"],
+  'رقابة لصيقة': ["Close marking", "Marquage serré", "Marcaje estrecho"],
+  'يلاحق نجم الخصم الهجومي ويقلل خطورته': ["Tracks the opposition star and reduces his threat", "Colle à la star adverse et réduit sa menace", "Persigue a la estrella rival y reduce su peligro"],
+  'بلا تعليمات': ["No instructions", "Aucune consigne", "Sin instrucciones"],
   'التشكيلات': ["Lineups", "Compositions", "Alineaciones"],
   'التبديلات التي تمت': ["Substitutions made", "Remplacements effectués", "Cambios realizados"],
   'البدلاء': ["Substitutes", "Remplaçants", "Suplentes"],
