@@ -44,14 +44,20 @@ jobs:
           fi
 
       - name: Allow internet access in the manifest
+        env:
+          ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID }}
         run: |
           python3 - <<'EOF'
-          import re, pathlib
+          import re, os, pathlib
           p = pathlib.Path('android/app/src/main/AndroidManifest.xml')
           s = p.read_text(encoding='utf-8')
           if 'android.permission.INTERNET' not in s:
               s = re.sub(r'(<manifest[^>]*>)', r'\1\n    <uses-permission android:name="android.permission.INTERNET"/>', s, count=1)
           s = re.sub(r'android:label="[^"]*"', 'android:label="مدرب كرة القدم"', s, count=1)
+          # معرّف تطبيق AdMob (الافتراضي معرّف تجريبي من Google؛ ضع معرّفك في متغير المستودع ADMOB_APP_ID)
+          app_id = os.environ.get('ADMOB_APP_ID') or 'ca-app-pub-3940256099942544~3347511713'
+          if 'com.google.android.gms.ads.APPLICATION_ID' not in s:
+              s = s.replace('</application>', '    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="%s"/>\n    </application>' % app_id, 1)
           p.write_text(s, encoding='utf-8')
           EOF
 
@@ -112,6 +118,7 @@ jobs:
         run: |
           mkdir -p logs
           flutter build apk --release \
+            --dart-define=ADMOB_REWARDED_ID=${{ vars.ADMOB_REWARDED_ID }} \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} 2>&1 | tee logs/build_full.log
 
