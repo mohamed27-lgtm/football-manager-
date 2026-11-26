@@ -343,4 +343,18 @@ void main() {
     }
     expect(g1 + g2, greaterThan(0));
   });
+
+  test('أهداف المجلس الثانوية: لقطة الشباب والتقييم والحفظ', () {
+    final gs = _newGame(140);
+    gs.snapBoardGoals();
+    expect(gs.youthDone, 0);
+    for (final p in gs.user.squad.where((p) => p.age <= 21)) {
+      p.apps += gs.youthMinApps;
+    }
+    final c0 = gs.confidence;
+    gs.evaluateBoardGoals();
+    expect((gs.confidence - c0).abs(), lessThanOrEqualTo(8));
+    final j = gs.toJson();
+    expect(j['ya0'], isA<Map>());
+  });
 }

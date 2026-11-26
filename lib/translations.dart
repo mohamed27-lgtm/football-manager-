@@ -1,5 +1,7 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'هدف مالي': ["Financial goal", "Objectif financier", "Objetivo financiero"],
+  'هدف الشباب': ["Youth goal", "Objectif jeunes", "Objetivo de jóvenes"],
   'يتقدم للأمام': ["Push forward", "Se projette vers l'avant", "Sube al ataque"],
   'يشارك أكثر في إنهاء الهجمات': ["Takes part more in finishing attacks", "Participe davantage aux finitions", "Participa más en la definición"],
   'يبقى في الخلف': ["Stay back", "Reste en retrait", "Se queda atrás"],

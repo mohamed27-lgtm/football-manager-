@@ -396,6 +396,8 @@ class MessageDetailScreen extends StatelessWidget {
               _kv('ثقة الإدارة', '${gs.confidence.round()}%', c: gs.confidence >= 50 ? const Color(0xFF1FA58A) : const Color(0xFFE5533D)),
               _kv('هدف الموسم', 'المركز ${gs.objective} أو أفضل'),
               _kv('مركزك الحالي', '${gs.position}'),
+              _kv('هدف مالي', 'الرواتب ≤ 85% (حالياً ${gs.ffpRevenue <= 0 ? '—' : '${(gs.ffpRatio * 100).round()}%'})', c: gs.finGoalOk ? const Color(0xFF1FA58A) : const Color(0xFFE5533D)),
+              _kv('هدف الشباب', '${gs.youthDone}/${gs.youthNeed} لاعبين ≤21 سنة (${gs.youthMinApps}+ مباريات)', c: gs.youthDone >= gs.youthNeed ? const Color(0xFF1FA58A) : null),
             ]),
           ),
         ],

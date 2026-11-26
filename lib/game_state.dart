@@ -148,6 +148,38 @@ class GameState extends ChangeNotifier {
   int season = 1;
   int week = 0;
   int objective = 6;
+
+  /// أهداف المجلس الثانوية: مالي (نسبة الرواتب) وشباب (إشراك لاعبين ≤21 سنة). تُقاس من لقطة بداية الموسم
+  final Map<int, int> youthApps0 = {};
+  int get youthNeed => 3;
+  int get youthMinApps => 8;
+  int get youthDone => user.squad.where((p) => p.age <= 21 && p.apps - (youthApps0[p.id] ?? p.apps) >= youthMinApps).length;
+  bool get finGoalOk => ffpRevenue <= 0 || ffpRatio <= 0.85;
+  void snapBoardGoals() {
+    youthApps0
+      ..clear()
+      ..addEntries(user.squad.where((p) => p.age <= 21).map((p) => MapEntry(p.id, p.apps)));
+  }
+
+  /// يقيّم الهدفين الثانويين عند نهاية الموسم (يُستدعى بعد هدف المركز)
+  void evaluateBoardGoals() {
+    final yo = youthDone >= youthNeed;
+    final fo = finGoalOk && user.budget >= 0;
+    if (fo) {
+      confidence = min(100, confidence + 4);
+      news.insert(0, '💼 الهدف المالي محقق: الرواتب ضمن ${(0.85 * 100).round()}% من الإيرادات');
+    } else {
+      confidence = max(0, confidence - 4);
+      news.insert(0, '💼 أخفقت في الهدف المالي (الرواتب ${(ffpRatio * 100).round()}% من الإيرادات أو ميزانية سالبة)');
+    }
+    if (yo) {
+      confidence = min(100, confidence + 4);
+      news.insert(0, '🌱 هدف الشباب محقق: $youthDone لاعبين شباب لعبوا أكثر من $youthMinApps مباريات');
+    } else {
+      confidence = max(0, confidence - 2);
+      news.insert(0, '🌱 لم يتحقق هدف الشباب ($youthDone من $youthNeed)');
+    }
+  }
   String leagueName = 'الدوري الافتراضي';
   String country = '';
   int leagueId = 0;
@@ -678,6 +710,7 @@ class GameState extends ChangeNotifier {
     _seedFreeAgents();
     market = _scoutedMarket();
     _setObjective();
+    snapBoardGoals();
     news.add('مرحباً بك مدرباً لنادي ${user.name} في $leagueName. هدف الإدارة: المركز $objective أو أفضل.');
   }
 
@@ -694,6 +727,8 @@ class GameState extends ChangeNotifier {
     season = j['season'] as int;
     week = j['week'] as int;
     objective = j['objective'] as int;
+    youthApps0.clear();
+    ((j['ya0'] as Map<String, dynamic>?) ?? {}).forEach((k, v) => youthApps0[int.parse(k)] = v as int);
     leagueName = (j['league'] as String?) ?? leagueName;
     if (j['fin'] != null) fin = Finance.fromJson(j['fin'] as Map<String, dynamic>);
     _wireFin();
@@ -993,6 +1028,7 @@ class GameState extends ChangeNotifier {
         'season': season,
         'week': week,
         'objective': objective,
+        'ya0': {for (final e in youthApps0.entries) '${e.key}': e.value},
         'league': leagueName,
         'fin': fin.toJson(),
         'offers': [for (final o in offers) o.toJson()],
@@ -2928,6 +2964,7 @@ class GameState extends ChangeNotifier {
       confidence = max(0, confidence - (pos > objective + 2 ? 15 : 10));
       news.insert(0, '😕 لم تحقق هدف الإدارة (المركز $pos بدل $objective)');
     }
+    evaluateBoardGoals();
     // جوائز الدوري الواقعية: مبلغ ثابت لكل مركز (الاستحقاق الرياضي) يكبر مع مستوى الدوري ودرجته
     final prize = max(0.0, (teams.length - pos + 1) * 2.4 * 20 / teams.length) * leagueMoneyF * divFactor;
     user.budget += prize;
@@ -3057,7 +3094,8 @@ class GameState extends ChangeNotifier {
     _takeoverTick();
     if (confidence <= 0) fired = true;
     _advanceCups();
-    news.insert(0, '📋 هدف الإدارة للموسم $season: المركز $objective أو أفضل');
+    snapBoardGoals();
+    news.insert(0, '📋 هدف الإدارة للموسم $season: المركز $objective أو أفضل، ومالي: الرواتب ≤ 85% من الإيرادات، وشباب: $youthNeed لاعبين ≤21 سنة يلعبون $youthMinApps مباريات');
     unawaited(save());
     notifyListeners();
   }
