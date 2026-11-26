@@ -111,6 +111,35 @@ class GameState extends ChangeNotifier {
   String upperName = '', lowerName = '';
   int div = 1; // درجة نادي المستخدم الحالية
 
+  /// مستوى الدوري (0.2 - 1.0) من متوسط قوة أنديته: الدوريات الكبرى توزع جوائز أكبر بكثير
+  double get leagueMoneyF {
+    final l = teams.where((t) => t.squad.isNotEmpty).toList();
+    if (l.isEmpty) return 1.0;
+    final avg = l.fold(0.0, (a, t) => a + t.strength) / l.length;
+    return ((avg - 58) / 16).clamp(0.2, 1.0).toDouble();
+  }
+
+  /// نسبة جوائز البطولة القارية إلى دوري أبطال أوروبا (UEFA 2024/25: المشاركة 18.6M، دور الـ16 11M، الربع 12.5M، النصف 15M، النهائي 18.5M، اللقب +6.5M)
+  double prizeScale(Cup c) {
+    final swiss = realWorld && confedOf(country).swiss;
+    return switch (c.key) {
+      'con' => swiss ? 1.0 : (realWorld ? 0.3 : 0.5),
+      'uel' => 0.32,
+      'uecl' => swiss ? 0.15 : 0.1,
+      _ => 0.5,
+    };
+  }
+
+  /// جائزة بلوغ الدور التالي بعد الفوز في دور حجمه [size]
+  double koPrize(Cup c, int size) => prizeScale(c) *
+      switch (size) {
+        32 => 11.0,
+        16 => 12.5,
+        8 => 15.0,
+        4 => 18.5,
+        _ => 6.5,
+      };
+
   /// معامل الدخل حسب الدرجة (البث والجوائز أقل في الدرجات الدنيا)
   double get divFactor => div <= 1 ? 1.0 : (div == 2 ? 0.6 : 0.4);
   late Team user;
@@ -741,6 +770,8 @@ class GameState extends ChangeNotifier {
     ];
     friendliesLeft = (j['fl'] as int?) ?? 3;
     intlDone = (j['ib'] as int?) ?? 0;
+    valUpdPlayed = (j['vup'] as int?) ?? 0;
+    valUpdLabel = (j['vul'] as String?) ?? 'بداية الموسم';
     takeoverPending = j['tkp'] as String?;
     takeoverSeason = (j['tks'] as int?) ?? 0;
     investor = j['inv'] as String?;
@@ -933,6 +964,8 @@ class GameState extends ChangeNotifier {
     dedupePlayers();
     _identityDeduped = true;
     dedupeByIdentity();
+    if (user.squad.any((p) => p.pub == null)) publishAllValues(valUpdLabel);
+    _valuesPublished = true;
     market.removeWhere((m) => user.squad.any((p) => p.id == m.id));
   }
 
@@ -965,6 +998,8 @@ class GameState extends ChangeNotifier {
         'offers': [for (final o in offers) o.toJson()],
         if (friendliesLeft != 3) 'fl': friendliesLeft,
         if (intlDone != 0) 'ib': intlDone,
+        'vup': valUpdPlayed,
+        'vul': valUpdLabel,
         if (takeoverPending != null) 'tkp': takeoverPending,
         if (takeoverSeason != 0) 'tks': takeoverSeason,
         if (investor != null) 'inv': investor,
@@ -1484,6 +1519,7 @@ class GameState extends ChangeNotifier {
     _pitchTick();
     _promisesTick();
     intlBreakTick();
+    _valueWindowTick();
     _updateLegends();
     for (final p in user.squad) {
       if (p.injuredWeeks > 0 && !_injBefore.contains(p)) {
@@ -2892,7 +2928,8 @@ class GameState extends ChangeNotifier {
       confidence = max(0, confidence - (pos > objective + 2 ? 15 : 10));
       news.insert(0, '😕 لم تحقق هدف الإدارة (المركز $pos بدل $objective)');
     }
-    final prize = max(0.0, (teams.length + 1 - pos) * 0.9 * 12 / teams.length) * divFactor;
+    // جوائز الدوري الواقعية: مبلغ ثابت لكل مركز (الاستحقاق الرياضي) يكبر مع مستوى الدوري ودرجته
+    final prize = max(0.0, (teams.length - pos + 1) * 2.4 * 20 / teams.length) * leagueMoneyF * divFactor;
     user.budget += prize;
     fin.add('prize', prize);
     news.insert(0, '🏆 أنهيت الموسم $season في المركز $pos — جائزة ${prize.toStringAsFixed(1)}M');
@@ -3002,6 +3039,8 @@ class GameState extends ChangeNotifier {
     _enforceRegistration();
     seasonOver = false;
     roundResults.clear();
+    publishAllValues('بداية الموسم الجديد');
+    valUpdPlayed = 0;
     _buildFixtures();
     final qualIds = qualT.every(teams.contains) ? [for (final t in qualT) t.id] : null;
     _setupCups(qualIds);
@@ -3391,9 +3430,12 @@ class GameState extends ChangeNotifier {
       c.alive = q;
       if (userWas) {
         if (q.contains(user.id)) {
-          user.budget += 3.0;
-          fin.add('prize', 3.0);
-          news.insert(0, '🏅 تأهلت من دور المجموعات في ${c.name} — مكافأة ${money1(3.0)}');
+          final grpRows = groupTable(c, c.groups.firstWhere((x) => x.contains(user.id)));
+          final me = grpRows.firstWhere((r) => r.id == user.id);
+          final gp = prizeScale(c) * (15.6 + 2.8 * me.w + 0.9 * me.d + 11.0);
+          user.budget += gp;
+          fin.add('prize', gp);
+          news.insert(0, '🏅 تأهلت من دور المجموعات في ${c.name} — مكافأة ${money1(gp)}');
         } else {
           news.insert(0, '👋 ودّعت ${c.name} من دور المجموعات');
         }
@@ -3412,7 +3454,7 @@ class GameState extends ChangeNotifier {
     final userWas = c.alive.contains(user.id) && !c.byes.contains(user.id);
     if (userWas) {
       if (winners.contains(user.id)) {
-        final prize = (c.continental ? 1.5 : 0.5) * (c.kind == 2 ? idx - c.lpRounds + 1 : idx + 1);
+        final prize = c.continental ? koPrize(c, c.size) : 0.5 * (idx + 1) * leagueMoneyF;
         user.budget += prize;
         fin.add('prize', prize);
         news.insert(0, '🏅 تأهلت في ${c.name} (${c.roundName}) — مكافأة ${money1(prize)}');
@@ -3439,7 +3481,7 @@ class GameState extends ChangeNotifier {
       }
       clubTitle(team(winners.first).name, c.name);
       if (winners.first == user.id) {
-        final bonus = c.continental ? 10.0 : (c.key == 'sup' ? 2.0 : (c.key == 'esup' ? 4.0 : 3.0));
+        final bonus = c.continental ? koPrize(c, 2) : (c.key == 'sup' ? 2.0 : (c.key == 'esup' ? 4.0 : 3.0));
         user.budget += bonus;
         fin.add('prize', bonus);
         // الألقاب تكسب ثقة الإدارة بقدر قيمتها: قارية أكثر من محلية، والسوبر أقل
@@ -3464,16 +3506,23 @@ class GameState extends ChangeNotifier {
     c.alive = ids.take(24).toList();
     c.seeded = true;
     if (rank >= 0) {
+      final me = tb.firstWhere((r) => r.id == user.id);
+      final sc = prizeScale(c);
+      final basePrize = sc * (18.6 + 2.1 * me.w + 0.7 * me.d + (36 - rank - 1) / 35 * 2.0);
       if (rank < 8) {
-        user.budget += 4.0;
-        fin.add('prize', 4.0);
-        news.insert(0, '🏅 ${c.name}: المركز ${rank + 1} في مرحلة الدوري — تأهل مباشر إلى دور الـ16 (+${money1(4.0)})');
+        final pr = basePrize + sc * 11.0;
+        user.budget += pr;
+        fin.add('prize', pr);
+        news.insert(0, '🏅 ${c.name}: المركز ${rank + 1} في مرحلة الدوري — تأهل مباشر إلى دور الـ16 (+${money1(pr)})');
       } else if (rank < 24) {
-        user.budget += 1.5;
-        fin.add('prize', 1.5);
-        news.insert(0, '🏅 ${c.name}: المركز ${rank + 1} — ستلعب الملحق على التأهل لدور الـ16 (+${money1(1.5)})');
+        final pr = basePrize + sc * 1.0;
+        user.budget += pr;
+        fin.add('prize', pr);
+        news.insert(0, '🏅 ${c.name}: المركز ${rank + 1} — ستلعب الملحق على التأهل لدور الـ16 (+${money1(pr)})');
       } else {
-        news.insert(0, '👋 ودّعت ${c.name} من مرحلة الدوري (المركز ${rank + 1})');
+        user.budget += basePrize;
+        fin.add('prize', basePrize);
+        news.insert(0, '👋 ودّعت ${c.name} من مرحلة الدوري (المركز ${rank + 1}) — جائزة المشاركة ${money1(basePrize)}');
       }
     }
     _draw(c);
@@ -3806,6 +3855,7 @@ class GameState extends ChangeNotifier {
       _identityDeduped = true;
       dedupeByIdentity();
     }
+    if (!_valuesPublished) publishAllValues('بداية الموسم');
     final mine = {for (final p in user.squad) p.id};
     final m = <Player>[for (final p in freeAgents) if (!mine.contains(p.id)) Player.fromJson(p.toJson())..free = true..club = null];
     final pool = <Player>[];
@@ -3976,6 +4026,50 @@ class GameState extends ChangeNotifier {
       if (force || p.sOv == null) {
         p.sOv = p.overall;
         p.sVal = p.value;
+      }
+    }
+  }
+
+  bool _valuesPublished = false;
+  /// آخر تحديث للقيمة السوقية (عدد مبارياتك الرسمية عنده) ولماذا
+  int valUpdPlayed = 0;
+  String valUpdLabel = 'بداية الموسم';
+
+  /// يعلن القيم الجديدة لكل لاعبي العالم دفعة واحدة، كما يحدّث Transfermarkt قيمه
+  void publishAllValues(String label) {
+    for (final t in [...teams, ...upper, ...lower, ...foreign.values]) {
+      for (final p in t.squad) {
+        p.publishValue();
+      }
+    }
+    for (final p in [...freeAgents, ...market]) {
+      p.publishValue();
+    }
+    valUpdPlayed = user.played;
+    valUpdLabel = label;
+    _valuesPublished = true;
+    snapProgress(force: false);
+  }
+
+  /// نوافذ التحديث خلال الموسم: قبل الشتاء (~42% من المباريات) وبعد نافذة يناير (~65%)، ثم بداية الموسم الجديد
+  List<(int, String)> get valueWindows {
+    final total = (teams.length - 1) * 2;
+    return [(max(1, (total * 0.42).round()), 'قبل فترة الشتاء'), (max(2, (total * 0.65).round()), 'بعد نافذة يناير')];
+  }
+
+  /// المباريات المتبقية على التحديث القادم (null = عند نهاية الموسم)
+  int? get matchesToValueUpdate {
+    for (final w in valueWindows) {
+      if (user.played < w.$1) return w.$1 - user.played;
+    }
+    return null;
+  }
+
+  void _valueWindowTick() {
+    for (final w in valueWindows) {
+      if (user.played == w.$1 && valUpdPlayed != w.$1) {
+        publishAllValues(w.$2);
+        news.insert(0, '📈 تحديث القيم السوقية (${w.$2}) — راجع قيم لاعبيك');
       }
     }
   }

@@ -1,5 +1,15 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  '👋 ودّعت {} من مرحلة الدوري (المركز {}) — جائزة المشاركة {}': ['👋 {} league phase exit (position {}) — participation prize {}', '👋 {} éliminé en phase de ligue (place {}) — prime de participation {}', '👋 Eliminado de la fase de liga de {} (puesto {}) — premio de participación {}'],
+  '📈 تحديث القيم السوقية ({}) — راجع قيم لاعبيك': ['📈 Market values updated ({}) — check your players\' values', '📈 Valeurs marchandes mises à jour ({}) — vérifiez vos joueurs', '📈 Valores de mercado actualizados ({}) — revisa a tus jugadores'],
+  'آخر تحديث للقيمة: {} • التالي: بداية الموسم القادم': ['Last value update: {} • Next: start of next season', 'Dernière mise à jour : {} • Prochaine : début de saison', 'Última actualización: {} • Próxima: inicio de la próxima temporada'],
+  'آخر تحديث للقيمة: {} • التالي بعد {} مباراة': ['Last value update: {} • Next in {} matches', 'Dernière mise à jour : {} • Prochaine dans {} matchs', 'Última actualización: {} • Próxima en {} partidos'],
+  'متوقع في التحديث القادم: {} ▲': ['Expected at next update: {} ▲', 'Attendu à la prochaine mise à jour : {} ▲', 'Esperado en la próxima actualización: {} ▲'],
+  'متوقع في التحديث القادم: {} ▼': ['Expected at next update: {} ▼', 'Attendu à la prochaine mise à jour : {} ▼', 'Esperado en la próxima actualización: {} ▼'],
+  'بداية الموسم': ['Season start', 'Début de saison', 'Inicio de temporada'],
+  'بداية الموسم الجديد': ['New season start', 'Début de nouvelle saison', 'Inicio de nueva temporada'],
+  'قبل فترة الشتاء': ['Before the winter break', 'Avant la trêve hivernale', 'Antes del parón invernal'],
+  'بعد نافذة يناير': ['After the January window', 'Après le mercato d\'hiver', 'Tras el mercado de enero'],
   'تطور اللاعب': ['Player progress', 'Progression du joueur', 'Progreso del jugador'],
   'منذ بداية الموسم': ['Since season start', 'Depuis le début de saison', 'Desde el inicio de temporada'],
   'القوة منذ بداية المسيرة': ['Rating since career start', 'Niveau depuis le début', 'Nivel desde el inicio'],

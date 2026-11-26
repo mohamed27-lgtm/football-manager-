@@ -181,8 +181,10 @@ class Player {
     return f;
   }
 
-  /// القيمة السوقية: تعتمد على قيمة Transfermarkt الحقيقية وتتحرك مع تطور تقييم اللاعب وعمره وأدائه وعقده، بسقف حسب المركز
-  double get value {
+  /// القيمة المعلنة (مثل Transfermarkt): لا تتحرك أسبوعياً، بل تُحدَّث في نوافذ محددة من الموسم
+  double? pub;
+
+  double get _core {
     double v;
     if (mv0 != null && ov0 != null) {
       v = mv0! * pow(10, (overall - ov0!) / _ovSlope) * _ageF(age) / _ageF(age0 ?? age);
@@ -192,9 +194,21 @@ class Player {
       if (age >= 31) m *= 0.6;
       v = pow(overall / 50, 6).toDouble() * m;
     }
-    v = v * _contractF * (1 + awardBoost) * _situationF;
-    return max(0.1, (min(v, valueCap) * 10).round() / 10);
+    return v * (1 + awardBoost) * _situationF;
   }
+
+  double _fin(double v) => max(0.1, (min(v, valueCap) * 10).round() / 10);
+
+  /// القيمة الحقيقية الآن (تتأثر بالعقد وبكل العوامل فوراً)
+  double get liveValue => _fin(_core * _contractF);
+
+  /// ما سيُعلن عند التحديث القادم (دون أثر العقد لأنه يدخل في سعر الصفقة)
+  double get pendingValue => _fin(_core);
+
+  /// القيمة السوقية المعلنة: المنشورة آخر مرة، أو الحية إن لم تُنشر بعد
+  double get value => pub ?? liveValue;
+
+  void publishValue() => pub = pendingValue;
 
   /// عقد قصير يخفّض القيمة (قرب الرحيل المجاني)، وعقد طويل يرفعها قليلاً
   double get _contractF => contract <= 0 ? 0.5 : contract == 1 ? 0.82 : contract == 2 ? 0.95 : contract >= 4 ? 1.05 : 1.0;
@@ -257,7 +271,7 @@ class Player {
         'career': career,
         'aw': awards,
         'nat2': nat2, 'sw': swNat, 'swt': swTry, 'sww': swWeek, 'sk': sk, 'tr': traits,
-        'club': club, 'nat': nat, 'sub': sub, 'ft': foot, 'ht': height, 'mv0': mv0, 'ov0': ov0, 'age0': age0, if (sOv != null) 'sov': sOv, if (sVal != null) 'sval': sVal,
+        'club': club, 'nat': nat, 'sub': sub, 'ft': foot, 'ht': height, 'mv0': mv0, 'ov0': ov0, 'age0': age0, if (pub != null) 'pub': pub, if (sOv != null) 'sov': sOv, if (sVal != null) 'sval': sVal,
       };
 
   factory Player.fromJson(Map<String, dynamic> j) => Player(
@@ -322,6 +336,7 @@ class Player {
         ..mv0 = (j['mv0'] as num?)?.toDouble()
         ..ov0 = (j['ov0'] as num?)?.toInt()
         ..age0 = (j['age0'] as num?)?.toInt()
+        ..pub = (j['pub'] as num?)?.toDouble()
         ..sOv = (j['sov'] as num?)?.toInt()
         ..sVal = (j['sval'] as num?)?.toDouble()
         ..career = [

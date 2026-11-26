@@ -201,16 +201,18 @@ void main() {
     p.mv0 = 900;
     p.ov0 = p.overall;
     p.age0 = p.age;
+    p.pub = null;
     expect(p.value, lessThanOrEqualTo(p.valueCap));
+    p.pub = null;
     final base = (p..mv0 = 60..ov0 = p.overall).value;
     p.injuredWeeks = 10;
-    expect(p.value, lessThan(base));
+    expect(p.liveValue, lessThan(base));
     p.injuredWeeks = 0;
     p.age0 = 22;
     p.age = 22;
-    final young = p.value;
+    final young = p.liveValue;
     p.age = 31;
-    expect(p.value, lessThan(young));
+    expect(p.liveValue, lessThan(young));
     final big = gs.clubStature;
     expect(big, inInclusiveRange(0.85, 2.0));
   });
@@ -269,5 +271,33 @@ void main() {
     for (final iso in kCountryIso.values) {
       expect(File('assets/flags/$iso.png').existsSync(), isTrue, reason: iso);
     }
+  });
+
+  test('القيمة المعلنة لا تتحرك إلا عند النشر، ونوافذ التحديث محددة', () {
+    final gs = _newGame(109);
+    final p = gs.user.squad.firstWhere((x) => !x.filler);
+    p.mv0 = 20;
+    p.ov0 = p.overall;
+    p.age0 = p.age;
+    p.publishValue();
+    final shown = p.value;
+    p.mv0 = 40;
+    expect(p.value, shown);
+    expect(p.pendingValue, greaterThan(shown));
+    gs.publishAllValues('اختبار');
+    expect(p.value, p.pendingValue);
+    expect(gs.valueWindows.length, 2);
+    expect(gs.valueWindows[0].$1, lessThan(gs.valueWindows[1].$1));
+    expect(gs.matchesToValueUpdate, isNotNull);
+    final g2 = GameState.fromJson(jsonDecode(jsonEncode(gs.toJson())) as Map<String, dynamic>);
+    expect(g2.user.squad.firstWhere((x) => x.id == p.id).pub, p.pub);
+  });
+
+  test('جوائز الدوري: البطل أكثر بكثير من الأخير ومرتبطة بمستوى الدوري', () {
+    final gs = _newGame(110);
+    expect(gs.leagueMoneyF, inInclusiveRange(0.2, 1.0));
+    final cup = gs.continental!;
+    expect(gs.koPrize(cup, 4), greaterThan(gs.koPrize(cup, 16)));
+    expect(gs.koPrize(cup, 2), lessThan(gs.koPrize(cup, 4)));
   });
 }

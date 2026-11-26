@@ -657,6 +657,16 @@ class _PlayerCardState extends State<_PlayerCard> {
         _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('تطور اللاعب', style: TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
+          Text(
+            'آخر تحديث للقيمة: ${gs.valUpdLabel}${gs.matchesToValueUpdate == null ? ' • التالي: بداية الموسم القادم' : ' • التالي بعد ${gs.matchesToValueUpdate} مباراة'}',
+            style: const TextStyle(color: kMuted, fontSize: 11.5),
+          ),
+          if ((p.pendingValue - p.value).abs() >= 0.3)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text('متوقع في التحديث القادم: ${money(p.pendingValue)} ${p.pendingValue > p.value ? '▲' : '▼'}', style: TextStyle(color: p.pendingValue > p.value ? const Color(0xFF1FA58A) : const Color(0xFFE5533D), fontSize: 11.5, fontWeight: FontWeight.w800)),
+            ),
+          const SizedBox(height: 8),
           _progressRow('القوة', '${p.overall}', p.ovDelta.toDouble(), 'منذ بداية الموسم', fmt: (d) => '${d > 0 ? '+' : ''}${d.round()}'),
           _progressRow('القيمة السوقية', money(p.value), p.valDelta, 'منذ بداية الموسم', fmt: _dm),
           if (p.ov0 != null) _progressRow('القوة منذ بداية المسيرة', '${p.overall}', p.ovSinceStart.toDouble(), 'عند الاستيراد ${p.ov0}', fmt: (d) => '${d > 0 ? '+' : ''}${d.round()}'),
