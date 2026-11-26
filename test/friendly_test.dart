@@ -7,6 +7,7 @@ import 'package:football_manager/data.dart';
 import 'package:football_manager/game_state.dart';
 import 'package:football_manager/engine.dart';
 import 'package:football_manager/models.dart';
+import 'package:football_manager/wallet.dart';
 import 'package:football_manager/transfers.dart';
 import 'package:football_manager/stadiums.dart';
 import 'package:football_manager/countries.dart';
@@ -356,5 +357,22 @@ void main() {
     expect((gs.confidence - c0).abs(), lessThanOrEqualTo(8));
     final j = gs.toJson();
     expect(j['ya0'], isA<Map>());
+  });
+
+  test('كوينز اللعبة: رصيد مشترك، مكافأة يومية مرة كل 20 ساعة، وخصم لا يتجاوز الرصيد', () {
+    final w = Wallet.i;
+    w.coins = 100;
+    w.lastDaily = 0;
+    final t0 = DateTime(2026, 11, 26, 10);
+    expect(w.claimDaily(t0), Wallet.dailyReward);
+    expect(w.coins, 125);
+    expect(w.claimDaily(t0.add(const Duration(hours: 5))), 0);
+    expect(w.claimDaily(t0.add(const Duration(hours: 21))), Wallet.dailyReward);
+    expect(w.spend(10000), isFalse);
+    expect(w.spend(50), isTrue);
+    final gs = _newGame(150);
+    expect(gs.coins, w.coins);
+    gs.coins = gs.coins - 10;
+    expect(w.coins, gs.coins);
   });
 }

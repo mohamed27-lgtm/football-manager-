@@ -1,5 +1,9 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  'كوينز اللعبة': ["Game coins", "Pièces du jeu", "Monedas del juego"],
+  'عملة نادرة مشتركة بين كل ألعابك. تُصرف على مزايا لا تُشترى بالمال داخل اللعبة.': ["A rare currency shared across all your saves. Spent on perks that cannot be bought with in-game money.", "Une monnaie rare partagée entre toutes vos parties, pour des avantages impossibles à acheter avec l'argent du jeu.", "Una moneda rara compartida entre todas tus partidas, para ventajas que no se compran con dinero del juego."],
+  'المكافأة اليومية: عد لاحقاً': ["Daily reward: come back later", "Récompense quotidienne : revenez plus tard", "Recompensa diaria: vuelve más tarde"],
+  'شعارات الأندية وصور اللاعبين (تنزيل اختياري)': ["Club logos and player photos (optional download)", "Logos des clubs et photos des joueurs (téléchargement facultatif)", "Escudos y fotos de jugadores (descarga opcional)"],
   'بداية الضغط': ["Press starts", "Début du pressing", "Inicio de la presión"],
   'اضغط على أي لاعب لتغييره • اسحب المقبضين الجانبيين لتحريك خط الدفاع وحدّ الضغط': ["Tap a player to change • drag the side handles to move the defensive line and pressing line", "Touchez un joueur pour le changer • glissez les poignées pour déplacer la ligne défensive et le pressing", "Toca un jugador para cambiarlo • arrastra los tiradores para mover la línea defensiva y la presión"],
   'أبيض: تمريرات قصيرة • أصفر متقطع: تمريرات مباشرة • أحمر: منطقة الضغط • أزرق: ممرات العرض': ["White: short passes • dashed yellow: direct passes • red: pressing zone • blue: width lanes", "Blanc : passes courtes • jaune pointillé : passes directes • rouge : zone de pressing • bleu : couloirs", "Blanco: pases cortos • amarillo discontinuo: pases directos • rojo: zona de presión • azul: carriles"],

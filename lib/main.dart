@@ -11,11 +11,13 @@ import 'game_state.dart';
 import 'home.dart';
 import 'models.dart';
 import 'settings.dart';
+import 'wallet.dart';
 import 'widgets.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppSettings.i.load();
+  await Wallet.i.load();
   await LogoStore.init();
   await loadCoaches();
   unawaited(Bundled.list());

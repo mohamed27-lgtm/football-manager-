@@ -27,6 +27,7 @@ import 'images_screen.dart';
 import 'sections_page.dart';
 import 'lang_sheet.dart';
 import 'settings.dart';
+import 'wallet.dart';
 import 'scout_report.dart';
 import 'widgets.dart';
 import 'title_screen.dart';
@@ -68,6 +69,53 @@ class _StartScreenState extends State<StartScreen> {
   int tab = 0; // 0 الرئيسية، 1 التنزيلات، 2 الأقسام
 
   String _mb(int chars) => '${(chars / 1e6).toStringAsFixed(1)} MB';
+
+  void _store() {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => ListenableBuilder(
+        listenable: Wallet.i,
+        builder: (ctx, _) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                const Icon(Icons.monetization_on, color: kGold, size: 30),
+                const SizedBox(width: 8),
+                Text('${Wallet.i.coins}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: kGold)),
+                const SizedBox(width: 8),
+                const Text('كوينز اللعبة', style: TextStyle(fontWeight: FontWeight.w800)),
+              ]),
+              const SizedBox(height: 6),
+              const Text('عملة نادرة مشتركة بين كل ألعابك. تُصرف على مزايا لا تُشترى بالمال داخل اللعبة.', style: TextStyle(color: kMuted, fontSize: 12.5, height: 1.5)),
+              const SizedBox(height: 14),
+              FilledButton.icon(
+                onPressed: Wallet.i.canClaimDaily()
+                    ? () {
+                        final n = Wallet.i.claimDaily();
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('حصلت على $n كوينز')));
+                      }
+                    : null,
+                icon: const Icon(Icons.card_giftcard),
+                label: Text(Wallet.i.canClaimDaily() ? 'استلم المكافأة اليومية (+${Wallet.dailyReward})' : 'المكافأة اليومية: عد لاحقاً'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _images();
+                },
+                icon: const Icon(Icons.cloud_download_rounded),
+                label: const Text('شعارات الأندية وصور اللاعبين (تنزيل اختياري)'),
+              ),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
 
   void _images() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ImagesScreen()));
 
@@ -171,14 +219,21 @@ class _StartScreenState extends State<StartScreen> {
                     Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
                   ]),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                  decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.sd_storage_outlined, size: 18, color: kGold),
-                    const SizedBox(width: 6),
-                    Text(_mb(total), style: const TextStyle(fontWeight: FontWeight.w800, color: kGold)),
-                  ]),
+                ListenableBuilder(
+                  listenable: Wallet.i,
+                  builder: (_, __) => InkWell(
+                    onTap: _store,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kLine)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        const Icon(Icons.monetization_on, size: 20, color: kGold),
+                        const SizedBox(width: 6),
+                        Text('${Wallet.i.coins}', style: const TextStyle(fontWeight: FontWeight.w900, color: kGold)),
+                      ]),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 InkWell(
@@ -193,32 +248,35 @@ class _StartScreenState extends State<StartScreen> {
                 ),
               ]),
               const SizedBox(height: 16),
-              InkWell(
-                onTap: _images,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0x221FA58A),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0x551FA58A)),
+              ListenableBuilder(
+                listenable: Wallet.i,
+                builder: (_, __) => InkWell(
+                  onTap: _store,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0x22FFC857),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0x66FFC857)),
+                    ),
+                    child: Row(children: [
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          const Text('كوينز اللعبة', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                          const SizedBox(height: 2),
+                          Text('رصيدك ${Wallet.i.coins} • ${Wallet.i.canClaimDaily() ? 'مكافأتك اليومية جاهزة' : 'عملة نادرة تُصرف على مزايا خاصة'}', style: const TextStyle(color: kMuted, fontSize: 11.5, height: 1.4)),
+                        ]),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: const BoxDecoration(color: kGold, shape: BoxShape.circle),
+                        child: const Icon(Icons.monetization_on, color: Colors.black),
+                      ),
+                    ]),
                   ),
-                  child: Row(children: [
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const Text('شعارات الأندية وصور اللاعبين', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                        const SizedBox(height: 2),
-                        const Text('اللعبة تعمل بدون الصور، وتنزيلها اختياري ويُحفظ على جهازك.', style: TextStyle(color: kMuted, fontSize: 11.5, height: 1.4)),
-                      ]),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: const BoxDecoration(color: kAccent, shape: BoxShape.circle),
-                      child: const Icon(Icons.cloud_download_rounded, color: Colors.black),
-                    ),
-                  ]),
                 ),
               ),
               const SizedBox(height: 12),

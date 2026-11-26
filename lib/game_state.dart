@@ -11,6 +11,7 @@ import 'data.dart';
 import 'engine.dart';
 import 'finance.dart';
 import 'models.dart';
+import 'wallet.dart';
 import 'names.dart';
 import 'last_match.dart';
 import 'calendar.dart';
@@ -381,7 +382,9 @@ class GameState extends ChangeNotifier {
       }
     }
   }
-  int coins = 300; // كوينز: تُكسب من المتجر ومشاهدة الإعلانات (لاحقاً)
+  /// كوينز اللعبة: رصيد مشترك بين الألعاب (انظر Wallet)
+  int get coins => Wallet.i.coins;
+  set coins(int v) => Wallet.i.add(v - Wallet.i.coins);
   static const createPlayerCost = 100;
   // ───────── مهام الكشافة ─────────
   final List<Map<String, dynamic>> missions = []; // {c: البلد, e: أسبوع الانتهاء, w: المدة}
@@ -838,7 +841,6 @@ class GameState extends ChangeNotifier {
     honours.addAll(((j['honours'] as List?) ?? const []).cast<String>());
     oplog.addAll(((j['oplog'] as List?) ?? const []).cast<String>());
     watch.addAll(((j['watch'] as List?) ?? const []).cast<int>());
-    coins = (j['coins'] as int?) ?? 300;
     dayCursor = (j['dc'] as int?) ?? 0;
     if (j['lm'] != null) {
       try {
