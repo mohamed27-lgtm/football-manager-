@@ -218,6 +218,14 @@ class _LeaguesScreenState extends State<LeaguesScreen> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
           child: Row(children: [
+            Container(
+              width: 52,
+              height: 52,
+              margin: const EdgeInsetsDirectional.only(end: 12),
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
+              child: CompLogo(d.id, fallback: Icons.emoji_events_outlined, color: kAccent, size: 40),
+            ),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(d.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
