@@ -359,15 +359,18 @@ void main() {
     expect(j['ya0'], isA<Map>());
   });
 
-  test('كوينز اللعبة: رصيد مشترك، مكافأة يومية مرة كل 20 ساعة، وخصم لا يتجاوز الرصيد', () {
+  test('كوينز اللعبة: رصيد مشترك، مكافأة يومية بسلسلة، وخصم لا يتجاوز الرصيد', () {
     final w = Wallet.i;
     w.coins = 100;
-    w.lastDaily = 0;
-    final t0 = DateTime(2026, 11, 26, 10);
-    expect(w.claimDaily(t0), Wallet.dailyReward);
-    expect(w.coins, 125);
-    expect(w.claimDaily(t0.add(const Duration(hours: 5))), 0);
-    expect(w.claimDaily(t0.add(const Duration(hours: 21))), Wallet.dailyReward);
+    w.streak = 0;
+    w.lastDay = '';
+    final d1 = DateTime(2026, 11, 26, 10);
+    expect(w.claimDaily(d1), Wallet.rewards[0]);
+    expect(w.claimDaily(d1.add(const Duration(hours: 5))), 0); // نفس اليوم
+    expect(w.claimDaily(d1.add(const Duration(days: 1))), Wallet.rewards[1]); // يوم متتابع
+    expect(w.streak, 2);
+    expect(w.claimDaily(d1.add(const Duration(days: 4))), Wallet.rewards[0]); // انقطعت السلسلة
+    expect(w.streak, 1);
     expect(w.spend(10000), isFalse);
     expect(w.spend(50), isTrue);
     final gs = _newGame(150);
@@ -420,5 +423,40 @@ void main() {
     final back = GameState.fromJson(gs.toJson());
     expect(back.legendSeason, gs.season);
     expect(back.windowExtSeason, gs.season);
+  });
+
+  test('عناصر الكوينز الثانية: الدرع، التراجع، الشفاء، الموهبة، اسم الملعب', () {
+    final gs = _newGame(170);
+    Wallet.i.coins = 3000;
+    // درع الإقالة يمنع الإقالة مرة واحدة
+    expect(gs.buyShield(), isNull);
+    gs.confidence = 0;
+    gs.checkSackForTest();
+    expect(gs.fired, isFalse);
+    expect(gs.confidence, 40);
+    gs.confidence = 0;
+    gs.checkSackForTest();
+    expect(gs.fired, isTrue);
+    // الشفاء الكامل مرة في الموسم
+    final p = gs.user.squad.first..injuredWeeks = 6;
+    expect(gs.healInjuryFull(p), isNull);
+    expect(p.injuredWeeks, 0);
+    expect(gs.healInjuryFull(p), isNotNull);
+    // الموهبة: ثلاث بدائل، واحدة في الموسم
+    final ts = gs.drawTalents();
+    expect(ts.length, 3);
+    final n0 = gs.user.squad.length;
+    expect(gs.signTalent(ts.first), isNull);
+    expect(gs.user.squad.length, n0 + 1);
+    expect(gs.signTalent(ts[1]), isNotNull);
+    // اسم الملعب
+    expect(gs.renameStadium('ab'), isNotNull);
+    expect(gs.renameStadium('ملعب الأحلام'), isNull);
+    expect(gs.user.venue, 'ملعب الأحلام');
+    // لا صفقة للتراجع عنها
+    expect(gs.undoableDeal, isNull);
+    expect(gs.undoLastDeal(), isNotNull);
+    final back = GameState.fromJson(gs.toJson());
+    expect(back.talentSeason, gs.season);
   });
 }

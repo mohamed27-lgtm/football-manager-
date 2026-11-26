@@ -57,10 +57,10 @@ class _CoinStore extends StatelessWidget {
     );
   }
 
-  Future<Player?> _pickInjured(BuildContext c) {
-    final inj = gs.user.squad.where((p) => p.injuredWeeks >= 3).toList();
+  Future<Player?> _pickInjured(BuildContext c, {int min = 3}) {
+    final inj = gs.user.squad.where((p) => p.injuredWeeks >= min).toList();
     if (inj.isEmpty) {
-      _say(c, 'لا يوجد لاعب مصاب إصابة طويلة (3 أسابيع فأكثر)', '');
+      _say(c, min == 1 ? 'لا يوجد لاعب مصاب' : 'لا يوجد لاعب مصاب إصابة طويلة (3 أسابيع فأكثر)', '');
       return Future.value(null);
     }
     return showDialog<Player>(
@@ -70,6 +70,43 @@ class _CoinStore extends StatelessWidget {
         children: [
           for (final p in inj)
             SimpleDialogOption(onPressed: () => Navigator.pop(d, p), child: Text('${p.name} — ${p.injuredWeeks} أسابيع')),
+        ],
+      ),
+    );
+  }
+
+  Future<Player?> _pickTalent(BuildContext c) {
+    final ts = gs.drawTalents();
+    return showDialog<Player>(
+      context: c,
+      builder: (d) => SimpleDialog(
+        title: const Text('اختر موهبة'),
+        children: [
+          for (final p in ts)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(d, p),
+              child: Row(children: [
+                PosChip(p.pos),
+                const SizedBox(width: 8),
+                Expanded(child: Text('${p.name} (${p.age} سنة)', style: const TextStyle(fontWeight: FontWeight.w800))),
+                Text('${p.overall} ← ${p.potential}', style: const TextStyle(fontWeight: FontWeight.w900)),
+              ]),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _askName(BuildContext c) {
+    final ctl = TextEditingController(text: gs.user.venue ?? '');
+    return showDialog<String>(
+      context: c,
+      builder: (d) => AlertDialog(
+        title: const Text('اسم الملعب'),
+        content: TextField(controller: ctl, maxLength: 30, autofocus: true),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(d), child: const Text('إلغاء')),
+          FilledButton(onPressed: () => Navigator.pop(d, ctl.text), child: const Text('تأكيد')),
         ],
       ),
     );
@@ -155,6 +192,49 @@ class _CoinStore extends StatelessWidget {
                 on: () async {
                   final i = await _pickLegend(c);
                   if (i != null && c.mounted) _say(c, gs.signLegend(i), 'انضم الأسطورة إلى فريقك');
+                }),
+            _item(c,
+                icon: Icons.shield,
+                title: 'درع الإقالة',
+                sub: 'يمنع إقالتك مرة واحدة إذا نزلت ثقة الإدارة إلى الصفر، ويعيدها إلى 40%. تحمل درعين كحد أقصى.',
+                cost: CoinPerks.costShield,
+                note: gs.sackShield > 0 ? 'لديك ${gs.sackShield}' : null,
+                on: () => _say(c, gs.buyShield(), 'اشتريت درع إقالة')),
+            _item(c,
+                icon: Icons.undo,
+                title: 'التراجع عن آخر صفقة',
+                sub: 'يلغي آخر تعاقد ويستردّ كامل ما دفعته، خلال أسبوع من التعاقد.',
+                cost: CoinPerks.costUndo,
+                note: gs.undoableDeal == null ? 'لا توجد صفقة متاحة' : 'الصفقة: ${gs.undoableDeal!.name}',
+                on: gs.undoableDeal == null ? null : () => _say(c, gs.undoLastDeal(), 'تم التراجع عن الصفقة')),
+            _item(c,
+                icon: Icons.medical_services,
+                title: 'شفاء فوري',
+                sub: 'ينهي إصابة لاعب بالكامل الآن. مرة في الموسم.',
+                cost: CoinPerks.costFullHeal,
+                note: gs.fullHealSeason == gs.season ? 'استُخدم هذا الموسم' : null,
+                on: () async {
+                  final p = await _pickInjured(c, min: 1);
+                  if (p != null && c.mounted) _say(c, gs.healInjuryFull(p), 'شُفي اللاعب');
+                }),
+            _item(c,
+                icon: Icons.auto_awesome,
+                title: 'موهبة مضمونة',
+                sub: 'اختر شاباً من 3 مواهب بإمكانية عالية جداً. واحدة في الموسم.',
+                cost: CoinPerks.costTalent,
+                note: gs.talentSeason == gs.season ? 'استُخدمت هذا الموسم' : null,
+                on: () async {
+                  final p = await _pickTalent(c);
+                  if (p != null && c.mounted) _say(c, gs.signTalent(p), 'انضمت الموهبة إلى فريقك');
+                }),
+            _item(c,
+                icon: Icons.stadium,
+                title: 'اسم الملعب',
+                sub: 'سمِّ ملعبك بما تشاء، ويظهر في صفحة الملعب.',
+                cost: CoinPerks.costStadiumName,
+                on: () async {
+                  final n = await _askName(c);
+                  if (n != null && c.mounted) _say(c, gs.renameStadium(n), 'تغيّر اسم الملعب');
                 }),
             const SizedBox(height: 4),
             const Text('تسريع البناء فوراً', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),

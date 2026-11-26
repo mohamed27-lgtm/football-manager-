@@ -384,6 +384,8 @@ class GameState extends ChangeNotifier {
     }
   }
   /// حالة مزايا الكوينز (انظر coin_perks.dart)
+  int sackShield = 0, fullHealSeason = -1, talentSeason = -1;
+  Map<String, dynamic>? lastDeal;
   int windowExtUntil = -1, windowExtSeason = -1, priorityUntil = -1, prioritySeason = -1, healSeason = -1, legendSeason = -1;
 
   /// كوينز اللعبة: رصيد مشترك بين الألعاب (انظر Wallet)
@@ -734,6 +736,10 @@ class GameState extends ChangeNotifier {
     season = j['season'] as int;
     week = j['week'] as int;
     objective = j['objective'] as int;
+    sackShield = (j['shd'] as int?) ?? 0;
+    fullHealSeason = (j['fhs'] as int?) ?? -1;
+    talentSeason = (j['tls'] as int?) ?? -1;
+    lastDeal = j['ldl'] == null ? null : Map<String, dynamic>.from(j['ldl'] as Map);
     windowExtUntil = (j['wxu'] as int?) ?? -1;
     windowExtSeason = (j['wxs'] as int?) ?? -1;
     priorityUntil = (j['pru'] as int?) ?? -1;
@@ -1040,6 +1046,10 @@ class GameState extends ChangeNotifier {
         'season': season,
         'week': week,
         'objective': objective,
+        'shd': sackShield,
+        'fhs': fullHealSeason,
+        'tls': talentSeason,
+        'ldl': lastDeal,
         'wxu': windowExtUntil,
         'wxs': windowExtSeason,
         'pru': priorityUntil,
@@ -1639,7 +1649,7 @@ class GameState extends ChangeNotifier {
     }
     if (user.budget < -5) confidence -= 2;
     confidence = confidence.clamp(0, 100).toDouble();
-    if (confidence <= 0) fired = true;
+    _checkSack();
     this._weeklyJobs();
     this._projectsTick();
     this._campaignsTick();
@@ -1917,6 +1927,7 @@ class GameState extends ChangeNotifier {
       notifyListeners();
       return 'فشل اللاعب في الفحص الطبي — أُلغيت الصفقة';
     }
+    final fromClub = p.club;
     if (!p.free && p.club != null) {
       final owner = _ownerOf(p);
       if (owner == null) {
@@ -1950,6 +1961,7 @@ class GameState extends ChangeNotifier {
     _registerNew(p);
     market.remove(p);
     freeAgents.removeWhere((x) => x.id == p.id);
+    lastDeal = {'id': p.id, 'price': price, 'fee': fee, 'extra': extra, 'from': fromClub, 's': season, 'w': week};
     news.insert(0, '💼 تعاقدت مع ${p.name} مقابل ${money1(price)} + عمولة وكيل ${money1(fee)}$note');
     logOp('تعاقد مع ${p.name} (-${money1(price + fee)})');
     unawaited(save());
@@ -3112,7 +3124,7 @@ class GameState extends ChangeNotifier {
     ceremony = null;
     _setObjective();
     _takeoverTick();
-    if (confidence <= 0) fired = true;
+    _checkSack();
     _advanceCups();
     snapBoardGoals();
     news.insert(0, '📋 هدف الإدارة للموسم $season: المركز $objective أو أفضل، ومالي: الرواتب ≤ 85% من الإيرادات، وشباب: $youthNeed لاعبين ≤21 سنة يلعبون $youthMinApps مباريات');
@@ -3775,7 +3787,7 @@ class GameState extends ChangeNotifier {
       confidence = min(100, confidence + 2);
     } else if (lost) {
       confidence = max(0, confidence - 2);
-      if (confidence <= 0) fired = true;
+      _checkSack();
     }
     _morale(user, won ? 3 : (lost ? -3 : 0));
     for (final o in c.ties.where((x) => !x.played)) {

@@ -106,8 +106,29 @@ class _StartScreenState extends State<StartScreen> {
                       }
                     : null,
                 icon: const Icon(Icons.card_giftcard),
-                label: Text(Wallet.i.canClaimDaily() ? 'استلم المكافأة اليومية (+${Wallet.dailyReward})' : 'المكافأة اليومية: عد لاحقاً'),
+                label: Text(Wallet.i.canClaimDaily() ? 'استلم المكافأة اليومية (+${Wallet.i.nextReward()})' : 'المكافأة اليومية: عد غداً'),
               ),
+              const SizedBox(height: 10),
+              Row(children: [
+                for (final e in Wallet.rewards.indexed)
+                  Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        color: e.$1 < (Wallet.i.canClaimDaily() ? (Wallet.i.streakIfClaimed() - 1) % 7 : (Wallet.i.streak == 0 ? 0 : (Wallet.i.streak - 1) % 7 + 1)) ? const Color(0x44FFC857) : kCard,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: kLine),
+                      ),
+                      child: Column(children: [
+                        Text('${e.$1 + 1}', style: const TextStyle(fontSize: 10, color: kMuted)),
+                        Text('${e.$2}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: e.$1 == 6 ? kGold : null)),
+                      ]),
+                    ),
+                  ),
+              ]),
+              const SizedBox(height: 4),
+              Text('السلسلة الحالية: ${Wallet.i.streak} يوماً — يتصاعد المبلغ كل يوم متتابع', style: const TextStyle(color: kMuted, fontSize: 11.5)),
               const SizedBox(height: 10),
               OutlinedButton.icon(
                 onPressed: () {

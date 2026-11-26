@@ -1,5 +1,14 @@
 // ملف مُولَّد: ترجمات النصوص (العربية → English / Français / Español)
 const Map<String, List<String>> kTr = {
+  "درع الإقالة": ["Sack shield", "Bouclier anti-licenciement", "Escudo anti-despido"],
+  "التراجع عن آخر صفقة": ["Undo last signing", "Annuler la dernière signature", "Deshacer el último fichaje"],
+  "شفاء فوري": ["Instant recovery", "Guérison instantanée", "Recuperación instantánea"],
+  "موهبة مضمونة": ["Guaranteed talent", "Talent garanti", "Talento garantizado"],
+  "اسم الملعب": ["Stadium name", "Nom du stade", "Nombre del estadio"],
+  "اختر موهبة": ["Choose a talent", "Choisissez un talent", "Elige un talento"],
+  "المكافأة اليومية: عد غداً": ["Daily reward: come back tomorrow", "Récompense quotidienne : revenez demain", "Recompensa diaria: vuelve mañana"],
+  "لا توجد صفقة متاحة": ["No deal available", "Aucune transaction disponible", "Ningún fichaje disponible"],
+  "لا يوجد لاعب مصاب": ["No injured player", "Aucun joueur blessé", "Ningún jugador lesionado"],
   "متجر الكوينز": ["Coin store", "Boutique de pièces", "Tienda de monedas"],
   "كشّاف مميز": ["Premium scout", "Recruteur premium", "Ojeador premium"],
   "تمديد نافذة الانتقالات": ["Extend transfer window", "Prolonger le mercato", "Ampliar ventana de fichajes"],
